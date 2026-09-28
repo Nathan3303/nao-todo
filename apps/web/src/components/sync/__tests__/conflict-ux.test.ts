@@ -313,7 +313,8 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(groupHead?.textContent).toContain('本地标题')
         expect(groupHead?.textContent).not.toContain('任务')
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
-        expect(itemButton?.textContent).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(itemButton?.textContent).toContain('冲突 1')
+        expect(itemButton?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
         expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
 
         // 只读对比：点击条目 ⇒ compare(item)；渲染字段级差异（败方 vs 当前）
@@ -473,14 +474,15 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         expect(stacked).toContain('border-bottom: 1px solid var(--nue-border-color)')
     })
 
-    it('左栏只保留「对象名称 + 冲突类型」：无时间等元信息', async () => {
+    it('左栏只保留「对象名称」（无冲突类型/时间）', async () => {
         await openConflictList(1)
         conflict().items.value = [conflictItem()]
         await nextTick()
         const head = document.querySelector<HTMLElement>('.conflict-list__group-head')
         expect(head?.textContent).toContain('本地标题')
         const entry = document.querySelector<HTMLElement>('.conflict-list__entry')
-        expect(entry?.textContent).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(entry?.textContent).toContain('冲突 1')
+        expect(entry?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
         expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
     })
 
@@ -500,6 +502,8 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         expect(text).toContain(messages['zh-CN']['sync.conflict.objectInfo'])
         expect(text).toContain(messages['zh-CN']['sync.conflict.metaTable'])
         expect(text).toContain(messages['zh-CN']['sync.conflict.table.tasks'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaKind'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
         expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntityId'])
         expect(text).toContain('t1')
         expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntryId'])
@@ -526,12 +530,14 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         const allRows = Array.from(document.querySelectorAll('.conflict-list__diff'))
             .map((el) => el.textContent ?? '')
             .join('|')
-        expect(allRows).toContain('name')
-        expect(allRows).toContain('updatedAt')
+        // 字段名为可读标签（非 raw 技术名）
+        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.name'])
+        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.updatedAt'])
+        expect(allRows).not.toContain('updatedAt')
         // 技术字段段落排在普通字段之后
         const text = dialogText()
         expect(text).toContain(messages['zh-CN']['sync.conflict.technicalSection'])
-        expect(text.indexOf('updatedAt')).toBeGreaterThan(
+        expect(text.indexOf(messages['zh-CN']['sync.conflict.field.updatedAt'])).toBeGreaterThan(
             text.indexOf(messages['zh-CN']['sync.conflict.technicalSection'])
         )
     })

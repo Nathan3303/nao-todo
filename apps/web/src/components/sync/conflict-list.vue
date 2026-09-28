@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * 冲突列表主体（左栏记录 / 右栏对象信息 + diff）—— 数据面由父级 `ConflictDialog` 经 `ux` 注入（DI 唯一入口）
+ * 冲突列表主体（左栏名称 / 右栏详情）—— 数据面由父级 `ConflictDialog` 经 `ux` 注入（DI 唯一入口）
  *
- * @description T338：左栏**只保留**「对象名称（组头）+ 冲突类型（条目）」；被移出的元信息
- *              （类型 / 实体 ID / 冲突 ID / 时间）在**右栏「对象信息」**可见（不丢信息）。
- *              右栏 diff：仅差异字段 · 三态「颜色 + 符号 + 文字标签」三重冗余 · **技术字段始终显示**
- *              但**次要样式**（次要色 / 更小字号 / 排在正常字段之后并加轻分隔）。
+ * @description T340 · C 端化：面向消费级用户，**不是后台管理台**。
+ *              - 左栏**只保留对象名称**（分组）；冲突类型/状态/时间/ID/字段差异**全部进右栏详情**（信息只迁移不丢失）；
+ *              - 详情为**卡片 + 分区留白 + 圆角**，非「表头 + 行 + 网格」；条目点击区 ≥40px；
+ *              - 文案**去术语**（我的修改 / 云端最新 / 用云端的 / 保留我的修改）；字段名用**可读标签**；
+ *              - 三态「颜色 + 符号 + 文字标签」三重冗余（`-80` 图形 / `-90` 文本，实测达标）；
+ *              - 技术字段**始终显示**但为**次要样式**（次要色 / 更小字号 / 排在普通字段之后 + 轻分隔）；
+ *              - 覆盖类动作给**安全提示**，主按钮「保留我的修改」突出、次按钮弱化。
  *              四态齐备（加载/空/错误/成功）；⛔ 不改恢复动作 / 合并语义 / 计数。
  */
 import { computed, onMounted, ref } from 'vue'
@@ -15,6 +18,7 @@ import type {
     ConflictListItem
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import type { ConflictUx } from '@/hooks'
+import { fieldLabel } from './conflict-field-labels'
 import {
     DIFF_LABEL_KEY,
     DIFF_SYMBOL,
@@ -102,6 +106,7 @@ interface DiffRow {
     kind: FieldDiffKind
     symbol: string
     label: string
+    humanLabel: string
     loserText: string
     currentText: string
 }
@@ -113,12 +118,13 @@ const toRow = (diff: ConflictFieldDiff): DiffRow => {
         kind,
         symbol: DIFF_SYMBOL[kind],
         label: t(DIFF_LABEL_KEY[kind]),
+        humanLabel: fieldLabel(diff.field),
         loserText: formatFieldValue(diff.loser),
         currentText: formatFieldValue(diff.current)
     }
 }
 
-/** T338：技术字段**始终显示**，但拆到普通字段之后（次要段落） */
+/** 技术字段**始终显示**，但拆到普通字段之后（次要段落） */
 const diffGroups = computed(() => {
     const { normal, technical } = splitTechnicalDiffs(comparison.value?.diffs ?? [])
     return { normal: normal.map(toRow), technical: technical.map(toRow) }
@@ -155,7 +161,7 @@ const runRetryLocal = (): void => {
 
 <template>
     <div class="conflict-list">
-        <!-- 左栏：冲突记录（只保留「对象名称 + 冲突类型」） -->
+        <!-- 左栏：只保留对象名称（分组）+ 极简「冲突 N」条目；详情全部在右栏 -->
         <div class="conflict-list__left">
             <nue-text
                 v-if="folded"
@@ -205,14 +211,18 @@ const runRetryLocal = (): void => {
                         <span class="conflict-list__group-title">{{ groupTitle(group) }}</span>
                     </button>
                     <ul v-show="!groupCollapsed(group.key)" class="conflict-list__items">
-                        <li v-for="item in group.items" :key="item.id" class="conflict-list__item">
+                        <li
+                            v-for="(item, index) in group.items"
+                            :key="item.id"
+                            class="conflict-list__item"
+                        >
                             <button
                                 class="conflict-list__entry"
                                 :class="{ 'is-active': isActive(item) }"
                                 :aria-selected="isActive(item)"
                                 @click="compare(item)"
                             >
-                                <span>{{ kindLabel(item.kind) }}</span>
+                                {{ t('sync.conflict.entryOrdinal', { index: index + 1 }) }}
                             </button>
                         </li>
                     </ul>
@@ -220,7 +230,7 @@ const runRetryLocal = (): void => {
             </div>
         </div>
 
-        <!-- 右栏：对象信息 + 选中条目的 diff（未选中 ⇒ 提示） -->
+        <!-- 右栏：详情（对象信息 + 差异 + 技术字段 + 安全提示 + 动作） -->
         <div class="conflict-list__right">
             <nue-text
                 v-if="!comparison"
@@ -231,8 +241,10 @@ const runRetryLocal = (): void => {
                 {{ t('sync.conflict.selectHint') }}
             </nue-text>
             <template v-else>
-                <!-- T338：左栏移出的元信息在右栏可见（不丢信息） -->
-                <section class="conflict-list__meta">
+                <h3 class="conflict-list__detail-title">{{ t('sync.conflict.detailTitle') }}</h3>
+
+                <!-- 对象信息：左栏移出的信息在此完整承载 -->
+                <section class="conflict-list__section">
                     <nue-text size="xs" class="conflict-list__section-title">
                         {{ t('sync.conflict.objectInfo') }}
                     </nue-text>
@@ -240,6 +252,10 @@ const runRetryLocal = (): void => {
                         <div class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaTable') }}</dt>
                             <dd>{{ tableLabel(comparison.table) }}</dd>
+                        </div>
+                        <div v-if="activeItem" class="conflict-list__meta-row">
+                            <dt>{{ t('sync.conflict.metaKind') }}</dt>
+                            <dd>{{ kindLabel(activeItem.kind) }}</dd>
                         </div>
                         <div class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaEntityId') }}</dt>
@@ -264,117 +280,146 @@ const runRetryLocal = (): void => {
                     </dl>
                 </section>
 
-                <nue-text size="xs" class="conflict-list__section-title">
-                    {{ t('sync.conflict.compareTitle') }}
-                </nue-text>
-                <div class="conflict-list__diff-head">
-                    <span class="conflict-list__diff-head-spacer" />
-                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                        {{ t('sync.conflict.loserLabel') }}
+                <!-- 差异详情：逐字段卡片（无表头/网格） -->
+                <section class="conflict-list__section">
+                    <nue-text size="xs" class="conflict-list__section-title">
+                        {{ t('sync.conflict.compareTitle') }}
                     </nue-text>
-                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                        {{ t('sync.conflict.currentLabel') }}
-                    </nue-text>
-                </div>
-                <ul class="conflict-list__diffs">
-                    <li
-                        v-for="row in diffGroups.normal"
-                        :key="row.field"
-                        class="conflict-list__diff"
-                        :class="`is-${row.kind}`"
-                    >
-                        <span class="conflict-list__field">
-                            <span class="conflict-list__symbol" :class="`is-${row.kind}`">
-                                {{ row.symbol }}
-                            </span>
-                            <span class="conflict-list__field-name">{{ row.field }}</span>
-                            <span class="conflict-list__state-label" :class="`is-${row.kind}`">
-                                {{ row.label }}
-                            </span>
-                        </span>
-                        <nue-text size="xs" class="conflict-list__value is-loser">
-                            <span
-                                class="conflict-list__text"
-                                :class="{
-                                    'is-truncated': isTruncated(row.loserText, row.field, 'loser')
-                                }"
-                                >{{ row.loserText }}</span
-                            >
-                            <button
-                                v-if="isLongValue(row.loserText)"
-                                class="conflict-list__value-toggle"
-                                @click="toggleValue(row.field, 'loser')"
-                            >
-                                {{
-                                    valueExpanded(row.field, 'loser')
-                                        ? t('sync.conflict.collapse')
-                                        : t('sync.conflict.expand')
-                                }}
-                            </button>
-                        </nue-text>
-                        <nue-text size="xs" class="conflict-list__value is-current">
-                            <span
-                                class="conflict-list__text"
-                                :class="{
-                                    'is-truncated': isTruncated(
-                                        row.currentText,
-                                        row.field,
-                                        'current'
-                                    )
-                                }"
-                                >{{ row.currentText }}</span
-                            >
-                            <button
-                                v-if="isLongValue(row.currentText)"
-                                class="conflict-list__value-toggle"
-                                @click="toggleValue(row.field, 'current')"
-                            >
-                                {{
-                                    valueExpanded(row.field, 'current')
-                                        ? t('sync.conflict.collapse')
-                                        : t('sync.conflict.expand')
-                                }}
-                            </button>
-                        </nue-text>
-                    </li>
-                    <!-- T338：技术字段始终显示 ⇒ 次要段落（轻分隔 + 次要色 / 更小字号） -->
-                    <template v-if="diffGroups.technical.length > 0">
-                        <li class="conflict-list__diff-sep">
-                            {{ t('sync.conflict.technicalSection') }}
-                        </li>
+                    <ul class="conflict-list__diffs">
                         <li
-                            v-for="row in diffGroups.technical"
+                            v-for="row in diffGroups.normal"
                             :key="row.field"
-                            class="conflict-list__diff is-technical"
+                            class="conflict-list__diff"
                             :class="`is-${row.kind}`"
                         >
-                            <span class="conflict-list__field">
+                            <div class="conflict-list__diff-top">
                                 <span class="conflict-list__symbol" :class="`is-${row.kind}`">
                                     {{ row.symbol }}
                                 </span>
-                                <span class="conflict-list__field-name">{{ row.field }}</span>
+                                <span class="conflict-list__field-name">{{ row.humanLabel }}</span>
                                 <span class="conflict-list__state-label" :class="`is-${row.kind}`">
                                     {{ row.label }}
                                 </span>
-                            </span>
-                            <nue-text size="xs" class="conflict-list__value is-loser">
-                                <span class="conflict-list__text">{{ row.loserText }}</span>
-                            </nue-text>
-                            <nue-text size="xs" class="conflict-list__value is-current">
-                                <span class="conflict-list__text">{{ row.currentText }}</span>
-                            </nue-text>
+                            </div>
+                            <div class="conflict-list__value-row">
+                                <span class="conflict-list__value-source">
+                                    {{ t('sync.conflict.loserLabel') }}
+                                </span>
+                                <nue-text size="xs" class="conflict-list__value is-loser">
+                                    <span
+                                        class="conflict-list__text"
+                                        :class="{
+                                            'is-truncated': isTruncated(
+                                                row.loserText,
+                                                row.field,
+                                                'loser'
+                                            )
+                                        }"
+                                        >{{ row.loserText }}</span
+                                    >
+                                    <button
+                                        v-if="isLongValue(row.loserText)"
+                                        class="conflict-list__value-toggle"
+                                        @click="toggleValue(row.field, 'loser')"
+                                    >
+                                        {{
+                                            valueExpanded(row.field, 'loser')
+                                                ? t('sync.conflict.collapse')
+                                                : t('sync.conflict.expand')
+                                        }}
+                                    </button>
+                                </nue-text>
+                            </div>
+                            <div class="conflict-list__value-row">
+                                <span class="conflict-list__value-source">
+                                    {{ t('sync.conflict.currentLabel') }}
+                                </span>
+                                <nue-text size="xs" class="conflict-list__value is-current">
+                                    <span
+                                        class="conflict-list__text"
+                                        :class="{
+                                            'is-truncated': isTruncated(
+                                                row.currentText,
+                                                row.field,
+                                                'current'
+                                            )
+                                        }"
+                                        >{{ row.currentText }}</span
+                                    >
+                                    <button
+                                        v-if="isLongValue(row.currentText)"
+                                        class="conflict-list__value-toggle"
+                                        @click="toggleValue(row.field, 'current')"
+                                    >
+                                        {{
+                                            valueExpanded(row.field, 'current')
+                                                ? t('sync.conflict.collapse')
+                                                : t('sync.conflict.expand')
+                                        }}
+                                    </button>
+                                </nue-text>
+                            </div>
                         </li>
-                    </template>
-                </ul>
+
+                        <!-- 技术字段：始终显示，但次要段落（轻分隔 + 次要色 / 更小字号） -->
+                        <template v-if="diffGroups.technical.length > 0">
+                            <li class="conflict-list__diff-sep">
+                                {{ t('sync.conflict.technicalSection') }}
+                            </li>
+                            <li
+                                v-for="row in diffGroups.technical"
+                                :key="row.field"
+                                class="conflict-list__diff is-technical"
+                                :class="`is-${row.kind}`"
+                            >
+                                <div class="conflict-list__diff-top">
+                                    <span class="conflict-list__symbol" :class="`is-${row.kind}`">
+                                        {{ row.symbol }}
+                                    </span>
+                                    <span class="conflict-list__field-name">
+                                        {{ row.humanLabel }}
+                                    </span>
+                                </div>
+                                <div class="conflict-list__value-row">
+                                    <span class="conflict-list__value-source">
+                                        {{ t('sync.conflict.loserLabel') }}
+                                    </span>
+                                    <nue-text size="xs" class="conflict-list__value is-loser">
+                                        <span class="conflict-list__text">{{ row.loserText }}</span>
+                                    </nue-text>
+                                </div>
+                                <div class="conflict-list__value-row">
+                                    <span class="conflict-list__value-source">
+                                        {{ t('sync.conflict.currentLabel') }}
+                                    </span>
+                                    <nue-text size="xs" class="conflict-list__value is-current">
+                                        <span class="conflict-list__text">{{
+                                            row.currentText
+                                        }}</span>
+                                    </nue-text>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </section>
+
                 <nue-text v-if="retryFailed" size="xs" color="var(--nue-error-color-90)">
                     {{ t('sync.conflict.retryFailed') }}
                 </nue-text>
+                <!-- 覆盖类动作的安全提示 -->
+                <nue-text
+                    size="xs"
+                    color="var(--nue-secondary-text-color)"
+                    class="conflict-list__safety"
+                >
+                    {{ t('sync.conflict.safetyHint') }}
+                </nue-text>
                 <div class="conflict-list__actions">
-                    <nue-button theme="pure,small" @click="runKeepServer">
-                        {{ t('sync.conflict.keepServer') }}
-                    </nue-button>
-                    <nue-button theme="pure,small" @click="runRetryLocal">
+                    <nue-button theme="primary,small" @click="runRetryLocal">
                         {{ t('sync.conflict.retryLocal') }}
+                    </nue-button>
+                    <nue-button theme="small,ghost" @click="runKeepServer">
+                        {{ t('sync.conflict.keepServer') }}
                     </nue-button>
                     <nue-button theme="pure,small" @click="closeComparison">
                         {{ t('sync.conflict.close') }}
@@ -386,11 +431,11 @@ const runRetryLocal = (): void => {
 </template>
 
 <style scoped>
-/* T338：左右分栏（阈值 900px，窄窗堆叠见下方 @media） */
+/* T340：左右分栏（阈值 900px，窄窗堆叠见下方 @media） */
 .conflict-list {
     display: flex;
     flex-direction: row;
-    gap: var(--nue-gap-sm);
+    gap: var(--nue-gap-df);
     min-height: 0;
     flex: 1;
 }
@@ -400,24 +445,24 @@ const runRetryLocal = (): void => {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-xs);
-    flex: 0 1 clamp(240px, 30%, 360px);
+    flex: 0 1 clamp(200px, 26%, 320px);
     min-height: 0;
     overflow-y: auto;
-    padding-right: var(--nue-gap-sm);
+    padding-right: var(--nue-gap-df);
     border-right: 1px solid var(--nue-border-color);
 }
 
 .conflict-list__right {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-xs);
+    gap: var(--nue-gap-sm);
     flex: 1;
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
 }
 
-/* 窄窗堆叠：竖分隔改为**横向**分隔（复用左栏下边框，语义一致且不增加控件） */
+/* 窄窗堆叠：竖分隔改为**横向**分隔（复用左栏下边框，语义一致且不新增控件） */
 @media (max-width: 899.98px) {
     .conflict-list {
         flex-direction: column;
@@ -453,32 +498,35 @@ const runRetryLocal = (): void => {
     gap: var(--nue-gap-2xs);
 }
 
+/* C 端：点击区 ≥40px + 圆角 + hover */
 .conflict-list__group-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    min-height: 40px;
     width: 100%;
-    padding: 6px 0;
+    padding: 0 var(--nue-gap-xs);
     border: none;
-    border-bottom: 1px solid var(--nue-border-color);
+    border-radius: var(--nue-radius-lg);
     background: none;
     cursor: pointer;
     text-align: left;
     color: var(--nue-primary-text-color);
+    font-size: var(--nue-text-sm);
     font-weight: var(--nue-font-weight-medium, 500);
+}
+
+.conflict-list__group-head:hover {
+    background-color: var(--nue-primary-color-100);
 }
 
 .conflict-list__items,
 .conflict-list__diffs {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-2xs);
+    gap: var(--nue-gap-xs);
     margin: 0;
     padding: 0;
     list-style: none;
-}
-
-.conflict-list__diffs {
-    gap: var(--nue-gap-xs);
 }
 
 .conflict-list__item {
@@ -488,16 +536,22 @@ const runRetryLocal = (): void => {
 
 .conflict-list__entry {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    min-height: 40px;
     width: 100%;
-    padding: var(--nue-gap-2xs) var(--nue-gap-xs);
+    padding: 0 var(--nue-gap-xs);
     border: none;
     border-left: 3px solid transparent;
+    border-radius: var(--nue-radius-lg);
     background: none;
     cursor: pointer;
     text-align: left;
     color: var(--nue-primary-text-color);
     font-size: var(--nue-text-xs);
+}
+
+.conflict-list__entry:hover {
+    background-color: var(--nue-primary-color-100);
 }
 
 .conflict-list__entry.is-active {
@@ -506,25 +560,33 @@ const runRetryLocal = (): void => {
     font-weight: var(--nue-font-weight-medium, 500);
 }
 
-.conflict-list__section-title {
+/* 详情：分区留白（非表头/网格） */
+.conflict-list__detail-title {
+    margin: 0;
     color: var(--nue-primary-text-color);
-    font-weight: var(--nue-font-weight-medium, 500);
+    font-size: var(--nue-text-md);
+    font-weight: 600;
 }
 
-/* 对象信息（左栏移出的元信息在右栏可见） */
-.conflict-list__meta {
+.conflict-list__section {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-2xs);
-    padding-bottom: var(--nue-gap-xs);
-    border-bottom: 1px solid var(--nue-border-color);
+    gap: var(--nue-gap-xs);
+}
+
+.conflict-list__section-title {
+    color: var(--nue-secondary-text-color);
+    font-weight: var(--nue-font-weight-medium, 500);
 }
 
 .conflict-list__meta-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--nue-gap-2xs);
     margin: 0;
+    padding: var(--nue-gap-xs) var(--nue-gap-sm);
+    border-radius: var(--nue-radius-lg);
+    background-color: var(--nue-primary-color-100);
 }
 
 .conflict-list__meta-row {
@@ -546,19 +608,15 @@ const runRetryLocal = (): void => {
     overflow-wrap: anywhere;
 }
 
-.conflict-list__diff-head,
+/* 逐字段卡片：圆角 + 留白 + 状态色条（无表头/网格） */
 .conflict-list__diff {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--nue-gap-xs);
-    align-items: start;
-}
-
-/* T338：三态高亮 —— 颜色（-80 图形）+ 符号 + 文字标签（-90 文本）三重冗余 */
-.conflict-list__diff {
-    min-height: 24px;
-    padding-left: var(--nue-gap-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-gap-2xs);
+    padding: var(--nue-gap-xs) var(--nue-gap-sm);
+    border-radius: var(--nue-radius-lg);
     border-left: 3px solid transparent;
+    background-color: var(--nue-primary-color-100);
 }
 
 .conflict-list__diff.is-added {
@@ -573,27 +631,7 @@ const runRetryLocal = (): void => {
     border-left-color: var(--nue-warning-color-80);
 }
 
-/* 技术字段：始终显示但次要（更小字号 + 次要色；仍保留左侧状态色条以不丢三态） */
-.conflict-list__diff-sep {
-    padding-top: var(--nue-gap-xs);
-    border-top: 1px solid var(--nue-border-color);
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-}
-
-.conflict-list__diff.is-technical {
-    min-height: 20px;
-}
-
-.conflict-list__diff.is-technical .conflict-list__field-name,
-.conflict-list__diff.is-technical .conflict-list__value,
-.conflict-list__diff.is-technical .conflict-list__value.is-current {
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-    font-weight: 400;
-}
-
-.conflict-list__field {
+.conflict-list__diff-top {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
@@ -602,8 +640,8 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__field-name {
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-xs);
+    color: var(--nue-primary-text-color);
+    font-size: var(--nue-text-sm);
     font-weight: var(--nue-font-weight-medium, 500);
     overflow-wrap: anywhere;
 }
@@ -644,6 +682,19 @@ const runRetryLocal = (): void => {
     color: var(--nue-warning-color-90);
 }
 
+/* 值行：来源标签 + 值（逐行，避免表头/网格） */
+.conflict-list__value-row {
+    display: grid;
+    grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
+    gap: var(--nue-gap-xs);
+    align-items: baseline;
+}
+
+.conflict-list__value-source {
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+}
+
 .conflict-list__value {
     display: flex;
     align-items: baseline;
@@ -651,7 +702,7 @@ const runRetryLocal = (): void => {
     min-width: 0;
 }
 
-/* 来源层级：败方 = secondary，服务端当前 = primary + medium（可读性不依赖状态色） */
+/* 来源层级：我的修改 = secondary，云端最新 = primary + medium */
 .conflict-list__value.is-loser {
     color: var(--nue-secondary-text-color);
 }
@@ -685,13 +736,39 @@ const runRetryLocal = (): void => {
     font-size: var(--nue-text-2xs);
 }
 
+/* 技术字段：始终显示但次要（更小字号 + 次要色；保留状态色条以不丢三态） */
+.conflict-list__diff-sep {
+    padding-top: var(--nue-gap-xs);
+    border-top: 1px solid var(--nue-border-color);
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+}
+
+.conflict-list__diff.is-technical {
+    background-color: transparent;
+    padding: var(--nue-gap-2xs) var(--nue-gap-sm);
+}
+
+.conflict-list__diff.is-technical .conflict-list__field-name,
+.conflict-list__diff.is-technical .conflict-list__value,
+.conflict-list__diff.is-technical .conflict-list__value.is-current {
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+    font-weight: 400;
+}
+
+.conflict-list__safety {
+    color: var(--nue-secondary-text-color);
+}
+
 .conflict-list__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--nue-gap-xs);
+    align-items: center;
+    gap: var(--nue-gap-sm);
     position: sticky;
     bottom: 0;
-    padding-top: var(--nue-gap-xs);
+    padding: var(--nue-gap-xs) 0;
     background-color: var(--nue-primary-color-0);
 }
 </style>

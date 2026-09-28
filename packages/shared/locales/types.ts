@@ -61,6 +61,55 @@ export interface LocaleMessages {
     'sync.conflict.metaAt': string
     'sync.conflict.metaServerTime': string
     'sync.conflict.metaLocalTime': string
+    'sync.conflict.metaKind': string
+    'sync.conflict.detailTitle': string
+    'sync.conflict.safetyHint': string
+    'sync.conflict.entryOrdinal': string
+    'sync.conflict.field.id': string
+    'sync.conflict.field.userId': string
+    'sync.conflict.field.createdAt': string
+    'sync.conflict.field.updatedAt': string
+    'sync.conflict.field.deletedAt': string
+    'sync.conflict.field.revision': string
+    'sync.conflict.field.syncedServerUpdatedAt': string
+    'sync.conflict.field.parentTaskId': string
+    'sync.conflict.field.name': string
+    'sync.conflict.field.description': string
+    'sync.conflict.field.state': string
+    'sync.conflict.field.priority': string
+    'sync.conflict.field.startAt': string
+    'sync.conflict.field.endAt': string
+    'sync.conflict.field.projectId': string
+    'sync.conflict.field.tags': string
+    'sync.conflict.field.archivedAt': string
+    'sync.conflict.field.starMarkAt': string
+    'sync.conflict.field.givenUpAt': string
+    'sync.conflict.field.remindAt': string
+    'sync.conflict.field.remindRepeat': string
+    'sync.conflict.field.remindTime': string
+    'sync.conflict.field.remindWeekdays': string
+    'sync.conflict.field.checkItemCount': string
+    'sync.conflict.field.commentCount': string
+    'sync.conflict.field.subtaskCount': string
+    'sync.conflict.field.sortId': string
+    'sync.conflict.field.taskId': string
+    'sync.conflict.field.taskName': string
+    'sync.conflict.field.isDone': string
+    'sync.conflict.field.icon': string
+    'sync.conflict.field.color': string
+    'sync.conflict.field.deactivedAt': string
+    'sync.conflict.field.taskCount': string
+    'sync.conflict.field.content': string
+    'sync.conflict.field.attachments': string
+    'sync.conflict.field.isTopUp': string
+    'sync.conflict.field.avatar': string
+    'sync.conflict.field.nickname': string
+    'sync.conflict.field.type': string
+    'sync.conflict.field.duration': string
+    'sync.conflict.field.totalDuration': string
+    'sync.conflict.field.sessionId': string
+    'sync.conflict.field.pomodoroId': string
+    'sync.conflict.field.note': string
     'sync.conflict.fieldAdded': string
     'sync.conflict.fieldRemoved': string
     'sync.conflict.fieldChanged': string
