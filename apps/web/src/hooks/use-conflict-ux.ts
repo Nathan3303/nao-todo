@@ -30,7 +30,6 @@ export interface ConflictUx {
     compare: (item: ConflictListItem) => Promise<void>
     keepServer: (item: ConflictListItem) => Promise<void>
     retryLocal: (item: ConflictListItem) => Promise<void>
-    closeComparison: () => void
 }
 
 export const useConflictUx = (): ConflictUx => {
@@ -95,11 +94,6 @@ export const useConflictUx = (): ConflictUx => {
         await refresh()
     }
 
-    const closeComparison = (): void => {
-        comparison.value = null
-        retryFailed.value = false
-    }
-
     return {
         items,
         folded,
@@ -111,7 +105,6 @@ export const useConflictUx = (): ConflictUx => {
         refresh,
         compare,
         keepServer,
-        retryLocal,
-        closeComparison
+        retryLocal
     }
 }

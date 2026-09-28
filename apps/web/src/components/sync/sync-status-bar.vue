@@ -61,9 +61,23 @@ const dropdownRef = ref<InstanceType<typeof NueDropdown> | null>(null)
 const conflictDialogOpen = ref(false)
 const conflictEntryRowRef = ref<HTMLLIElement | null>(null)
 
-// T338：关闭对话框后把焦点归还触发按钮（a11y；ref 置于行上，取内部 button 聚焦）
+/** T347：焦点归还入口按钮（×/Esc/底部「关闭」三条路径统一走此函数） */
+const focusConflictEntry = (): void => {
+    conflictEntryRowRef.value?.querySelector('button')?.focus()
+}
+
+/**
+ * 关闭冲突对话框（T347）：**先**把焦点移回触发按钮（在对话框子树之外）⇒ 后续对话框卸载时
+ * 浏览器不会把焦点抛回 body；`watch` 的 nextTick 归还是兜底（jsdom 无动画事件时）。
+ */
+const closeConflictDialog = (): void => {
+    focusConflictEntry()
+    conflictDialogOpen.value = false
+}
+
+// T338/T347：关闭对话框后把焦点归还触发按钮（兜底；前置归还已覆盖真实浏览器主要竞态）
 watch(conflictDialogOpen, (isOpen) => {
-    if (!isOpen) void nextTick(() => conflictEntryRowRef.value?.querySelector('button')?.focus())
+    if (!isOpen) void nextTick(focusConflictEntry)
 })
 
 // @computed 同步中（含手动触发）
@@ -357,7 +371,12 @@ watch(
             </li>
         </nue-dropdown>
         <!-- T338：冲突对话框（入口 = 面板行「冲突 N」；NueDialog 传送至 body 弹层池） -->
-        <ConflictDialog v-model="conflictDialogOpen" />
+        <!-- T347：底部「关闭」/ × → close；Esc → before-close；三条路径均归还焦点到入口按钮 -->
+        <ConflictDialog
+            v-model="conflictDialogOpen"
+            @close="closeConflictDialog"
+            @before-close="focusConflictEntry"
+        />
         <!--
           常驻读屏活动区域（NFR「只播摘要」）：只播同步中/失败计数/数据不完整摘要，**不含** lastError 全文。
           视觉隐藏用 WCAG 惯例（clip-path 而非 display:none/hidden，读屏仍可播报）；

@@ -8,17 +8,28 @@
  *              关闭后焦点归还触发按钮由父级 `SyncStatusBar` 负责。
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.2
  */
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { t } from '@nao-todo/shared/locales'
+import { conflictObjectCount } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import { useConflictUx } from '@/hooks'
 import ConflictList from './conflict-list.vue'
 
 defineOptions({ name: 'ConflictDialog' })
 
+const emit = defineEmits<{ close: []; beforeClose: [] }>()
+
 const open = defineModel<boolean>({ default: false })
 
 const ux = useConflictUx()
 const bodyRef = ref<HTMLElement | null>(null)
+
+/** T346：标题计数 = **对象数**（distinct `table:entityId`），与左栏行数 / badge 同口径 */
+const objectCount = computed(() => conflictObjectCount(ux.items.value))
+
+/** T347：底部「关闭」/ 标题栏 `×` 均请求父级关闭对话框（焦点归还在父级统一处理） */
+const requestClose = (): void => {
+    emit('close')
+}
 
 const onAfterOpen = (): void => {
     void nextTick(() => bodyRef.value?.focus())
@@ -26,15 +37,20 @@ const onAfterOpen = (): void => {
 </script>
 
 <template>
-    <nue-dialog v-model="open" theme="conflict,large" @after-open="onAfterOpen">
+    <nue-dialog
+        v-model="open"
+        theme="conflict,large"
+        @after-open="onAfterOpen"
+        @before-close="emit('beforeClose')"
+    >
         <!-- 对话框标题栏：名称 + 条数走 header 插槽（不拼字符串） -->
-        <template #header="{ close }">
+        <template #header>
             <div class="conflict-dialog__header-left">
                 <nue-text class="nue-dialog__header__title">
                     {{ t('sync.conflict.title') }}
                 </nue-text>
                 <nue-text size="xs" class="conflict-dialog__header-count">
-                    {{ t('sync.conflict.groupCount', { count: ux.items.value.length }) }}
+                    {{ t('sync.conflict', { count: objectCount }) }}
                 </nue-text>
             </div>
             <nue-button
@@ -42,7 +58,7 @@ const onAfterOpen = (): void => {
                 theme="icon,ghost,small"
                 icon="clear"
                 :aria-label="t('sync.conflict.close')"
-                @click="close"
+                @click="requestClose"
             />
         </template>
         <div
@@ -53,7 +69,7 @@ const onAfterOpen = (): void => {
             :aria-label="t('sync.conflict.title')"
             tabindex="-1"
         >
-            <ConflictList :ux="ux" />
+            <ConflictList :ux="ux" @close="requestClose" />
         </div>
     </nue-dialog>
 </template>

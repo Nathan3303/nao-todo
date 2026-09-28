@@ -103,13 +103,21 @@ export const loadConflictJournal = async (userId: string): Promise<ConflictJourn
     return record?.conflictJournal ?? []
 }
 
-/** 冲突记账条数（冷启动恢复状态面计数用；无记录 ⇒ 0） */
+/**
+ * 冲突「对象数」= distinct `table:entityId`（T346 统一计数口径）。
+ * @description **单一真源**：由 journal 条目派生，与状态面 `conflictCount` 同源（不新增第二计数源）。
+ */
+export const conflictObjectCount = (
+    entries: ReadonlyArray<{ table: string; entityId: string }>
+): number => new Set(entries.map((entry) => `${entry.table}:${entry.entityId}`)).size
+
+/** 冲突「对象数」（distinct 实体；冷启动恢复状态面计数用；无记录 ⇒ 0） */
 export const countConflicts = async (userId: string): Promise<number> =>
-    (await loadConflictJournal(userId)).length
+    conflictObjectCount(await loadConflictJournal(userId))
 
 /**
  * 追加一条冲突记账（**纯追加 + 有界**：超上限环形淘汰最旧）
- * @returns 追加后的记账条数（供状态面计数）
+ * @returns 追加后的**对象数**（distinct 实体；供状态面计数，T346 口径）
  * @description 空 `userId` 硬失败（C-55：不得退化为空用户读写）
  */
 export const appendConflict = async (
@@ -139,7 +147,7 @@ export const appendConflict = async (
             evictedCount: (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
         }
     })
-    return next.length
+    return conflictObjectCount(next)
 }
 
 /** 清空冲突记账（登出/清库随 `meta` 一并清除；此处供显式清理） */
@@ -208,7 +216,7 @@ export interface ConflictComparison {
 /** 恢复动作结果 */
 export interface ConflictResolutionResult {
     ok: boolean
-    /** 动作后该用户 journal 剩余条数（供状态面计数刷新） */
+    /** 动作后该用户剩余**对象数**（distinct 实体，T346 口径；供状态面计数刷新） */
     remaining: number
 }
 
@@ -302,9 +310,9 @@ export const compareConflict = async (
 
 /**
  * 恢复动作 A「保留服务端版本」：清除该实体的 journal 条目（本地已是胜方，无副作用）
- * @returns `remaining` = 清除后剩余条数（供状态面计数刷新）
- * @description T331：清条目后**同源刷新状态面计数**（`remaining` = journal 当前长度）⇒
- *              徽标「冲突 N」随处理递减 / 归零（不再滞留到重启）。
+ * @returns `remaining` = 清除后剩余**对象数**（distinct 实体；供状态面计数刷新）
+ * @description T331：清条目后**同源刷新状态面计数** ⇒ 徽标「冲突 N」随处理递减 / 归零
+ *              （不再滞留到重启）；T346：计数口径 = **对象数**（同一对象多条记录算 1 项）。
  */
 export const resolveConflictKeepServer = async (
     userId: string,
@@ -319,14 +327,14 @@ export const resolveConflictKeepServer = async (
         )
         return remaining.length === entries.length ? null : { entries: remaining }
     })
-    syncStatus.setConflictCount(next.length)
-    return { ok: true, remaining: next.length }
+    syncStatus.setConflictCount(conflictObjectCount(next))
+    return { ok: true, remaining: conflictObjectCount(next) }
 }
 
 /**
  * 恢复动作 B「以我的版本重试」：败方快照写回本地表（`updatedAt` = 服务端校准 now）+ `markDirty`
  * ⇒ 下轮 push 以**新 base**（当前服务端版本）重推；仍不匹配 ⇒ 再次 journal（不死循环）
- * @description 缺「表名 → 本地表/转换器」映射 ⇒ 显式失败（`ok:false`）且**不吞条目**（`remaining` = 现有条数）；
+ * @description 缺「表名 → 本地表/转换器」映射 ⇒ 显式失败（`ok:false`）且**不吞条目**（`remaining` = 现有**对象数**）；
  *              成功后删除该实体**全部** journal 条目（动作 A/B 对称）。
  */
 export const resolveConflictRetryLocal = async (
@@ -354,7 +362,7 @@ export const resolveConflictRetryLocal = async (
             )
         }
     })
-    // T331：成功恢复 ⇒ 同源刷新状态面计数（`remaining` = journal 当前长度）⇒ 徽标递减 / 归零
-    if (resolved) syncStatus.setConflictCount(next.length)
-    return { ok: resolved, remaining: next.length }
+    // T331/T346：成功恢复 ⇒ 同源刷新状态面计数（`remaining` = 剩余**对象数**）⇒ 徽标递减 / 归零
+    if (resolved) syncStatus.setConflictCount(conflictObjectCount(next))
+    return { ok: resolved, remaining: conflictObjectCount(next) }
 }

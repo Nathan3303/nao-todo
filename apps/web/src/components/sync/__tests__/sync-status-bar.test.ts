@@ -86,8 +86,7 @@ vi.mock('@/hooks', async () => {
         refresh: vi.fn(async () => {}),
         compare: vi.fn(async () => {}),
         keepServer: vi.fn(async () => {}),
-        retryLocal: vi.fn(async () => {}),
-        closeComparison: vi.fn(() => {})
+        retryLocal: vi.fn(async () => {})
     }
     hooksMock.status = status
     hooksMock.manualSyncing = manualSyncing
@@ -320,15 +319,15 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         // 冲突 > 0 ⇒ 行可见且含 N；业务计数各行独立呈现
         status().value = { ...status().value, pendingCount: 3, failedCount: 1, conflictCount: 2 }
         await nextTick()
-        expect(panelText()).toContain('冲突 2')
+        expect(panelText()).toContain('2 项待确认')
         expect(panelText()).toContain('待推送 3')
         expect(panelText()).toContain('失败 1')
 
         // 负向（ADR R-05 明列）：仅 conflictCount 变化，不得影响 pendingCount/failedCount 行
         status().value = { ...status().value, conflictCount: 5 }
         await nextTick()
-        expect(panelText()).toContain('冲突 5')
-        expect(panelText()).not.toContain('冲突 2')
+        expect(panelText()).toContain('5 项待确认')
+        expect(panelText()).not.toContain('2 项待确认')
         expect(panelText()).toContain('待推送 3')
         expect(panelText()).toContain('失败 1')
 

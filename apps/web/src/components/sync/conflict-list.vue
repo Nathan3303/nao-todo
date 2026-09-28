@@ -6,13 +6,15 @@
  *              - 左栏**只保留对象名称**（分组）；冲突类型/状态/时间/ID/字段差异**全部进右栏详情**（信息只迁移不丢失）；
  *              - 详情为**卡片 + 分区留白 + 圆角**，非「表头 + 行 + 网格」；条目点击区 ≥40px；
  *              - 文案**去术语**（我的修改 / 云端最新 / 用云端的 / 保留我的修改）；字段名用**可读标签**；
- *              - 三态「颜色 + 符号 + 文字标签」三重冗余（`-80` 图形 / `-90` 文本，实测达标）；
+ *              - 三态「颜色 + 符号 + 文字标签」三重冗余（对比度按**卡片真实底色**实测：正文/小文本 ≥4.5、
+ *                图形（色条）≥3；绿色系小文本/符号用 `-100`、红/橙文本用 `-90`）；
  *              - 技术字段**始终显示**但为**次要样式**（次要色 / 更小字号 / 排在普通字段之后 + 轻分隔）；
  *              - 覆盖类动作给**安全提示**，主按钮「保留我的修改」突出、次按钮弱化。
  *              四态齐备（加载/空/错误/成功）；⛔ 不改恢复动作 / 合并语义 / 计数。
  */
 import { computed, onMounted, ref } from 'vue'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import type {
     ConflictFieldDiff,
@@ -37,6 +39,9 @@ defineOptions({ name: 'ConflictList' })
 
 const props = defineProps<{ ux: ConflictUx }>()
 
+/** T347：底部「关闭」= 关闭对话框（父级监听后收起 modal） */
+const emit = defineEmits<{ close: [] }>()
+
 const {
     items,
     folded,
@@ -48,8 +53,7 @@ const {
     refresh,
     compare,
     keepServer,
-    retryLocal,
-    closeComparison
+    retryLocal
 } = props.ux
 
 onMounted(() => {
@@ -164,6 +168,25 @@ const activeItem = computed<ConflictListItem | null>(() => {
     )
 })
 
+/** T346：选中实体的**全部**记录（用于「全部类型 + 记录条数」⇒ 信息不丢失） */
+const activeItems = computed<ConflictListItem[]>(() => {
+    const current = comparison.value
+    if (!current) return []
+    return items.value.filter(
+        (item) => item.table === current.table && item.entityId === current.entityId
+    )
+})
+
+/** 该对象的全部冲突类型（去重、按出现顺序）——避免「只显示最新 kind」丢信息 */
+const activeKinds = computed<string[]>(() => {
+    const kinds: string[] = []
+    for (const item of activeItems.value) {
+        const label = kindLabel(item.kind)
+        if (!kinds.includes(label)) kinds.push(label)
+    }
+    return kinds
+})
+
 const runKeepServer = (): void => {
     if (activeItem.value) void keepServer(activeItem.value)
 }
@@ -197,7 +220,7 @@ const runRetryLocal = (): void => {
                 :error-message="t('sync.conflict.loadFailed')"
                 :empty="!loading && !error && items.length === 0"
                 :empty-message="t('sync.conflict.empty')"
-                empty-image-src="/public/images/notaskhere.webp"
+                :empty-image-src="assetUrl('/images/notaskhere.webp')"
             >
                 <template #error>
                     <nue-text size="xs" color="var(--nue-secondary-text-color)">
@@ -231,7 +254,7 @@ const runRetryLocal = (): void => {
                 :error="false"
                 :empty="true"
                 :empty-message="t('sync.conflict.selectHint')"
-                empty-image-src="/public/images/todo.webp"
+                :empty-image-src="assetUrl('/images/todo.webp')"
             />
             <template v-else>
                 <nue-text tag="h4">
@@ -248,9 +271,13 @@ const runRetryLocal = (): void => {
                             <dt>{{ t('sync.conflict.metaTable') }}</dt>
                             <dd>{{ tableLabel(comparison.table) }}</dd>
                         </div>
-                        <div v-if="activeItem" class="conflict-list__meta-row">
+                        <div v-if="activeKinds.length" class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaKind') }}</dt>
-                            <dd>{{ kindLabel(activeItem.kind) }}</dd>
+                            <dd>{{ activeKinds.join('、') }}</dd>
+                        </div>
+                        <div v-if="activeItems.length" class="conflict-list__meta-row">
+                            <dt>{{ t('sync.conflict.metaRecordCount') }}</dt>
+                            <dd>{{ activeItems.length }}</dd>
                         </div>
                         <div class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaEntityId') }}</dt>
@@ -287,7 +314,7 @@ const runRetryLocal = (): void => {
                         :error="false"
                         :empty="true"
                         :empty-message="t('sync.conflict.noFieldDiff')"
-                        empty-image-src="/public/images/todo.webp"
+                        :empty-image-src="assetUrl('/images/todo.webp')"
                     />
                     <ul v-else class="conflict-list__diffs">
                         <li
@@ -424,7 +451,7 @@ const runRetryLocal = (): void => {
                     <nue-button theme="small,ghost" @click="runKeepServer">
                         {{ t('sync.conflict.keepServer') }}
                     </nue-button>
-                    <nue-button theme="pure,small" @click="closeComparison">
+                    <nue-button theme="pure,small" @click="emit('close')">
                         {{ t('sync.conflict.close') }}
                     </nue-button>
                 </div>
@@ -625,7 +652,7 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__symbol.is-added {
-    color: var(--nue-success-color-80);
+    color: var(--nue-success-color-100);
 }
 
 .conflict-list__symbol.is-removed {
@@ -633,17 +660,18 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__symbol.is-changed {
-    color: var(--nue-warning-color-80);
+    color: var(--nue-warning-color-90);
 }
 
-/* 文字标签：小文本须 ≥4.5:1 ⇒ 用 -90 级（实测 4.95 / 6.67 / 8.97） */
+/* 文字标签：小文本须 ≥4.5:1。底色为卡片 `-100`（非白底）⇒ 绿色须用 `-100`（实测 5.29），
+   红/橙用 `-90`（7.19 / 5.34） */
 .conflict-list__state-label {
     font-size: var(--nue-text-2xs);
     font-weight: 500;
 }
 
 .conflict-list__state-label.is-added {
-    color: var(--nue-success-color-90);
+    color: var(--nue-success-color-100);
 }
 
 .conflict-list__state-label.is-removed {
@@ -718,7 +746,7 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__diff.is-technical {
-    background-color: #efefef;
+    background-color: var(--nue-primary-color-100);
     padding: var(--nue-gap-xs) var(--nue-gap-sm);
 }
 

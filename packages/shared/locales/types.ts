@@ -56,7 +56,6 @@ export interface LocaleMessages {
     'sync.conflict.empty': string
     'sync.conflict.loading': string
     'sync.conflict.unknownObject': string
-    'sync.conflict.groupCount': string
     'sync.conflict.selectHint': string
     'sync.conflict.loadFailed': string
     'sync.conflict.noFieldDiff': string
@@ -69,6 +68,7 @@ export interface LocaleMessages {
     'sync.conflict.metaServerTime': string
     'sync.conflict.metaLocalTime': string
     'sync.conflict.metaKind': string
+    'sync.conflict.metaRecordCount': string
     'sync.conflict.detailTitle': string
     'sync.conflict.safetyHint': string
     'sync.conflict.field.id': string
