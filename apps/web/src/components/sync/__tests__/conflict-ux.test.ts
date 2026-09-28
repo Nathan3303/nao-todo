@@ -2,7 +2,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDialog, NueDropdown, NueEmpty, NueIcon, NueText, NueTooltip } from 'nue-ui'
+import {
+    NueButton,
+    NueDialog,
+    NueDiv,
+    NueDropdown,
+    NueEmpty,
+    NueIcon,
+    NueText,
+    NueTooltip
+} from 'nue-ui'
 import {
     CONFLICT_JOURNAL_LIMIT,
     type ConflictComparison,
@@ -228,6 +237,7 @@ const mountBar = (): void => {
             components: {
                 'nue-button': NueButton,
                 'nue-dialog': NueDialog,
+                'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
                 'nue-empty': NueEmpty,
                 'nue-icon': NueIcon,

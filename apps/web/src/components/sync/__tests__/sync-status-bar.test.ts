@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDialog, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDiv, NueDropdown, NueText, NueTooltip } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { setLocale } from '@nao-todo/shared/locales'
@@ -126,6 +126,7 @@ const mountBar = (props: Record<string, unknown> = {}): VueWrapper => {
             components: {
                 'nue-button': NueButton,
                 'nue-dialog': NueDialog,
+                'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
                 'nue-text': NueText,
                 'nue-tooltip': NueTooltip
@@ -290,7 +291,8 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         // 分区仍以 <li> 为面板直系子节点（P8/C12）
         const directItems = panel()?.querySelectorAll(':scope > li') ?? []
         expect(directItems.length).toBeGreaterThan(0)
-        expect(panel()?.querySelector('.sync-panel__footer button.nue-button')).toBeTruthy()
+        // 同步动作按钮（已随用户调整移入「概览」分区）
+        expect(panel()?.querySelector('button.nue-button')).toBeTruthy()
     })
 
     it('偏好同步失败：面板显示计数 + 弹出可见提示（T136 GAP-2 / AC3-04 / AC4-04）', async () => {
