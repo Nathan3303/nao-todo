@@ -45,6 +45,11 @@ export interface LocaleMessages {
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string
+    'sync.section.overview': string
+    'sync.section.data': string
+    'sync.section.queue': string
+    'sync.section.conflict': string
+    'sync.section.error': string
     'sync.conflict.title': string
     'sync.conflict.foldLimit': string
     'sync.conflict.foldEvicted': string
@@ -53,6 +58,8 @@ export interface LocaleMessages {
     'sync.conflict.unknownObject': string
     'sync.conflict.groupCount': string
     'sync.conflict.selectHint': string
+    'sync.conflict.loadFailed': string
+    'sync.conflict.noFieldDiff': string
     'sync.conflict.objectInfo': string
     'sync.conflict.technicalSection': string
     'sync.conflict.metaTable': string
@@ -64,7 +71,6 @@ export interface LocaleMessages {
     'sync.conflict.metaKind': string
     'sync.conflict.detailTitle': string
     'sync.conflict.safetyHint': string
-    'sync.conflict.entryOrdinal': string
     'sync.conflict.field.id': string
     'sync.conflict.field.userId': string
     'sync.conflict.field.createdAt': string

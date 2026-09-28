@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDialog, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDropdown, NueEmpty, NueIcon, NueText, NueTooltip } from 'nue-ui'
 import {
     CONFLICT_JOURNAL_LIMIT,
     type ConflictComparison,
@@ -229,6 +229,8 @@ const mountBar = (): void => {
                 'nue-button': NueButton,
                 'nue-dialog': NueDialog,
                 'nue-dropdown': NueDropdown,
+                'nue-empty': NueEmpty,
+                'nue-icon': NueIcon,
                 'nue-text': NueText,
                 'nue-tooltip': NueTooltip
             }
@@ -305,15 +307,13 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(document.querySelector('.conflict-list')).toBeTruthy()
         expect(conflict().refresh).toHaveBeenCalled()
 
-        // T339：左栏只保留「对象名称（组头）+ 冲突类型（条目）」；时间等移入右栏
+        // 左栏：仅对象名称行（无类型/时间）；点击行 ⇒ 展示详情
         const item = conflictItem()
         conflict().items.value = [item]
         await nextTick()
-        const groupHead = document.querySelector<HTMLElement>('.conflict-list__group-head')
-        expect(groupHead?.textContent).toContain('本地标题')
-        expect(groupHead?.textContent).not.toContain('任务')
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
-        expect(itemButton?.textContent).toContain('冲突 1')
+        expect(itemButton?.textContent).toContain('本地标题')
+        expect(itemButton?.textContent).not.toContain('任务')
         expect(itemButton?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
         expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
 
@@ -374,7 +374,7 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         ]
         await nextTick()
         const heads = Array.from(
-            document.querySelectorAll<HTMLElement>('.conflict-list__group-head')
+            document.querySelectorAll<HTMLElement>('.conflict-list__entry')
         ).map((el) => el.textContent ?? '')
         expect(heads).toHaveLength(2)
         expect(heads[0]).toContain('t-9')
@@ -478,10 +478,8 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         await openConflictList(1)
         conflict().items.value = [conflictItem()]
         await nextTick()
-        const head = document.querySelector<HTMLElement>('.conflict-list__group-head')
-        expect(head?.textContent).toContain('本地标题')
         const entry = document.querySelector<HTMLElement>('.conflict-list__entry')
-        expect(entry?.textContent).toContain('冲突 1')
+        expect(entry?.textContent).toContain('本地标题')
         expect(entry?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
         expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
     })
@@ -540,6 +538,78 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         expect(text.indexOf(messages['zh-CN']['sync.conflict.field.updatedAt'])).toBeGreaterThan(
             text.indexOf(messages['zh-CN']['sync.conflict.technicalSection'])
         )
+    })
+})
+
+describe('T342 三态（LoadingError） + 左栏对象行', () => {
+    it('loading ⇒ 左栏展示 LoadingError 加载态', async () => {
+        await openConflictList(1)
+        conflict().loading.value = true
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.loading'])
+    })
+
+    it('error ⇒ 左栏展示错误文案 + 可点「重试」（点击调用 refresh）', async () => {
+        await openConflictList(1)
+        conflict().loading.value = false
+        conflict().error.value = 'boom'
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.loadFailed'])
+        const retry = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(
+            (button) => button.textContent?.includes(messages['zh-CN']['common.retry'])
+        )
+        expect(retry).toBeTruthy()
+        const before = conflict().refresh.mock.calls.length
+        retry?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(conflict().refresh.mock.calls.length).toBeGreaterThan(before)
+    })
+
+    it('empty ⇒ 左栏展示 LoadingError 空态文案', async () => {
+        await openConflictList(1)
+        conflict().loading.value = false
+        conflict().error.value = null
+        conflict().items.value = []
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.empty'])
+    })
+
+    it('无字段差异 ⇒ 差异详情区展示 LoadingError 空态', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: {},
+            current: {},
+            diffs: []
+        }
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.noFieldDiff'])
+        expect(document.querySelectorAll('.conflict-list__diff')).toHaveLength(0)
+    })
+
+    it('左栏对象行：点击 ⇒ 选中该对象（仅该行高亮）+ 展示详情', async () => {
+        await openConflictList(2)
+        const item = conflictItem()
+        // 同一对象两条 journal 条目 ⇒ 仍是**一行**（避免「全 active」）
+        conflict().items.value = [item, conflictItem({ id: 't1b' })]
+        await nextTick()
+        const rows = document.querySelectorAll<HTMLElement>('.conflict-list__entry')
+        expect(rows).toHaveLength(1)
+        expect(rows[0]?.getAttribute('aria-selected')).toBe('false')
+        rows[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await nextTick()
+        expect(conflict().compare).toHaveBeenCalled()
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+        expect(rows[0]?.getAttribute('aria-selected')).toBe('true')
     })
 })
 

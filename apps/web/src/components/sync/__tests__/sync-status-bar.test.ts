@@ -267,6 +267,32 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(document.activeElement).toBe(button)
     })
 
+    it('面板按类别分区：概览/待处理/冲突/错误 为独立区域，计数为横向 chips', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            pendingCount: 3,
+            failedCount: 1,
+            conflictCount: 2,
+            lastError: 'boom'
+        }
+        await nextTick()
+
+        const titles = Array.from(
+            document.querySelectorAll<HTMLElement>('.sync-panel__section-title')
+        ).map((el) => el.textContent?.trim() ?? '')
+        expect(titles).toEqual(expect.arrayContaining(['概览', '待处理', '冲突', '错误']))
+
+        // 计数为 chips（同行横向），而非逐行竖排
+        const chips = document.querySelectorAll('.sync-panel__chips .sync-panel__chip')
+        expect(chips.length).toBe(2)
+
+        // 分区仍以 <li> 为面板直系子节点（P8/C12）
+        const directItems = panel()?.querySelectorAll(':scope > li') ?? []
+        expect(directItems.length).toBeGreaterThan(0)
+        expect(panel()?.querySelector('.sync-panel__footer button.nue-button')).toBeTruthy()
+    })
+
     it('偏好同步失败：面板显示计数 + 弹出可见提示（T136 GAP-2 / AC3-04 / AC4-04）', async () => {
         createHost()
         mountBar()

@@ -8,7 +8,7 @@
  *              关闭后焦点归还触发按钮由父级 `SyncStatusBar` 负责。
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.2
  */
-import { computed, nextTick, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { t } from '@nao-todo/shared/locales'
 import { useConflictUx } from '@/hooks'
 import ConflictList from './conflict-list.vue'
@@ -20,19 +20,31 @@ const open = defineModel<boolean>({ default: false })
 const ux = useConflictUx()
 const bodyRef = ref<HTMLElement | null>(null)
 
-/** 标题带条数（header 可见计数） */
-const title = computed(
-    () =>
-        `${t('sync.conflict.title')} · ${t('sync.conflict.groupCount', { count: ux.items.value.length })}`
-)
-
 const onAfterOpen = (): void => {
     void nextTick(() => bodyRef.value?.focus())
 }
 </script>
 
 <template>
-    <nue-dialog v-model="open" theme="conflict" :title="title" @after-open="onAfterOpen">
+    <nue-dialog v-model="open" theme="conflict,large" @after-open="onAfterOpen">
+        <!-- 对话框标题栏：名称 + 条数走 header 插槽（不拼字符串） -->
+        <template #header="{ close }">
+            <div class="conflict-dialog__header-left">
+                <nue-text class="nue-dialog__header__title">
+                    {{ t('sync.conflict.title') }}
+                </nue-text>
+                <nue-text size="xs" class="conflict-dialog__header-count">
+                    {{ t('sync.conflict.groupCount', { count: ux.items.value.length }) }}
+                </nue-text>
+            </div>
+            <nue-button
+                class="nue-dialog__header__closebtn"
+                theme="icon,ghost,small"
+                icon="clear"
+                :aria-label="t('sync.conflict.close')"
+                @click="close"
+            />
+        </template>
         <div
             ref="bodyRef"
             class="conflict-dialog__body"
@@ -73,6 +85,17 @@ const onAfterOpen = (): void => {
     flex: 1;
     min-height: 0;
     outline: none;
+}
+
+.conflict-dialog__header-left {
+    display: flex;
+    align-items: baseline;
+    gap: var(--nue-gap-xs);
+    min-width: 0;
+}
+
+.conflict-dialog__header-count {
+    color: var(--nue-secondary-text-color);
 }
 
 @media (max-width: 899.98px) {

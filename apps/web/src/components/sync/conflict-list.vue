@@ -13,6 +13,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import type {
     ConflictFieldDiff,
     ConflictListItem
@@ -55,8 +56,7 @@ onMounted(() => {
     void refresh()
 })
 
-/** 长值展开态；组折叠态 */
-const collapsedGroups = ref<Record<string, boolean>>({})
+/** 长值展开态 */
 const expandedValues = ref<Record<string, boolean>>({})
 
 const TABLE_KEYS: Record<string, LocaleKey> = {
@@ -95,10 +95,14 @@ const groupTitle = (group: ConflictGroup): string => {
     return conflictTitleOf(item, kindLabel(item.kind) || t('sync.conflict.unknownObject'))
 }
 
-const groupCollapsed = (key: string): boolean => collapsedGroups.value[key] === true
+/** 选中对象（按实体判定 ⇒ 同一对象仅一行高亮，避免「全 active」） */
+const isGroupActive = (group: ConflictGroup): boolean =>
+    comparison.value?.table === group.table && comparison.value?.entityId === group.entityId
 
-const toggleGroup = (key: string): void => {
-    collapsedGroups.value[key] = !groupCollapsed(key)
+/** 点击对象行 ⇒ 直接展示该对象的最新冲突详情（`compareConflict` 亦取最新条目） */
+const selectGroup = (group: ConflictGroup): void => {
+    const item = group.items[group.items.length - 1]
+    if (item) void compare(item)
 }
 
 interface DiffRow {
@@ -130,6 +134,11 @@ const diffGroups = computed(() => {
     return { normal: normal.map(toRow), technical: technical.map(toRow) }
 })
 
+/** 是否有字段差异（无 ⇒ 走 LoadingError 空态） */
+const hasFieldDiff = computed(
+    () => diffGroups.value.normal.length + diffGroups.value.technical.length > 0
+)
+
 const valueKey = (field: string, side: 'loser' | 'current'): string => `${field}:${side}`
 
 const valueExpanded = (field: string, side: 'loser' | 'current'): boolean =>
@@ -143,12 +152,17 @@ const toggleValue = (field: string, side: 'loser' | 'current'): void => {
 const isTruncated = (text: string, field: string, side: 'loser' | 'current'): boolean =>
     isLongValue(text) && !valueExpanded(field, side)
 
-const isActive = (item: ConflictListItem): boolean =>
-    comparison.value?.table === item.table && comparison.value?.entityId === item.entityId
-
-const activeItem = computed<ConflictListItem | null>(
-    () => items.value.find((item) => isActive(item)) ?? null
-)
+/** 右侧「对象信息」取该实体的最新条目（与 `compareConflict` 的最新条目同口径） */
+const activeItem = computed<ConflictListItem | null>(() => {
+    const current = comparison.value
+    if (!current) return null
+    return (
+        [...items.value]
+            .reverse()
+            .find((item) => item.table === current.table && item.entityId === current.entityId) ??
+        null
+    )
+})
 
 const runKeepServer = (): void => {
     if (activeItem.value) void keepServer(activeItem.value)
@@ -161,7 +175,7 @@ const runRetryLocal = (): void => {
 
 <template>
     <div class="conflict-list">
-        <!-- 左栏：只保留对象名称（分组）+ 极简「冲突 N」条目；详情全部在右栏 -->
+        <!-- 左栏：对象名称列表（一行一对象）；点击行 ⇒ 右栏展示该对象冲突详情（三态用 LoadingError） -->
         <div class="conflict-list__left">
             <nue-text
                 v-if="folded"
@@ -175,76 +189,57 @@ const runRetryLocal = (): void => {
                         : t('sync.conflict.foldLimit')
                 }}
             </nue-text>
-
-            <nue-text
-                v-if="loading"
-                size="xs"
-                color="var(--nue-secondary-text-color)"
-                class="conflict-list__state"
+            <loading-error
+                class="conflict-list__loading-error"
+                :loading="loading"
+                :loading-message="t('sync.conflict.loading')"
+                :error="!!error"
+                :error-message="t('sync.conflict.loadFailed')"
+                :empty="!loading && !error && items.length === 0"
+                :empty-message="t('sync.conflict.empty')"
+                empty-image-src="/public/images/notaskhere.webp"
             >
-                {{ t('sync.conflict.loading') }}
-            </nue-text>
-            <nue-text
-                v-else-if="error"
-                size="xs"
-                color="var(--nue-error-color-90)"
-                class="conflict-list__state"
-            >
-                {{ error }}
-            </nue-text>
-            <nue-text
-                v-else-if="items.length === 0"
-                size="xs"
-                color="var(--nue-secondary-text-color)"
-                class="conflict-list__state"
-            >
-                {{ t('sync.conflict.empty') }}
-            </nue-text>
-
-            <div v-else class="conflict-list__groups">
-                <section v-for="group in groups" :key="group.key" class="conflict-list__group">
-                    <button
-                        class="conflict-list__group-head"
-                        :aria-expanded="!groupCollapsed(group.key)"
-                        @click="toggleGroup(group.key)"
-                    >
-                        <span class="conflict-list__group-title">{{ groupTitle(group) }}</span>
-                    </button>
-                    <ul v-show="!groupCollapsed(group.key)" class="conflict-list__items">
-                        <li
-                            v-for="(item, index) in group.items"
-                            :key="item.id"
-                            class="conflict-list__item"
+                <template #error>
+                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                        {{ t('sync.conflict.loadFailed') }}
+                    </nue-text>
+                    <nue-button theme="primary,small" @click="refresh">
+                        {{ t('common.retry') }}
+                    </nue-button>
+                </template>
+                <ul class="conflict-list__groups">
+                    <li v-for="group in groups" :key="group.key">
+                        <button
+                            class="conflict-list__entry"
+                            :class="{ 'is-active': isGroupActive(group) }"
+                            :aria-selected="isGroupActive(group)"
+                            @click="selectGroup(group)"
                         >
-                            <button
-                                class="conflict-list__entry"
-                                :class="{ 'is-active': isActive(item) }"
-                                :aria-selected="isActive(item)"
-                                @click="compare(item)"
-                            >
-                                {{ t('sync.conflict.entryOrdinal', { index: index + 1 }) }}
-                            </button>
-                        </li>
-                    </ul>
-                </section>
-            </div>
+                            {{ groupTitle(group) }}
+                        </button>
+                    </li>
+                </ul>
+            </loading-error>
         </div>
 
         <!-- 右栏：详情（对象信息 + 差异 + 技术字段 + 安全提示 + 动作） -->
         <div class="conflict-list__right">
-            <nue-text
+            <loading-error
                 v-if="!comparison"
-                size="xs"
-                color="var(--nue-secondary-text-color)"
-                class="conflict-list__state"
-            >
-                {{ t('sync.conflict.selectHint') }}
-            </nue-text>
+                class="conflict-list__loading-error"
+                :loading="false"
+                :error="false"
+                :empty="true"
+                :empty-message="t('sync.conflict.selectHint')"
+                empty-image-src="/public/images/todo.webp"
+            />
             <template v-else>
-                <h3 class="conflict-list__detail-title">{{ t('sync.conflict.detailTitle') }}</h3>
+                <nue-text tag="h4">
+                    {{ t('sync.conflict.detailTitle') }}
+                </nue-text>
 
                 <!-- 对象信息：左栏移出的信息在此完整承载 -->
-                <section class="conflict-list__section">
+                <nue-div vertical gap="var(--nue-gap-xs)">
                     <nue-text size="xs" class="conflict-list__section-title">
                         {{ t('sync.conflict.objectInfo') }}
                     </nue-text>
@@ -278,14 +273,23 @@ const runRetryLocal = (): void => {
                             <dd>{{ timeOf(activeItem.loserUpdatedAt) }}</dd>
                         </div>
                     </dl>
-                </section>
+                </nue-div>
 
-                <!-- 差异详情：逐字段卡片（无表头/网格） -->
+                <!-- 差异详情：逐字段卡片（无表头/网格）；无字段差异 ⇒ LoadingError 空态 -->
                 <section class="conflict-list__section">
                     <nue-text size="xs" class="conflict-list__section-title">
                         {{ t('sync.conflict.compareTitle') }}
                     </nue-text>
-                    <ul class="conflict-list__diffs">
+                    <loading-error
+                        v-if="!hasFieldDiff"
+                        class="conflict-list__loading-error"
+                        :loading="false"
+                        :error="false"
+                        :empty="true"
+                        :empty-message="t('sync.conflict.noFieldDiff')"
+                        empty-image-src="/public/images/todo.webp"
+                    />
+                    <ul v-else class="conflict-list__diffs">
                         <li
                             v-for="row in diffGroups.normal"
                             :key="row.field"
@@ -360,7 +364,6 @@ const runRetryLocal = (): void => {
                                 </nue-text>
                             </div>
                         </li>
-
                         <!-- 技术字段：始终显示，但次要段落（轻分隔 + 次要色 / 更小字号） -->
                         <template v-if="diffGroups.technical.length > 0">
                             <li class="conflict-list__diff-sep">
@@ -482,72 +485,46 @@ const runRetryLocal = (): void => {
     color: var(--nue-warning-color-90);
 }
 
-.conflict-list__state {
-    color: var(--nue-secondary-text-color);
+.conflict-list__loading-error {
+    flex: 1;
+    min-height: 0;
+    height: auto;
 }
 
 .conflict-list__groups {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-sm);
-}
-
-.conflict-list__group {
-    display: flex;
-    flex-direction: column;
     gap: var(--nue-gap-2xs);
-}
-
-/* C 端：点击区 ≥40px + 圆角 + hover */
-.conflict-list__group-head {
-    display: flex;
-    align-items: center;
-    min-height: 40px;
-    width: 100%;
-    padding: 0 var(--nue-gap-xs);
-    border: none;
-    border-radius: var(--nue-radius-lg);
-    background: none;
-    cursor: pointer;
-    text-align: left;
-    color: var(--nue-primary-text-color);
-    font-size: var(--nue-text-sm);
-    font-weight: var(--nue-font-weight-medium, 500);
-}
-
-.conflict-list__group-head:hover {
-    background-color: var(--nue-primary-color-100);
-}
-
-.conflict-list__items,
-.conflict-list__diffs {
-    display: flex;
-    flex-direction: column;
-    gap: var(--nue-gap-xs);
-    margin: 0;
+    margin: var(--nue-padding-2xs) 0;
     padding: 0;
     list-style: none;
 }
 
-.conflict-list__item {
+/* 差异详情：横向排版（卡片流式并行，非 flex column） */
+.conflict-list__diffs {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: var(--nue-gap-xs);
+    margin: var(--nue-padding-2xs) 0;
+    padding: 0;
+    list-style: none;
 }
 
 .conflict-list__entry {
     display: flex;
     align-items: center;
-    min-height: 40px;
     width: 100%;
-    padding: 0 var(--nue-gap-xs);
-    border: none;
-    border-left: 3px solid transparent;
-    border-radius: var(--nue-radius-lg);
-    background: none;
-    cursor: pointer;
-    text-align: left;
-    color: var(--nue-primary-text-color);
+    height: var(--nue-box-size-md);
+    padding: var(--nue-padding-sm);
+    gap: var(--nue-gap-xs);
     font-size: var(--nue-text-xs);
+    border: none;
+    border-radius: var(--nue-primary-radius);
+    background: none;
+    color: var(--nue-primary-text-color);
+    transition: background ease-in var(--nue-animation-duration-xshort);
 }
 
 .conflict-list__entry:hover {
@@ -555,9 +532,8 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__entry.is-active {
-    border-left-color: var(--nue-primary-color-600);
-    background-color: var(--nue-primary-color-100);
-    font-weight: var(--nue-font-weight-medium, 500);
+    background-color: var(--nue-primary-color-900);
+    color: var(--nue-primary-color-0);
 }
 
 /* 详情：分区留白（非表头/网格） */
@@ -566,12 +542,6 @@ const runRetryLocal = (): void => {
     color: var(--nue-primary-text-color);
     font-size: var(--nue-text-md);
     font-weight: 600;
-}
-
-.conflict-list__section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--nue-gap-xs);
 }
 
 .conflict-list__section-title {
@@ -608,13 +578,15 @@ const runRetryLocal = (): void => {
     overflow-wrap: anywhere;
 }
 
-/* 逐字段卡片：圆角 + 留白 + 状态色条（无表头/网格） */
+/* 逐字段卡片：圆角 + 留白 + 状态色条（无表头/网格；横向流式） */
 .conflict-list__diff {
     display: flex;
     flex-direction: column;
+    flex: 1 1 240px;
+    min-width: 0;
     gap: var(--nue-gap-2xs);
     padding: var(--nue-gap-xs) var(--nue-gap-sm);
-    border-radius: var(--nue-radius-lg);
+    border-radius: var(--nue-primary-radius);
     border-left: 3px solid transparent;
     background-color: var(--nue-primary-color-100);
 }
@@ -738,6 +710,7 @@ const runRetryLocal = (): void => {
 
 /* 技术字段：始终显示但次要（更小字号 + 次要色；保留状态色条以不丢三态） */
 .conflict-list__diff-sep {
+    flex-basis: 100%;
     padding-top: var(--nue-gap-xs);
     border-top: 1px solid var(--nue-border-color);
     color: var(--nue-secondary-text-color);
@@ -745,8 +718,8 @@ const runRetryLocal = (): void => {
 }
 
 .conflict-list__diff.is-technical {
-    background-color: transparent;
-    padding: var(--nue-gap-2xs) var(--nue-gap-sm);
+    background-color: #efefef;
+    padding: var(--nue-gap-xs) var(--nue-gap-sm);
 }
 
 .conflict-list__diff.is-technical .conflict-list__field-name,
