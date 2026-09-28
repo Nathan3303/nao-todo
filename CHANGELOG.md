@@ -2,6 +2,43 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.2] - 2026-09-28
+
+发布批次：**冲突 UX 收口**（`T331` 计数同源修复 + `T332` diff 展示优化 + `T333` 测试加固）。**Tag `v1.12.2`** · root `1.12.2` · `apps/web` / `apps/desktop` `1.12.2` · `packages/shared` `1.4.0 → 1.4.1` · `packages/infrastructure` `0.8.1 → 0.8.2`（`apps/mobile` / `packages/presentation-react` 零改动，不动）。详见 `docs/releases/v1.12.2.md`。
+
+### 修复
+
+- **处理冲突后「冲突 N」计数不递减 / 不归零**（`T331`）：根因 = 两条恢复动作只删 journal 条目并刷新列表，**未把 journal 的剩余条数写回状态面计数** ⇒ 徽标滞留快照（用户看到「处理完不消失、重启才消失」）。现改为**同源写回**（`resolveConflictKeepServer` / `resolveConflictRetryLocal` 后 `setConflictCount(remaining)`）⇒ 处理 1 条减 1、全清归零（徽标隐藏）。
+
+### 改进（冲突记录 UI/UX · `T332`）
+
+- **按对象分组**：同一实体（`表:实体`）的多条冲突归为一组，组头「表名 · 标题 · N 条冲突」，默认展开可折叠；标题取不到时优雅降级（`name/title → ID → 本地化类型 → 未知对象`，**不空白 / 不 undefined**）。
+- **增/删/改三态高亮**：以**颜色 + 符号**（`+ − ~`）**双承载**（左侧强调条），不单靠颜色（可访问性）。
+- **技术字段默认隐藏可展开**：`updatedAt` / `revision` / `id` 等默认不出，一键「显示技术字段」。
+- **长值截断可展开**；**双方来源标注清晰**（「我的版本（败方）」/「服务端版本（当前）」）；仍**只显示差异字段**。
+- ⛔ 仅展示层：不改恢复动作 / 合并语义 / 计数。
+
+### 内部质量
+
+- **同毫秒时间戳 flake 加固**（`T333`）：pull 侧 LWW 用严格 `>`，用例若与本地 create 同毫秒 ⇒ 判「本地胜」跳过 ⇒ 偶发红；统一改为远端 `now+1ms`（严格更晚）。**仅测试，无运行时影响**。
+
+### 行为变更
+
+- 无新增行为变更（延续 v1.12.1 的「偏好入队失败报错回滚」与「OCC 下陈旧 base 得可见 `stale`」）。
+
+### 协同前提
+
+- 仍建议与服务端 `nao-todo-server` `5cb30c5`+ 配套（OCC + 派生行回传）。
+
+### 已知未做（已登记）
+
+- `DEF-51`：同毫秒并列语义不对称（pull 严格 `>` vs 服务端 `After`）—— P3；建议修法 = 并列时按「本地是否有待推改动」分流。
+- `DEF-49`：主行 `create` 时间戳 1ms 舍入（P3）。
+
+### 验证
+
+- `vp check` 0 err；全仓 **204 文件 / 1646 例 / 0 红**；四守卫 rc0；**移动端 diff = 0**；`apps/web` / `apps/desktop` 构建 exit 0。
+
 ## [v1.12.1] - 2026-09-28
 
 发布批次：**同步冲突客户端侧修复**（`T325` / `T326` / `T329`）—— 消除「desktop 频繁修改后概率性同步冲突」与「无提示静默覆盖」窗口。**Tag `v1.12.1`** · root `1.12.1` · `apps/web` / `apps/desktop` `1.12.1` · `packages/infrastructure` `0.8.0 → 0.8.1`（`apps/mobile` / `packages/presentation-react` 零改动，不动；其余包本批无改动，不 bump）。详见 `docs/releases/v1.12.1.md`。
