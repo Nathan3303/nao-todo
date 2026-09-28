@@ -50,6 +50,11 @@ export interface LocaleMessages {
     'sync.conflict.foldEvicted': string
     'sync.conflict.empty': string
     'sync.conflict.loading': string
+    'sync.conflict.unknownObject': string
+    'sync.conflict.groupCount': string
+    'sync.conflict.showTechnical': string
+    'sync.conflict.expand': string
+    'sync.conflict.collapse': string
     'sync.conflict.compareTitle': string
     'sync.conflict.loserLabel': string
     'sync.conflict.currentLabel': string

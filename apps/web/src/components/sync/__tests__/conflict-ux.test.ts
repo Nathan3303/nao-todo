@@ -294,13 +294,15 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(document.querySelector('.conflict-list')).toBeTruthy()
         expect(conflict().refresh).toHaveBeenCalled()
 
-        // 列表：条目渲染表名（本地化）+ 败方标题
+        // 列表：分组头渲染表名（本地化）+ 败方标题；条目按钮可点击
         const item = conflictItem()
         conflict().items.value = [item]
         await nextTick()
+        const groupHead = document.querySelector<HTMLElement>('.conflict-list__group-head')
+        expect(groupHead?.textContent).toContain('任务')
+        expect(groupHead?.textContent).toContain('本地标题')
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
-        expect(itemButton?.textContent).toContain('任务')
-        expect(itemButton?.textContent).toContain('本地标题')
+        expect(itemButton).toBeTruthy()
 
         // 只读对比：点击条目 ⇒ compare(item)；渲染字段级差异（败方 vs 当前）
         itemButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -349,6 +351,25 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         conflict().retryFailed.value = true
         await nextTick()
         expect(panelText()).toContain(messages['zh-CN']['sync.conflict.retryFailed'])
+    })
+
+    it('T332：分组标题在无标题时优雅降级（entityId ⇒ 本地化 kind），不出现空白/undefined', async () => {
+        await openConflictList(2)
+        conflict().items.value = [
+            conflictItem({ id: 'a', loser: null, entityId: 't-9' }),
+            conflictItem({ id: 'b', loser: null, entityId: '', kind: 'conflict' })
+        ]
+        await nextTick()
+        const heads = Array.from(
+            document.querySelectorAll<HTMLElement>('.conflict-list__group-head')
+        ).map((el) => el.textContent ?? '')
+        expect(heads).toHaveLength(2)
+        expect(heads[0]).toContain('t-9')
+        expect(heads[1]).toContain(messages['zh-CN']['sync.conflict.kind.conflict'])
+        for (const head of heads) {
+            expect(head).not.toContain('undefined')
+            expect(head.replace(/\s/g, '')).not.toBe('')
+        }
     })
 
     it('折叠提示两文案区分：limit（已达上限）vs evicted（更早已折叠/丢弃）—— DP-2B-5 / R-15', async () => {
