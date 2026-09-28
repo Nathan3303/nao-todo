@@ -274,6 +274,12 @@ export interface SyncQueueRecord {
     action: SyncAction
     /** 本地实体 updatedAt（删除时为 deletedAt） */
     localUpdatedAt: string
+    /**
+     * 入队修订号（T326 / AC-T325-8）：同实体每次 `markDirty` 自增，用于推送在飞时
+     * 判定「队列项是否被新写入覆盖」——**替代毫秒时间戳相等比较**，避免同 ms 新写被误删。
+     * 非索引字段（纯追加）⇒ 不 bump Dexie version / 不触 C-44；旧记录缺失视为 0。
+     */
+    revision?: number
     /** 推送失败重试计数 */
     retryCount: number
     /** 业务/数据类失败累计次数（SHELL-06 C-44 纯追加；旧记录缺失视为 0） */

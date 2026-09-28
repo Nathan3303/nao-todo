@@ -7,7 +7,9 @@ import { localDatabase } from '../../persistence-local/db/local-database'
 import { newLocalTaskRepository } from '../../persistence-local/repos/task-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
 import { getServerTimeOffset, nowCalibratedIso, setServerTimeOffset } from '../sync-config'
+import { SyncService } from '../sync-service'
 import { syncTracker } from '../sync-tracker'
+import type { Requester } from '@nao-todo/shared'
 
 /**
  * T144 / PS-15 —— 本地写时间基准走服务端校准值
@@ -51,6 +53,16 @@ const createTask = () =>
             []
         )
     )
+
+const EMPTY_TABLE = { items: [], total: 0, nextCursor: '', nextCursorId: '' }
+
+const mockRequester = (handler: (url: string, body: unknown) => unknown): Requester =>
+    ({
+        post: async (url: string, body: unknown) => ({ data: handler(url, body) }),
+        get: async () => ({ data: {} }),
+        put: async () => ({ data: {} }),
+        delete: async () => ({ data: {} })
+    }) as unknown as Requester
 
 describe('T144 / PS-15 本地写时间基准 = 服务端校准值', () => {
     beforeEach(async () => {
@@ -98,5 +110,68 @@ describe('T144 / PS-15 本地写时间基准 = 服务端校准值', () => {
         const ts = Date.parse((task as { updatedAt: string }).updatedAt)
         expect(ts).toBeGreaterThanOrEqual(before - 50)
         expect(ts).toBeLessThanOrEqual(Date.now() + 50)
+    })
+
+    it('AC-T325-1(push)：/sync/push 响应含 serverTime（`body.data.serverTime`）⇒ 校准写入非零偏移', async () => {
+        setServerTimeOffset(0)
+        const [task] = await createTask()
+        const taskId = (task as { id: string }).id
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url !== '/sync/push') return { code: 90020, message: 'ok', data: { data: {} } }
+                // 真实服务端结构：`body.data = SyncPushRes { results, serverTime }`
+                return {
+                    code: 90010,
+                    message: 'ok',
+                    data: {
+                        results: [
+                            {
+                                table: 'tasks',
+                                id: taskId,
+                                outcome: 'applied',
+                                serverUpdatedAt: new Date().toISOString()
+                            }
+                        ],
+                        serverTime: String(Date.now() + 17)
+                    }
+                }
+            })
+        )
+        await service.pushAll()
+        const offset = getServerTimeOffset()
+        // 改前必红：客户端读 `body.serverTime`（undefined）⇒ 偏移恒 0
+        expect(Number.isFinite(offset)).toBe(true)
+        expect(offset).not.toBe(0)
+    })
+
+    it('AC-T325-1(pull)：/sync/pull 响应含 serverTime（`body.data.serverTime`）⇒ 校准写入非零偏移', async () => {
+        setServerTimeOffset(0)
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url !== '/sync/pull')
+                    return { code: 90010, message: 'ok', data: { results: [] } }
+                // 真实服务端结构：`body.data = SyncPullRes { data: {...}, serverTime }`
+                return {
+                    code: 90020,
+                    message: 'ok',
+                    data: {
+                        data: {
+                            tasks: EMPTY_TABLE,
+                            projects: EMPTY_TABLE,
+                            tags: EMPTY_TABLE,
+                            taskCheckItems: EMPTY_TABLE,
+                            taskComments: EMPTY_TABLE,
+                            pomodoros: EMPTY_TABLE,
+                            pomodoroRecords: EMPTY_TABLE
+                        },
+                        serverTime: String(Date.now() + 17)
+                    }
+                }
+            })
+        )
+        await service.pullAll()
+        const offset = getServerTimeOffset()
+        expect(Number.isFinite(offset)).toBe(true)
+        expect(offset).not.toBe(0)
     })
 })
