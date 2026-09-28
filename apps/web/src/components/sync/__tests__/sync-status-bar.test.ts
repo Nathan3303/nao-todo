@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDropdown, NueText, NueTooltip } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { setLocale } from '@nao-todo/shared/locales'
@@ -74,6 +74,21 @@ vi.mock('@/hooks', async () => {
     const manualSyncing = ref(false)
     const run = vi.fn()
     const loadedCount = ref(0)
+    // T338：SyncStatusBar 渲染 ConflictDialog ⇒ 需提供 useConflictUx（本文件不测冲突，给空态）
+    const conflict = {
+        items: ref([]),
+        folded: ref(false),
+        foldedReason: ref(null),
+        loading: ref(false),
+        error: ref(null),
+        comparison: ref(null),
+        retryFailed: ref(false),
+        refresh: vi.fn(async () => {}),
+        compare: vi.fn(async () => {}),
+        keepServer: vi.fn(async () => {}),
+        retryLocal: vi.fn(async () => {}),
+        closeComparison: vi.fn(() => {})
+    }
     hooksMock.status = status
     hooksMock.manualSyncing = manualSyncing
     hooksMock.run = run
@@ -81,7 +96,8 @@ vi.mock('@/hooks', async () => {
     return {
         useSyncStatus: () => ({ status }),
         useManualSync: () => ({ syncing: manualSyncing, run }),
-        useMirrorLoadedCount: () => loadedCount
+        useMirrorLoadedCount: () => loadedCount,
+        useConflictUx: () => conflict
     }
 })
 
@@ -109,6 +125,7 @@ const mountBar = (props: Record<string, unknown> = {}): VueWrapper => {
         global: {
             components: {
                 'nue-button': NueButton,
+                'nue-dialog': NueDialog,
                 'nue-dropdown': NueDropdown,
                 'nue-text': NueText,
                 'nue-tooltip': NueTooltip

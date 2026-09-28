@@ -53,6 +53,10 @@ export interface LocaleMessages {
     'sync.conflict.unknownObject': string
     'sync.conflict.groupCount': string
     'sync.conflict.showTechnical': string
+    'sync.conflict.selectHint': string
+    'sync.conflict.fieldAdded': string
+    'sync.conflict.fieldRemoved': string
+    'sync.conflict.fieldChanged': string
     'sync.conflict.expand': string
     'sync.conflict.collapse': string
     'sync.conflict.compareTitle': string

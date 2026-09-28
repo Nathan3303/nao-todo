@@ -24,7 +24,7 @@ import {
 import { railBottomHost } from '@/components/app/aside-v2/rail-host'
 import { open as settingsDialogOpen } from '@/components/settings/dialog/state'
 import { useManualSync, useMirrorLoadedCount, useSyncStatus } from '@/hooks'
-import ConflictList from './conflict-list.vue'
+import ConflictDialog from './conflict-dialog.vue'
 import { CONFLICT_JOURNAL_LIMIT } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 
 defineOptions({ name: 'SyncStatusBar' })
@@ -57,8 +57,14 @@ const panelOpen = ref(false)
 // @state 下拉实例（C11 设置对话框开启时收起；C16 焦点归还时定位轨道按钮）
 const dropdownRef = ref<InstanceType<typeof NueDropdown> | null>(null)
 
-// @state 冲突列表展开（T165/W3：入口可交互；数据面经 ConflictList → useConflictUx）
-const conflictOpen = ref(false)
+// @state 冲突对话框开（T338：入口「冲突 N」⇒ 打开对话框：左栏记录 / 右栏 diff）
+const conflictDialogOpen = ref(false)
+const conflictEntryRowRef = ref<HTMLLIElement | null>(null)
+
+// T338：关闭对话框后把焦点归还触发按钮（a11y；ref 置于行上，取内部 button 聚焦）
+watch(conflictDialogOpen, (isOpen) => {
+    if (!isOpen) void nextTick(() => conflictEntryRowRef.value?.querySelector('button')?.focus())
+})
 
 // @computed 同步中（含手动触发）
 const syncing = computed(() => status.value.syncing || manualSyncing.value)
@@ -268,19 +274,15 @@ watch(
             <!-- PS-14 / DP-1 + T165/W3：冲突记账条数入口（可交互 ⇒ 展开冲突列表：
                  只读对比 + 两种恢复动作）；warning 色：冲突为 LWW **已收敛**的结果事件
                  （非同步失败；败方快照已入 journal），与 `paused` 同属「状态性、需知情但非失败」 -->
-            <li v-if="status.conflictCount > 0" class="sync-panel__row">
+            <li v-if="status.conflictCount > 0" ref="conflictEntryRowRef" class="sync-panel__row">
                 <nue-button
                     class="sync-conflict-entry"
                     theme="pure,small"
-                    :aria-expanded="conflictOpen"
-                    @click="conflictOpen = !conflictOpen"
+                    aria-haspopup="dialog"
+                    @click="conflictDialogOpen = true"
                 >
                     {{ t('sync.conflict', { count: status.conflictCount }) }}
                 </nue-button>
-            </li>
-            <!-- T165/W3：冲突列表/只读对比/恢复动作（弹层内展开；数据面经 useConflictUx） -->
-            <li v-if="conflictOpen" class="sync-panel__row">
-                <ConflictList />
             </li>
             <!-- DP-2B-5 / R-15：达上限 ⇒ 面板级折叠提示（未展开列表亦可见） -->
             <li v-if="status.conflictCount >= CONFLICT_JOURNAL_LIMIT" class="sync-panel__row">
@@ -330,6 +332,8 @@ watch(
                 </nue-button>
             </li>
         </nue-dropdown>
+        <!-- T338：冲突对话框（入口 = 面板行「冲突 N」；NueDialog 传送至 body 弹层池） -->
+        <ConflictDialog v-model="conflictDialogOpen" />
         <!--
           常驻读屏活动区域（NFR「只播摘要」）：只播同步中/失败计数/数据不完整摘要，**不含** lastError 全文。
           视觉隐藏用 WCAG 惯例（clip-path 而非 display:none/hidden，读屏仍可播报）；
@@ -424,7 +428,7 @@ watch(
    限宽避免超长 lastError 撑破面板（AC-05；行内文本为 2 行截断）。 */
 .nue-dropdown--sync-panel {
     min-width: 12rem;
-    max-width: 18rem;
+    max-width: 24rem;
     padding: var(--nue-padding-xs);
 }
 </style>

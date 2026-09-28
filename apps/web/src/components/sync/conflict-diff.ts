@@ -13,11 +13,23 @@ import type {
 /** 字段差异三态：仅「当前」有值 ⇒ 新增；仅「我的（败方）」有值 ⇒ 删除；两侧都有但不同 ⇒ 修改 */
 export type FieldDiffKind = 'added' | 'removed' | 'changed'
 
-/** 三态符号（与语义色**双承载**，不单靠颜色 ⇒ 可访问性） */
+/** 三态符号（与语义色、文字标签**三重承载** ⇒ 不单靠颜色） */
 export const DIFF_SYMBOL: Record<FieldDiffKind, string> = {
     added: '+',
     removed: '−',
     changed: '~'
+}
+
+/** 三态文字标签 i18n 键（与符号/颜色三重冗余 ⇒ 灰阶 / 色觉差异下仍可辨） */
+export type FieldDiffLabelKey =
+    | 'sync.conflict.fieldAdded'
+    | 'sync.conflict.fieldRemoved'
+    | 'sync.conflict.fieldChanged'
+
+export const DIFF_LABEL_KEY: Record<FieldDiffKind, FieldDiffLabelKey> = {
+    added: 'sync.conflict.fieldAdded',
+    removed: 'sync.conflict.fieldRemoved',
+    changed: 'sync.conflict.fieldChanged'
 }
 
 /**

@@ -5,6 +5,7 @@ import type {
     ConflictListItem
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import {
+    DIFF_LABEL_KEY,
     DIFF_SYMBOL,
     classifyFieldDiff,
     conflictTitleOf,
@@ -53,6 +54,13 @@ describe('T332 conflict-diff 纯函数', () => {
             expect(DIFF_SYMBOL.removed).toBeTruthy()
             expect(DIFF_SYMBOL.changed).toBeTruthy()
             expect(new Set(Object.values(DIFF_SYMBOL)).size).toBe(3)
+        })
+
+        it('三态文字标签键齐备（颜色 + 符号 + 标签三重冗余，覆盖灰阶/色觉差异）', () => {
+            expect(DIFF_LABEL_KEY.added).toBe('sync.conflict.fieldAdded')
+            expect(DIFF_LABEL_KEY.removed).toBe('sync.conflict.fieldRemoved')
+            expect(DIFF_LABEL_KEY.changed).toBe('sync.conflict.fieldChanged')
+            expect(new Set(Object.values(DIFF_LABEL_KEY)).size).toBe(3)
         })
     })
 
