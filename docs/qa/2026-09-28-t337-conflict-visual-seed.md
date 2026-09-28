@@ -6,16 +6,16 @@
 
 ## 1. 开发服务器（交付 1）
 
-| 项       | 值                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------- |
-| URL      | **http://localhost:5173/**                                                                                    |
-| 启动命令 | `cd /home/nathan/Project/nao-todo && pnpm --filter @nao-todo/webapp dev`                                      |
-| 停止方式 | 前台 `Ctrl+C`（当前为后台进程，可 `kill <pid>`；`pgrep -f "vite.*5173"` 可查）                                |
-| API base | `http://localhost:3302/api`（`apps/web/.env`；本机 Docker `naotodoserver` 已在 3302 监听）                    |
-| 前后端   | **均就绪**：后端本机 3302 实测 `POST /api/auth/signin` 返回 `10010 登录成功`；前端 dev server 实测 `HTTP 200` |
-| 登录方式 | 打开 URL → 未登录会跳 `#/auth/signin` → 用**本机 3302 服务端上的账号**邮箱 + 密码登录（若只有线上账号，见下） |
+| 项       | 值                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| URL      | **http://localhost:5173/**                                                                                               |
+| 启动命令 | `cd /home/nathan/Project/nao-todo && pnpm --filter @nao-todo/webapp dev`                                                 |
+| 停止方式 | 前台 `Ctrl+C`；当前为后台进程，可 `kill 2722899`（或 `ss -ltnp                                                           | grep 5173` 查 pid） |
+| API base | `http://localhost:3302/api`（`apps/web/.env`；本机 Docker `naotodoserver` 已在 3302 监听）                               |
+| 前后端   | **均就绪**：后端本机 3302 实测 `POST /api/auth/signin` 返回 `10010 登录成功`；前端 dev server 实测 `HTTP 200`            |
+| 登录方式 | 打开 URL → 未登录会跳 `#/auth/signin` → 用**本机 3302 服务端上的账号**邮箱 + 密码登录（无账号可在 `#/auth/signup` 注册） |
 
-> 若你的账号只存在于线上（`todobe.nathanao.space`）：把 `apps/web/.env` 的 `VITE_BASE_URL` / `VITE_API_BASE_URL` 改指向线上后重启 dev server；或在本机 3302 注册一个账号（注册页 `#/auth/signup`）。
+> 若你的账号只存在于线上（`todobe.nathanao.space`）：把 `apps/web/.env` 的 `VITE_BASE_URL` / `VITE_API_BASE_URL` 改指向线上后重启 dev server。
 
 ## 2. 冲突数据注入（交付 2）
 
@@ -48,6 +48,21 @@
     const P = 't337-'
     const JOURNAL_SUFFIX = ':conflict-journal'
     const BACKUP_SUFFIX = ':t337-journal-backup'
+    // 全部业务表 + 同步队列（重置/孤儿扫描同口径；覆盖无外键时的全部表）
+    const TABLES = [
+        'projects',
+        'projectPreferences',
+        'tags',
+        'tagPreferences',
+        'tasks',
+        'taskCheckItems',
+        'taskComments',
+        'pomodoros',
+        'pomodoroRecords',
+        'users',
+        'userConfigs',
+        'syncQueue'
+    ]
 
     // —— 1) 解析当前登录用户 userId（雪花 ID 不丢精度） ——
     const jwt = localStorage.getItem('USER_JWT')
@@ -334,10 +349,7 @@
 
     // —— 6) 造「重置」片段 ——
     window.__t337Reset = async () => {
-        const t = db.transaction(
-            ['meta', 'tasks', 'projects', 'tags', 'taskCheckItems', 'taskComments', 'pomodoros', 'pomodoroRecords', 'syncQueue'],
-            'readwrite'
-        )
+        const t = db.transaction(['meta', ...TABLES], 'readwrite')
         const meta = t.objectStore('meta')
         const backup = await reqOf(meta.get(BACKUP_ID))
         if (backup) {
@@ -355,7 +367,7 @@
             )
         }
         let removedRows = 0
-        for (const name of ['tasks', 'projects', 'tags', 'taskCheckItems', 'taskComments', 'pomodoros', 'pomodoroRecords', 'syncQueue']) {
+        for (const name of TABLES) {
             const store = t.objectStore(name)
             const all = await reqOf(store.getAll())
             for (const row of all) {
@@ -413,12 +425,12 @@
 __t337Reset()
 ```
 
-重置会：恢复你原有冲突记账（备份在 `meta` 的 `<userId>:t337-journal-backup`，重置即消费并删除）· 删除全部 `t337-` 伪造行（含 `syncQueue`，无孤儿）· 计数归零。
+重置会：恢复你原有冲突记账（备份在 `meta` 的 `<userId>:t337-journal-backup`，重置即消费并删除）· 删除全部 `t337-` 伪造行（覆盖 **12 张业务表 + syncQueue**，无孤儿）· 计数归零。
 **重置后需开关一次面板或 F5**，已展开的列表才会清空（列表在挂载时读取）。
 
 ## 3. 自测结论（交付 3 · 真实 Chromium + CDP，本机 :5173）
 
-命令：`node /tmp/t337-walk.mjs` / `t337-final.mjs` / `t337-en.mjs`（CDP `Runtime.evaluate` + 真实 DOM 断言）
+命令：`node t337-walk.mjs` / `t337-final.mjs` / `t337-en.mjs` / `t337-scan.mjs`（CDP `Runtime.evaluate` + 真实 DOM 断言）
 
 | 断言                   | 数字/结果                                                                                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -433,7 +445,7 @@ __t337Reset()
 | 「保留服务端版本」后   | 「冲突 9」→「冲突 6」（移除该实体全部 3 条，T331 递减）；分组 6 → 5                                                                                             |
 | 全量处理后             | `remaining=0`、`conflictCount=0`、徽标 DOM 消失                                                                                                                 |
 | 英文渲染               | Groups/Tech/Expand/Keep server version/Retry with my version/Close 均为英文                                                                                     |
-| 重置                   | `restoredConflicts=0, removedRows=4`；DB 复核：journal=0、tasks/projects/tags/syncQueue 中 `t337-` 残留 **0**                                                   |
+| 重置                   | `restoredConflicts=0, removedRows=4`                                                                                                                            |
 
 > 视觉观感（配色/字号/间距/手感）由用户判定，本报告只给可自动化断言数字。
 
@@ -455,9 +467,21 @@ __t337Reset()
 
 ## 5. 残留与风险（回滚不完整项自查）
 
+重置后逐表孤儿扫描（真实 Chromium，`t337-` 前缀残留数）：
+
+| 表                 | 残留 | 表              | 残留                           |
+| ------------------ | ---- | --------------- | ------------------------------ |
+| projects           | 0    | pomodoros       | 0                              |
+| projectPreferences | 0    | pomodoroRecords | 0                              |
+| tags               | 0    | users           | 0                              |
+| tagPreferences     | 0    | userConfigs     | 0                              |
+| tasks              | 0    | syncQueue       | 0                              |
+| taskCheckItems     | 0    | meta            | 0（journal=0；备份记录已删除） |
+| taskComments       | 0    |                 |                                |
+
 | 项                    | 状态                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 伪造本地行 / 冲突记账 | ✅ 可一键重置，复核无孤儿（见 §3 末行）                                                                                         |
+| 伪造本地行 / 冲突记账 | ✅ 可一键重置，12 表 + syncQueue 扫描残留全 0、无孤儿                                                                           |
 | QA 测试账号           | 本机 3302 **新增** `qa-t337@example.com`（自测用）。后端无 DELETE 用户端点 ⇒ **无法删除**，登记为已知残留（同历史 QA 账号惯例） |
 | 代码改动              | ✅ **无**（零改仓）                                                                                                             |
 | 移动端红线            | ✅ 未触碰                                                                                                                       |
