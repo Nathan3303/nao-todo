@@ -67,6 +67,21 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
+## 产品定位与界面原则（C 端，2026-09-28 用户确立）
+
+本项目是 C 端消费级应用（任务 / 清单 / 专注工具），**不是后台管理台**。面向用户的界面（尤其对话框、详情、冲突处理）不得带「管理台气质」。
+
+1. **文案说人话**：禁止面向用户裸露内部术语与技术键名（如 `stale` / `OCC` / 败方 / `derivedUpdates` / `name` / `archivedAt` / `revision`），一律映射为用户可读标签与说明（如「云端最新」「我的修改」「归档状态」「更新时间」）。
+2. **视觉 C 端化**：避免「表头 + 行 + 网格」表格式排版 ⇒ 卡片 / 分区留白 / 圆角 / 舒展字号 / 更大点击区（列表条目高 ≥40px）；主按钮突出、次按钮弱化；涉及覆盖数据必须给「选择后以谁为准」的安全提示。
+3. **信息分层**：列表（左栏）只承载「名称」级信息，冲突类型 / 状态 / 时间 / ID / 字段差异等技术细节一律进详情区；硬约束 = **信息只迁移、不丢失**。
+4. **三态可辨性**：颜色 + 符号 + 文字标签**三重冗余**。实测依据：橙 / 红在红绿色盲模拟下 ΔE 7.4 / 9.1（几乎重合），去色后两两对比度全部 <3:1 ⇒ 不得仅靠颜色。
+5. **对比度下限**：文本 ≥4.5:1、图形 / 边框 ≥3:1（验收口径，见 `DESIGN.md`）。
+6. **状态占位统一**：内容区域的 loading / error / empty **一律用 `LoadingError`**（`packages/shared/components/loading-error`），不得自绘空态 / 错误态；详见 `DESIGN.md` §4.1。
+7. **不另创体系**：沿用既有 `nue-*` token 与组件；确需新增 token / 组件 ⇒ 先报 PM。
+8. **移动端红线不变**：`packages/presentation-react` 与 `apps/mobile` 不随桌面 / Web 需求改动。
+
+出处：2026-09-28 冲突面板视觉走查（T338/T339/T340/T342/T343）；实测证据与设计语言见 `DESIGN.md`。
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web
