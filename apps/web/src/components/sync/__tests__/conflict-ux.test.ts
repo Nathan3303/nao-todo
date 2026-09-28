@@ -779,6 +779,21 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
         expect(panel()?.getAttribute('data-visible')).toBe('false')
         outside.remove()
     })
+
+    it('T355：点击对话框遮罩空白 ⇒ 父面板保持打开、对话框仍开（遮罩不关对话框）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const overlay = document.querySelector<HTMLElement>('.nue-dialog-overlay')
+        expect(overlay, '遮罩存在').toBeTruthy()
+        expect(overlay?.className, '遮罩带冲突对话框主题类').toContain('nue-overlay--conflict')
+        overlay?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        // NueDialog 的遮罩只绑 onEscape、无 onClick ⇒ 点遮罩不关对话框
+        expect(document.querySelector('[role="dialog"]')).toBeTruthy()
+        // 该 click 不得冒泡到 window 关掉父面板（回归修复点）
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).not.toBe(document.querySelector('.sync-rail-btn'))
+    })
 })
 
 describe('面 ③ i18n 中英键齐备 / 死键守护（T169）', () => {
