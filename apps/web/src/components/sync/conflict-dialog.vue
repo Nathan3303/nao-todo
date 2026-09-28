@@ -8,7 +8,7 @@
  *              关闭后焦点归还触发按钮由父级 `SyncStatusBar` 负责。
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.2
  */
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { t } from '@nao-todo/shared/locales'
 import { conflictObjectCount } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import { useConflictUx } from '@/hooks'
@@ -22,6 +22,7 @@ const open = defineModel<boolean>({ default: false })
 
 const ux = useConflictUx()
 const bodyRef = ref<HTMLElement | null>(null)
+const overlayEl = ref<HTMLElement | null>(null)
 
 /** T346：标题计数 = **对象数**（distinct `table:entityId`），与左栏行数 / badge 同口径 */
 const objectCount = computed(() => conflictObjectCount(ux.items.value))
@@ -31,9 +32,35 @@ const requestClose = (): void => {
     emit('close')
 }
 
+/**
+ * T347：截断对话框内部点击的冒泡。
+ * @description `NueDropdown`（本面板 `transparent`）打开时在 `window` 上注册 click 监听关闭自身
+ *   （nue-ui `dropdown-*.js` 的 open 处理器）；冲突对话框 `Teleport` 到 body、位于下拉 popper 之外
+ *   ⇒ 点 `×` / 底部按钮会被误判「点击外部」而**关掉父面板**，`SyncStatusBar` 的 `@close` 随即把焦点
+ *   移回轨道按钮、覆盖归还（Esc 是 keydown 不触发 click ⇒ 面板不关 ⇒ 故 Esc 正常）。
+ *   在对话框 overlay 层截断冒泡，使面板保持打开、焦点回到触发按钮。
+ */
+const stopClickBubble = (event: Event): void => {
+    event.stopPropagation()
+}
+
 const onAfterOpen = (): void => {
     void nextTick(() => bodyRef.value?.focus())
 }
+
+// 打开即挂（不等 `after-open` 动画事件：jsdom 无动画）/ 关闭时摘除（同一 click 的冒泡早于本次 flush）
+watch(open, (isOpen) => {
+    if (isOpen) {
+        void nextTick(() => {
+            overlayEl.value =
+                (bodyRef.value?.closest('.nue-dialog-overlay') as HTMLElement | null) ?? null
+            overlayEl.value?.addEventListener('click', stopClickBubble)
+        })
+        return
+    }
+    overlayEl.value?.removeEventListener('click', stopClickBubble)
+    overlayEl.value = null
+})
 </script>
 
 <template>

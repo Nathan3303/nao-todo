@@ -694,7 +694,7 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
         expect(src).toContain("assetUrl('/images/todo.webp')")
     })
 
-    it('⑤ 底部「关闭」= 关闭对话框（不再只清空右栏）', async () => {
+    it('⑤ 底部「关闭」= 关闭对话框（不再只清空右栏），且父面板保持打开', async () => {
         await openConflictList(1)
         await selectObject()
         const close = actionButton(messages['zh-CN']['sync.conflict.close'])
@@ -702,6 +702,8 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
         close?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await settle()
         expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+        // 回归：点击冒泡到 window 曾误关父面板 ⇒ 入口按钮不在可聚焦状态
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
         expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
     })
 
@@ -717,7 +719,24 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
             ?.dispatchEvent(new Event('animationend', { bubbles: true }))
         await settle()
         expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
         expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('③ 连续快速「开→×」3 次 ⇒ 面板始终打开、焦点稳定在入口按钮', async () => {
+        await openConflictList(1)
+        await selectObject()
+        for (let i = 0; i < 3; i += 1) {
+            conflictEntry()?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+            await settle()
+            document
+                .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+                ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+            await settle()
+            expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+            expect(panel()?.getAttribute('data-visible')).toBe('true')
+            expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+        }
     })
 })
 
