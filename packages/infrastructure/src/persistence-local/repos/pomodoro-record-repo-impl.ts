@@ -56,10 +56,12 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
             )
             // 异步加密在事务外完成（WebCrypto await 会中断 Dexie 事务）
             const record = await pomodoroRecordEntityToItem(entity, this.currentUserId)
+            // T329 / DEF-50：记录写入 + 入队同一 `rw` 事务（⛔ 不得把 markDirty 留在事务外 ⇒ 产生 RC-5 窗口）
             await this.db.transaction(
                 'rw',
                 this.db.pomodoroRecords,
                 this.db.pomodoros,
+                this.db.syncQueue,
                 async () => {
                     await this.db.pomodoroRecords.add(record)
                     // 完成专注时累加对应常用专注的累计时长（与远程后端行为一致）；
@@ -73,9 +75,15 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                             await this.db.pomodoros.put(pomodoro)
                         }
                     }
+                    await syncTracker.markDirty(
+                        'pomodoroRecords',
+                        entity.id,
+                        'upsert',
+                        entity.updatedAt,
+                        this.db.syncQueue
+                    )
                 }
             )
-            await syncTracker.markDirty('pomodoroRecords', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]

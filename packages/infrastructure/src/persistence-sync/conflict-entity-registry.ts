@@ -13,7 +13,10 @@
  */
 import type { Table } from 'dexie'
 import { localDatabase } from '../persistence-local/db/local-database'
-import { putWithSyncBase } from '../persistence-local/repos/put-with-sync-base'
+import {
+    putWithSyncBase,
+    putWithSyncBaseAndEnqueue
+} from '../persistence-local/repos/put-with-sync-base'
 import {
     projectEntityToRecord,
     projectRecordToEntity
@@ -51,6 +54,11 @@ export interface ConflictEntityConfig {
     entityToRecord: EntityRecordConverter
     /** 落库（**保留 per-row base**；直连表，不触发 markDirty） */
     putRecord: (record: unknown) => Promise<unknown>
+    /**
+     * T329 / DEF-50：落库 + 入队**同一 Dexie `rw` 事务**（仅改 base + 业务行 + `syncQueue`）。
+     * 冲突恢复动作 B「以我的版本重试」用：避免 `putRecord` + `markDirty` 两次 await 的 RC-5 窗口。
+     */
+    putRecordAndEnqueue: (record: unknown, updatedAt: string) => Promise<unknown>
 }
 
 const makeConfig = <T extends { id: string }>(
@@ -63,7 +71,9 @@ const makeConfig = <T extends { id: string }>(
     getRecord: (id) => tableRef.get(id) as Promise<Record<string, unknown> | undefined>,
     recordToEntity,
     entityToRecord,
-    putRecord: (record) => putWithSyncBase(tableRef, record as T)
+    putRecord: (record) => putWithSyncBase(tableRef, record as T),
+    putRecordAndEnqueue: (record, updatedAt) =>
+        putWithSyncBaseAndEnqueue(localDatabase, tableRef, table, record as T, 'upsert', updatedAt)
 })
 
 /** 业务同步 7 表的冲突实体映射（key 集 ≡ `SYNC_TABLES`，见一致性测试） */

@@ -11,9 +11,9 @@ import { localDatabase } from '../db/local-database'
 import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { defaultProjectPreferenceRes2Entity } from '../../persistence-go/project/converters'
-import { markPreferenceDirty } from '../../persistence-sync/preference-sync'
+import { schedulePreferencePush } from '../../persistence-sync/preference-sync'
+import { enqueuePreference } from '../../persistence-sync/preference-queue'
 import { fetchRemoteProjectPreference } from '../../persistence-sync/preference-remote'
-
 /**
  * 本地项目偏好仓储实现
  * @description JSON 配置字段加密存储，按 projectId 查询；
@@ -85,12 +85,19 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
 
     async save(updatedEntity: ProjectPreferenceEntity): GoAsync<void> {
         try {
-            await putWithSyncBase(
-                this.db.projectPreferences,
-                await projectPreferenceEntityToRecord(updatedEntity, this.currentUserId)
-            )
-            // TASK-26 / M6：本地写成功后入偏好队列（**不入 syncQueue**）+ 防抖回传（按行）
-            await markPreferenceDirty('projectPreference', updatedEntity.projectId)
+            const userId = this.currentUserId
+            const record = await projectPreferenceEntityToRecord(updatedEntity, userId)
+            // T329 / DEF-50：业务行 + 偏好队列**同一 Dexie `rw` 事务**
+            //（⛔ 不得拆为 putWithSyncBase + markPreferenceDirty 两次 await ⇒ RC-5 窗口）
+            await this.db.transaction('rw', this.db.projectPreferences, this.db.meta, async () => {
+                await putWithSyncBase(this.db.projectPreferences, record)
+                await enqueuePreference(
+                    userId,
+                    { kind: 'projectPreference', projectId: updatedEntity.projectId },
+                    this.db.meta
+                )
+            })
+            schedulePreferencePush()
             return null
         } catch (err) {
             return String(err)

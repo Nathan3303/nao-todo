@@ -8,7 +8,8 @@ import { localDatabase } from '../db/local-database'
 import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { defaultTagPreferenceRes2Entity } from '../../persistence-go/tag/converters'
-import { markPreferenceDirty } from '../../persistence-sync/preference-sync'
+import { schedulePreferencePush } from '../../persistence-sync/preference-sync'
+import { enqueuePreference } from '../../persistence-sync/preference-queue'
 import { fetchRemoteTagPreference } from '../../persistence-sync/preference-remote'
 
 /**
@@ -56,12 +57,18 @@ export class LocalTagPreferenceRepoImpl implements TagPreferenceRepository {
 
     async save(updatedEntity: TagPreferenceEntity): GoAsync<void> {
         try {
-            await putWithSyncBase(
-                this.db.tagPreferences,
-                await tagPreferenceEntityToRecord(updatedEntity, this.currentUserId)
-            )
-            // DP-5：本地写成功后入偏好队列（**不入 syncQueue**）+ 防抖回传（按行）
-            await markPreferenceDirty('tagPreference', undefined, updatedEntity.tagId)
+            const userId = this.currentUserId
+            const record = await tagPreferenceEntityToRecord(updatedEntity, userId)
+            // T329 / DEF-50：业务行 + 偏好队列**同一 Dexie `rw` 事务**
+            await this.db.transaction('rw', this.db.tagPreferences, this.db.meta, async () => {
+                await putWithSyncBase(this.db.tagPreferences, record)
+                await enqueuePreference(
+                    userId,
+                    { kind: 'tagPreference', tagId: updatedEntity.tagId },
+                    this.db.meta
+                )
+            })
+            schedulePreferencePush()
             return null
         } catch (err) {
             return String(err)
