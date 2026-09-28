@@ -4,7 +4,7 @@
 
 ## [v1.12.1] - 2026-09-28
 
-发布批次：**同步冲突客户端侧修复**（`T325` / `T326` / `T329`）—— 消除「desktop 频繁修改后概率性同步冲突」与「无提示静默覆盖」窗口。**Tag `v1.12.1`** · root `1.12.1` · `apps/web` / `apps/desktop` `1.12.1`（`packages/*` 本版未 bump；`apps/mobile` / `packages/presentation-react` 零改动）。详见 `docs/releases/v1.12.1.md`。
+发布批次：**同步冲突客户端侧修复**（`T325` / `T326` / `T329`）—— 消除「desktop 频繁修改后概率性同步冲突」与「无提示静默覆盖」窗口。**Tag `v1.12.1`** · root `1.12.1` · `apps/web` / `apps/desktop` `1.12.1` · `packages/infrastructure` `0.8.0 → 0.8.1`（`apps/mobile` / `packages/presentation-react` 零改动，不动；其余包本批无改动，不 bump）。详见 `docs/releases/v1.12.1.md`。
 
 ### 修复（同步冲突 · 客户端侧）
 
