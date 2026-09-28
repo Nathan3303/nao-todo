@@ -58,11 +58,21 @@ export const classifyFieldDiff = (diff: ConflictFieldDiff): FieldDiffKind => {
     return 'changed'
 }
 
-/** 可见差异：默认过滤技术字段；`showTechnical` ⇒ 全量（保持原顺序） */
-export const visibleDiffs = (
-    diffs: ConflictFieldDiff[],
-    showTechnical: boolean
-): ConflictFieldDiff[] => (showTechnical ? diffs : diffs.filter((d) => !isTechnicalField(d.field)))
+/**
+ * 拆分差异为「普通字段」与「技术字段」两组（T338：技术字段**始终显示**，但排在后面并加轻分隔）
+ * @description 保持各自原顺序（普通在前）；技术字段样式次要（§`isTechnicalField`）。
+ */
+export const splitTechnicalDiffs = (
+    diffs: ConflictFieldDiff[]
+): { normal: ConflictFieldDiff[]; technical: ConflictFieldDiff[] } => {
+    const normal: ConflictFieldDiff[] = []
+    const technical: ConflictFieldDiff[] = []
+    for (const diff of diffs) {
+        if (isTechnicalField(diff.field)) technical.push(diff)
+        else normal.push(diff)
+    }
+    return { normal, technical }
+}
 
 /** 同一实体（`table:entityId`）归一组 */
 export interface ConflictGroup {

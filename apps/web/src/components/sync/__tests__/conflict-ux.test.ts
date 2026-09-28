@@ -169,6 +169,12 @@ const referencedConflictKeys = (): string[] => {
     return [...new Set(source.match(/sync\.conflict[\w.-]*/g) ?? [])]
 }
 
+/** `conflict-list.vue` 原始源码（静态样式守护：分割线 / 堆叠态分支） */
+const conflictListSource = (): string =>
+    Object.entries(conflictComponentSources).find(([path]) =>
+        path.includes('conflict-list.vue')
+    )?.[1] ?? ''
+
 vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -299,15 +305,16 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(document.querySelector('.conflict-list')).toBeTruthy()
         expect(conflict().refresh).toHaveBeenCalled()
 
-        // 列表：分组头渲染表名（本地化）+ 败方标题；条目按钮可点击
+        // T339：左栏只保留「对象名称（组头）+ 冲突类型（条目）」；时间等移入右栏
         const item = conflictItem()
         conflict().items.value = [item]
         await nextTick()
         const groupHead = document.querySelector<HTMLElement>('.conflict-list__group-head')
-        expect(groupHead?.textContent).toContain('任务')
         expect(groupHead?.textContent).toContain('本地标题')
+        expect(groupHead?.textContent).not.toContain('任务')
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
-        expect(itemButton).toBeTruthy()
+        expect(itemButton?.textContent).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
 
         // 只读对比：点击条目 ⇒ compare(item)；渲染字段级差异（败方 vs 当前）
         itemButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -453,6 +460,80 @@ describe('T338 冲突对话框（模态 + 两栏 + a11y + T331 回归）', () =>
 
         expect(conflict().keepServer).toHaveBeenCalledWith(item)
         expect(panelText()).toContain('冲突 1')
+    })
+})
+
+describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显）', () => {
+    it('两栏分隔：左栏竖向 1px 分隔（既有 border 色）；<900px 堆叠时改横向（静态样式守护）', () => {
+        const src = conflictListSource()
+        expect(src).toContain('border-right: 1px solid var(--nue-border-color)')
+        // 堆叠态分支：竖分隔关闭 ⇒ 改横向（复用左栏下边框）
+        const stacked = src.slice(src.indexOf('@media (max-width: 899.98px)'))
+        expect(stacked).toContain('border-right: none')
+        expect(stacked).toContain('border-bottom: 1px solid var(--nue-border-color)')
+    })
+
+    it('左栏只保留「对象名称 + 冲突类型」：无时间等元信息', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        await nextTick()
+        const head = document.querySelector<HTMLElement>('.conflict-list__group-head')
+        expect(head?.textContent).toContain('本地标题')
+        const entry = document.querySelector<HTMLElement>('.conflict-list__entry')
+        expect(entry?.textContent).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
+    })
+
+    it('被移出的信息在右栏「对象信息」可见（类型 / 实体 ID / 冲突 ID / 发生时间）', async () => {
+        await openConflictList(1)
+        const item = conflictItem()
+        conflict().items.value = [item]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+        const text = dialogText()
+        expect(text).toContain(messages['zh-CN']['sync.conflict.objectInfo'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaTable'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.table.tasks'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntityId'])
+        expect(text).toContain('t1')
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntryId'])
+        expect(text).toContain(item.id)
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaAt'])
+    })
+
+    it('技术字段始终显示（无开关）且排在普通字段之后（轻分隔 + 次要样式）', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: {},
+            current: {},
+            diffs: [
+                { field: 'name', loser: '旧', current: '新' },
+                { field: 'updatedAt', loser: 'A', current: 'B' }
+            ]
+        }
+        await nextTick()
+        // 开关已移除
+        expect(document.querySelector('.conflict-list__tech-toggle')).toBeFalsy()
+        const allRows = Array.from(document.querySelectorAll('.conflict-list__diff'))
+            .map((el) => el.textContent ?? '')
+            .join('|')
+        expect(allRows).toContain('name')
+        expect(allRows).toContain('updatedAt')
+        // 技术字段段落排在普通字段之后
+        const text = dialogText()
+        expect(text).toContain(messages['zh-CN']['sync.conflict.technicalSection'])
+        expect(text.indexOf('updatedAt')).toBeGreaterThan(
+            text.indexOf(messages['zh-CN']['sync.conflict.technicalSection'])
+        )
     })
 })
 

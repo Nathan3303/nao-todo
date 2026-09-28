@@ -52,8 +52,15 @@ export interface LocaleMessages {
     'sync.conflict.loading': string
     'sync.conflict.unknownObject': string
     'sync.conflict.groupCount': string
-    'sync.conflict.showTechnical': string
     'sync.conflict.selectHint': string
+    'sync.conflict.objectInfo': string
+    'sync.conflict.technicalSection': string
+    'sync.conflict.metaTable': string
+    'sync.conflict.metaEntityId': string
+    'sync.conflict.metaEntryId': string
+    'sync.conflict.metaAt': string
+    'sync.conflict.metaServerTime': string
+    'sync.conflict.metaLocalTime': string
     'sync.conflict.fieldAdded': string
     'sync.conflict.fieldRemoved': string
     'sync.conflict.fieldChanged': string
