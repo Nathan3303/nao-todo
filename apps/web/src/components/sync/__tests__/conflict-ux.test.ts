@@ -738,6 +738,47 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
             expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
         }
     })
+
+    it('T353：关闭对话框不摘除截断监听（覆盖「关闭那次 click」的冒泡）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        // 修复前：`watch(open)` 的 open→false 分支在关闭 click 冒泡途中同步 `removeEventListener`
+        // ⇒ 该 click 继续冒泡命中 dropdown 的 window 监听 ⇒ 面板被关。监听器须「常驻」。
+        const removeSpy = vi.spyOn(Element.prototype, 'removeEventListener')
+        document
+            .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(removeSpy.mock.calls.filter(([type]) => type === 'click')).toEqual([])
+        removeSpy.mockRestore()
+    })
+
+    it('T353：对话框内点击不得到达 window 层监听（dropdown「点外部即关」）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const winSpy = vi.fn()
+        window.addEventListener('click', winSpy)
+        document
+            .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(winSpy).not.toHaveBeenCalled()
+        window.removeEventListener('click', winSpy)
+        // 面板保持打开 + 焦点归还
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('不回归：面板外点击仍能关闭面板（document 级截断只作用于对话框内）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const outside = document.createElement('div')
+        document.body.appendChild(outside)
+        outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(panel()?.getAttribute('data-visible')).toBe('false')
+        outside.remove()
+    })
 })
 
 describe('面 ③ i18n 中英键齐备 / 死键守护（T169）', () => {

@@ -8,7 +8,7 @@
  *              关闭后焦点归还触发按钮由父级 `SyncStatusBar` 负责。
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.2
  */
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { t } from '@nao-todo/shared/locales'
 import { conflictObjectCount } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import { useConflictUx } from '@/hooks'
@@ -22,7 +22,6 @@ const open = defineModel<boolean>({ default: false })
 
 const ux = useConflictUx()
 const bodyRef = ref<HTMLElement | null>(null)
-const overlayEl = ref<HTMLElement | null>(null)
 
 /** T346：标题计数 = **对象数**（distinct `table:entityId`），与左栏行数 / badge 同口径 */
 const objectCount = computed(() => conflictObjectCount(ux.items.value))
@@ -33,34 +32,32 @@ const requestClose = (): void => {
 }
 
 /**
- * T347：截断对话框内部点击的冒泡。
- * @description `NueDropdown`（本面板 `transparent`）打开时在 `window` 上注册 click 监听关闭自身
- *   （nue-ui `dropdown-*.js` 的 open 处理器）；冲突对话框 `Teleport` 到 body、位于下拉 popper 之外
- *   ⇒ 点 `×` / 底部按钮会被误判「点击外部」而**关掉父面板**，`SyncStatusBar` 的 `@close` 随即把焦点
- *   移回轨道按钮、覆盖归还（Esc 是 keydown 不触发 click ⇒ 面板不关 ⇒ 故 Esc 正常）。
- *   在对话框 overlay 层截断冒泡，使面板保持打开、焦点回到触发按钮。
+ * T353：阻断「对话框内」的点击到达 `window` 的下拉「点外部即关」监听。
+ * @description `NueDropdown`（本面板 `transparent`）打开时在 **`window`（冒泡）** 注册 click 监听，
+ *   任何 window click 都关闭面板（**无 target 判定**，nue-ui `dropdown-*.js` 的 open 处理器）；
+ *   冲突对话框 `Teleport` 到 body、在 popper 之外 ⇒ 点 `×` / 底部按钮会被当「点外部」关掉父面板，
+ *   `SyncStatusBar` 的 `@close` 随即把焦点移回轨道按钮（Esc 是 keydown 不触发 click ⇒ 本就正常）。
+ *
+ *   关键时序（qa 真机定位）：**浏览器在每次事件监听回调之间有 microtask 检查点** ⇒ 关闭那次 click
+ *   置 `open=false` 后，Vue 的 flush 会在该 click 冒泡到 `window` **之前**执行；故监听器必须
+ *   **常驻**（组件 mount→unmount），不能在「对话框开/关」时增删。
+ *   - 注册于 **`document` 冒泡阶段**（早于 `window` 冒泡）⇒ 截断后 dropdown 收不到；
+ *   - 用 `composedPath()`（而非 `event.target.closest`）判定「源在对话框内」，即使目标已在关闭瞬间
+ *     卸载也能命中路径中的 `.nue-dialog--conflict`。
  */
-const stopClickBubble = (event: Event): void => {
-    event.stopPropagation()
+const stopDialogClickBubble = (event: Event): void => {
+    const insideDialog = event
+        .composedPath()
+        .some((node) => node instanceof Element && node.classList.contains('nue-dialog--conflict'))
+    if (insideDialog) event.stopPropagation()
 }
+
+onMounted(() => document.addEventListener('click', stopDialogClickBubble))
+onBeforeUnmount(() => document.removeEventListener('click', stopDialogClickBubble))
 
 const onAfterOpen = (): void => {
     void nextTick(() => bodyRef.value?.focus())
 }
-
-// 打开即挂（不等 `after-open` 动画事件：jsdom 无动画）/ 关闭时摘除（同一 click 的冒泡早于本次 flush）
-watch(open, (isOpen) => {
-    if (isOpen) {
-        void nextTick(() => {
-            overlayEl.value =
-                (bodyRef.value?.closest('.nue-dialog-overlay') as HTMLElement | null) ?? null
-            overlayEl.value?.addEventListener('click', stopClickBubble)
-        })
-        return
-    }
-    overlayEl.value?.removeEventListener('click', stopClickBubble)
-    overlayEl.value = null
-})
 </script>
 
 <template>
