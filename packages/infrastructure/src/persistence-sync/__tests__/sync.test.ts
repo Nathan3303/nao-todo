@@ -55,6 +55,14 @@ const mockRequester = (handler: (url: string, body: unknown) => unknown): Reques
     }) as unknown as Requester
 
 /**
+ * T333：远端时间戳 = 当前 +1ms（**严格晚于**本地入队的 `localUpdatedAt`）。
+ * 背景：pull 侧 LWW 用**严格** `remoteTs > localTs`；若用例用裸 `new Date().toISOString()`
+ * 且与本地 create 的 `nowCalibratedIso()` 落在**同毫秒** ⇒ 判「本地胜」跳过 ⇒ **偶发红**
+ * （机器越快越易命中）。+1ms 保证严格更晚，⛔ 不用 sleep。
+ */
+const remoteNowIso = (): string => new Date(Date.now() + 1).toISOString()
+
+/**
  * DEF-28（flaky）隔离：本文件每个用例都新建独立 `SyncService`，其实例内的**条件退避定时器**
  * （`scheduleBackfillTick` → `setTimeout(→ resumeBackfill)`）在用例结束后仍存活；一旦落在后续
  * 用例中途触发，会经**全局单例** `syncStatus.beginRun()` 清空在跑运行的 `runErrors`
@@ -203,7 +211,7 @@ describe('SyncService', () => {
         )
         expect(pomodoroErr).toBeNull()
         const pomodoroId = (pomodoro as { id: string }).id
-        const now = new Date().toISOString()
+        const now = remoteNowIso()
         const remotePomodoro = {
             id: pomodoroId,
             createdAt: now,
@@ -536,7 +544,7 @@ describe('SyncService', () => {
     })
 
     it('拉取有实际写入时触发数据变化回调（通知视图刷新）', async () => {
-        const now = new Date().toISOString()
+        const now = remoteNowIso()
         const remoteProject = {
             id: 'p-remote',
             createdAt: now,
@@ -611,7 +619,7 @@ describe('SyncService', () => {
     })
 
     it('远程任务 tags 为 null（后端 nil slice）：拉取不抛错且本地落库为空数组', async () => {
-        const now = new Date().toISOString()
+        const now = remoteNowIso()
         const remoteTask = {
             id: 't-null-tags',
             createdAt: now,
@@ -663,7 +671,7 @@ describe('SyncService', () => {
     })
 
     it('远程评论 attachments 为 null：拉取不抛错且本地落库为空数组', async () => {
-        const now = new Date().toISOString()
+        const now = remoteNowIso()
         const remoteComment = {
             id: 'c-null-attachments',
             createdAt: now,
