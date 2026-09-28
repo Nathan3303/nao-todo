@@ -6,6 +6,7 @@
  *              TASK-26 / ADR-r2 P2 更正）：普通清单偏好走**独立偏好队列**（`preference-queue`）按行回传
  *              `POST /projects/:id/preference`，**不入 `syncQueue`**（合成主键与批量 upsert 契约不兼容）。
  */
+import type { Table } from 'dexie'
 import {
     localDatabase,
     type SyncAction,
@@ -33,21 +34,24 @@ export class SyncTracker {
         table: string,
         entityId: string,
         action: SyncAction,
-        updatedAt: string
+        updatedAt: string,
+        queue: Table<SyncQueueRecord, string> = localDatabase.syncQueue
     ): Promise<void> {
         const userId = localSession.getCurrentUserId()
         if (!userId) return // 无会话（未登录/测试环境）不登记
         const now = new Date().toISOString()
         const id = `${userId}:${table}:${entityId}`
         // 同实体重复写合并：保留首次入队时间与既有重试计数
-        const existing = await localDatabase.syncQueue.get(id)
-        await localDatabase.syncQueue.put({
+        const existing = await queue.get(id)
+        await queue.put({
             id,
             userId,
             table,
             entityId,
             action,
             localUpdatedAt: updatedAt,
+            // T326 / AC-T325-8：修订号自增（旧记录缺失视为 0），推送在飞守卫据此判定「是否有新写」
+            revision: (existing?.revision ?? 0) + 1,
             retryCount: existing?.retryCount ?? 0,
             // SHELL-06 C-44：同实体重写保留退避进度（不重置 attempts/nextAttemptAt）
             attempts: existing?.attempts,

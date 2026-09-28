@@ -6,6 +6,7 @@
  *              拉取写入直连表 + converters（不触发 markDirty，避免同步回环）。
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
+import type { Table } from 'dexie'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { localDatabase, type SyncQueueRecord } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
@@ -476,9 +477,10 @@ export class SyncService {
     }
 
     /** 校准服务器时间偏移（响应带回 serverTime，UTC Unix 毫秒；后端可能返回字符串） */
-    private calibrateServerTime(serverTime?: number): void {
-        if (typeof serverTime === 'number' && Number.isFinite(serverTime) && serverTime > 0) {
-            setServerTimeOffset(serverTime - Date.now())
+    private calibrateServerTime(serverTime?: number | string): void {
+        const value = typeof serverTime === 'string' ? Number(serverTime) : serverTime
+        if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            setServerTimeOffset(value - Date.now())
         }
     }
 
@@ -491,6 +493,36 @@ export class SyncService {
         return localDatabase[config.table as keyof typeof localDatabase] as never
     }
 
+    /** 原始 Dexie 表（供事务作用域使用；`tableOf` 的窄接口无法参与 `transaction`） */
+    private rawTableOf(config: SyncTableConfig): Table<Record<string, unknown>, string> {
+        return localDatabase[config.table as keyof typeof localDatabase] as unknown as Table<
+            Record<string, unknown>,
+            string
+        >
+    }
+
+    /**
+     * 构造拉取行记录（含 per-row base），**加解密在事务外**完成
+     * @description 供 `putPulledRecord` 与「队列再确认 + 写入」事务共用（Dexie 事务内不得 await 外部长 Promise）。
+     */
+    private async buildPulledRecord(
+        config: SyncTableConfig,
+        entity: Record<string, unknown>,
+        userId: string
+    ): Promise<Record<string, unknown>> {
+        // R-5 / T188-B：拉取落库边界把服务端隐式桶（`projectId === userId`）归一为本地字面 `'inbox'`
+        const source =
+            config.table === 'tasks'
+                ? { ...entity, projectId: toLocalProjectId(entity.projectId, userId) }
+                : entity
+        const record = (await config.entityToRecord(source, userId)) as {
+            syncedServerUpdatedAt?: string
+        }
+        const serverUpdatedAt = typeof entity.updatedAt === 'string' ? entity.updatedAt : ''
+        if (serverUpdatedAt) record.syncedServerUpdatedAt = serverUpdatedAt
+        return record as Record<string, unknown>
+    }
+
     /**
      * 落库一条拉取记录，并同时落 per-row 同步版本基线
      * @description §9.1.5 / R-20：pull 写入时 `syncedServerUpdatedAt` = 该行服务端 `updatedAt`，
@@ -501,18 +533,7 @@ export class SyncService {
         entity: Record<string, unknown>,
         userId: string
     ): Promise<void> {
-        // R-5 / T188-B：拉取落库边界把服务端隐式桶（`projectId === userId`）归一为本地字面 `'inbox'`
-        //   （仅 tasks 表有 projectId；唯一落点，供本地字面 `'inbox'` 过滤命中）
-        const source =
-            config.table === 'tasks'
-                ? { ...entity, projectId: toLocalProjectId(entity.projectId, userId) }
-                : entity
-        const record = (await config.entityToRecord(source, userId)) as {
-            syncedServerUpdatedAt?: string
-        }
-        const serverUpdatedAt = typeof entity.updatedAt === 'string' ? entity.updatedAt : ''
-        if (serverUpdatedAt) record.syncedServerUpdatedAt = serverUpdatedAt
-        await this.tableOf(config).put(record)
+        await this.tableOf(config).put(await this.buildPulledRecord(config, entity, userId))
     }
 
     /**
@@ -530,6 +551,33 @@ export class SyncService {
         await this.tableOf(config).update(entityId, {
             syncedServerUpdatedAt: serverUpdatedAt
         })
+    }
+
+    /**
+     * 消费派生行版本回执（T326 / B②，客户端半边；服务端字段由 T327 提供）
+     * @description 同一批 push 中，服务端对子实体（检查项/评论/子任务）的写入会**派生推进父任务/清单**
+     *              的 `updated_at` 却不回传（RC-1）⇒ 客户端 base 静默过期 ⇒ 下次 push `stale`。
+     *              本方法把回执声明的**被派生行当前服务端版本**写回该行 base（仅改 base、不动业务字段、
+     *              不 markDirty）⇒ 下一次 push 以新 base 命中。
+     *
+     *              期望字段（供 T327 对齐，RFC3339Milli）：
+     *              `derivedUpdates: Array<{ table: string; id: string; updatedAt: string }>`
+     *              **缺省 / 非数组 / 未知表 / 空 id / 空 updatedAt ⇒ 完全 no-op**（旧服务端行为逐字不变）。
+     */
+    private async applyDerivedUpdates(updates: unknown): Promise<void> {
+        if (!Array.isArray(updates)) return
+        for (const entry of updates) {
+            if (!entry || typeof entry !== 'object') continue
+            const { table, id, updatedAt } = entry as {
+                table?: unknown
+                id?: unknown
+                updatedAt?: unknown
+            }
+            if (typeof table !== 'string' || typeof id !== 'string' || id === '') continue
+            if (typeof updatedAt !== 'string' || updatedAt === '') continue
+            if (!SYNC_TABLES.some((c) => c.table === table)) continue
+            await this.writeBackSyncBase(table, id, updatedAt)
+        }
     }
 
     /**
@@ -747,8 +795,9 @@ export class SyncService {
                     syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
                     return
                 }
+                // T326 / AC-T325-1：serverTime 在 SyncPullRes 内（`body.data.serverTime`），非 `body.serverTime`
                 this.calibrateServerTime(
-                    Number((data as { serverTime?: string | number }).serverTime)
+                    (data?.data as { serverTime?: string | number } | undefined)?.serverTime
                 )
                 // 后端结构：response.data = { code, message, data: { data: { [table]: { items, total, nextCursor, nextCursorId } } }, serverTime }
                 const inner = (data?.data as { data?: Record<string, PullTableResult> } | undefined)
@@ -855,12 +904,35 @@ export class SyncService {
                     await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
+                } else {
+                    // T326 / RC-3 / AC-T325-3：本地胜也把 base 收敛到服务端当前版本
+                    //（否则 base 恒旧 ⇒ OCC 下下一次 push 必然 stale）。仅改 base：不动业务字段、不出队。
+                    if (typeof entity.updatedAt === 'string' && entity.updatedAt) {
+                        await this.writeBackSyncBase(config.table, id, entity.updatedAt)
+                    }
                 }
-                // 本地胜：跳过（保留 queue，交给推送）
             } else {
-                // 本地未改：远程胜直接覆盖（含删除墓碑）
-                await this.putPulledRecord(config, entity, userId)
-                written += 1
+                // 本地未改：远程覆盖。T326 / RC-5：把「队列再确认 + 写入」收进**同一 Dexie 事务**，
+                // 与本地写路径的「写入 + 入队」事务互斥 ⇒ pull 首读队列（空）与写行之间若本地写抢先入队，
+                // 事务内的二次确认会发现队列项并**放弃覆盖**（不再有无 journal 的静默覆盖）。
+                // 加解密（buildPulledRecord）在事务外完成，避 Dexie 过早提交。
+                const record = await this.buildPulledRecord(config, entity, userId)
+                const rawTable = this.rawTableOf(config)
+                let didWrite = false
+                await localDatabase.transaction(
+                    'rw',
+                    rawTable,
+                    localDatabase.syncQueue,
+                    async () => {
+                        const stillQueued = await localDatabase.syncQueue.get(
+                            `${userId}:${config.table}:${id}`
+                        )
+                        if (stillQueued) return
+                        await rawTable.put(record)
+                        didWrite = true
+                    }
+                )
+                if (didWrite) written += 1
             }
         }
         // 推进游标（keyset：只前进不后退；尾页无 nextCursor 时推进到本批最大 updatedAt，
@@ -980,9 +1052,10 @@ export class SyncService {
 
             const pushBody: Record<string, Record<string, unknown>[]> = {}
             const deletions: { table: string; id: string }[] = []
-            // 发送前快照各实体 localUpdatedAt：确认后仅当队列项未被推送期间的新修改覆盖才移除，
-            // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2）
-            const snapshots = new Map<string, string>()
+            // 发送前快照各实体入队 revision：确认后仅当队列项未被推送期间的新修改覆盖才移除，
+            // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2；T326 改为 revision 比较，
+            // 避免**同毫秒**新写被 `localUpdatedAt` 相等误判为「未变」而误删 —— AC-T325-8）
+            const snapshotRevisions = new Map<string, number>()
             for (const item of dueQueue) {
                 const config = SYNC_TABLES.find((c) => c.table === item.table)
                 if (!config) {
@@ -994,7 +1067,7 @@ export class SyncService {
                     })
                     continue
                 }
-                snapshots.set(`${item.table}:${item.entityId}`, item.localUpdatedAt)
+                snapshotRevisions.set(`${item.table}:${item.entityId}`, item.revision ?? 0)
                 const record = await this.tableOf(config).get(item.entityId)
                 if (!record) {
                     // 本地记录已不存在（物理清理）：按删除推送兜底
@@ -1061,7 +1134,7 @@ export class SyncService {
                         status
                     })
                     for (const item of dueQueue) {
-                        if (snapshots.has(`${item.table}:${item.entityId}`)) {
+                        if (snapshotRevisions.has(`${item.table}:${item.entityId}`)) {
                             await syncTracker.markBusinessFailure(
                                 item.id,
                                 this.businessNextAttemptAt(item)
@@ -1098,15 +1171,22 @@ export class SyncService {
                 return
             }
             const data =
-                (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
-            this.calibrateServerTime((data as { serverTime?: number }).serverTime)
+                (raw?.data as {
+                    data?: {
+                        results?: PushResult[]
+                        serverTime?: string | number
+                        derivedUpdates?: unknown
+                    }
+                }) ?? {}
+            // T326 / AC-T325-1：serverTime 在 SyncPushRes 内（`body.data.serverTime`），非 `body.serverTime`
+            this.calibrateServerTime(data.data?.serverTime)
             const results = data.data?.results ?? []
             const resultByKey = new Map(results.map((r) => [`${r.table}:${r.id}`, r]))
             const pushed = new Set(resultByKey.keys())
             let unconfirmed = false
             for (const item of dueQueue) {
                 const key = `${item.table}:${item.entityId}`
-                const snapshot = snapshots.get(key)
+                const snapshot = snapshotRevisions.get(key)
                 if (!pushed.has(key)) {
                     // 响应中无该实体：后端拒绝或字段不匹配 ⇒ 业务类退避（C-38/C-39）
                     if (snapshot !== undefined) {
@@ -1176,12 +1256,15 @@ export class SyncService {
                 ) {
                     await this.writeBackSyncBase(item.table, item.entityId, result.serverUpdatedAt)
                 }
-                // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
+                // 推送期间本地对同一实体有新修改（revision 已变化）：保留队列项下轮重推，防止本地修改丢失
+                //（T326 / AC-T325-8：比较入队 revision，非毫秒时间戳 ⇒ 同 ms 新写不再被误删）
                 const current = await localDatabase.syncQueue.get(item.id)
-                if (current && snapshot !== undefined && current.localUpdatedAt === snapshot) {
+                if (current && snapshot !== undefined && (current.revision ?? 0) === snapshot) {
                     await syncTracker.removeQueued(item.table, item.entityId)
                 }
             }
+            // T326 / B②：派生行版本回执（additive；字段缺省/未知表 ⇒ no-op，旧服务端行为逐字不变）
+            await this.applyDerivedUpdates(data.data?.derivedUpdates)
             // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）
             if (unconfirmed) syncStatus.noteRunError('push', ERR_PUSH_UNCONFIRMED)
             // 全部确认 ⇒ 回传完成：清暂停与退避定时（C-40 成功即停）
