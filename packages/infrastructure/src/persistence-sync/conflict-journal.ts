@@ -16,6 +16,7 @@ import {
 } from '../persistence-local/db/local-database'
 import { findConflictEntity } from './conflict-entity-registry'
 import { nowCalibratedIso } from './sync-config'
+import { syncStatus } from './sync-status'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 export type { ConflictJournalEntry }
@@ -302,6 +303,8 @@ export const compareConflict = async (
 /**
  * 恢复动作 A「保留服务端版本」：清除该实体的 journal 条目（本地已是胜方，无副作用）
  * @returns `remaining` = 清除后剩余条数（供状态面计数刷新）
+ * @description T331：清条目后**同源刷新状态面计数**（`remaining` = journal 当前长度）⇒
+ *              徽标「冲突 N」随处理递减 / 归零（不再滞留到重启）。
  */
 export const resolveConflictKeepServer = async (
     userId: string,
@@ -316,6 +319,7 @@ export const resolveConflictKeepServer = async (
         )
         return remaining.length === entries.length ? null : { entries: remaining }
     })
+    syncStatus.setConflictCount(next.length)
     return { ok: true, remaining: next.length }
 }
 
@@ -350,5 +354,7 @@ export const resolveConflictRetryLocal = async (
             )
         }
     })
+    // T331：成功恢复 ⇒ 同源刷新状态面计数（`remaining` = journal 当前长度）⇒ 徽标递减 / 归零
+    if (resolved) syncStatus.setConflictCount(next.length)
     return { ok: resolved, remaining: next.length }
 }
