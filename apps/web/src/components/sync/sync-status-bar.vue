@@ -24,7 +24,7 @@ import {
 import { railBottomHost } from '@/components/app/aside-v2/rail-host'
 import { open as settingsDialogOpen } from '@/components/settings/dialog/state'
 import { useManualSync, useMirrorLoadedCount, useSyncStatus } from '@/hooks'
-import ConflictList from './conflict-list.vue'
+import ConflictDialog from './conflict-dialog.vue'
 import { CONFLICT_JOURNAL_LIMIT } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 
 defineOptions({ name: 'SyncStatusBar' })
@@ -57,8 +57,28 @@ const panelOpen = ref(false)
 // @state 下拉实例（C11 设置对话框开启时收起；C16 焦点归还时定位轨道按钮）
 const dropdownRef = ref<InstanceType<typeof NueDropdown> | null>(null)
 
-// @state 冲突列表展开（T165/W3：入口可交互；数据面经 ConflictList → useConflictUx）
-const conflictOpen = ref(false)
+// @state 冲突对话框开（T338：入口「冲突 N」⇒ 打开对话框：左栏记录 / 右栏 diff）
+const conflictDialogOpen = ref(false)
+const conflictEntryRowRef = ref<HTMLLIElement | null>(null)
+
+/** T347：焦点归还入口按钮（×/Esc/底部「关闭」三条路径统一走此函数） */
+const focusConflictEntry = (): void => {
+    conflictEntryRowRef.value?.querySelector('button')?.focus()
+}
+
+/**
+ * 关闭冲突对话框（T347）：**先**把焦点移回触发按钮（在对话框子树之外）⇒ 后续对话框卸载时
+ * 浏览器不会把焦点抛回 body；`watch` 的 nextTick 归还是兜底（jsdom 无动画事件时）。
+ */
+const closeConflictDialog = (): void => {
+    focusConflictEntry()
+    conflictDialogOpen.value = false
+}
+
+// T338/T347：关闭对话框后把焦点归还触发按钮（兜底；前置归还已覆盖真实浏览器主要竞态）
+watch(conflictDialogOpen, (isOpen) => {
+    if (!isOpen) void nextTick(focusConflictEntry)
+})
 
 // @computed 同步中（含手动触发）
 const syncing = computed(() => status.value.syncing || manualSyncing.value)
@@ -94,6 +114,20 @@ const coverage = computed(() =>
 
 // @computed 「数据截至」时间（非法值 ⇒ null ⇒ 面板不渲染时间，落 ③）
 const timeText = computed(() => formatMirrorPulledAt(status.value.mirrorPulledAt, locale.value))
+
+// @computed 面板分区可见性（按类别聚合，避免空分区）
+// 数据区：新鲜度非 updated（②③）或覆盖度提示（④⑤）任一生效
+const hasDataSection = computed(
+    () => freshness.value !== 'updated' || coverage.value.loadingMore || coverage.value.truncated
+)
+// 待处理区：暂停/待推送/失败/偏好失败任一 > 0
+const hasQueueSection = computed(
+    () =>
+        status.value.paused ||
+        status.value.pendingCount > 0 ||
+        status.value.failedCount > 0 ||
+        status.value.preferenceFailedCount > 0
+)
 
 /**
  * @computed 数据可信度角标（**通道③**，ADR D-4；与通道② 正交、同时呈现）
@@ -219,117 +253,130 @@ watch(
               面板内容行：@open 渲染 / @close 移除（C9）；面板根是库内 <ul>，故每行均为 <li>（P8/C12）。
               以下 ②③④⑤ 由内容区顶部条迁入（T115b/r7：顶部零挂载，原文案逐字保留）。
             -->
-            <!-- 首行：上次同步时间 / 从未同步 / 同步中… -->
-            <li class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                    {{ lastSyncText }}
-                </nue-text>
-            </li>
-            <!-- ② 回退本地镜像：显示「数据截至 X」+「可能不是最新」（AC8） -->
-            <li v-if="freshness === 'mirror'" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
-                    {{ t('offline.freshness.mirror', { time: timeText ?? '' }) }}
-                </nue-text>
-                <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                    {{ t('offline.freshness.mirrorHint') }}
-                </nue-text>
-            </li>
-            <!-- ③ 尚未同步完成（含空镜像/截断）：引导联网，不呈现为「数据丢失」（AC9） -->
-            <li v-else-if="freshness === 'incomplete'" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
-                    {{ t('offline.freshness.incomplete') }}
-                </nue-text>
-                <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                    {{ t('offline.freshness.incompleteHint') }}
-                </nue-text>
-            </li>
-            <!-- SHELL-06 C-41：暂停（离线/超限）显式可见，仅提示不阻断 -->
-            <li v-if="status.paused" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
-                    {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
-                </nue-text>
-            </li>
-            <li v-else-if="status.pendingCount > 0" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                    {{ t('sync.pending', { count: status.pendingCount }) }}
-                </nue-text>
-            </li>
-            <li v-if="status.failedCount > 0" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-error-color-60)">
-                    {{ t('sync.failed', { count: status.failedCount }) }}
-                </nue-text>
-            </li>
-            <!-- TASK-26 / T136 GAP-2：偏好队列推送失败（独立于业务失败计数，AC3-04） -->
-            <li v-if="status.preferenceFailedCount > 0" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-error-color-60)">
-                    {{ t('sync.preferenceFailed', { count: status.preferenceFailedCount }) }}
-                </nue-text>
-            </li>
-            <!-- PS-14 / DP-1 + T165/W3：冲突记账条数入口（可交互 ⇒ 展开冲突列表：
-                 只读对比 + 两种恢复动作）；warning 色：冲突为 LWW **已收敛**的结果事件
-                 （非同步失败；败方快照已入 journal），与 `paused` 同属「状态性、需知情但非失败」 -->
-            <li v-if="status.conflictCount > 0" class="sync-panel__row">
-                <nue-button
-                    class="sync-conflict-entry"
-                    theme="pure,small"
-                    :aria-expanded="conflictOpen"
-                    @click="conflictOpen = !conflictOpen"
-                >
-                    {{ t('sync.conflict', { count: status.conflictCount }) }}
-                </nue-button>
-            </li>
-            <!-- T165/W3：冲突列表/只读对比/恢复动作（弹层内展开；数据面经 useConflictUx） -->
-            <li v-if="conflictOpen" class="sync-panel__row">
-                <ConflictList />
-            </li>
-            <!-- DP-2B-5 / R-15：达上限 ⇒ 面板级折叠提示（未展开列表亦可见） -->
-            <li v-if="status.conflictCount >= CONFLICT_JOURNAL_LIMIT" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
-                    {{ t('sync.conflict.foldLimit') }}
-                </nue-text>
-            </li>
-            <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；
-                         live region 只播摘要（见下方常驻活动区域），此处不带 aria-live -->
-            <li v-if="status.lastError" class="sync-panel__row">
-                <nue-text
-                    size="xs"
-                    color="var(--nue-error-color-60)"
-                    :clamped="2"
-                    :title="status.lastError"
-                >
-                    {{ status.lastError }}
-                </nue-text>
-            </li>
-            <!-- ④ 覆盖度：未扫完（瞬态，自动消失） -->
-            <li v-if="coverage.loadingMore" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                    {{ t('offline.coverage.loadingMore') }}
-                </nue-text>
-            </li>
-            <!-- ⑤ 覆盖度：触顶（常驻，独立于上一条；N 取实际行数，取不到退通用文案，不编造数字） -->
-            <li v-if="coverage.truncated" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
-                    {{
-                        loadedCount > 0
-                            ? t('offline.coverage.truncated', { count: loadedCount })
-                            : t('offline.coverage.truncatedGeneric')
-                    }}
-                </nue-text>
-            </li>
             <!--
-              【skill 偏离留痕｜ADR §5】本面板信息行与 footer 用原生 <li> 而非 <nue-dropdown-item>：
-              nue-ui 1.10.58 与 1.11.0 的 NueDropdownItem 渲染均为 <li data-executeid onClick>，
-              无 tabindex / role / keydown（两版逐文件核对，见 ADR §2 D-4 源码级等价表）→ 键盘不可达，
-              无法承载 AC-03「Tab 进 footer 按钮 → Enter 触发」。skill 条目语境是菜单选项
-              （execute-id + closeWhenExecuted）；本轮 footer 是动作按钮且按 C15 不挂 execute-id。
-              行为等价子集内合法：不给控件补 role="menu"/"menuitem"，不给只读行套 item。
+              面板分区行：@open 渲染 / @close 移除（C9）。面板根是库内 <ul> ⇒ **每个分区为一个 <li>**
+              （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合：
+              概览（时间）/ 数据（可信度与覆盖度）/ 待处理（计数 chips）/ 冲突 / 错误；footer 动作常驻。
             -->
-            <li class="sync-panel__footer">
-                <nue-button theme="pure,small" :loading="manualSyncing" @click="runManualSync">
-                    {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
-                </nue-button>
+            <!-- 概览：上次同步时间 / 从未同步 / 同步中… -->
+            <li class="sync-panel__section">
+                <span class="sync-panel__section-title">{{ t('sync.section.overview') }}</span>
+                <nue-div class="sync-panel__section-body" justify="space-between">
+                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                        {{ lastSyncText }}
+                    </nue-text>
+                    <nue-button theme="pure,small" :loading="manualSyncing" @click="runManualSync">
+                        {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
+                    </nue-button>
+                </nue-div>
+            </li>
+            <!-- 数据：② 回退本地镜像 / ③ 尚未同步完成 / ④ 未扫完 / ⑤ 触顶（仅相关时渲染） -->
+            <li v-if="hasDataSection" class="sync-panel__section">
+                <span class="sync-panel__section-title">{{ t('sync.section.data') }}</span>
+                <div class="sync-panel__section-body">
+                    <template v-if="freshness === 'mirror'">
+                        <nue-text size="xs" color="var(--nue-warning-color-90)">
+                            {{ t('offline.freshness.mirror', { time: timeText ?? '' }) }}
+                        </nue-text>
+                        <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                            {{ t('offline.freshness.mirrorHint') }}
+                        </nue-text>
+                    </template>
+                    <template v-else-if="freshness === 'incomplete'">
+                        <nue-text size="xs" color="var(--nue-warning-color-90)">
+                            {{ t('offline.freshness.incomplete') }}
+                        </nue-text>
+                        <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                            {{ t('offline.freshness.incompleteHint') }}
+                        </nue-text>
+                    </template>
+                    <!-- ④ 覆盖度：未扫完（瞬态，自动消失） -->
+                    <nue-text
+                        v-if="coverage.loadingMore"
+                        size="xs"
+                        color="var(--nue-secondary-text-color)"
+                    >
+                        {{ t('offline.coverage.loadingMore') }}
+                    </nue-text>
+                    <!-- ⑤ 覆盖度：触顶（常驻；N 取实际行数，取不到退通用文案，不编造数字） -->
+                    <nue-text
+                        v-if="coverage.truncated"
+                        size="xs"
+                        color="var(--nue-warning-color-90)"
+                    >
+                        {{
+                            loadedCount > 0
+                                ? t('offline.coverage.truncated', { count: loadedCount })
+                                : t('offline.coverage.truncatedGeneric')
+                        }}
+                    </nue-text>
+                </div>
+            </li>
+            <!-- 待处理：暂停 / 待推送 / 失败 / 偏好失败（横向 chips；仅 >0 时渲染） -->
+            <li v-if="hasQueueSection" class="sync-panel__section">
+                <span class="sync-panel__section-title">{{ t('sync.section.queue') }}</span>
+                <div class="sync-panel__section-body sync-panel__chips">
+                    <span v-if="status.paused" class="sync-panel__chip is-warning">
+                        {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
+                    </span>
+                    <span v-else-if="status.pendingCount > 0" class="sync-panel__chip">
+                        {{ t('sync.pending', { count: status.pendingCount }) }}
+                    </span>
+                    <span v-if="status.failedCount > 0" class="sync-panel__chip is-error">
+                        {{ t('sync.failed', { count: status.failedCount }) }}
+                    </span>
+                    <span v-if="status.preferenceFailedCount > 0" class="sync-panel__chip is-error">
+                        {{ t('sync.preferenceFailed', { count: status.preferenceFailedCount }) }}
+                    </span>
+                </div>
+            </li>
+            <!-- 冲突：记账条数入口（可交互 ⇒ 冲突对话框）+ 达上限折叠提示 -->
+            <li
+                v-if="status.conflictCount > 0"
+                ref="conflictEntryRowRef"
+                class="sync-panel__section"
+            >
+                <span class="sync-panel__section-title">{{ t('sync.section.conflict') }}</span>
+                <div class="sync-panel__section-body">
+                    <nue-button
+                        class="sync-conflict-entry"
+                        theme="pure,small"
+                        aria-haspopup="dialog"
+                        @click="conflictDialogOpen = true"
+                    >
+                        {{ t('sync.conflict', { count: status.conflictCount }) }}
+                    </nue-button>
+                    <nue-text
+                        v-if="status.conflictCount >= CONFLICT_JOURNAL_LIMIT"
+                        size="xs"
+                        color="var(--nue-warning-color-90)"
+                    >
+                        {{ t('sync.conflict.foldLimit') }}
+                    </nue-text>
+                </div>
+            </li>
+            <!-- 错误：最近一次运行的首个错误（2 行截断 + title 全文；禁 v-html） -->
+            <li v-if="status.lastError" class="sync-panel__section">
+                <span class="sync-panel__section-title">{{ t('sync.section.error') }}</span>
+                <div class="sync-panel__section-body">
+                    <nue-text
+                        size="xs"
+                        color="var(--nue-error-color-90)"
+                        :clamped="2"
+                        :title="status.lastError"
+                    >
+                        {{ status.lastError }}
+                    </nue-text>
+                </div>
             </li>
         </nue-dropdown>
+        <!-- T338：冲突对话框（入口 = 面板行「冲突 N」；NueDialog 传送至 body 弹层池） -->
+        <!-- T347：底部「关闭」/ × → close；Esc → before-close；三条路径均归还焦点到入口按钮 -->
+        <ConflictDialog
+            v-model="conflictDialogOpen"
+            @close="closeConflictDialog"
+            @before-close="focusConflictEntry"
+        />
         <!--
           常驻读屏活动区域（NFR「只播摘要」）：只播同步中/失败计数/数据不完整摘要，**不含** lastError 全文。
           视觉隐藏用 WCAG 惯例（clip-path 而非 display:none/hidden，读屏仍可播报）；
@@ -385,25 +432,63 @@ watch(
     background-color: var(--nue-warning-color-60);
 }
 
-/* 信息行（<li> 由本组件渲染，scoped 生效；面板根 <ul> 由库渲染，另见下方非 scoped 块） */
-.sync-panel__row {
+/* 面板分区（每分区一个 <li>，由本组件渲染 ⇒ scoped 生效）：分区标题 + 分区内容；分区之间 1px 分隔 */
+.sync-panel__section {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-2xs);
+    padding: var(--nue-gap-xs) 0;
+    border-top: 1px solid var(--nue-border-color);
+}
+
+.sync-panel__section:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.sync-panel__section-title {
     color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-xs);
+    font-weight: 500;
 }
 
-.sync-panel__row.is-failed {
-    color: var(--nue-error-color-60);
+.sync-panel__section-body {
+    display: flex;
+    align-items: center;
+    gap: var(--nue-gap-2xs);
+    font-size: var(--nue-text-xs);
 }
 
-.sync-panel__row.is-pending {
-    color: var(--nue-warning-color-60);
+/* 计数 chips：横向排列（不占整行、不竖堆） */
+.sync-panel__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--nue-gap-xs);
 }
 
-/* footer 动作按钮行 */
+.sync-panel__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--nue-gap-xs);
+    border-radius: var(--nue-primary-radius);
+    background-color: var(--nue-primary-color-100);
+    color: var(--nue-primary-text-color);
+    font-size: var(--nue-text-2xs);
+}
+
+.sync-panel__chip.is-warning {
+    color: var(--nue-warning-color-90);
+}
+
+.sync-panel__chip.is-error {
+    color: var(--nue-error-color-90);
+}
+
+/* footer 动作按钮行（与分区同宽，上分隔） */
 .sync-panel__footer {
     display: flex;
+    padding-top: var(--nue-gap-xs);
+    border-top: 1px solid var(--nue-border-color);
 }
 
 /* 读屏活动区域：视觉隐藏（WCAG sr-only，非 display:none/hidden）；绝对定位脱离 flex 布局 */
@@ -424,7 +509,7 @@ watch(
    限宽避免超长 lastError 撑破面板（AC-05；行内文本为 2 行截断）。 */
 .nue-dropdown--sync-panel {
     min-width: 12rem;
-    max-width: 18rem;
+    max-width: 24rem;
     padding: var(--nue-padding-xs);
 }
 </style>

@@ -13,11 +13,23 @@ import type {
 /** 字段差异三态：仅「当前」有值 ⇒ 新增；仅「我的（败方）」有值 ⇒ 删除；两侧都有但不同 ⇒ 修改 */
 export type FieldDiffKind = 'added' | 'removed' | 'changed'
 
-/** 三态符号（与语义色**双承载**，不单靠颜色 ⇒ 可访问性） */
+/** 三态符号（与语义色、文字标签**三重承载** ⇒ 不单靠颜色） */
 export const DIFF_SYMBOL: Record<FieldDiffKind, string> = {
     added: '+',
     removed: '−',
     changed: '~'
+}
+
+/** 三态文字标签 i18n 键（与符号/颜色三重冗余 ⇒ 灰阶 / 色觉差异下仍可辨） */
+export type FieldDiffLabelKey =
+    | 'sync.conflict.fieldAdded'
+    | 'sync.conflict.fieldRemoved'
+    | 'sync.conflict.fieldChanged'
+
+export const DIFF_LABEL_KEY: Record<FieldDiffKind, FieldDiffLabelKey> = {
+    added: 'sync.conflict.fieldAdded',
+    removed: 'sync.conflict.fieldRemoved',
+    changed: 'sync.conflict.fieldChanged'
 }
 
 /**
@@ -46,11 +58,21 @@ export const classifyFieldDiff = (diff: ConflictFieldDiff): FieldDiffKind => {
     return 'changed'
 }
 
-/** 可见差异：默认过滤技术字段；`showTechnical` ⇒ 全量（保持原顺序） */
-export const visibleDiffs = (
-    diffs: ConflictFieldDiff[],
-    showTechnical: boolean
-): ConflictFieldDiff[] => (showTechnical ? diffs : diffs.filter((d) => !isTechnicalField(d.field)))
+/**
+ * 拆分差异为「普通字段」与「技术字段」两组（T338：技术字段**始终显示**，但排在后面并加轻分隔）
+ * @description 保持各自原顺序（普通在前）；技术字段样式次要（§`isTechnicalField`）。
+ */
+export const splitTechnicalDiffs = (
+    diffs: ConflictFieldDiff[]
+): { normal: ConflictFieldDiff[]; technical: ConflictFieldDiff[] } => {
+    const normal: ConflictFieldDiff[] = []
+    const technical: ConflictFieldDiff[] = []
+    for (const diff of diffs) {
+        if (isTechnicalField(diff.field)) technical.push(diff)
+        else normal.push(diff)
+    }
+    return { normal, technical }
+}
 
 /** 同一实体（`table:entityId`）归一组 */
 export interface ConflictGroup {

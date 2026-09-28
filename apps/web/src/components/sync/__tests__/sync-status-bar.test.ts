@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDiv, NueDropdown, NueText, NueTooltip } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { setLocale } from '@nao-todo/shared/locales'
@@ -74,6 +74,20 @@ vi.mock('@/hooks', async () => {
     const manualSyncing = ref(false)
     const run = vi.fn()
     const loadedCount = ref(0)
+    // T338：SyncStatusBar 渲染 ConflictDialog ⇒ 需提供 useConflictUx（本文件不测冲突，给空态）
+    const conflict = {
+        items: ref([]),
+        folded: ref(false),
+        foldedReason: ref(null),
+        loading: ref(false),
+        error: ref(null),
+        comparison: ref(null),
+        retryFailed: ref(false),
+        refresh: vi.fn(async () => {}),
+        compare: vi.fn(async () => {}),
+        keepServer: vi.fn(async () => {}),
+        retryLocal: vi.fn(async () => {})
+    }
     hooksMock.status = status
     hooksMock.manualSyncing = manualSyncing
     hooksMock.run = run
@@ -81,7 +95,8 @@ vi.mock('@/hooks', async () => {
     return {
         useSyncStatus: () => ({ status }),
         useManualSync: () => ({ syncing: manualSyncing, run }),
-        useMirrorLoadedCount: () => loadedCount
+        useMirrorLoadedCount: () => loadedCount,
+        useConflictUx: () => conflict
     }
 })
 
@@ -109,6 +124,8 @@ const mountBar = (props: Record<string, unknown> = {}): VueWrapper => {
         global: {
             components: {
                 'nue-button': NueButton,
+                'nue-dialog': NueDialog,
+                'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
                 'nue-text': NueText,
                 'nue-tooltip': NueTooltip
@@ -250,6 +267,33 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(document.activeElement).toBe(button)
     })
 
+    it('面板按类别分区：概览/待处理/冲突/错误 为独立区域，计数为横向 chips', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            pendingCount: 3,
+            failedCount: 1,
+            conflictCount: 2,
+            lastError: 'boom'
+        }
+        await nextTick()
+
+        const titles = Array.from(
+            document.querySelectorAll<HTMLElement>('.sync-panel__section-title')
+        ).map((el) => el.textContent?.trim() ?? '')
+        expect(titles).toEqual(expect.arrayContaining(['概览', '待处理', '冲突', '错误']))
+
+        // 计数为 chips（同行横向），而非逐行竖排
+        const chips = document.querySelectorAll('.sync-panel__chips .sync-panel__chip')
+        expect(chips.length).toBe(2)
+
+        // 分区仍以 <li> 为面板直系子节点（P8/C12）
+        const directItems = panel()?.querySelectorAll(':scope > li') ?? []
+        expect(directItems.length).toBeGreaterThan(0)
+        // 同步动作按钮（已随用户调整移入「概览」分区）
+        expect(panel()?.querySelector('button.nue-button')).toBeTruthy()
+    })
+
     it('偏好同步失败：面板显示计数 + 弹出可见提示（T136 GAP-2 / AC3-04 / AC4-04）', async () => {
         createHost()
         mountBar()
@@ -275,15 +319,15 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         // 冲突 > 0 ⇒ 行可见且含 N；业务计数各行独立呈现
         status().value = { ...status().value, pendingCount: 3, failedCount: 1, conflictCount: 2 }
         await nextTick()
-        expect(panelText()).toContain('冲突 2')
+        expect(panelText()).toContain('2 项待确认')
         expect(panelText()).toContain('待推送 3')
         expect(panelText()).toContain('失败 1')
 
         // 负向（ADR R-05 明列）：仅 conflictCount 变化，不得影响 pendingCount/failedCount 行
         status().value = { ...status().value, conflictCount: 5 }
         await nextTick()
-        expect(panelText()).toContain('冲突 5')
-        expect(panelText()).not.toContain('冲突 2')
+        expect(panelText()).toContain('5 项待确认')
+        expect(panelText()).not.toContain('2 项待确认')
         expect(panelText()).toContain('待推送 3')
         expect(panelText()).toContain('失败 1')
 

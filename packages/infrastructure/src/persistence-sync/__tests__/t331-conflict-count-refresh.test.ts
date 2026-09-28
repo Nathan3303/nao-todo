@@ -9,6 +9,7 @@ import { newLocalTaskRepository } from '../../persistence-local/repos/task-repo-
 import { localSession } from '../../persistence-local/session/local-session'
 import {
     appendConflict,
+    conflictObjectCount,
     countConflicts,
     listConflicts,
     resolveConflictKeepServer,
@@ -24,8 +25,10 @@ import { syncStatus } from '../sync-status'
  * 两条恢复动作只删 journal 条目、**未把 journal 的 `remaining` 写回状态面** ⇒ 徽标滞留原值
  * （应用重启时由 `restoreConflictCount` 纠正 ⇒ 用户看到「处理完不消失、重启才消失」）。
  *
- * 断言：恢复动作后 `syncStatus.conflictCount === journal 当前条数`；全部处理 ⇒ 0（徽标隐藏）；
- * 重启后（`restoreConflictCount`）与 journal 一致。两条路径（web / desktop）同基础设施代码。
+ * 断言：恢复动作后 `syncStatus.conflictCount === journal **对象数**（distinct 实体）`；
+ * 全部处理 ⇒ 0（徽标隐藏）；重启后（`restoreConflictCount`）与 journal 一致。
+ *
+ * T346：计数口径由「journal 条目数」改为「待处理**对象数**」（同一实体多条记录算 1 项）。
  */
 
 const USER_ID = 't331-user'
@@ -60,7 +63,7 @@ const resetLocalState = async (): Promise<void> => {
     syncStatus.setConflictCount(0)
 }
 
-/** 模拟同步路径：appendConflict 后状态面计数 = journal 条数 */
+/** 模拟同步路径：appendConflict 后状态面计数 = journal 对象数 */
 const syncCountFromJournal = async (): Promise<void> => {
     syncStatus.setConflictCount(await countConflicts(USER_ID))
 }
@@ -140,7 +143,43 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
         await syncCountFromJournal()
         await resolveConflictKeepServer(USER_ID, 'tasks', 't1')
         const list = await listConflicts(USER_ID)
-        expect(syncStatus.get().conflictCount).toBe(list.items.length)
+        expect(syncStatus.get().conflictCount).toBe(conflictObjectCount(list.items))
+        expect(syncStatus.get().conflictCount).toBe(await countConflicts(USER_ID))
+    })
+
+    it('T346：同一对象多条记录 ⇒ 计数为 1（对象数 ≠ 条目数）', async () => {
+        await seedStale('t1', '甲')
+        await seedStale('t1', '乙')
+        await seedStale('t1', '丙')
+        await syncCountFromJournal()
+
+        expect(await countConflicts(USER_ID)).toBe(1)
+        expect(syncStatus.get().conflictCount).toBe(1)
+        // 列表条目数仍为 3（对象信息不丢）
+        expect((await listConflicts(USER_ID)).items).toHaveLength(3)
+    })
+
+    it('T346：处理一个多记录对象 ⇒ 计数 −1（不是 −N）', async () => {
+        await seedStale('t1', '甲')
+        await seedStale('t1', '乙')
+        await seedStale('t2', '丙')
+        await syncCountFromJournal()
+        expect(syncStatus.get().conflictCount).toBe(2)
+
+        const result = await resolveConflictKeepServer(USER_ID, 'tasks', 't1')
+        expect(result.remaining).toBe(1)
+        expect(syncStatus.get().conflictCount).toBe(1)
+        // t1 的两条记录一并清除 ⇒ 只剩 t2 的 1 条
+        expect((await listConflicts(USER_ID)).items).toHaveLength(1)
+    })
+
+    it('T346：重启后按对象数恢复（同一对象多条记录 ⇒ 1）', async () => {
+        await seedStale('t1', '甲')
+        await seedStale('t1', '乙')
+        syncStatus.setConflictCount(999)
+        const service = new SyncService(dummyRequester)
+        await service.restoreConflictCount()
+        expect(syncStatus.get().conflictCount).toBe(1)
         expect(syncStatus.get().conflictCount).toBe(await countConflicts(USER_ID))
     })
 

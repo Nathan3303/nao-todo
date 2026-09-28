@@ -45,14 +45,80 @@ export interface LocaleMessages {
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string
+    'sync.section.overview': string
+    'sync.section.data': string
+    'sync.section.queue': string
+    'sync.section.conflict': string
+    'sync.section.error': string
     'sync.conflict.title': string
     'sync.conflict.foldLimit': string
     'sync.conflict.foldEvicted': string
     'sync.conflict.empty': string
     'sync.conflict.loading': string
     'sync.conflict.unknownObject': string
-    'sync.conflict.groupCount': string
-    'sync.conflict.showTechnical': string
+    'sync.conflict.selectHint': string
+    'sync.conflict.loadFailed': string
+    'sync.conflict.noFieldDiff': string
+    'sync.conflict.objectInfo': string
+    'sync.conflict.technicalSection': string
+    'sync.conflict.metaTable': string
+    'sync.conflict.metaEntityId': string
+    'sync.conflict.metaEntryId': string
+    'sync.conflict.metaAt': string
+    'sync.conflict.metaServerTime': string
+    'sync.conflict.metaLocalTime': string
+    'sync.conflict.metaKind': string
+    'sync.conflict.metaRecordCount': string
+    'sync.conflict.detailTitle': string
+    'sync.conflict.safetyHint': string
+    'sync.conflict.field.id': string
+    'sync.conflict.field.userId': string
+    'sync.conflict.field.createdAt': string
+    'sync.conflict.field.updatedAt': string
+    'sync.conflict.field.deletedAt': string
+    'sync.conflict.field.revision': string
+    'sync.conflict.field.syncedServerUpdatedAt': string
+    'sync.conflict.field.parentTaskId': string
+    'sync.conflict.field.name': string
+    'sync.conflict.field.description': string
+    'sync.conflict.field.state': string
+    'sync.conflict.field.priority': string
+    'sync.conflict.field.startAt': string
+    'sync.conflict.field.endAt': string
+    'sync.conflict.field.projectId': string
+    'sync.conflict.field.tags': string
+    'sync.conflict.field.archivedAt': string
+    'sync.conflict.field.starMarkAt': string
+    'sync.conflict.field.givenUpAt': string
+    'sync.conflict.field.remindAt': string
+    'sync.conflict.field.remindRepeat': string
+    'sync.conflict.field.remindTime': string
+    'sync.conflict.field.remindWeekdays': string
+    'sync.conflict.field.checkItemCount': string
+    'sync.conflict.field.commentCount': string
+    'sync.conflict.field.subtaskCount': string
+    'sync.conflict.field.sortId': string
+    'sync.conflict.field.taskId': string
+    'sync.conflict.field.taskName': string
+    'sync.conflict.field.isDone': string
+    'sync.conflict.field.icon': string
+    'sync.conflict.field.color': string
+    'sync.conflict.field.deactivedAt': string
+    'sync.conflict.field.taskCount': string
+    'sync.conflict.field.content': string
+    'sync.conflict.field.attachments': string
+    'sync.conflict.field.isTopUp': string
+    'sync.conflict.field.avatar': string
+    'sync.conflict.field.nickname': string
+    'sync.conflict.field.type': string
+    'sync.conflict.field.duration': string
+    'sync.conflict.field.totalDuration': string
+    'sync.conflict.field.sessionId': string
+    'sync.conflict.field.pomodoroId': string
+    'sync.conflict.field.note': string
+    'sync.conflict.fieldAdded': string
+    'sync.conflict.fieldRemoved': string
+    'sync.conflict.fieldChanged': string
     'sync.conflict.expand': string
     'sync.conflict.collapse': string
     'sync.conflict.compareTitle': string

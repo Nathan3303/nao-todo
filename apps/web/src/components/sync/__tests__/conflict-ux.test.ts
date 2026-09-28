@@ -2,7 +2,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import {
+    NueButton,
+    NueDialog,
+    NueDiv,
+    NueDropdown,
+    NueEmpty,
+    NueIcon,
+    NueText,
+    NueTooltip
+} from 'nue-ui'
 import {
     CONFLICT_JOURNAL_LIMIT,
     type ConflictComparison,
@@ -13,8 +22,9 @@ import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { resetReadOnlyForTest } from '@nao-todo/presentation/offline'
 
-/** 冲突组件源码（`?raw`）：用于 i18n 悬空键 / 死键静态守护（T169） */
-const conflictComponentSources = import.meta.glob('../*.vue', {
+/** 冲突组件源码（`?raw`）：用于 i18n 悬空键 / 死键静态守护（T169）——
+ *  T338：同时扇入同目录 `.ts`（`DIFF_LABEL_KEY` 等纯函数模块也消费 i18n 键） */
+const conflictComponentSources = import.meta.glob('../*.{vue,ts}', {
     query: '?raw',
     import: 'default',
     eager: true
@@ -77,7 +87,6 @@ type MockConflictUx = {
     compare: ReturnType<typeof vi.fn>
     keepServer: ReturnType<typeof vi.fn>
     retryLocal: ReturnType<typeof vi.fn>
-    closeComparison: ReturnType<typeof vi.fn>
 }
 
 const hooksMock = vi.hoisted(() => ({
@@ -118,8 +127,7 @@ vi.mock('@/hooks', async () => {
         refresh: vi.fn(async () => {}),
         compare: vi.fn(async () => {}),
         keepServer: vi.fn(async () => {}),
-        retryLocal: vi.fn(async () => {}),
-        closeComparison: vi.fn(() => {})
+        retryLocal: vi.fn(async () => {})
     }
     hooksMock.status = status
     hooksMock.manualSyncing = manualSyncing
@@ -168,6 +176,12 @@ const referencedConflictKeys = (): string[] => {
     return [...new Set(source.match(/sync\.conflict[\w.-]*/g) ?? [])]
 }
 
+/** `conflict-list.vue` 原始源码（静态样式守护：分割线 / 堆叠态分支） */
+const conflictListSource = (): string =>
+    Object.entries(conflictComponentSources).find(([path]) =>
+        path.includes('conflict-list.vue')
+    )?.[1] ?? ''
+
 vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -204,11 +218,12 @@ const panel = (): HTMLElement | null =>
 
 const panelText = (): string => panel()?.textContent ?? ''
 
-/** 冲突入口的可交互控件（button / role=button / tabindex） */
+/** T338：对话框内容（NueDialog 传送至 body）⇒ 读 body 文本（面板 + 对话框并集） */
+const dialogText = (): string => document.body.textContent ?? ''
+
+/** 冲突入口按钮（按稳定类名定位；文案已改为「N 项待确认」，不用文本匹配） */
 const conflictEntry = (): Element | undefined =>
-    Array.from(panel()?.querySelectorAll('button, [role="button"], [tabindex]') ?? []).find((el) =>
-        el.textContent?.includes('冲突')
-    )
+    panel()?.querySelector('.sync-conflict-entry') ?? undefined
 
 const mountBar = (): void => {
     createHost()
@@ -217,7 +232,11 @@ const mountBar = (): void => {
         global: {
             components: {
                 'nue-button': NueButton,
+                'nue-dialog': NueDialog,
+                'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
+                'nue-empty': NueEmpty,
+                'nue-icon': NueIcon,
                 'nue-text': NueText,
                 'nue-tooltip': NueTooltip
             }
@@ -250,7 +269,7 @@ describe('面 ③ 冲突 UX 可见面（红基线）', () => {
         status().value = { ...status().value, conflictCount: 2 }
         await nextTick()
 
-        expect(panelText()).toContain('冲突 2')
+        expect(panelText()).toContain('2 项待确认')
         expect(conflictEntry()).toBeTruthy()
     })
 
@@ -263,7 +282,7 @@ describe('面 ③ 冲突 UX 可见面（红基线）', () => {
         status().value = { ...status().value, conflictCount: CONFLICT_JOURNAL_LIMIT }
         await nextTick()
 
-        expect(panelText()).toContain(`冲突 ${CONFLICT_JOURNAL_LIMIT}`)
+        expect(panelText()).toContain(`${CONFLICT_JOURNAL_LIMIT} 项待确认`)
         expect(panelText()).toContain('折叠')
     })
 })
@@ -294,15 +313,15 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(document.querySelector('.conflict-list')).toBeTruthy()
         expect(conflict().refresh).toHaveBeenCalled()
 
-        // 列表：分组头渲染表名（本地化）+ 败方标题；条目按钮可点击
+        // 左栏：仅对象名称行（无类型/时间）；点击行 ⇒ 展示详情
         const item = conflictItem()
         conflict().items.value = [item]
         await nextTick()
-        const groupHead = document.querySelector<HTMLElement>('.conflict-list__group-head')
-        expect(groupHead?.textContent).toContain('任务')
-        expect(groupHead?.textContent).toContain('本地标题')
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
-        expect(itemButton).toBeTruthy()
+        expect(itemButton?.textContent).toContain('本地标题')
+        expect(itemButton?.textContent).not.toContain('任务')
+        expect(itemButton?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
 
         // 只读对比：点击条目 ⇒ compare(item)；渲染字段级差异（败方 vs 当前）
         itemButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -316,9 +335,9 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
             diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
         }
         await nextTick()
-        expect(panelText()).toContain(messages['zh-CN']['sync.conflict.compareTitle'])
-        expect(panelText()).toContain('本地标题')
-        expect(panelText()).toContain('服务端标题')
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.compareTitle'])
+        expect(dialogText()).toContain('本地标题')
+        expect(dialogText()).toContain('服务端标题')
 
         // 两种恢复动作：A 保留服务端 / B 以我的版本重试
         actionButton(messages['zh-CN']['sync.conflict.keepServer'])?.dispatchEvent(
@@ -346,11 +365,11 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
             diffs: [{ field: 'name', loser: '本地标题', current: null }]
         }
         await nextTick()
-        expect(panelText()).not.toContain(messages['zh-CN']['sync.conflict.retryFailed'])
+        expect(dialogText()).not.toContain(messages['zh-CN']['sync.conflict.retryFailed'])
 
         conflict().retryFailed.value = true
         await nextTick()
-        expect(panelText()).toContain(messages['zh-CN']['sync.conflict.retryFailed'])
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.retryFailed'])
     })
 
     it('T332：分组标题在无标题时优雅降级（entityId ⇒ 本地化 kind），不出现空白/undefined', async () => {
@@ -361,7 +380,7 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         ]
         await nextTick()
         const heads = Array.from(
-            document.querySelectorAll<HTMLElement>('.conflict-list__group-head')
+            document.querySelectorAll<HTMLElement>('.conflict-list__entry')
         ).map((el) => el.textContent ?? '')
         expect(heads).toHaveLength(2)
         expect(heads[0]).toContain('t-9')
@@ -383,13 +402,397 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         conflict().folded.value = true
         conflict().foldedReason.value = 'limit'
         await nextTick()
-        expect(panelText()).toContain(foldLimit)
-        expect(panelText()).not.toContain(foldEvicted)
+        expect(dialogText()).toContain(foldLimit)
+        expect(dialogText()).not.toContain(foldEvicted)
 
         conflict().foldedReason.value = 'evicted'
         await nextTick()
-        expect(panelText()).toContain(foldEvicted)
-        expect(panelText()).not.toContain(foldLimit)
+        expect(dialogText()).toContain(foldEvicted)
+        expect(dialogText()).not.toContain(foldLimit)
+    })
+})
+
+describe('T338 冲突对话框（模态 + 两栏 + a11y + T331 回归）', () => {
+    it('入口「冲突 N」⇒ 打开 role=dialog / aria-modal 的对话框（左栏记录 + 右栏提示）', async () => {
+        await openConflictList(2)
+
+        const dialog = document.querySelector('[role="dialog"][aria-modal="true"]')
+        expect(dialog).toBeTruthy()
+        expect(document.querySelector('.conflict-list__left')).toBeTruthy()
+        expect(document.querySelector('.conflict-list__right')).toBeTruthy()
+        // header 显示条数（对话框传送至 body ⇒ 读 body 文本）
+        expect(document.body.textContent).toContain(messages['zh-CN']['sync.conflict.title'])
+        // 未选中 ⇒ 右栏提示
+        expect(document.body.textContent).toContain(messages['zh-CN']['sync.conflict.selectHint'])
+    })
+
+    it('× 关闭 ⇒ 对话框卸载且焦点归还触发按钮', async () => {
+        await openConflictList(1)
+        expect(document.querySelector('[role="dialog"]')).toBeTruthy()
+
+        const closeBtn = document.querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+        expect(closeBtn).toBeTruthy()
+        closeBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await nextTick()
+        // jsdom 不跑 CSS 动画 ⇒ 手动补 animationend 触发 NueDialog 的 model 写回
+        document
+            .querySelector('.nue-dialog')
+            ?.dispatchEvent(new Event('animationend', { bubbles: true }))
+        await settle()
+
+        expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+        expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('T331 回归：对话框内处理冲突 ⇒ 入口计数递减（数据面同源写回，详见 infra 测试）', async () => {
+        await openConflictList(2)
+        const item = conflictItem()
+        conflict().items.value = [item]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        // 模拟数据面副作用（真实副作用由 t331-conflict-count-refresh.test.ts 保证）
+        conflict().keepServer.mockImplementationOnce(async () => {
+            status().value = { ...status().value, conflictCount: 1 }
+        })
+        await nextTick()
+        actionButton(messages['zh-CN']['sync.conflict.keepServer'])?.dispatchEvent(
+            new MouseEvent('click', { bubbles: true })
+        )
+        await settle()
+
+        expect(conflict().keepServer).toHaveBeenCalledWith(item)
+        expect(panelText()).toContain('1 项待确认')
+    })
+})
+
+describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显）', () => {
+    it('两栏分隔：左栏竖向 1px 分隔（既有 border 色）；<900px 堆叠时改横向（静态样式守护）', () => {
+        const src = conflictListSource()
+        expect(src).toContain('border-right: 1px solid var(--nue-border-color)')
+        // 堆叠态分支：竖分隔关闭 ⇒ 改横向（复用左栏下边框）
+        const stacked = src.slice(src.indexOf('@media (max-width: 899.98px)'))
+        expect(stacked).toContain('border-right: none')
+        expect(stacked).toContain('border-bottom: 1px solid var(--nue-border-color)')
+    })
+
+    it('左栏只保留「对象名称」（无冲突类型/时间）', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        await nextTick()
+        const entry = document.querySelector<HTMLElement>('.conflict-list__entry')
+        expect(entry?.textContent).toContain('本地标题')
+        expect(entry?.textContent).not.toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(document.querySelector('.conflict-list__entry-time')).toBeFalsy()
+    })
+
+    it('被移出的信息在右栏「对象信息」可见（类型 / 实体 ID / 冲突 ID / 发生时间）', async () => {
+        await openConflictList(1)
+        const item = conflictItem()
+        conflict().items.value = [item]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+        const text = dialogText()
+        expect(text).toContain(messages['zh-CN']['sync.conflict.objectInfo'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaTable'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.table.tasks'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaKind'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntityId'])
+        expect(text).toContain('t1')
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaEntryId'])
+        expect(text).toContain(item.id)
+        expect(text).toContain(messages['zh-CN']['sync.conflict.metaAt'])
+    })
+
+    it('技术字段始终显示（无开关）且排在普通字段之后（轻分隔 + 次要样式）', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: {},
+            current: {},
+            diffs: [
+                { field: 'name', loser: '旧', current: '新' },
+                { field: 'updatedAt', loser: 'A', current: 'B' }
+            ]
+        }
+        await nextTick()
+        // 开关已移除
+        expect(document.querySelector('.conflict-list__tech-toggle')).toBeFalsy()
+        const allRows = Array.from(document.querySelectorAll('.conflict-list__diff'))
+            .map((el) => el.textContent ?? '')
+            .join('|')
+        // 字段名为可读标签（非 raw 技术名）
+        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.name'])
+        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.updatedAt'])
+        expect(allRows).not.toContain('updatedAt')
+        // 技术字段段落排在普通字段之后
+        const text = dialogText()
+        expect(text).toContain(messages['zh-CN']['sync.conflict.technicalSection'])
+        expect(text.indexOf(messages['zh-CN']['sync.conflict.field.updatedAt'])).toBeGreaterThan(
+            text.indexOf(messages['zh-CN']['sync.conflict.technicalSection'])
+        )
+    })
+})
+
+describe('T342 三态（LoadingError） + 左栏对象行', () => {
+    it('loading ⇒ 左栏展示 LoadingError 加载态', async () => {
+        await openConflictList(1)
+        conflict().loading.value = true
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.loading'])
+    })
+
+    it('error ⇒ 左栏展示错误文案 + 可点「重试」（点击调用 refresh）', async () => {
+        await openConflictList(1)
+        conflict().loading.value = false
+        conflict().error.value = 'boom'
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.loadFailed'])
+        const retry = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(
+            (button) => button.textContent?.includes(messages['zh-CN']['common.retry'])
+        )
+        expect(retry).toBeTruthy()
+        const before = conflict().refresh.mock.calls.length
+        retry?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(conflict().refresh.mock.calls.length).toBeGreaterThan(before)
+    })
+
+    it('empty ⇒ 左栏展示 LoadingError 空态文案', async () => {
+        await openConflictList(1)
+        conflict().loading.value = false
+        conflict().error.value = null
+        conflict().items.value = []
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.empty'])
+    })
+
+    it('无字段差异 ⇒ 差异详情区展示 LoadingError 空态', async () => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: {},
+            current: {},
+            diffs: []
+        }
+        await nextTick()
+        expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.noFieldDiff'])
+        expect(document.querySelectorAll('.conflict-list__diff')).toHaveLength(0)
+    })
+
+    it('T346：1 个对象 3 条记录 ⇒ 标题与行数均按对象数（1），右栏展示 3 条记录 + 全部类型', async () => {
+        await openConflictList(1)
+        conflict().items.value = [
+            conflictItem({ id: 'a', kind: 'stale' }),
+            conflictItem({ id: 'b', kind: 'push-noop' }),
+            conflictItem({ id: 'c', kind: 'remote-wins' })
+        ]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+
+        // 标题按**对象数**（1），不是记录数（3）
+        expect(dialogText()).toContain('1 项待确认')
+        expect(dialogText()).not.toContain('3 项待确认')
+        // 左栏只有 1 行（一行一对象）
+        expect(document.querySelectorAll('.conflict-list__entry')).toHaveLength(1)
+        // 右栏对象信息：记录条数 = 3 + 全部类型（去重）
+        const meta = document.querySelector('.conflict-list__meta-list')?.textContent ?? ''
+        expect(meta).toContain(messages['zh-CN']['sync.conflict.metaRecordCount'])
+        expect(meta).toContain('3')
+        expect(meta).toContain(messages['zh-CN']['sync.conflict.kind.stale'])
+        expect(meta).toContain(messages['zh-CN']['sync.conflict.kind.push-noop'])
+        expect(meta).toContain(messages['zh-CN']['sync.conflict.kind.remote-wins'])
+    })
+
+    it('左栏对象行：点击 ⇒ 选中该对象（仅该行高亮）+ 展示详情', async () => {
+        await openConflictList(2)
+        const item = conflictItem()
+        // 同一对象两条 journal 条目 ⇒ 仍是**一行**（避免「全 active」）
+        conflict().items.value = [item, conflictItem({ id: 't1b' })]
+        await nextTick()
+        const rows = document.querySelectorAll<HTMLElement>('.conflict-list__entry')
+        expect(rows).toHaveLength(1)
+        expect(rows[0]?.getAttribute('aria-selected')).toBe('false')
+        rows[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await nextTick()
+        expect(conflict().compare).toHaveBeenCalled()
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+        expect(rows[0]?.getAttribute('aria-selected')).toBe('true')
+    })
+})
+
+describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / 关闭语义）', () => {
+    /** 选中一个对象 ⇒ 右栏渲染（footer 动作区仅在 comparison 存在时渲染） */
+    const selectObject = async (): Promise<void> => {
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '本地标题' },
+            current: { name: '服务端标题' },
+            diffs: [{ field: 'name', loser: '本地标题', current: '服务端标题' }]
+        }
+        await nextTick()
+    }
+
+    it('① 对比度按真实底色（卡片 -100）重算：绿色系小文本/符号提级至 -100', () => {
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).toContain(
+            '.conflict-list__state-label.is-added {\n    color: var(--nue-success-color-100);'
+        )
+        expect(src).toContain(
+            '.conflict-list__symbol.is-added {\n    color: var(--nue-success-color-100);'
+        )
+        expect(src).toContain(
+            '.conflict-list__symbol.is-changed {\n    color: var(--nue-warning-color-90);'
+        )
+        // 旧的「按白底估算」注释不得残留
+        expect(src).not.toContain('实测 4.95 / 6.67 / 8.97')
+    })
+
+    it('② 深色技术卡片走主题 token（无写死亮色 #efefef）', () => {
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).not.toContain('#efefef')
+        expect(src).toContain(
+            '.conflict-list__diff.is-technical {\n    background-color: var(--nue-primary-color-100);'
+        )
+    })
+
+    it('④ 空态图统一 assetUrl（无 /public 404 路径 / 无未绑定占位符）', () => {
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).not.toContain('/public/images')
+        expect(src).not.toContain('assetUrlPlaceholder')
+        expect(src).toContain("assetUrl('/images/notaskhere.webp')")
+        expect(src).toContain("assetUrl('/images/todo.webp')")
+    })
+
+    it('⑤ 底部「关闭」= 关闭对话框（不再只清空右栏），且父面板保持打开', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const close = actionButton(messages['zh-CN']['sync.conflict.close'])
+        expect(close).toBeTruthy()
+        close?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+        // 回归：点击冒泡到 window 曾误关父面板 ⇒ 入口按钮不在可聚焦状态
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('③ Esc 关闭 ⇒ 焦点同样归还入口按钮（与 × / 底部按钮一致）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        document
+            .querySelector('.nue-dialog-overlay')
+            ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        await nextTick()
+        document
+            .querySelector('.nue-dialog')
+            ?.dispatchEvent(new Event('animationend', { bubbles: true }))
+        await settle()
+        expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('③ 连续快速「开→×」3 次 ⇒ 面板始终打开、焦点稳定在入口按钮', async () => {
+        await openConflictList(1)
+        await selectObject()
+        for (let i = 0; i < 3; i += 1) {
+            conflictEntry()?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+            await settle()
+            document
+                .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+                ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+            await settle()
+            expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+            expect(panel()?.getAttribute('data-visible')).toBe('true')
+            expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+        }
+    })
+
+    it('T353：关闭对话框不摘除截断监听（覆盖「关闭那次 click」的冒泡）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        // 修复前：`watch(open)` 的 open→false 分支在关闭 click 冒泡途中同步 `removeEventListener`
+        // ⇒ 该 click 继续冒泡命中 dropdown 的 window 监听 ⇒ 面板被关。监听器须「常驻」。
+        const removeSpy = vi.spyOn(Element.prototype, 'removeEventListener')
+        document
+            .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(removeSpy.mock.calls.filter(([type]) => type === 'click')).toEqual([])
+        removeSpy.mockRestore()
+    })
+
+    it('T353：对话框内点击不得到达 window 层监听（dropdown「点外部即关」）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const winSpy = vi.fn()
+        window.addEventListener('click', winSpy)
+        document
+            .querySelector<HTMLButtonElement>('.nue-dialog__header__closebtn')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(winSpy).not.toHaveBeenCalled()
+        window.removeEventListener('click', winSpy)
+        // 面板保持打开 + 焦点归还
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).toBe(document.querySelector('.sync-conflict-entry'))
+    })
+
+    it('不回归：面板外点击仍能关闭面板（document 级截断只作用于对话框内）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const outside = document.createElement('div')
+        document.body.appendChild(outside)
+        outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(panel()?.getAttribute('data-visible')).toBe('false')
+        outside.remove()
+    })
+
+    it('T355：点击对话框遮罩空白 ⇒ 父面板保持打开、对话框仍开（遮罩不关对话框）', async () => {
+        await openConflictList(1)
+        await selectObject()
+        const overlay = document.querySelector<HTMLElement>('.nue-dialog-overlay')
+        expect(overlay, '遮罩存在').toBeTruthy()
+        expect(overlay?.className, '遮罩带冲突对话框主题类').toContain('nue-overlay--conflict')
+        overlay?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        // NueDialog 的遮罩只绑 onEscape、无 onClick ⇒ 点遮罩不关对话框
+        expect(document.querySelector('[role="dialog"]')).toBeTruthy()
+        // 该 click 不得冒泡到 window 关掉父面板（回归修复点）
+        expect(panel()?.getAttribute('data-visible')).toBe('true')
+        expect(document.activeElement).not.toBe(document.querySelector('.sync-rail-btn'))
     })
 })
 
@@ -425,7 +828,7 @@ describe('面 ③ i18n 中英键齐备 / 死键守护（T169）', () => {
         const unused = Object.keys(messages['zh-CN'])
             .filter((key) => key.startsWith('sync.conflict') && !referenced.has(key))
             .sort()
-        // 已知死键（T169 登记，非阻塞；先例 `offline.readOnlyBanner`）：`sync.conflict.title` 零生产消费者
-        expect(unused).toEqual(['sync.conflict.title'])
+        // T338：`sync.conflict.title` 已用作对话框标题 ⇒ 冲突命名空间零死键
+        expect(unused).toEqual([])
     })
 })

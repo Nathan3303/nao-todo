@@ -5,6 +5,7 @@ import type {
     ConflictListItem
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import {
+    DIFF_LABEL_KEY,
     DIFF_SYMBOL,
     classifyFieldDiff,
     conflictTitleOf,
@@ -12,7 +13,7 @@ import {
     groupConflictItems,
     isLongValue,
     isTechnicalField,
-    visibleDiffs
+    splitTechnicalDiffs
 } from '../conflict-diff'
 
 /**
@@ -54,9 +55,16 @@ describe('T332 conflict-diff 纯函数', () => {
             expect(DIFF_SYMBOL.changed).toBeTruthy()
             expect(new Set(Object.values(DIFF_SYMBOL)).size).toBe(3)
         })
+
+        it('三态文字标签键齐备（颜色 + 符号 + 标签三重冗余，覆盖灰阶/色觉差异）', () => {
+            expect(DIFF_LABEL_KEY.added).toBe('sync.conflict.fieldAdded')
+            expect(DIFF_LABEL_KEY.removed).toBe('sync.conflict.fieldRemoved')
+            expect(DIFF_LABEL_KEY.changed).toBe('sync.conflict.fieldChanged')
+            expect(new Set(Object.values(DIFF_LABEL_KEY)).size).toBe(3)
+        })
     })
 
-    describe('技术字段判定（默认隐藏 / 可展开）', () => {
+    describe('技术字段判定（始终显示 / 次要分组）', () => {
         it('时间戳 / 版本令牌 / 主键 / 排序 ⇒ 技术字段', () => {
             for (const field of [
                 'id',
@@ -77,18 +85,25 @@ describe('T332 conflict-diff 纯函数', () => {
             }
         })
 
-        it('visibleDiffs：默认过滤技术字段；开关打开 ⇒ 全量且保持原顺序', () => {
+        it('splitTechnicalDiffs：拆为「普通 + 技术」两组，各自保持原顺序（技术字段始终显示）', () => {
             const diffs = [
                 diff({ field: 'name', loser: '旧', current: '新' }),
                 diff({ field: 'updatedAt', loser: 'A', current: 'B' }),
-                diff({ field: 'revision', loser: 1, current: 2 })
+                diff({ field: 'revision', loser: 1, current: 2 }),
+                diff({ field: 'state', loser: 'todo', current: 'done' })
             ]
-            expect(visibleDiffs(diffs, false).map((d) => d.field)).toEqual(['name'])
-            expect(visibleDiffs(diffs, true).map((d) => d.field)).toEqual([
-                'name',
-                'updatedAt',
-                'revision'
+            const { normal, technical } = splitTechnicalDiffs(diffs)
+            expect(normal.map((d) => d.field)).toEqual(['name', 'state'])
+            expect(technical.map((d) => d.field)).toEqual(['updatedAt', 'revision'])
+        })
+
+        it('splitTechnicalDiffs：全为业务字段 ⇒ 技术组为空', () => {
+            const { normal, technical } = splitTechnicalDiffs([
+                diff({ field: 'name' }),
+                diff({ field: 'tags' })
             ])
+            expect(normal).toHaveLength(2)
+            expect(technical).toHaveLength(0)
         })
     })
 
