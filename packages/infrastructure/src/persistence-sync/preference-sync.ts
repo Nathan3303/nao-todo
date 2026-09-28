@@ -595,11 +595,33 @@ const runPreferenceReconcile = async (
             const remote = await fetchRemoteProjectPreference(requester, record.projectId)
             if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
             const next = await projectPreferenceEntityToRecord(remote, userId)
-            await localDatabase.projectPreferences.put({
-                ...next,
-                syncedServerUpdatedAt: remote.updatedAt
-            })
-            applied += 1
+            // T329 / DEF-50：覆盖侧也需**事务内再确认**——首读队列后若本地写抢先入队，
+            // 则放弃覆盖（与业务面 pull 同型）⇒ 不得无提示覆盖未推本地值（PS-1b）
+            const didApply = await localDatabase.transaction(
+                'rw',
+                localDatabase.projectPreferences,
+                localDatabase.meta,
+                async () => {
+                    const freshQueue = await loadPreferenceQueue(userId, localDatabase.meta)
+                    if (
+                        freshQueue.some(
+                            (item) =>
+                                item.kind === 'projectPreference' &&
+                                item.projectId === record.projectId
+                        )
+                    )
+                        return false
+                    const current = await localDatabase.projectPreferences.get(record.id)
+                    if (!current || !isRemoteNewer(remote.updatedAt, current.syncedServerUpdatedAt))
+                        return false
+                    await localDatabase.projectPreferences.put({
+                        ...next,
+                        syncedServerUpdatedAt: remote.updatedAt
+                    })
+                    return true
+                }
+            )
+            if (didApply) applied += 1
         }
 
         const tags = (await localDatabase.tagPreferences.toArray()).filter(
@@ -612,11 +634,29 @@ const runPreferenceReconcile = async (
             const remote = await fetchRemoteTagPreference(requester, record.tagId)
             if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
             const next = await tagPreferenceEntityToRecord(remote, userId)
-            await localDatabase.tagPreferences.put({
-                ...next,
-                syncedServerUpdatedAt: remote.updatedAt
-            })
-            applied += 1
+            const didApply = await localDatabase.transaction(
+                'rw',
+                localDatabase.tagPreferences,
+                localDatabase.meta,
+                async () => {
+                    const freshQueue = await loadPreferenceQueue(userId, localDatabase.meta)
+                    if (
+                        freshQueue.some(
+                            (item) => item.kind === 'tagPreference' && item.tagId === record.tagId
+                        )
+                    )
+                        return false
+                    const current = await localDatabase.tagPreferences.get(record.id)
+                    if (!current || !isRemoteNewer(remote.updatedAt, current.syncedServerUpdatedAt))
+                        return false
+                    await localDatabase.tagPreferences.put({
+                        ...next,
+                        syncedServerUpdatedAt: remote.updatedAt
+                    })
+                    return true
+                }
+            )
+            if (didApply) applied += 1
         }
 
         return { checked, applied }

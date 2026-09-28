@@ -9,6 +9,7 @@
  *              - 失败分类与退避**复用** `sync-retry` 原语（SHELL-06 C-38/C-39），不新增重试机制。
  * @see docs/adr/2026-09-23-local-preference-sync.md（§D-1b / §D-4 / PS-1 / PS-10）
  */
+import type { Table } from 'dexie'
 import {
     localDatabase,
     type MetaRecord,
@@ -35,25 +36,29 @@ export const preferenceUnitKey = (item: {
     return `projectPreference:${item.projectId ?? ''}`
 }
 
-/** 读取偏好队列（无记录 ⇒ 空数组） */
-export const loadPreferenceQueue = async (userId: string): Promise<PreferenceQueueItem[]> => {
+/** 读取偏好队列（无记录 ⇒ 空数组；`meta` 可传事务内表，T329） */
+export const loadPreferenceQueue = async (
+    userId: string,
+    meta: Table<MetaRecord, string> = localDatabase.meta
+): Promise<PreferenceQueueItem[]> => {
     if (!userId) return []
-    const record = await localDatabase.meta.get(preferenceQueueId(userId))
+    const record = await meta.get(preferenceQueueId(userId))
     return record?.preferenceQueue ?? []
 }
 
-/** 覆盖写入偏好队列（空队列 ⇒ 删除记录，避免残留） */
+/** 覆盖写入偏好队列（空队列 ⇒ 删除记录，避免残留；`meta` 可传事务内表，T329） */
 export const savePreferenceQueue = async (
     userId: string,
-    items: PreferenceQueueItem[]
+    items: PreferenceQueueItem[],
+    meta: Table<MetaRecord, string> = localDatabase.meta
 ): Promise<void> => {
     if (!userId) return
     const id = preferenceQueueId(userId)
     if (items.length === 0) {
-        await localDatabase.meta.delete(id)
+        await meta.delete(id)
         return
     }
-    await localDatabase.meta.put({ id, preferenceQueue: items } satisfies MetaRecord)
+    await meta.put({ id, preferenceQueue: items } satisfies MetaRecord)
 }
 
 /**
@@ -69,10 +74,11 @@ export const enqueuePreference = async (
         'createdAt' | 'attempts' | 'nextAttemptAt' | 'lastErrorClass'
     > & {
         createdAt?: string
-    }
+    },
+    meta: Table<MetaRecord, string> = localDatabase.meta
 ): Promise<PreferenceQueueItem[]> => {
     if (!userId) return []
-    const items = await loadPreferenceQueue(userId)
+    const items = await loadPreferenceQueue(userId, meta)
     const key = preferenceUnitKey(item)
     const existing = items.find((candidate) => preferenceUnitKey(candidate) === key)
     const next: PreferenceQueueItem = {
@@ -83,7 +89,7 @@ export const enqueuePreference = async (
         createdAt: item.createdAt ?? existing?.createdAt ?? new Date().toISOString()
     }
     const merged = [...items.filter((candidate) => preferenceUnitKey(candidate) !== key), next]
-    await savePreferenceQueue(userId, merged)
+    await savePreferenceQueue(userId, merged, meta)
     return merged
 }
 

@@ -16,7 +16,6 @@ import {
 } from '../persistence-local/db/local-database'
 import { findConflictEntity } from './conflict-entity-registry'
 import { nowCalibratedIso } from './sync-config'
-import { syncTracker } from './sync-tracker'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 export type { ConflictJournalEntry }
@@ -339,11 +338,11 @@ export const resolveConflictRetryLocal = async (
         const config = findConflictEntity(table)
         const entry = config ? latestEntry(entries, table, entityId) : undefined
         if (!config || !entry || !SNAPSHOT_KINDS.has(entry.kind)) return null
-        // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecord` 保留当前 base
+        // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecordAndEnqueue` 保留当前 base，
+        // 且业务行 + 入队**同一 Dexie 事务**（T329 / DEF-50：⛔ 不得拆为两次 await ⇒ 防 RC-5 静默丢写）
         const updatedAt = nowCalibratedIso()
         const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
-        await config.putRecord(record)
-        await syncTracker.markDirty(table, entityId, 'upsert', updatedAt)
+        await config.putRecordAndEnqueue(record, updatedAt)
         resolved = true
         return {
             entries: entries.filter(

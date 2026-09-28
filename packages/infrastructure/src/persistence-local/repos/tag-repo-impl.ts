@@ -3,12 +3,11 @@ import type { GoAsync } from '@nao-todo/shared'
 import { tagEntityToRecord, tagRecordToEntity } from '../converters/tag'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
-import { putWithSyncBase } from './put-with-sync-base'
+import { putWithSyncBaseAndEnqueue } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
-import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 本地标签仓储实现
@@ -47,8 +46,14 @@ export class LocalTagRepoImpl implements TagRepository {
                 createdEntity.color,
                 createdEntity.sortId
             )
-            await this.db.tags.add(await tagEntityToRecord(entity, this.currentUserId))
-            await syncTracker.markDirty('tags', entity.id, 'upsert', entity.updatedAt)
+            await putWithSyncBaseAndEnqueue(
+                this.db,
+                this.db.tags,
+                'tags',
+                await tagEntityToRecord(entity, this.currentUserId),
+                'upsert',
+                entity.updatedAt
+            )
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -58,11 +63,14 @@ export class LocalTagRepoImpl implements TagRepository {
     async update(updatedEntity: TagEntity): GoAsync<void> {
         try {
             updatedEntity.updatedAt = nowCalibratedIso()
-            await putWithSyncBase(
+            await putWithSyncBaseAndEnqueue(
+                this.db,
                 this.db.tags,
-                await tagEntityToRecord(updatedEntity, this.currentUserId)
+                'tags',
+                await tagEntityToRecord(updatedEntity, this.currentUserId),
+                'upsert',
+                updatedEntity.updatedAt
             )
-            await syncTracker.markDirty('tags', updatedEntity.id, 'upsert', updatedEntity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -76,8 +84,14 @@ export class LocalTagRepoImpl implements TagRepository {
             const entity = await tagRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await putWithSyncBase(this.db.tags, await tagEntityToRecord(entity, this.currentUserId))
-            await syncTracker.markDirty('tags', id, 'delete', entity.deletedAt ?? entity.updatedAt)
+            await putWithSyncBaseAndEnqueue(
+                this.db,
+                this.db.tags,
+                'tags',
+                await tagEntityToRecord(entity, this.currentUserId),
+                'delete',
+                entity.deletedAt ?? entity.updatedAt
+            )
             return null
         } catch (err) {
             return String(err)
@@ -128,11 +142,14 @@ export class LocalTagRepoImpl implements TagRepository {
             const entities: TagEntity[] = []
             for (const entity of updatedEntities) {
                 entity.updatedAt = nowCalibratedIso()
-                await putWithSyncBase(
+                await putWithSyncBaseAndEnqueue(
+                    this.db,
                     this.db.tags,
-                    await tagEntityToRecord(entity, this.currentUserId)
+                    'tags',
+                    await tagEntityToRecord(entity, this.currentUserId),
+                    'upsert',
+                    entity.updatedAt
                 )
-                await syncTracker.markDirty('tags', entity.id, 'upsert', entity.updatedAt)
                 entities.push(entity)
             }
             return [entities, null]
