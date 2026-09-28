@@ -37,7 +37,9 @@ export default defineConfig({
             // SHELL-05 C-36：桌面渲染层复用 webapp 源码（@ → apps/web/src），
             // 必须保证共享运行时依赖单物理实例；否则 vue-router 双实例 →
             // AppRoot 的 useRouter() 返回 undefined（H6）。
-            // 显式排除 nue-ui：桌面 1.10.58 / web 1.11.0 双版本为 SHELL-02 已裁决行为，不得去重。
+            // 显式排除 nue-ui，不参与 dedupe：① 两端版本已对齐 1.13.0（T358）；
+            // ② 仍不去重 —— 保留 SHELL-02 裁决行为（去重会改变模块/弹层池实例语义，属行为变更）；
+            // ③ 若需重新评估去重（含重复模块数/产物体积对照）⇒ 另开单，勿在此顺手改。
             dedupe: ['vue', 'vue-router', 'pinia'],
             alias: [
                 // 注意顺序：@/hooks 必须排在 @ 之前，
