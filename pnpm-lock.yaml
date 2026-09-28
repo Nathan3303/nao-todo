@@ -244,14 +244,14 @@ importers:
         specifier: ^5.1.11
         version: 5.1.16
       nue-ui:
-        specifier: 1.11.0
-        version: 1.11.0(vue@3.5.41(typescript@5.4.5))
+        specifier: 1.13.0
+        version: 1.13.0(vue@3.5.41(typescript@5.4.5))
       nue-ui-iconfont:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.24
-        version: 0.13.24
+        specifier: 0.13.26
+        version: 0.13.26
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -344,8 +344,8 @@ importers:
         specifier: ^30.0.1
         version: 30.0.1(@noble/hashes@2.3.0)
       nue-ui-resolver:
-        specifier: 0.3.0
-        version: 0.3.0(unplugin-vue-components@0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5)))(vue@3.5.41(typescript@5.4.5))
+        specifier: 0.4.0
+        version: 0.4.0(unplugin-vue-components@0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5)))(vue@3.5.41(typescript@5.4.5))
       rollup-plugin-visualizer:
         specifier: ^5.14.0
         version: 5.14.0(rollup@4.63.0)
@@ -398,14 +398,14 @@ importers:
         specifier: workspace:*
         version: link:../web
       nue-ui:
-        specifier: 1.10.58
-        version: 1.10.58(vue@3.5.41(typescript@5.4.5))
+        specifier: 1.13.0
+        version: 1.13.0(vue@3.5.41(typescript@5.4.5))
       nue-ui-iconfont:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.24
-        version: 0.13.24
+        specifier: 0.13.26
+        version: 0.13.26
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -5184,22 +5184,17 @@ packages:
   nue-ui-iconfont@0.2.6:
     resolution: {integrity: sha512-SJwpBLigIPj1npUMsnqJeiZZqogtaOvCIY1BrxLnmfW0fjduC76Y0MAp48iIl5jKCs6NbUVvex0qS85iF7L9gw==}
 
-  nue-ui-resolver@0.3.0:
-    resolution: {integrity: sha512-WL7LcmFF49zJbG7Rz9sIHfmAnNB7c0MPURSstXpu0u+KSO/2EO0usc9wDmyYxeiS9xqSM7Az2oI37AMSq/iIhg==}
+  nue-ui-resolver@0.4.0:
+    resolution: {integrity: sha512-Cg0MOhPt7e8oOYWXUQ9Rr1ECKqHK/4oJDJRzmmGQvzgwFgINPPss57OWFN5msGVSPJGS2ASsZoZyW8EUvExl8Q==}
     peerDependencies:
       unplugin-vue-components: ^0.27.0
       vue: ^3.5.0
 
-  nue-ui-theme-shadlike@0.13.24:
-    resolution: {integrity: sha512-xPR/7itMilttVKxdd8tLSZNY8lP/SM4MtWZrfFkUr3oubR50m9UZA8ELej+CAruzadkQ1veZv4vU9DRkx4nx5A==}
+  nue-ui-theme-shadlike@0.13.26:
+    resolution: {integrity: sha512-sEl7fWS6dlOEXA8hCOTHI3y/GUGWCtLpESJ+kAHJ+7IO1KTrI0otLKgkTgDZAABX6+jMvFL/FPygotnYtEZjKA==}
 
-  nue-ui@1.10.58:
-    resolution: {integrity: sha512-jEABvTQFsdIjETndMUxyTbsh8XeprcJhCyYI5UF9T+u9CFdk+iuM2A9XBPPB4od7b9AhbB8zS1b6qA78/BdgCQ==}
-    peerDependencies:
-      vue: ^3.5.18
-
-  nue-ui@1.11.0:
-    resolution: {integrity: sha512-QJACqEvPscHCD8vs3zv3yf092cVWmKyoqMfBBq/3QiERAiim0QBS/L4tnCGrpKjoDpwEXkgQ/4aUCfimVK9S3g==}
+  nue-ui@1.13.0:
+    resolution: {integrity: sha512-izkhaNFszxBKrLO+kqCWLazZbQrNwyb9Mf9dl5RxeY/wAInBU9uWsBs5uPl9yreTvHcd0x3WFBjIiZE+b8ZKNA==}
     peerDependencies:
       vue: ^3.5.18
 
@@ -11489,18 +11484,14 @@ snapshots:
 
   nue-ui-iconfont@0.2.6: {}
 
-  nue-ui-resolver@0.3.0(unplugin-vue-components@0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5)))(vue@3.5.41(typescript@5.4.5)):
+  nue-ui-resolver@0.4.0(unplugin-vue-components@0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5)))(vue@3.5.41(typescript@5.4.5)):
     dependencies:
       unplugin-vue-components: 0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5))
       vue: 3.5.41(typescript@5.4.5)
 
-  nue-ui-theme-shadlike@0.13.24: {}
+  nue-ui-theme-shadlike@0.13.26: {}
 
-  nue-ui@1.10.58(vue@3.5.41(typescript@5.4.5)):
-    dependencies:
-      vue: 3.5.41(typescript@5.4.5)
-
-  nue-ui@1.11.0(vue@3.5.41(typescript@5.4.5)):
+  nue-ui@1.13.0(vue@3.5.41(typescript@5.4.5)):
     dependencies:
       vue: 3.5.41(typescript@5.4.5)
 
