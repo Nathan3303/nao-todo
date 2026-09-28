@@ -4,7 +4,6 @@ import CalendarWeekly from '../weekly/index.vue'
 import CalendarDaily from '../daily/index.vue'
 import CalendarDayDrawer from './day-drawer.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
-import ScheduleUndoToast from './undo-toast.vue'
 import { ghostPointOf } from './use-drag-schedule'
 import { useCalendarHost } from '../use-calendar-host'
 
@@ -19,7 +18,6 @@ defineOptions({ name: 'CalendarStandalone' })
 const {
     viewMode,
     drag,
-    activeUndo,
     dayDrawerDate,
     dayDrawerOpen,
     dayTasks,
@@ -81,15 +79,6 @@ const ghostStyle = () => {
             :on-open-task="openTaskFromPanel"
             :on-clear-filter="clearFilter"
             :on-show-completed="showCompleted"
-        />
-
-        <!-- C9 撤销 action-toast（全节唯一挂载点；daily 时间轴栈经注入通道上报） -->
-        <schedule-undo-toast
-            v-if="activeUndo"
-            :action="activeUndo.action"
-            :busy="activeUndo.busy"
-            @undo="activeUndo.undo"
-            @dismiss="activeUndo.dismiss"
         />
 
         <!-- F1 浮空胶囊（拖拽跟随，fixed 非 DOM 克隆） -->

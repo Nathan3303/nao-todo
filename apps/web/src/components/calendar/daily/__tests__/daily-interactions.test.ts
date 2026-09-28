@@ -2,14 +2,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick, ref, type Ref } from 'vue'
+import { defineComponent, nextTick, ref, type Ref, type VNode } from 'vue'
 import dayjs from 'dayjs'
-import { NueMessage } from 'nue-ui'
 import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
-import ScheduleUndoToast from '../../monthly/undo-toast.vue'
 import DailyView from '../index.vue'
 
 /**
@@ -30,6 +28,27 @@ const hoisted = vi.hoisted(() => ({
     update: vi.fn(),
     create: vi.fn(),
     open: vi.fn()
+}))
+
+/**
+ * T362：撤销入口改走 `NueMessage`（extension）⇒ 部分 mock `nue-ui`：
+ * 只替换 `NueMessage`（捕获呈现契约 + 提供可断言的 handle），其余（如 `NueButton`）保留真实导出。
+ * 注：真实库把消息节点挂到模块级 wrapper 上，测试清空 body 后该 wrapper 会变成游离节点
+ * ⇒ 涉及消息的用例一律走本 mock（项目既有 msg/confirm 单测同策略）。
+ */
+const messageMock = vi.hoisted(() =>
+    Object.assign(vi.fn(), {
+        error: vi.fn(),
+        success: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        log: vi.fn()
+    })
+)
+
+vi.mock('nue-ui', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('nue-ui')>()),
+    NueMessage: messageMock
 }))
 
 vi.mock('@/hooks', () => ({
@@ -118,6 +137,8 @@ const mouseClick = (x: number, target: EventTarget): void => {
 }
 
 let wrapper: VueWrapper | null = null
+/** T362：本次用例生成的撤销消息句柄（新动作替换时应被 close） */
+let undoHandles: { close: ReturnType<typeof vi.fn> }[] = []
 
 const mountDaily = async (dayZoom?: Ref<number>): Promise<VueWrapper> => {
     const pinia = createPinia()
@@ -181,8 +202,14 @@ beforeEach(() => {
     hoisted.update.mockReset().mockResolvedValue(null)
     hoisted.create.mockReset().mockResolvedValue([{ id: 'new' }, null])
     hoisted.open.mockReset()
-    vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
-    vi.spyOn(NueMessage, 'success').mockImplementation(() => {})
+    undoHandles = []
+    messageMock.mockReset().mockImplementation(() => {
+        const handle = { close: vi.fn() }
+        undoHandles.push(handle)
+        return handle
+    })
+    messageMock.error.mockReset()
+    messageMock.success.mockReset()
 })
 
 afterEach(() => {
@@ -303,24 +330,46 @@ describe('TASK-16 拉伸改时长（round + 下限，§5.5 / AC4②）', () => {
     })
 })
 
-describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9）', () => {
-    it('拖拽后点 schedule-undo ⇒ 恢复原值（09:00–10:00）', async () => {
+describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage extension）', () => {
+    it('拖拽后给出唯一撤销入口（NueMessage + 扩展区），点撤销 ⇒ 恢复原值（09:00–10:00）', async () => {
         const w = await mountDaily()
         await dragBar(w, 540, 790)
         expect(hhmm(lastPatch()?.startAt)).toBe('13:00')
 
-        const toast = w.findComponent(ScheduleUndoToast)
-        expect(toast.exists(), '应出现共享撤销条').toBe(true)
-        // teleport 到 body：组件级断言「撤销动作」链路（按钮→emit 由 undo-toast 自身用例覆盖）
-        expect(
-            document.querySelectorAll('[data-testid="schedule-undo"] .utoast__undo').length
-        ).toBeGreaterThan(0)
-        toast.vm.$emit('undo')
+        // 呈现契约：单条消息 + success 类型 + 5s + extension 渲染函数
+        expect(messageMock).toHaveBeenCalledTimes(1)
+        const payload = messageMock.mock.calls[0]![0] as {
+            message: string
+            type: string
+            duration: number
+            extension: () => VNode
+        }
+        expect(payload.message).toBe('已调整时间')
+        expect(payload.type).toBe('success')
+        expect(payload.duration).toBe(5000)
+
+        // 扩展区（真实组件）挂载后点「撤销」⇒ 走真实 undoLast 写回链路
+        const entry = mount(defineComponent({ render: () => payload.extension() }), {
+            attachTo: document.body
+        })
+        await entry.get('[data-testid="schedule-undo-action"]').trigger('click')
         await flushPromises()
+        entry.unmount()
 
         const restore = lastPatch()
         expect(hhmm(restore?.startAt)).toBe('09:00')
         expect(hhmm(restore?.endAt)).toBe('10:00')
+    })
+
+    it('反复改期 ⇒ 只有最新一条入口（上一条消息被 close）', async () => {
+        const w = await mountDaily()
+        await dragBar(w, 540, 790)
+        await dragBar(w, 540, 660)
+
+        expect(messageMock).toHaveBeenCalledTimes(2)
+        expect(undoHandles).toHaveLength(2)
+        expect(undoHandles[0]!.close).toHaveBeenCalledTimes(1)
+        expect(undoHandles[1]!.close).not.toHaveBeenCalled()
     })
 })
 
@@ -356,7 +405,7 @@ describe('TASK-16 失败回退（AC5① / C9）', () => {
         await dragBar(w, 540, 790)
 
         expect(hoisted.update).toHaveBeenCalledTimes(1)
-        expect(NueMessage.error).toHaveBeenCalled()
+        expect(messageMock.error).toHaveBeenCalled()
         expect(barOf(w).attributes('style')).toBe(styleBefore)
         expect(useTasksStore().getTask('a')!.startAt).toBe(before.startAt)
         expect(useTasksStore().getTask('a')!.endAt).toBe(before.endAt)

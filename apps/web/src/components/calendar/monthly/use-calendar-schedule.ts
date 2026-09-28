@@ -3,8 +3,13 @@ import { isArchivedReadOnlyError } from '@nao-todo/presentation/task/archive-gat
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
-import { onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
+import {
+    closeScheduleUndo,
+    presentScheduleUndo,
+    type ScheduleUndoPresentation
+} from '../undo-message'
 import { todayDateKey } from './monthly-layout'
 import {
     shiftTaskDates,
@@ -37,7 +42,8 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         return `${Number(month)} 月 ${Number(day)} 日`
     }
 
-    // @method 弹出/刷新撤销 toast（替换最近一次；约 5s 自动超时失效由 undo-toast 内部计时并 dismiss）
+    // @method 弹出/刷新撤销入口（替换最近一次；约 5s 自动超时失效）
+    //             实际呈现由下方 watch 交给 `undo-message`（NueMessage extension 单一入口）
     const showUndoAction = (action: ScheduleUndoAction): void => {
         undoAction.value = action
     }
@@ -180,9 +186,35 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         }
     }
 
-    // @lifecycle 视图卸载/页面切换 → 撤销快照失效（U2 同视图生命周期约束）
+    // @states 撤销入口 busy（撤销写回中 / 批量写回中；P3-1 互斥，口径与改前 toast 一致）
+    const undoEntryBusy = computed(() => undoBusy.value || scheduleBusy.value)
+
+    // @states 本实例当前呈现的载荷（按实例身份，用于「只关自己那条」）
+    let undoPresentation: ScheduleUndoPresentation | null = null
+
+    // @watch 呈现层（T362）：动作出现 ⇒ 经 NueMessage 扩展插槽呈现撤销入口
+    //        （全节单一入口由 `undo-message` 的模块级句柄注册表保证）；
+    //        动作被清除（撤销完成 / 超时 / 卸载）⇒ 关闭自己那一条
+    watch(undoAction, (action) => {
+        if (action) {
+            undoPresentation = {
+                action,
+                busy: () => undoEntryBusy.value,
+                undo: undoLast,
+                dismiss: dismissUndoAction
+            }
+            presentScheduleUndo(undoPresentation)
+            return
+        }
+        closeScheduleUndo(undoPresentation ?? undefined)
+        undoPresentation = null
+    })
+    // @lifecycle 视图卸载/页面切换 → 撤销快照失效（U2 同视图生命周期约束）＋ 关闭自己那条撤销入口
+    //              （消息挂在应用根下、不在本组件树内 ⇒ 必须显式收口，避免残留）
     onUnmounted(() => {
         undoAction.value = null
+        closeScheduleUndo(undoPresentation ?? undefined)
+        undoPresentation = null
     })
 
     return {
