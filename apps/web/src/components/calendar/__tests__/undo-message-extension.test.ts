@@ -15,18 +15,26 @@ import type { ScheduleUndoStatus } from '../undo-message'
 
 const mountExtension = (
     status: Ref<ScheduleUndoStatus> = ref('idle'),
-    undo = vi.fn()
+    undo = vi.fn(),
+    retired: Ref<boolean> = ref(false)
 ): {
     wrapper: ReturnType<typeof mount>
     status: Ref<ScheduleUndoStatus>
+    retired: Ref<boolean>
     undo: ReturnType<typeof vi.fn>
 } => ({
     wrapper: mount(UndoMessageExtension, {
         // attachTo：jsdom 下游离节点 focus() 不改变 activeElement（键盘可达断言需要真在文档中）
         attachTo: document.body,
-        props: { text: '已移至 10 月 5 日', status: () => status.value, undo }
+        props: {
+            text: '已移至 10 月 5 日',
+            status: () => status.value,
+            retired: () => retired.value,
+            undo
+        }
     }),
     status,
+    retired,
     undo
 })
 
@@ -99,6 +107,27 @@ describe('T362 撤销扩展区（NueMessage extension）', () => {
 
         await button.trigger('click')
         expect(undo).toHaveBeenCalledTimes(1)
+    })
+
+    it('failed 语义配色：pill 根打上 undo-entry--failed（颜色改指 error 令牌，与文案一致）', async () => {
+        const { wrapper, status } = mountExtension(ref('failed'))
+        expect(wrapper.get('.undo-entry').classes()).toContain('undo-entry--failed')
+
+        status.value = 'undone'
+        await nextTick()
+        expect(wrapper.get('.undo-entry').classes()).not.toContain('undo-entry--failed')
+    })
+
+    it('retired：已被新消息替换的旧条按钮不可点（防点到淡出旧条撤销最新动作）', async () => {
+        const { wrapper, retired, undo } = mountExtension()
+        const button = wrapper.get('[data-testid="schedule-undo-action"]')
+        expect(button.attributes('aria-disabled')).toBe('false')
+
+        retired.value = true
+        await nextTick()
+        expect(button.attributes('aria-disabled')).toBe('true')
+        await button.trigger('click')
+        expect(undo).not.toHaveBeenCalled()
     })
 
     it('成功终态不把焦点抛回 body（aria-disabled 保留可聚焦性）', async () => {

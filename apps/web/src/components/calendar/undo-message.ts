@@ -1,4 +1,4 @@
-import { h } from 'vue'
+import { h, ref, type Ref } from 'vue'
 import { NueMessage, type NueMessageHandle } from 'nue-ui'
 import UndoMessageExtension from './undo-message-extension.vue'
 import type { ScheduleUndoAction } from './monthly/reschedule'
@@ -63,6 +63,13 @@ type ActiveUndoMessage = {
     presentation: ScheduleUndoPresentation
     /** 实际消失计时（初始 5s；终态重置见 `holdScheduleUndo`） */
     timer: ReturnType<typeof setTimeout> | null
+    /**
+     * 已被新消息替换（正在淡出）
+     * @description 库关闭旧节点有 ~0.5s~2s 的移除动画 ⇒ 旧扩展区仍在 DOM；其 `undo` 闭包
+     *              指向**最新**动作（`undoLast` 读 `undoAction.value`）⇒ 若仍可点，用户点
+     *              “正在淡出的旧条”会撤销最新动作（语义困惑）。置 retired ⇒ 旧按钮立即不可点。
+     */
+    retired: Ref<boolean>
 }
 
 /** 当前唯一的撤销消息（模块级 ⇒ 跨实例单入口，替代原 undo-sink 的宿主唯一挂载点） */
@@ -79,11 +86,12 @@ const scheduleDismissal = (record: ActiveUndoMessage, delayMs: number): void => 
     }, delayMs)
 }
 
-/** 扩展区 VNode（惰性：由库在消息内部渲染时调用） */
-const extensionOf = (presentation: ScheduleUndoPresentation) => () =>
+/** 扩展区 VNode（惰性：由库在消息内部渲染时调用）；`retired` 为取值函数以保持响应式 */
+const extensionOf = (presentation: ScheduleUndoPresentation, retired: Ref<boolean>) => () =>
     h(UndoMessageExtension, {
         text: presentation.action.text,
         status: presentation.status,
+        retired: () => retired.value,
         undo: presentation.undo
     })
 
@@ -99,9 +107,12 @@ export const presentScheduleUndo = (presentation: ScheduleUndoPresentation): voi
     const previous = active
     active = null
     if (previous) {
+        // 先令旧入口不可点（仍在淡出，但不得再触发撤销）
+        previous.retired.value = true
         if (previous.timer !== null) clearTimeout(previous.timer)
         previous.handle.close()
     }
+    const retired = ref(false)
     const handle = NueMessage({
         // 主文案改由扩展区组件渲染（库 `message` 为静态 prop，无法随状态更新）；
         // 传空串而非省略，避免库默认占位「No content.」
@@ -109,9 +120,9 @@ export const presentScheduleUndo = (presentation: ScheduleUndoPresentation): voi
         type: presentation.action.tone === 'warning' ? 'warning' : 'success',
         // 库 duration 仅作硬上限；实际消失由本模块计时器控制（见 UNDO_MESSAGE_HARD_CAP）
         duration: UNDO_MESSAGE_HARD_CAP,
-        extension: extensionOf(presentation)
+        extension: extensionOf(presentation, retired)
     })
-    const record: ActiveUndoMessage = { handle, presentation, timer: null }
+    const record: ActiveUndoMessage = { handle, presentation, timer: null, retired }
     active = record
     scheduleDismissal(record, UNDO_MESSAGE_DURATION)
 }

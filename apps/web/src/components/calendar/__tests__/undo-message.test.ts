@@ -89,6 +89,7 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         expect(node).toBeTruthy()
         expect(node.props?.text).toBe('已移至 10 月 5 日')
         expect(typeof node.props?.status).toBe('function')
+        expect(typeof node.props?.retired).toBe('function')
     })
 
     it('warning（部分失败）tone ⇒ warning 类型；硬上限时长恒定', () => {
@@ -141,6 +142,22 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         vi.advanceTimersByTime(1)
         expect(dismiss).toHaveBeenCalledTimes(1)
         expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('T368：替换时旧条置 retired（淡出期间旧按钮不可点，防误撤最新动作）', () => {
+        const first = makePresentation(makeAction({ text: 'A' }))
+        const second = makePresentation(makeAction({ text: 'B' }))
+        presentScheduleUndo(first.presentation)
+        const firstNode = (
+            messageMock.mock.calls[0]![0] as {
+                extension: (ctx: { close: () => void }) => { props?: Record<string, unknown> }
+            }
+        ).extension({ close: vi.fn() })
+        const firstRetired = firstNode.props!.retired as () => boolean
+        expect(firstRetired()).toBe(false)
+
+        presentScheduleUndo(second.presentation)
+        expect(firstRetired()).toBe(true)
     })
 
     it('T366：接近原超时进入 undone 并重置计时 ⇒ 终态仍可见 UNDO_TERMINAL_DURATION', () => {

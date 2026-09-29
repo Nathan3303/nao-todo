@@ -27,12 +27,17 @@ const props = defineProps<{
     text: string
     /** 状态机取值函数（idle / busy / undone / failed） */
     status: () => ScheduleUndoStatus
+    /** 已被新消息替换（正在淡出）——旧入口不得再触发撤销（T368） */
+    retired: () => boolean
     undo: () => void
 }>()
 
 const status = computed(() => props.status())
-/** 不可点：写回中或已成功撤销（终态）；失败态保持可点以便重试 */
-const isInactive = computed(() => status.value === 'busy' || status.value === 'undone')
+const retired = computed(() => props.retired())
+/** 不可点：写回中 / 已成功撤销（终态）/ 已被新消息替换（淡出中）；失败态保持可点以便重试 */
+const isInactive = computed(
+    () => retired.value || status.value === 'busy' || status.value === 'undone'
+)
 const message = computed(() => {
     if (status.value === 'undone') return t('calendar.undo.doneMessage')
     if (status.value === 'failed') return t('calendar.undo.failedMessage')
@@ -52,7 +57,8 @@ const onAction = (): void => {
 </script>
 
 <template>
-    <span class="undo-entry">
+    <!-- `undo-entry--failed`：把库消息本体的语义变量改指 error 令牌（颜色与失败文案一致，见 style） -->
+    <span class="undo-entry" :class="{ 'undo-entry--failed': status === 'failed' }">
         <!-- O8：role=status 收窄到文本（live region 不含交互按钮，按钮不被重复播报） -->
         <span class="undo-entry__live" role="status">{{ message }}</span>
         <span class="undo-entry__text">{{ message }}</span>
@@ -75,6 +81,15 @@ const onAction = (): void => {
 :global(.nue-message-node-inner__extension:has(.undo-entry)) {
     border-left: none;
     padding-left: 0;
+}
+
+/* 失败态语义配色（T368）：pill 仍以 `--success`/`--warning` 创建（库 type 创建时固定、无法切换）
+   ⇒ 仅改指 error 令牌，使「颜色 = 失败」与文案一致；不改主题包、不写死色值。
+   实测对比度（error-70 on error-10）：浅色 4.57:1 / 深色 4.76:1 ⇒ 达 WCAG AA（不受 DEF-58 阻） */
+:global(.nue-message-node-inner:has(.undo-entry--failed)) {
+    --nue-message-node-inner-color: var(--nue-error-color-70);
+    --nue-message-node-inner-background-color: var(--nue-error-color-10);
+    --nue-message-node-inner-border-color: var(--nue-error-color-60);
 }
 
 .undo-entry {
