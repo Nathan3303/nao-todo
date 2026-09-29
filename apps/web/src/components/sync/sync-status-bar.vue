@@ -4,7 +4,7 @@
  * @description 轨道按钮 = tooltip「同步」+ refresh 图标（管线着色）+ 数据可信度角标（伪元素圆点），
  *              点击展开 NueDropdown 面板：首行时间、②离线·有镜像 / ③尚未同步完成、
  *              待推送 N、失败 N、错误摘要（2 行截断 + title 全文）、④正在加载更多 / ⑤触顶、
- *              footer「立即同步」。宿主为 webapp 侧栏 rail-host 注册表元素，宿主缺失
+ *              概览「立即同步」。宿主为 webapp 侧栏 rail-host 注册表元素，宿主缺失
  *              （抽屉分支/非 index 路由/profile 未就绪）即整体不渲染，无悬浮层回落。
  *
  *              T115b/r7：②③④⑤ 全部由内容区顶部条迁入本面板（顶部零挂载）；面板根为库渲染的 `<ul>`
@@ -256,7 +256,7 @@ watch(
             <!--
               面板分区行：@open 渲染 / @close 移除（C9）。面板根是库内 <ul> ⇒ **每个分区为一个 <li>**
               （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合：
-              概览（时间）/ 数据（可信度与覆盖度）/ 待处理（计数 chips）/ 冲突 / 错误；footer 动作常驻。
+              概览（时间 + 「立即同步」动作）/ 数据（可信度与覆盖度）/ 待处理（计数 chips）/ 冲突 / 错误。
             -->
             <!-- 概览：上次同步时间 / 从未同步 / 同步中… -->
             <li class="sync-panel__section">
@@ -481,13 +481,6 @@ watch(
 
 .sync-panel__chip.is-error {
     color: var(--nue-error-color-90);
-}
-
-/* footer 动作按钮行（与分区同宽，上分隔） */
-.sync-panel__footer {
-    display: flex;
-    padding-top: var(--nue-gap-xs);
-    border-top: 1px solid var(--nue-border-color);
 }
 
 /* 读屏活动区域：视觉隐藏（WCAG sr-only，非 display:none/hidden）；绝对定位脱离 flex 布局 */
