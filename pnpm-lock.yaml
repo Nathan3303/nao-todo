@@ -250,8 +250,8 @@ importers:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.26
-        version: 0.13.26
+        specifier: 0.13.27
+        version: 0.13.27
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -404,8 +404,8 @@ importers:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.26
-        version: 0.13.26
+        specifier: 0.13.27
+        version: 0.13.27
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -5190,8 +5190,8 @@ packages:
       unplugin-vue-components: ^0.27.0
       vue: ^3.5.0
 
-  nue-ui-theme-shadlike@0.13.26:
-    resolution: {integrity: sha512-sEl7fWS6dlOEXA8hCOTHI3y/GUGWCtLpESJ+kAHJ+7IO1KTrI0otLKgkTgDZAABX6+jMvFL/FPygotnYtEZjKA==}
+  nue-ui-theme-shadlike@0.13.27:
+    resolution: {integrity: sha512-SgYeXl5MmBaBqpiRDXd4BcBPLH0CBhTS+s+5u7j3XbgXZX1XfMkBtEXLTM2vRsys9KRodHJVGXPrAG/toIh0PA==}
 
   nue-ui@1.13.0:
     resolution: {integrity: sha512-izkhaNFszxBKrLO+kqCWLazZbQrNwyb9Mf9dl5RxeY/wAInBU9uWsBs5uPl9yreTvHcd0x3WFBjIiZE+b8ZKNA==}
@@ -11489,7 +11489,7 @@ snapshots:
       unplugin-vue-components: 0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5))
       vue: 3.5.41(typescript@5.4.5)
 
-  nue-ui-theme-shadlike@0.13.26: {}
+  nue-ui-theme-shadlike@0.13.27: {}
 
   nue-ui@1.13.0(vue@3.5.41(typescript@5.4.5)):
     dependencies:

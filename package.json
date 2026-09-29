@@ -31,7 +31,7 @@
         "nanoid": "^5.1.11",
         "nue-ui": "1.13.0",
         "nue-ui-iconfont": "0.2.6",
-        "nue-ui-theme-shadlike": "0.13.26",
+        "nue-ui-theme-shadlike": "0.13.27",
         "pinia": "^3.0.4",
         "vue": "^3.5.34",
         "vue-i18n": "^11.4.4",
