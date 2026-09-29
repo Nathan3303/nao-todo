@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { SHELL_ERROR_LOG_PREFIX } from './error-observability'
+import { SHELL_ERROR_LOG_PREFIX } from '../error-observability'
 import {
     pickSafeNavigationTarget,
     resolveNavigableTarget,
@@ -9,7 +9,7 @@ import {
     type NavigationCandidate,
     type NavigationStorage,
     type SafeNavigationRouter
-} from './safe-navigation'
+} from '../safe-navigation'
 
 /**
  * SHELL-05 T4 / C-28 / C-30：安全导航纯层

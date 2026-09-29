@@ -8,7 +8,7 @@ import {
     resetSignOutBroadcastForTest,
     setSignOutBroadcastChannelForTest,
     type SignOutBroadcastChannel
-} from './sign-out-broadcast'
+} from '../sign-out-broadcast'
 
 /**
  * AC16b：多标签（web）登出广播
@@ -50,7 +50,7 @@ vi.mock('@/safe-navigation', () => ({
     safeReplace: mocks.safeReplace
 }))
 
-vi.mock('./offline-entry', () => ({
+vi.mock('../offline-entry', () => ({
     revokeOfflineEntry: mocks.revokeOfflineEntry
 }))
 

@@ -15,7 +15,7 @@ import {
     NueMain,
     NueText
 } from 'nue-ui'
-import UnlockGate from './unlock-gate.vue'
+import UnlockGate from '../unlock-gate.vue'
 
 /**
  * 解锁门终态与离线身份断言（SHELL-03 C-01…C-04/C-18/C-20、BC-2/BC-4/BC-7）

@@ -19,13 +19,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@nao-todo/infrastructure/src/persistence-local/session/local-session', () => ({
     resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt
 }))
-vi.mock('./offline-prerequisites', () => ({ hasLocalMirror: mocks.hasLocalMirror }))
+vi.mock('../offline-prerequisites', () => ({ hasLocalMirror: mocks.hasLocalMirror }))
 vi.mock('@/data-plane', () => ({
     startWebDataPlane: mocks.startWebDataPlane,
     getFirstPullSettled: mocks.getFirstPullSettled
 }))
 
-const { evaluateFirstPullGate, waitForFirstPullGate } = await import('./first-pull-gate')
+const { evaluateFirstPullGate, waitForFirstPullGate } = await import('../first-pull-gate')
 
 const setOnline = (online: boolean): void => {
     Object.defineProperty(window.navigator, 'onLine', {

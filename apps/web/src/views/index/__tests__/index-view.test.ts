@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { taskDetailsLocation } from './task-details-location'
+import { taskDetailsLocation } from '../task-details-location'
 
 /**
  * SEA-04-DEF-01 回归：详情下钻必须保留当前 query

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createPinia, setActivePinia } from 'pinia'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { grantOfflineEntry, revokeOfflineEntry } from './offline-entry'
+import { grantOfflineEntry, revokeOfflineEntry } from '../offline-entry'
 
 /**
  * auth 守卫（beforeEnter）离线进入断言（SHELL-03 附录 B-2 / C-62 判据替换）
@@ -76,7 +76,7 @@ vi.mock(
     async () => import('@nao-todo/infrastructure')
 )
 
-const { beforeEnter } = await import('./routes')
+const { beforeEnter } = await import('../routes')
 
 const setSessionJwt = (jwt: string | null): void => {
     if (jwt === null) localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)

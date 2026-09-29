@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Router } from 'vue-router'
-import { SHELL_ERROR_LOG_PREFIX } from './error-observability'
-import { reportRouterInjection, selectRouter, type RouterResolution } from './router-access'
+import { SHELL_ERROR_LOG_PREFIX } from '../error-observability'
+import { reportRouterInjection, selectRouter, type RouterResolution } from '../router-access'
 
 /**
  * SHELL-05 T1 / C-37：实例无关 router 访问纯层

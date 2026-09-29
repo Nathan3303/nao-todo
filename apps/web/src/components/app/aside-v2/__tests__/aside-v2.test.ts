@@ -4,7 +4,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { ref } from 'vue'
 import { NueAside, NueAvatar, NueDiv, NueIcon, NueSeparator, NueText, NueTooltip } from 'nue-ui'
-import AsideV2 from './aside-v2.vue'
+import AsideV2 from '../aside-v2.vue'
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 

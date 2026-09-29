@@ -10,7 +10,7 @@ import {
     isOfflineEntryGranted,
     revokeOfflineEntry
 } from '@/views/auth/offline-entry'
-import AppRoot from './AppRoot.vue'
+import AppRoot from '../AppRoot.vue'
 
 /**
  * AppRoot 离线进入编排断言（SHELL-03 附录 B-1 / C-24/C-25）
@@ -37,11 +37,11 @@ vi.mock('@/App.vue', () => ({
     default: defineComponent({ name: 'App', template: '<div id="app-stub" />' })
 }))
 
-vi.mock('./hooks/use-local-reminder', () => ({
+vi.mock('../hooks/use-local-reminder', () => ({
     useLocalReminder: () => ({ start: vi.fn(), stop: vi.fn(), rescan: vi.fn() })
 }))
 
-vi.mock('./hooks/usecases/use-task-reminder', () => ({
+vi.mock('../hooks/usecases/use-task-reminder', () => ({
     useTaskReminder: () => ({})
 }))
 

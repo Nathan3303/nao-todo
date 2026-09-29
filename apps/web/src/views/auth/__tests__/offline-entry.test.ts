@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
-import { grantOfflineEntry, isOfflineEntryGranted, revokeOfflineEntry } from './offline-entry'
+import { grantOfflineEntry, isOfflineEntryGranted, revokeOfflineEntry } from '../offline-entry'
 
 /**
  * 离线进入会话 flag 断言（SHELL-03 C-25）

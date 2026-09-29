@@ -79,7 +79,7 @@ vi.mock('@/views/auth/bootstrap-local-data', () => ({
 }))
 
 const { startWebDataPlane, resetWebDataPlaneForTest, getMirrorState, getFirstPullSettled } =
-    await import('./data-plane')
+    await import('../data-plane')
 
 /** 冲刷前置自愈（异步）⇒ 同步启动的 Promise 链 */
 const flushPromises = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0))
