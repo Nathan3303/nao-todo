@@ -19,4 +19,4 @@ catalog:
 minimumReleaseAgeExclude:
     - nue-ui-resolver@0.3.0
     - nue-ui@1.11.0
-    - nue-ui-theme-shadlike@0.13.27
+    - nue-ui-theme-shadlike@0.13.28

@@ -80,7 +80,7 @@
         "@nao-todo/webapp": "workspace:*",
         "nue-ui": "1.13.0",
         "nue-ui-iconfont": "0.2.6",
-        "nue-ui-theme-shadlike": "0.13.27",
+        "nue-ui-theme-shadlike": "0.13.28",
         "pinia": "^3.0.4",
         "vue": "^3.5.40",
         "vue-i18n": "^11.4.6",
