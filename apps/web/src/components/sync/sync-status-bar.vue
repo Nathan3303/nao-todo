@@ -437,7 +437,6 @@ watch(
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-2xs);
-    padding: var(--nue-gap-xs) 0;
     border-top: 1px solid var(--nue-border-color);
 }
 
