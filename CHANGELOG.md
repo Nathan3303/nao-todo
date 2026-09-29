@@ -2,6 +2,56 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.3] - 2026-09-29
+
+发布批次：**组件库与主题升级 + 日历撤销入口重构 + 全仓测试布局规整 + 提示语义色 AA 达标**（`T358` NueUI `1.13.0` · `T362`/`T364`/`T366`/`T368` 日历撤销 · `T369` 测试目录 + 新守卫 · `T370`/`T385` 同步面板 · `T377` nue-ui-skill · `T380`/`T391` 主题 `0.13.27`/`0.13.28` · `T383` `DEF-61` 修复）。**Tag `v1.12.3`** · root `1.12.3` · `apps/web` / `apps/desktop` `1.12.3` · `packages/shared` `1.4.1 → 1.4.2`（新增 14 个 `calendar.undo.*` i18n 键）· `packages/infrastructure` 本批**零改动不动**（`apps/mobile` / `packages/presentation-react` 亦零改动）。详见 `docs/releases/v1.12.3.md`。
+
+### 行为变更（请留意）
+
+- **日历「撤销」入口改为库消息扩展插槽（`NueMessage`）**（`T362`）：不再用自研顶部胶囊；全节**单一入口**（新动作先关上一条）。**成功终态**：按钮变**不可点**并显示「已撤销」（`aria-disabled`）、主文案「已撤销该调整」，保持约 **2s**；**失败态**：红底「撤销失败，可重试」+「重试」**仍可点**，保持约 **3s**。取消/超时语义：非终态仍为**约 5s** 自消息出现起算。
+- **提示（Toast）语义色更深**（`DEF-58` 修复，主题 `0.13.27`）：success 文字 `-70→-100`、warning/error 文字 `-70→-90`、三边框 `-60→-80` ⇒ 浅/深均达「文本 ≥4.5 / 图形 ≥3」。
+- **按钮 / 徽标 / 表单提示语义色更深**（`DEF-61` 修复，主题 `0.13.28`）：实心 success/warning/error 按钮填充 `-40→-100`（白字对比度 **1.73→6.60**、**2.29→8.51**、**3.28→10.93**）、destructive 文字/描边 `error-40→error-80`、Prompt `value-error` `error-30→error-70`、Badge 底 `warning-50→warning-80` ⇒ **观感上填充明显变深**。
+- **同步状态面板**（`T370`/`T385`）：分区之间纵向留白收紧；已无引用的 `.sync-panel__footer` 死 CSS 移除（「立即同步」按钮本就在**概览**分区内）。
+- **测试文件位置约束**（`T369`，**对开发者行为变化**）：`apps/**` 与 `packages/**` 的测试文件必须位于 `__tests__/` 目录内；新增守卫 `guard:test-location` 并接入 CI `check`（不满足即 CI 红）。
+- ⚠️ **依赖版本变更**：NueUI `1.11.0`（web）/ `1.10.58`（desktop）→ **`1.13.0`**；主题 `nue-ui-theme-shadlike` `0.13.24 → 0.13.28`。
+
+### 依赖 / 工程
+
+- **NueUI `1.13.0`（两端对齐）**：桌面端不再重复打包两份组件库 —— 渲染层 nue-ui 分块 **171.5 kB → 91.1 kB（−46.9%）**、模块数 **82 → 50**。
+- **主题 `nue-ui-theme-shadlike` `0.13.24 → 0.13.28`**：含提示色（`0.13.27`）与按钮/徽标/提示（`0.13.28`）两轮对比度修复，上游并附 vitest 对比度自检（10 组）防退化。
+- **新增守卫 `guard:test-location`**（`scripts/guard-test-location.mjs`，纯静态 ~0.07s）：测试文件须在 `__tests__/`；已接入 `package.json` scripts 与 CI `check`。全仓守卫增至 **5** 个。
+- **新增 `nue-ui-skill`**（`.agents/skills/nue-ui/`：`SKILL.md` + `references/`）—— 供 Agent 按需加载 NueUI 选型/拼页面/定制样式；**非运行时依赖**，不进任何产物。
+
+### 修复
+
+- **`DEF-58`（提示色对比度不达 AA，上游主题债）**：见上「行为变更」；上游 `nue-ui-theme-shadlike@0.13.27` + 本仓升依赖后**关闭**。
+- **`DEF-61`（按钮 / 徽标 / 提示语义色配对 6 项不达标）**：上游 `nue-ui-theme-shadlike@0.13.28` + 本仓升依赖后**关闭**。
+- **日历撤销入口可用性与文案**（`T364`/`T366`/`T368`）：成功/失败终态改为**状态驱动**（非重建 DOM）；仅当写回**全部成功**才置「已撤销」（禁止乐观置位）；失败保持可重试；替换期旧条置 `retired` ⇒ 淡出中旧按钮不可点（防误撤最新动作）。
+
+### 改进
+
+- **日历撤销入口**：位置/主题/入场动画由组件库统一；读屏活动区（`role=status`）随状态播报；成功终态不丢焦点（`aria-disabled` 而非原生 `disabled`）。
+- **同步面板**：分区间距收紧（`T370`）+ footer 死代码清理（`T385`）。
+- **测试布局**：22 个散落测试（web 17 / desktop 4 / shared 1）`git mv` 进同级 `__tests__/`（保留历史），仅修正 31 处相对导入；**纯搬移，全仓文件/例数不变**。
+- **文档**：`DESIGN.md` 新增「提示（Message）语义色配对」与「按钮 / 徽标 / 表单提示语义色」两张实测表（浅/深）；`AGENTS.md` 补 `guard:test-location` 与全范围门禁 ⑨ + 主干同步纪律。
+
+### 内部质量
+
+- 五守卫（`guard:ddd` / `guard:gate-pathspec` / `guard:barrel-imports` / `guard:mobile-imports` / **`guard:test-location`**）全绿。
+- `pnpm exec vp check` **0 error**；全仓 `pnpm exec vp test --run` **207 文件 / 1698 例 / 0 红**；移动端 diff = **0**；双端构建 exit 0。
+
+### 已知未做（已登记）
+
+- `DEF-59`：冷加载 URL 的 `hash` 被 `LAST_VISITED_ROUTE` 覆盖（深链失效）—— 待定产品口径。
+- `DEF-60`：`useCalendarMonthly` / `CalendarMonthlyContext` 仍导出页面 0 消费的 `undoAction`/`undoBusy`/`undoLast`/`dismissUndoAction`（契约收窄，待小单）。
+- `DEF-49`：主行 `create` 时间戳 1ms 舍入（P3，服务端）。
+- `DEF-51`：同毫秒「并列」语义不对称（P3）。
+- `DEF-62`：**已在 `nue-ui` 仓修复**（PR CI 触发），nao-todo 侧无遗留。
+
+### 协同前提
+
+- 仍建议与服务端 `nao-todo-server` `5cb30c5`+ 配套（OCC + 派生行回传）。
+
 ## [v1.12.2] - 2026-09-28
 
 发布批次：**冲突 UX 收口**（`T331` 计数同源修复 + `T332` / `T338`–`T346` 冲突界面对话框化与可读性重构 + `T333` 测试加固 + `T347` 走查修复）。**Tag `v1.12.2`** · root `1.12.2` · `apps/web` / `apps/desktop` `1.12.2` · `packages/shared` `1.4.0 → 1.4.1` · `packages/infrastructure` `0.8.1 → 0.8.2`（`apps/mobile` / `packages/presentation-react` 零改动，不动）。详见 `docs/releases/v1.12.2.md`。
