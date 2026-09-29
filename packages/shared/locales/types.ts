@@ -681,6 +681,22 @@ export interface LocaleMessages {
     'calendar.allDay': string
     'calendar.noTasksToday': string
 
+    // Calendar · 撤销入口（T364：入口文案 + 成功/失败终态；动作文案随状态机同源）
+    'calendar.undo.action': string
+    'calendar.undo.busy': string
+    'calendar.undo.done': string
+    'calendar.undo.doneMessage': string
+    'calendar.undo.failedMessage': string
+    'calendar.undo.retry': string
+    'calendar.undo.movedTo': string
+    'calendar.undo.dateLabel': string
+    'calendar.undo.scheduledCount': string
+    'calendar.undo.partialFailed': string
+    'calendar.undo.allFailed': string
+    'calendar.undo.timeAdjusted': string
+    'calendar.undo.startAdjusted': string
+    'calendar.undo.durationAdjusted': string
+
     // Date relative
     'date.today': string
     'date.yesterday': string

@@ -23,12 +23,20 @@ export const UNDO_MESSAGE_DURATION = 5000
 /** 单条撤销的呈现载荷（按 `useCalendarSchedule` 实例身份构造，用于只关自己那一条） */
 export type ScheduleUndoPresentation = {
     action: ScheduleUndoAction
-    /** 撤销/批量写回中（P3-1 互斥）⇒ 扩展区按钮禁用并显示「撤销中…」 */
-    busy: () => boolean
+    /** 状态机取值（idle → busy → undone / failed）：扩展区文案与可用性只由它驱动 */
+    status: () => ScheduleUndoStatus
     undo: () => void
     /** 令该入口失效（撤销完成后的收口 / 超时失效） */
     dismiss: () => void
 }
+
+/**
+ * 撤销入口状态机（T364）
+ * @description idle=可撤销；busy=写回中（防连点）；undone=**成功终态**（不可再操作、文案变更）；
+ *              failed=写回失败（保留入口、仍可点以重试）。仅当写回全部成功才进入 undone
+ *              （禁止乐观置位）。
+ */
+export type ScheduleUndoStatus = 'idle' | 'busy' | 'undone' | 'failed'
 
 type ActiveUndoMessage = {
     handle: NueMessageHandle
@@ -43,7 +51,7 @@ let active: ActiveUndoMessage | null = null
 const extensionOf = (presentation: ScheduleUndoPresentation) => () =>
     h(UndoMessageExtension, {
         text: presentation.action.text,
-        busy: presentation.busy,
+        status: presentation.status,
         undo: presentation.undo
     })
 
@@ -63,7 +71,9 @@ export const presentScheduleUndo = (presentation: ScheduleUndoPresentation): voi
         previous.handle.close()
     }
     const handle = NueMessage({
-        message: presentation.action.text,
+        // 主文案改由扩展区组件渲染（库 `message` 为静态 prop，无法随状态更新）；
+        // 传空串而非省略，避免库默认占位「No content.」
+        message: '',
         type: presentation.action.tone === 'warning' ? 'warning' : 'success',
         duration: UNDO_MESSAGE_DURATION,
         extension: extensionOf(presentation)

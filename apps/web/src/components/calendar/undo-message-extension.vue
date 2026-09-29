@@ -1,41 +1,94 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NueButton } from 'nue-ui'
+import { t } from '@nao-todo/shared/locales'
+import type { ScheduleUndoStatus } from './undo-message'
 
 /**
- * U2 撤销扩展区（NueMessage `extension` 内容）
+ * U2 撤销扩展区（NueMessage `extension` 内容；T364 增加成功 / 失败终态）
  * @description 库以**独立 `render()` 根**渲染扩展内容（不在本应用作用域内）⇒
- *              ① 组件必须显式 import（本应用全局注册的 `nue-button` 在该根不可见，
+ *              ① 组件必须显式 import `NueButton`（本应用全局注册的 `nue-button` 在该根不可见，
  *                 写成字符串标签会退化为未知元素 ⇒ 丢失原生 button 语义/键盘可达）；
- *              ② `busy` 以**取值函数**直传并在此处读取 ⇒ 读取发生在本组件 render 中，
- *                 响应性得以保持（无需依赖库侧的 props 变更）。
+ *              ② `text` / `status` 以**取值函数**直传并在此处读取 ⇒ 读取发生在本组件 render 中，
+ *                 响应性得以保持（库 `message` 为静态 prop 无法更新，故主文案也由本组件渲染）。
+ *
+ *              T364 状态驱动（idle → busy → undone / failed）：
+ *              - idle：可点，主文案 = 动作文案，按钮「撤销」
+ *              - busy：不可点，按钮「撤销中…」
+ *              - undone：**终态**，不可点，主文案「已撤销该调整」、按钮「已撤销」
+ *              - failed：仍可点（重试），主文案「撤销失败，可重试」、按钮「重试」
+ *
+ *              禁用语义用 `aria-disabled` 而非原生 `disabled`：原生 disabled 会在按钮**当前持有焦点**
+ *              时把焦点抛回 `<body>`（键盘用户丢失位置）；`aria-disabled` 保留可聚焦性并向辅助技术
+ *              声明不可用，真正的「不可再激活」由 `undoLast` 的状态守卫保证（点击为 no-op）。
  */
 const props = defineProps<{
-    /** 动作文案（仅用于读屏播报；视觉文案由消息本体承载，避免重复朗读按钮） */
+    /** 动作文案（idle 主文案；终态文案由 status 覆盖） */
     text: string
-    /** 撤销写回中 / 批量写回中（P3-1 互斥）⇒ 按钮禁用并显示「撤销中…」 */
-    busy: () => boolean
+    /** 状态机取值函数（idle / busy / undone / failed） */
+    status: () => ScheduleUndoStatus
     undo: () => void
 }>()
 
-const isBusy = computed(() => props.busy())
+const status = computed(() => props.status())
+/** 不可点：写回中或已成功撤销（终态）；失败态保持可点以便重试 */
+const isInactive = computed(() => status.value === 'busy' || status.value === 'undone')
+const message = computed(() => {
+    if (status.value === 'undone') return t('calendar.undo.doneMessage')
+    if (status.value === 'failed') return t('calendar.undo.failedMessage')
+    return props.text
+})
+const actionLabel = computed(() => {
+    if (status.value === 'busy') return t('calendar.undo.busy')
+    if (status.value === 'undone') return t('calendar.undo.done')
+    if (status.value === 'failed') return t('calendar.undo.retry')
+    return t('calendar.undo.action')
+})
+/** 不可点时不派发（`aria-disabled` 只声明语义，不阻断事件；数据层 `undoLast` 另有状态守卫兜底） */
+const onAction = (): void => {
+    if (isInactive.value) return
+    props.undo()
+}
 </script>
 
 <template>
-    <!-- O8：role=status 收窄到文本（live region 不含交互按钮，按钮不被重复播报） -->
-    <span class="undo-entry__live" role="status">{{ text }}</span>
-    <nue-button
-        theme="pure"
-        class="undo-entry__action"
-        data-testid="schedule-undo-action"
-        :disabled="isBusy"
-        @click="undo"
-    >
-        {{ isBusy ? '撤销中…' : '撤销' }}
-    </nue-button>
+    <span class="undo-entry">
+        <!-- O8：role=status 收窄到文本（live region 不含交互按钮，按钮不被重复播报） -->
+        <span class="undo-entry__live" role="status">{{ message }}</span>
+        <span class="undo-entry__text">{{ message }}</span>
+        <nue-button
+            theme="pure"
+            class="undo-entry__action"
+            data-testid="schedule-undo-action"
+            :aria-disabled="isInactive"
+            @click="onAction"
+        >
+            {{ actionLabel }}
+        </nue-button>
+    </span>
 </template>
 
 <style scoped>
+/* 主文案改由本组件渲染（库 `message` 传空串，见 undo-message.ts）⇒
+   去掉库扩展区默认的左分隔线与内边距，避免出现悬空竖线
+   （本仓库仅此一处使用 message extension） */
+:global(.nue-message-node-inner__extension:has(.undo-entry)) {
+    border-left: none;
+    padding-left: 0;
+}
+
+.undo-entry {
+    display: inline-flex;
+    gap: calc(var(--nue-message-node-inner-vgap) * 0.5);
+    align-items: center;
+}
+
+/* 主文案：随状态更新（动作文案 / 已撤销该调整 / 撤销失败，可重试） */
+.undo-entry__text {
+    color: var(--nue-message-node-inner-color);
+    font-size: var(--nue-message-node-inner-font-size);
+}
+
 /* 读屏活动区域：视觉隐藏（WCAG sr-only，非 display:none / hidden）；脱离 flex 布局 */
 .undo-entry__live {
     position: absolute;
@@ -64,11 +117,12 @@ const isBusy = computed(() => props.busy())
     transition: background 60ms;
 }
 
-.nue-button.undo-entry__action:hover:not(:disabled) {
+.nue-button.undo-entry__action:hover:not([aria-disabled='true']) {
     background: color-mix(in srgb, var(--nue-message-node-inner-border-color) 22%, transparent);
 }
 
-.nue-button.undo-entry__action:disabled {
+/* 不可点（写回中 / 已撤销终态）：视觉弱化且不显示手型；语义由 aria-disabled 声明 */
+.nue-button.undo-entry__action[aria-disabled='true'] {
     opacity: 0.55;
     cursor: default;
 }

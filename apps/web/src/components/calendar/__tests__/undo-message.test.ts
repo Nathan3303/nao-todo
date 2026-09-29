@@ -4,16 +4,19 @@ import {
     closeScheduleUndo,
     presentScheduleUndo,
     UNDO_MESSAGE_DURATION,
-    type ScheduleUndoPresentation
+    type ScheduleUndoPresentation,
+    type ScheduleUndoStatus
 } from '../undo-message'
 import type { ScheduleUndoAction } from '../monthly/reschedule'
 
 /**
  * T362 撤销入口呈现（NueMessage extension）
- * @description 取代原 `undo-toast.vue` 的组件级断言：呈现参数（文案/类型/时长/扩展区）、
+ * @description 取代原 `undo-toast.vue` 的组件级断言：呈现参数（类型/时长/扩展区）、
  *              **单一入口不变量**（新动作先关上一条并令其失效）、超时失效、幂等关闭、
  *              身份守卫（不得误关他人那条）。库渲染（DOM/位置/动画）由 nue-ui 自身保障 ⇒
- *              此处 mock `NueMessage` 只断言我们下发的契约。
+ *              此处 mock `NueMessage` 只断言我们下发的契约；新动作替换/超时仍按原逻辑 close。
+ *
+ *              T364：主文案改由扩展区组件渲染 ⇒ 库 `message` 传空串（不断言动作文案在库侧）。
  */
 
 const messageMock = vi.hoisted(() => vi.fn())
@@ -31,11 +34,12 @@ const makeAction = (overrides: Partial<ScheduleUndoAction> = {}): ScheduleUndoAc
 })
 
 const makePresentation = (
-    action: ScheduleUndoAction = makeAction()
+    action: ScheduleUndoAction = makeAction(),
+    status: ScheduleUndoStatus = 'idle'
 ): { presentation: ScheduleUndoPresentation; dismiss: ReturnType<typeof vi.fn> } => {
     const dismiss = vi.fn()
     return {
-        presentation: { action, busy: () => false, undo: vi.fn(), dismiss },
+        presentation: { action, status: () => status, undo: vi.fn(), dismiss },
         dismiss
     }
 }
@@ -56,7 +60,7 @@ afterEach(() => {
 })
 
 describe('T362 撤销入口呈现（NueMessage extension）', () => {
-    it('动作出现 ⇒ 以消息呈现：文案/类型/时长/扩展区（内容为 VNode）', () => {
+    it('动作出现 ⇒ 以消息呈现：空主文案/类型/时长/扩展区（扩展区携带动作文案与状态取值函数）', () => {
         const { presentation } = makePresentation()
         presentScheduleUndo(presentation)
 
@@ -67,12 +71,16 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
             duration: number
             extension: (ctx: { close: () => void }) => unknown
         }
-        expect(payload.message).toBe('已移至 10 月 5 日')
+        // 主文案改由扩展区组件渲染（库 message 为静态 prop）⇒ 传空串
+        expect(payload.message).toBe('')
         expect(payload.type).toBe('success')
         expect(payload.duration).toBe(UNDO_MESSAGE_DURATION)
         expect(typeof payload.extension).toBe('function')
         // 扩展区渲染函数（库注入 { close } 上下文；本实现自行收口，不依赖该上下文）
-        expect(payload.extension({ close: vi.fn() })).toBeTruthy()
+        const node = payload.extension({ close: vi.fn() }) as { props?: Record<string, unknown> }
+        expect(node).toBeTruthy()
+        expect(node.props?.text).toBe('已移至 10 月 5 日')
+        expect(typeof node.props?.status).toBe('function')
     })
 
     it('warning（部分失败）tone ⇒ warning 类型；5s 时长恒定', () => {
@@ -107,6 +115,21 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         expect(dismiss).not.toHaveBeenCalled()
         expect(handles[0]!.close).not.toHaveBeenCalled()
 
+        vi.advanceTimersByTime(1)
+        expect(dismiss).toHaveBeenCalledTimes(1)
+        expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('T364：成功终态（undone）不主动关闭消息 ⇒ 仍按既有超时自动消失', () => {
+        const { presentation, dismiss } = makePresentation(makeAction(), 'undone')
+        presentScheduleUndo(presentation)
+
+        // 终态期间消息保持打开（状态稳定，不重建 DOM）
+        vi.advanceTimersByTime(UNDO_MESSAGE_DURATION - 1)
+        expect(handles[0]!.close).not.toHaveBeenCalled()
+        expect(dismiss).not.toHaveBeenCalled()
+
+        // 既有超时到点 ⇒ 自动消失
         vi.advanceTimersByTime(1)
         expect(dismiss).toHaveBeenCalledTimes(1)
         expect(handles[0]!.close).toHaveBeenCalledTimes(1)

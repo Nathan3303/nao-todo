@@ -336,7 +336,7 @@ describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage ex
         await dragBar(w, 540, 790)
         expect(hhmm(lastPatch()?.startAt)).toBe('13:00')
 
-        // 呈现契约：单条消息 + success 类型 + 5s + extension 渲染函数
+        // 呈现契约：单条消息 + success 类型 + 5s + extension 渲染函数（主文案改由扩展区渲染 ⇒ 空串）
         expect(messageMock).toHaveBeenCalledTimes(1)
         const payload = messageMock.mock.calls[0]![0] as {
             message: string
@@ -344,7 +344,7 @@ describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage ex
             duration: number
             extension: () => VNode
         }
-        expect(payload.message).toBe('已调整时间')
+        expect(payload.message).toBe('')
         expect(payload.type).toBe('success')
         expect(payload.duration).toBe(5000)
 
@@ -352,8 +352,15 @@ describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage ex
         const entry = mount(defineComponent({ render: () => payload.extension() }), {
             attachTo: document.body
         })
-        await entry.get('[data-testid="schedule-undo-action"]').trigger('click')
+        const undoButton = entry.get('[data-testid="schedule-undo-action"]')
+        await undoButton.trigger('click')
         await flushPromises()
+
+        // T364：真实写回成功后 ⇒ 终态不可点 + 文案变更（状态驱动，不靠移除 DOM）
+        expect(undoButton.text()).toBe('已撤销')
+        expect(undoButton.attributes('aria-disabled')).toBe('true')
+        expect(entry.get('.undo-entry__text').text()).toBe('已撤销该调整')
+        expect(entry.get('[role="status"]').text()).toBe('已撤销该调整')
         entry.unmount()
 
         const restore = lastPatch()

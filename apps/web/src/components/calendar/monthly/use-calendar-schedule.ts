@@ -1,14 +1,16 @@
 import { translateTaskError } from '@nao-todo/presentation/task'
 import { isArchivedReadOnlyError } from '@nao-todo/presentation/task/archive-gate'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import {
     closeScheduleUndo,
     presentScheduleUndo,
-    type ScheduleUndoPresentation
+    type ScheduleUndoPresentation,
+    type ScheduleUndoStatus
 } from '../undo-message'
 import { todayDateKey } from './monthly-layout'
 import {
@@ -34,17 +36,20 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
     // @states 最近一次成功写回动作（仅保留最近一个：新成功动作替换旧快照）；撤销/超时后失效
     const undoAction = ref<ScheduleUndoAction | null>(null)
     const undoBusy = ref(false) // 撤销写回防连点
+    const undoStatus = ref<ScheduleUndoStatus>('idle') // 状态机：idle→busy→undone/failed（T364）
     const scheduleBusy = ref(false) // 批量排期防连点
 
-    // @method 「X 月 X 日」日期标签（按日期键直接拆分，无时区偏移）
+    // @method 「X 月 X 日」日期标签（按日期键直接拆分，无时区偏移；月/日文案随语言）
     const monthDayLabelOf = (dateKey: string): string => {
         const [, month, day] = dateKey.split('-')
-        return `${Number(month)} 月 ${Number(day)} 日`
+        return t('calendar.undo.dateLabel', { month: Number(month), day: Number(day) })
     }
 
     // @method 弹出/刷新撤销入口（替换最近一次；约 5s 自动超时失效）
-    //             实际呈现由下方 watch 交给 `undo-message`（NueMessage extension 单一入口）
+    //             新动作一律重置状态机为 idle（终态不跨动作残留）；
+    //             实际呈现由下方 watch 交给 `undo-message`（NueMessage extension 单入口）
     const showUndoAction = (action: ScheduleUndoAction): void => {
+        undoStatus.value = 'idle'
         undoAction.value = action
     }
     const dismissUndoAction = (): void => {
@@ -86,7 +91,7 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
                 return
             }
             showUndoAction({
-                text: `已移至 ${monthDayLabelOf(dateKey)}`,
+                text: t('calendar.undo.movedTo', { date: monthDayLabelOf(dateKey) }),
                 tone: 'success',
                 snapshots
             })
@@ -120,14 +125,18 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
             const ok = tasks.length - fail
             if (ok > 0 && fail > 0) {
                 showUndoAction({
-                    text: `成功 ${ok} · 失败 ${fail}，失败项已保留选中`,
+                    text: t('calendar.undo.partialFailed', { ok, fail }),
                     tone: 'warning',
                     snapshots
                 })
             } else if (ok > 0) {
-                showUndoAction({ text: `已安排 ${ok} 个任务`, tone: 'success', snapshots })
+                showUndoAction({
+                    text: t('calendar.undo.scheduledCount', { count: ok }),
+                    tone: 'success',
+                    snapshots
+                })
             } else {
-                NueMessage.error(`成功 0 · 失败 ${fail}，已保留选中`)
+                NueMessage.error(t('calendar.undo.allFailed', { fail }))
             }
             return { ok, fail, failedIds }
         } finally {
@@ -140,7 +149,7 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
     const applyTimePatch = async (
         task: TaskViewObject,
         patch: { startAt?: string; endAt?: string },
-        label = '已调整时间'
+        labelKey: LocaleKey = 'calendar.undo.timeAdjusted'
     ): Promise<boolean> => {
         const snapshot = snapshotTaskDates(task)
         const err = await taskUseCase.update(task.id, {
@@ -152,21 +161,25 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
             if (!isArchivedReadOnlyError(err)) NueMessage.error(translateTaskError(err))
             return false
         }
-        showUndoAction({ text: label, tone: 'success', snapshots: [snapshot] })
+        showUndoAction({ text: t(labelKey), tone: 'success', snapshots: [snapshot] })
         return true
     }
 
-    // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点、失败 toast）；成功/失败均不再保留入口
-    //              P3-1：与批量排期互斥——批量写回进行中不执行撤销（慢网批量中入口禁用/串行化）
+    // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点）
+    //             ≻ 全部成功 ⇒ 进入 **undone 终态**（不关闭消息：按钮不可再点 + 文案变更，直至既有超时）
+    //             ≻ 任一失败 ⇒ **failed**（不显示已撤销；保留入口仍可重试 + 原错误提示）
+    //             P3-1：与批量排期互斥——批量写回进行中不执行撤销（慢网批量中入口禁用/串行化）
     const undoLast = async (): Promise<void> => {
         const action = undoAction.value
         if (!action || undoBusy.value) return
+        if (undoStatus.value === 'undone') return // 终态：成功撤销后不可再执行（幂等，连点/键盘连击最多一次）
         if (scheduleBusy.value) return // 批量串行写回中：撤销延迟到批结束后（新动作将替换旧快照）
         if (action.snapshots.length === 0) {
             dismissUndoAction()
             return
         }
         undoBusy.value = true
+        undoStatus.value = 'busy'
         try {
             let firstErr: Error | string | null = null
             for (const snap of action.snapshots) {
@@ -177,8 +190,13 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
                 })
                 if (err !== null && firstErr === null) firstErr = err
             }
-            dismissUndoAction()
-            if (firstErr !== null && !isArchivedReadOnlyError(firstErr)) {
+            if (firstErr === null) {
+                // 仅确认全部写回成功后才置终态（禁止乐观置位）：保留消息至既有超时自动消失
+                undoStatus.value = 'undone'
+                return
+            }
+            undoStatus.value = 'failed'
+            if (!isArchivedReadOnlyError(firstErr)) {
                 NueMessage.error(translateTaskError(firstErr))
             }
         } finally {
@@ -186,20 +204,25 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         }
     }
 
-    // @states 撤销入口 busy（撤销写回中 / 批量写回中；P3-1 互斥，口径与改前 toast 一致）
-    const undoEntryBusy = computed(() => undoBusy.value || scheduleBusy.value)
+    // @states 呈现状态（终态优先 ⇒ 成功后即使批量 busy 也不回退为可点；其余按 busy 收敛）
+    const undoEntryStatus = (): ScheduleUndoStatus => {
+        if (undoStatus.value === 'undone') return 'undone'
+        if (undoBusy.value || scheduleBusy.value) return 'busy'
+        if (undoStatus.value === 'failed') return 'failed'
+        return 'idle'
+    }
 
     // @states 本实例当前呈现的载荷（按实例身份，用于「只关自己那条」）
     let undoPresentation: ScheduleUndoPresentation | null = null
 
     // @watch 呈现层（T362）：动作出现 ⇒ 经 NueMessage 扩展插槽呈现撤销入口
     //        （全节单一入口由 `undo-message` 的模块级句柄注册表保证）；
-    //        动作被清除（撤销完成 / 超时 / 卸载）⇒ 关闭自己那一条
+    //        动作被清除（超时 / 卸载）⇒ 关闭自己那一条（成功终态仍保留至超时，不在此关闭）
     watch(undoAction, (action) => {
         if (action) {
             undoPresentation = {
                 action,
-                busy: () => undoEntryBusy.value,
+                status: undoEntryStatus,
                 undo: undoLast,
                 dismiss: dismissUndoAction
             }
@@ -225,6 +248,7 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         runBatchSchedule,
         undoAction,
         undoBusy,
+        undoStatus,
         undoLast,
         dismissUndoAction,
         scheduleToDay,

@@ -72,7 +72,7 @@ export const useDayDrag = () => {
                 await applyTimePatch(
                     task,
                     { startAt: newStart.toISOString(), endAt: realEnd.toISOString() },
-                    '已调整开始时间'
+                    'calendar.undo.startAdjusted'
                 )
                 return
             }
@@ -89,7 +89,7 @@ export const useDayDrag = () => {
                 await applyTimePatch(
                     task,
                     { startAt: realStart.toISOString(), endAt: newEnd.toISOString() },
-                    '已调整时长'
+                    'calendar.undo.durationAdjusted'
                 )
                 return
             }
@@ -105,7 +105,7 @@ export const useDayDrag = () => {
             await applyTimePatch(
                 task,
                 { startAt: newStart.toISOString(), endAt: newEnd.toISOString() },
-                '已调整时间'
+                'calendar.undo.timeAdjusted'
             )
         }
     })
