@@ -2,8 +2,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import {
     closeScheduleUndo,
+    holdScheduleUndo,
     presentScheduleUndo,
+    UNDO_FAILED_DURATION,
     UNDO_MESSAGE_DURATION,
+    UNDO_MESSAGE_HARD_CAP,
+    UNDO_TERMINAL_DURATION,
     type ScheduleUndoPresentation,
     type ScheduleUndoStatus
 } from '../undo-message'
@@ -74,7 +78,11 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         // 主文案改由扩展区组件渲染（库 message 为静态 prop）⇒ 传空串
         expect(payload.message).toBe('')
         expect(payload.type).toBe('success')
-        expect(payload.duration).toBe(UNDO_MESSAGE_DURATION)
+        // T366：库 duration 仅作硬上限（实际消失由本模块计时器控制）
+        expect(payload.duration).toBe(UNDO_MESSAGE_HARD_CAP)
+        expect(UNDO_MESSAGE_HARD_CAP).toBeGreaterThan(
+            UNDO_MESSAGE_DURATION + UNDO_TERMINAL_DURATION
+        )
         expect(typeof payload.extension).toBe('function')
         // 扩展区渲染函数（库注入 { close } 上下文；本实现自行收口，不依赖该上下文）
         const node = payload.extension({ close: vi.fn() }) as { props?: Record<string, unknown> }
@@ -83,12 +91,12 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         expect(typeof node.props?.status).toBe('function')
     })
 
-    it('warning（部分失败）tone ⇒ warning 类型；5s 时长恒定', () => {
+    it('warning（部分失败）tone ⇒ warning 类型；硬上限时长恒定', () => {
         const { presentation } = makePresentation(makeAction({ tone: 'warning' }))
         presentScheduleUndo(presentation)
         const payload = messageMock.mock.calls[0]![0] as { type: string; duration: number }
         expect(payload.type).toBe('warning')
-        expect(payload.duration).toBe(UNDO_MESSAGE_DURATION)
+        expect(payload.duration).toBe(UNDO_MESSAGE_HARD_CAP)
     })
 
     it('单一入口：新动作先关闭上一条消息（旧入口因消息被关而不可达）', () => {
@@ -133,6 +141,60 @@ describe('T362 撤销入口呈现（NueMessage extension）', () => {
         vi.advanceTimersByTime(1)
         expect(dismiss).toHaveBeenCalledTimes(1)
         expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('T366：接近原超时进入 undone 并重置计时 ⇒ 终态仍可见 UNDO_TERMINAL_DURATION', () => {
+        const { presentation, dismiss } = makePresentation(makeAction(), 'idle')
+        presentScheduleUndo(presentation)
+
+        // 用户在接近原 5s 超时时成功撤销（此时才进入终态并重置计时）
+        vi.advanceTimersByTime(UNDO_MESSAGE_DURATION - 100)
+        holdScheduleUndo(UNDO_TERMINAL_DURATION)
+
+        // 终态可见窗口：UNDO_TERMINAL_DURATION - 1 仍可见（此已越过原 5s，证明计时已重置）
+        vi.advanceTimersByTime(UNDO_TERMINAL_DURATION - 1)
+        expect(handles[0]!.close).not.toHaveBeenCalled()
+        expect(dismiss).not.toHaveBeenCalled()
+        vi.advanceTimersByTime(1)
+        expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+        expect(dismiss).toHaveBeenCalledTimes(1)
+    })
+
+    it('T366：失败态重置计时 ⇒ 保持 UNDO_FAILED_DURATION（不被原 5s 抢关）', () => {
+        const { presentation, dismiss } = makePresentation(makeAction(), 'idle')
+        presentScheduleUndo(presentation)
+
+        vi.advanceTimersByTime(UNDO_MESSAGE_DURATION - 100)
+        holdScheduleUndo(UNDO_FAILED_DURATION)
+
+        // 先越过原 5s，再越到新计时前一刻 ⇒ 证明失败态重置生效（未被原超时抢关）
+        vi.advanceTimersByTime(UNDO_FAILED_DURATION - 1)
+        expect(handles[0]!.close).not.toHaveBeenCalled()
+        expect(dismiss).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(1)
+        expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('T366：holdScheduleUndo 只作用于当前消息；消息已关闭后为空操作', () => {
+        const { presentation } = makePresentation()
+        presentScheduleUndo(presentation)
+        closeScheduleUndo()
+
+        holdScheduleUndo(UNDO_TERMINAL_DURATION)
+        vi.advanceTimersByTime(UNDO_MESSAGE_HARD_CAP)
+        expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('非终态（idle/busy）仍按原 5s 语义消失（未被 T366 改变）', () => {
+        const { presentation, dismiss } = makePresentation()
+        presentScheduleUndo(presentation)
+
+        vi.advanceTimersByTime(UNDO_MESSAGE_DURATION - 1)
+        expect(handles[0]!.close).not.toHaveBeenCalled()
+        vi.advanceTimersByTime(1)
+        expect(handles[0]!.close).toHaveBeenCalledTimes(1)
+        expect(dismiss).toHaveBeenCalledTimes(1)
     })
 
     it('替换后旧计时被清除：旧动作不再触发超时失效', () => {

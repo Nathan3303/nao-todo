@@ -8,6 +8,7 @@ import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
+import { UNDO_MESSAGE_HARD_CAP } from '../../undo-message'
 import DailyView from '../index.vue'
 
 /**
@@ -336,7 +337,8 @@ describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage ex
         await dragBar(w, 540, 790)
         expect(hhmm(lastPatch()?.startAt)).toBe('13:00')
 
-        // 呈现契约：单条消息 + success 类型 + 5s + extension 渲染函数（主文案改由扩展区渲染 ⇒ 空串）
+        // 呈现契约：单条消息 + success 类型 + 硬上限时长 + extension 渲染函数
+        // （主文案改由扩展区渲染 ⇒ 空串；实际消失由 undo-message 计时器控制，见 T366）
         expect(messageMock).toHaveBeenCalledTimes(1)
         const payload = messageMock.mock.calls[0]![0] as {
             message: string
@@ -346,7 +348,7 @@ describe('TASK-16 撤销并入（§5.5 / AC4⑤ / C9；T362 改走 NueMessage ex
         }
         expect(payload.message).toBe('')
         expect(payload.type).toBe('success')
-        expect(payload.duration).toBe(5000)
+        expect(payload.duration).toBe(UNDO_MESSAGE_HARD_CAP)
 
         // 扩展区（真实组件）挂载后点「撤销」⇒ 走真实 undoLast 写回链路
         const entry = mount(defineComponent({ render: () => payload.extension() }), {

@@ -8,7 +8,10 @@ import { onUnmounted, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import {
     closeScheduleUndo,
+    holdScheduleUndo,
     presentScheduleUndo,
+    UNDO_FAILED_DURATION,
+    UNDO_TERMINAL_DURATION,
     type ScheduleUndoPresentation,
     type ScheduleUndoStatus
 } from '../undo-message'
@@ -191,11 +194,14 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
                 if (err !== null && firstErr === null) firstErr = err
             }
             if (firstErr === null) {
-                // 仅确认全部写回成功后才置终态（禁止乐观置位）：保留消息至既有超时自动消失
+                // 仅确认全部写回成功后才置终态（禁止乐观置位）；并重置消失计时，保证「已撤销」可见
                 undoStatus.value = 'undone'
+                holdScheduleUndo(UNDO_TERMINAL_DURATION)
                 return
             }
             undoStatus.value = 'failed'
+            // 失败态同样重置计时：用户要看得清失败文案并有机会重试
+            holdScheduleUndo(UNDO_FAILED_DURATION)
             if (!isArchivedReadOnlyError(firstErr)) {
                 NueMessage.error(translateTaskError(firstErr))
             }
