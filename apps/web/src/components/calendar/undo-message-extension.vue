@@ -85,11 +85,12 @@ const onAction = (): void => {
 
 /* 失败态语义配色（T368）：pill 仍以 `--success`/`--warning` 创建（库 type 创建时固定、无法切换）
    ⇒ 仅改指 error 令牌，使「颜色 = 失败」与文案一致；不改主题包、不写死色值。
-   实测对比度（error-70 on error-10）：浅色 4.57:1 / 深色 4.76:1 ⇒ 达 WCAG AA（不受 DEF-58 阻） */
+   取值与 theme 0.13.27 的 `--error` 映射同源（`-90` 文字 / `-10` 底 / `-80` 边框）；
+   实测对比度（error-90 on error-10）：浅色 6.76:1 / 深色 6.51:1 ⇒ 达 WCAG AA */
 :global(.nue-message-node-inner:has(.undo-entry--failed)) {
-    --nue-message-node-inner-color: var(--nue-error-color-70);
+    --nue-message-node-inner-color: var(--nue-error-color-90);
     --nue-message-node-inner-background-color: var(--nue-error-color-10);
-    --nue-message-node-inner-border-color: var(--nue-error-color-60);
+    --nue-message-node-inner-border-color: var(--nue-error-color-80);
 }
 
 .undo-entry {
