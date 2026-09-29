@@ -1000,7 +1000,13 @@ cmd_close() {
   # 闸门②：在跑 turn（tmux 可判；非 tmux 宿主无法判 → 需 --force）
   pane="$(find_pane_for "$name" "$repo")"
   if [[ -n "$pane" ]]; then
-    pane_busy "$pane" && bus="tmux pane $pane 末行显示在跑 turn"
+    # 显式双分支赋值：pane 空闲时 bus 必须落为 ""。
+    # 曾用 `pane_busy "$pane" && bus=…`：pane_busy 为假时 && 短路，bus 在 set -u 下未绑定 → 行 1007 崩溃。
+    if pane_busy "$pane"; then
+      bus="tmux pane $pane 末行显示在跑 turn"
+    else
+      bus=""
+    fi
   else
     bus="非 tmux 宿主，无法确认是否在跑 turn"
   fi
