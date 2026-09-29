@@ -1,4 +1,4 @@
-import { computed, inject, provide, ref, shallowRef, watch, type Ref } from 'vue'
+import { computed, inject, provide, ref, watch, type Ref } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import useCalendarMonthly from './monthly/use-calendar-monthly'
@@ -21,7 +21,6 @@ import { useScope, useShortcut } from '@/hooks'
 import { CALENDAR_WEEKLY_CONTEXT_KEY, type CalendarWeeklyContext } from './weekly-context'
 import { CALENDAR_DAY_CONTEXT_KEY, type CalendarDayContext } from './daily/context'
 import { CALENDAR_MONTHLY_CONTEXT_KEY, type CalendarMonthlyContext } from './monthly-context'
-import { CALENDAR_UNDO_SINK_KEY, type CalendarUndoPayload } from './undo-sink'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -183,42 +182,8 @@ export const useCalendarHost = (options?: {
         closeQuickCreate()
     })
 
-    // —— C9 撤销呈现唯一：宿主唯一 toast 挂载点；daily 时间轴栈经本通道上报 ——
-    const delegatedUndo = shallowRef<CalendarUndoPayload | null>(null)
-    provide(CALENDAR_UNDO_SINK_KEY, {
-        report: (payload: CalendarUndoPayload) => {
-            // 最近一次动作：daily 新动作替换宿主旧动作（旧入口不可再撤销）
-            dismissUndoAction()
-            delegatedUndo.value = payload
-        },
-        clear: () => {
-            delegatedUndo.value = null
-        }
-    })
-    // 宿主自身新动作 = 最近一次动作：清掉 daily 上报，保证「最近一次」语义与单 toast
-    watch(undoAction, (action) => {
-        if (action) delegatedUndo.value = null
-    })
-    const activeUndo = computed(() => {
-        const delegated = delegatedUndo.value
-        if (delegated) {
-            return {
-                action: delegated.action,
-                busy: delegated.busy.value,
-                undo: delegated.undo,
-                dismiss: delegated.dismiss
-            }
-        }
-        if (undoAction.value) {
-            return {
-                action: undoAction.value,
-                busy: undoBusy.value || scheduleBusy.value,
-                undo: undoLast,
-                dismiss: dismissUndoAction
-            }
-        }
-        return null
-    })
+    // —— 撤销入口（T362）：改走 NueMessage extension，由 `undo-message` 的模块级句柄注册表
+    //     保证全节单一入口；daily 时间轴与宿主各自呈现，无需宿主独占挂载点 ——
 
     // —— C1-F8 键盘导航（calendar scope 激活窗口 = 宿主挂载期；三视图共享） ——
     useScope(CALENDAR_KEY_SCOPE)
@@ -443,7 +408,6 @@ export const useCalendarHost = (options?: {
         viewMode,
         laneLimit,
         drag,
-        activeUndo,
         dayDrawerDate,
         dayDrawerOpen,
         dayTasks,

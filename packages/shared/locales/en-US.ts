@@ -717,6 +717,22 @@ const enUS: LocaleMessages = {
     'calendar.allDay': 'All day',
     'calendar.noTasksToday': 'No tasks today',
 
+    // Calendar · undo entry (T364)
+    'calendar.undo.action': 'Undo',
+    'calendar.undo.busy': 'Undoing…',
+    'calendar.undo.done': 'Undone',
+    'calendar.undo.doneMessage': 'Change undone',
+    'calendar.undo.failedMessage': 'Undo failed, you can retry',
+    'calendar.undo.retry': 'Retry',
+    'calendar.undo.movedTo': 'Moved to {date}',
+    'calendar.undo.dateLabel': '{month}/{day}',
+    'calendar.undo.scheduledCount': 'Scheduled {count} task(s)',
+    'calendar.undo.partialFailed': '{ok} succeeded · {fail} failed; failed items kept selected',
+    'calendar.undo.allFailed': '0 succeeded · {fail} failed; selection kept',
+    'calendar.undo.timeAdjusted': 'Time adjusted',
+    'calendar.undo.startAdjusted': 'Start time adjusted',
+    'calendar.undo.durationAdjusted': 'Duration adjusted',
+
     // Date relative
     'date.today': 'Today {time}',
     'date.yesterday': 'Yesterday {time}',

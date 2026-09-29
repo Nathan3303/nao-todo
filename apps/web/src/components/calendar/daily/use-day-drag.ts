@@ -1,11 +1,10 @@
-import { computed, inject, onUnmounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
 import { useCalendarSchedule } from '../monthly/use-calendar-schedule'
 import { ghostPointOf, useDragSchedule } from '../monthly/use-drag-schedule'
-import { CALENDAR_UNDO_SINK_KEY } from '../undo-sink'
 import { DAY_SNAP_MINUTES, snapMinutes } from '../snap'
 import { DAY_MINUTES } from './day-zoom'
 
@@ -27,38 +26,12 @@ export type DayGesture = 'move' | 'resize' | 'resize-start' | null
 export const useDayDrag = () => {
     // —— T51 交互：拖拽改时间 / 拉伸改时长 / 撤销（C7–C10 / C13） ——
     const interactionTaskUseCase = useTaskUseCase(useTasksStore())
-    const {
-        rescheduleBusyId,
-        scheduleBusy,
-        undoAction,
-        undoBusy,
-        undoLast,
-        dismissUndoAction,
-        applyTimePatch
-    } = useCalendarSchedule({ taskUseCase: interactionTaskUseCase })
+    const { rescheduleBusyId, scheduleBusy, undoBusy, applyTimePatch } = useCalendarSchedule({
+        taskUseCase: interactionTaskUseCase
+    })
 
-    // —— C9 撤销呈现唯一：有宿主时经注入通道上报宿主渲染/转发（全节单 toast）；
-    //        无宿主（单测/独立挂载）走自足回退（本地渲染 toast）⇒ daily-interactions.test.ts 零改动 ——
-    const undoSink = inject(CALENDAR_UNDO_SINK_KEY, null)
-    if (undoSink) {
-        watch(
-            undoAction,
-            (action) => {
-                if (action) {
-                    undoSink.report({
-                        action,
-                        busy: undoBusy,
-                        undo: undoLast,
-                        dismiss: dismissUndoAction
-                    })
-                } else {
-                    undoSink.clear()
-                }
-            },
-            { immediate: true }
-        )
-        onUnmounted(() => undoSink.clear())
-    }
+    // —— 撤销入口（T362）：改走 NueMessage extension，由 `undo-message` 的模块级句柄注册表
+    //     保证全节单一入口（不再需要宿主注入通道 / 本地第二条 toast） ——
 
     // @states 交互层容器（几何基准）、当前手势、起拖时一次性读取的像素基准
     const trackEl = ref<HTMLElement | null>(null)
@@ -99,7 +72,7 @@ export const useDayDrag = () => {
                 await applyTimePatch(
                     task,
                     { startAt: newStart.toISOString(), endAt: realEnd.toISOString() },
-                    '已调整开始时间'
+                    'calendar.undo.startAdjusted'
                 )
                 return
             }
@@ -116,7 +89,7 @@ export const useDayDrag = () => {
                 await applyTimePatch(
                     task,
                     { startAt: realStart.toISOString(), endAt: newEnd.toISOString() },
-                    '已调整时长'
+                    'calendar.undo.durationAdjusted'
                 )
                 return
             }
@@ -132,7 +105,7 @@ export const useDayDrag = () => {
             await applyTimePatch(
                 task,
                 { startAt: newStart.toISOString(), endAt: newEnd.toISOString() },
-                '已调整时间'
+                'calendar.undo.timeAdjusted'
             )
         }
     })
@@ -212,12 +185,6 @@ export const useDayDrag = () => {
         startResize,
         startResizeStart,
         dragPreview,
-        ghostStyle,
-        scheduleBusy,
-        undoAction,
-        undoBusy,
-        undoLast,
-        dismissUndoAction,
-        hasHostUndoSink: undoSink !== null
+        ghostStyle
     }
 }

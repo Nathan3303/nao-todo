@@ -4,7 +4,6 @@ import { t } from '@nao-todo/shared/locales'
 import { computed, inject, ref } from 'vue'
 import TaskBar from '../monthly/task-bar.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
-import ScheduleUndoToast from '../monthly/undo-toast.vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { DAY_ZOOM_DEFAULT, dayAxisSpecOf, type DayZoom } from './day-zoom'
 import { useCalendarDay } from './use-calendar-day'
@@ -91,21 +90,8 @@ const {
     showStartFade,
     showEndFade
 } = useDayViewport({ model, dayZoom, setDayZoom: viewContext?.setDayZoom })
-const {
-    drag,
-    trackEl,
-    startMove,
-    startResize,
-    startResizeStart,
-    dragPreview,
-    ghostStyle,
-    scheduleBusy,
-    undoAction,
-    undoBusy,
-    undoLast,
-    dismissUndoAction,
-    hasHostUndoSink
-} = useDayDrag()
+const { drag, trackEl, startMove, startResize, startResizeStart, dragPreview, ghostStyle } =
+    useDayDrag()
 </script>
 
 <template>
@@ -338,15 +324,6 @@ const {
             <div class="day-edge-fade is-start" :class="{ 'is-visible': showStartFade }"></div>
             <div class="day-edge-fade is-end" :class="{ 'is-visible': showEndFade }"></div>
         </div>
-
-        <!-- C9 撤销（有宿主时经注入通道上报宿主渲染；无宿主自足回退本地渲染） -->
-        <schedule-undo-toast
-            v-if="!hasHostUndoSink && undoAction"
-            :action="undoAction"
-            :busy="undoBusy || scheduleBusy"
-            @undo="undoLast"
-            @dismiss="dismissUndoAction"
-        />
 
         <!-- F1 浮空胶囊（拖拽跟随）+ 吸附后起止时刻预览（AC2） -->
         <div v-if="drag.session.active" class="drag-ghost" :style="ghostStyle()">

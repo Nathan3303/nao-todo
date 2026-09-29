@@ -701,6 +701,22 @@ const zhCN: LocaleMessages = {
     'calendar.allDay': '全天',
     'calendar.noTasksToday': '当日暂无任务',
 
+    // Calendar · 撤销入口（T364）
+    'calendar.undo.action': '撤销',
+    'calendar.undo.busy': '撤销中…',
+    'calendar.undo.done': '已撤销',
+    'calendar.undo.doneMessage': '已撤销该调整',
+    'calendar.undo.failedMessage': '撤销失败，可重试',
+    'calendar.undo.retry': '重试',
+    'calendar.undo.movedTo': '已移至 {date}',
+    'calendar.undo.dateLabel': '{month} 月 {day} 日',
+    'calendar.undo.scheduledCount': '已安排 {count} 个任务',
+    'calendar.undo.partialFailed': '成功 {ok} · 失败 {fail}，失败项已保留选中',
+    'calendar.undo.allFailed': '成功 0 · 失败 {fail}，已保留选中',
+    'calendar.undo.timeAdjusted': '已调整时间',
+    'calendar.undo.startAdjusted': '已调整开始时间',
+    'calendar.undo.durationAdjusted': '已调整时长',
+
     // Date relative
     'date.today': '今天 {time}',
     'date.yesterday': '昨天 {time}',

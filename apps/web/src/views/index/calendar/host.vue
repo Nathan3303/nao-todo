@@ -5,7 +5,6 @@ import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import CalendarDayDrawer from '@/components/calendar/monthly/day-drawer.vue'
 import UnscheduledDrawer from '@/components/calendar/monthly/unscheduled-drawer.vue'
-import ScheduleUndoToast from '@/components/calendar/monthly/undo-toast.vue'
 import { ghostPointOf } from '@/components/calendar/monthly/use-drag-schedule'
 import { MAX_VISIBLE_LANES } from '@/components/calendar/monthly/monthly-layout'
 import { useCalendarHost } from '@/components/calendar/use-calendar-host'
@@ -33,7 +32,6 @@ const laneLimit = ref<number>(MAX_VISIBLE_LANES)
 
 const {
     drag,
-    activeUndo,
     dayDrawerDate,
     dayDrawerOpen,
     dayTasks,
@@ -114,15 +112,6 @@ const ghostStyle = () => {
             :on-open-task="openTaskFromPanel"
             :on-clear-filter="clearFilter"
             :on-show-completed="showCompleted"
-        />
-
-        <!-- C9 撤销 action-toast（全节唯一挂载点；daily 时间轴栈经注入通道上报） -->
-        <schedule-undo-toast
-            v-if="activeUndo"
-            :action="activeUndo.action"
-            :busy="activeUndo.busy"
-            @undo="activeUndo.undo"
-            @dismiss="activeUndo.dismiss"
         />
 
         <!-- F1 浮空胶囊（拖拽跟随，fixed 非 DOM 克隆） -->
