@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { defineComponent } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import useBuiltInProjectView from './built-in-project'
+import useBuiltInProjectView from '../built-in-project'
 
 /**
  * SHELL-05 T5 / C-31 / C-32：离线（profile=null）内容视图就绪断言

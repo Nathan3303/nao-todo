@@ -18,7 +18,8 @@
         "guard:ddd": "node scripts/guard-domain-isolation.mjs",
         "guard:gate-pathspec": "node scripts/guard-gate-pathspec.mjs",
         "guard:barrel-imports": "node scripts/guard-barrel-imports.mjs",
-        "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs"
+        "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs",
+        "guard:test-location": "node scripts/guard-test-location.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",

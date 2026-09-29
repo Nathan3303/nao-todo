@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { evaluateOfflinePrerequisites } from './offline-prerequisites'
+import { evaluateOfflinePrerequisites } from '../offline-prerequisites'
 
 /**
  * C-62：离线进入预检（纯函数；门退役后判据替换）

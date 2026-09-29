@@ -10,7 +10,7 @@ import {
     SHELL_ERROR_LOG_CAPACITY,
     SHELL_ERROR_MESSAGE_MAX,
     SHELL_ERROR_STACK_MAX
-} from './error-observability'
+} from '../error-observability'
 
 /**
  * SHELL-05 T3 / C-27：全局未捕获异常可观测

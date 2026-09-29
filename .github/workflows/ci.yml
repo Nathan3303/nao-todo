@@ -46,12 +46,13 @@ jobs:
             - name: Format / lint / type check
               run: pnpm exec vp check
 
-            - name: Guards (domain isolation / gate pathspec / barrel imports / mobile red line)
+            - name: Guards (domain isolation / gate pathspec / barrel imports / mobile red line / test location)
               run: |
                   pnpm run guard:ddd
                   pnpm run guard:gate-pathspec
                   pnpm run guard:barrel-imports
                   pnpm run guard:mobile-imports
+                  pnpm run guard:test-location
 
     # job 2：全仓测试（与 check 并行）
     test:

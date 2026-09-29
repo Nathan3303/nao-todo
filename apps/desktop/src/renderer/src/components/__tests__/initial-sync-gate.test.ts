@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { NueButton, NueDiv, NueEmpty, NueIcon, NueMain, NueText } from 'nue-ui'
-import InitialSyncGate from './initial-sync-gate.vue'
+import InitialSyncGate from '../initial-sync-gate.vue'
 
 /**
  * 初始同步门终态与逃生入口断言（SHELL-03 C-01/C-02/C-06/C-10、F-5、BC-2/BC-4）

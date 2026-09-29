@@ -103,7 +103,7 @@ vi.mock(
     async () => import('@nao-todo/infrastructure')
 )
 
-const { useCaseBinding } = await import('./binding')
+const { useCaseBinding } = await import('../binding')
 
 type AuthUseCaseLike = {
     signIn: (vo: { password: string }) => Promise<string | null>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { startReminderSse } from './reminder-sse'
+import { startReminderSse } from '../reminder-sse'
 
 /**
  * T157 / FIX-C：提醒 SSE 空 token 不建连（DEF-33 下游加固）

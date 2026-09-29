@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
-import { bootstrapLocalData, withBootstrapRetry } from './bootstrap-local-data'
+import { bootstrapLocalData, withBootstrapRetry } from '../bootstrap-local-data'
 
 /**
  * C-61 / DEF-10：启动收敛点与常驻重跑（调用点①②③）

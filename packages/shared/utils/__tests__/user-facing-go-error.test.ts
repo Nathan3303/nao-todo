@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { t } from '../locales/i18n'
-import { unwrapError as unwrapErrorRaw } from './unwrap-go-error'
+import { t } from '../../locales/i18n'
+import { unwrapError as unwrapErrorRaw } from '../unwrap-go-error'
 import {
     isMissingUserIdError,
     unwrapError,
     unwrapErrors,
     MISSING_USER_ID_ERROR_NAME
-} from './user-facing-go-error'
+} from '../user-facing-go-error'
 
 /**
  * AC11：`userId` 硬失败的用户可读文案

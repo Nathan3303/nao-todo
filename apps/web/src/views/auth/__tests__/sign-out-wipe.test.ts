@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import { wipeLocalDataOnSignOut } from './sign-out-wipe'
+import { wipeLocalDataOnSignOut } from '../sign-out-wipe'
 
 /**
  * C-54 / C-52：登出清库护栏（脏队列阻塞确认 + `wipeUserData` 单一入口）

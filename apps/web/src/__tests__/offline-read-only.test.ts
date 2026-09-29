@@ -6,7 +6,7 @@ import {
     setOffline,
     setOfflineEntryActive
 } from '@nao-todo/presentation/offline'
-import { applySyncConfirmation, isSessionConfirmed } from './offline-read-only'
+import { applySyncConfirmation, isSessionConfirmed } from '../offline-read-only'
 
 /**
  * 会话级「离线进入」flag 生命周期断言（C-59 / AC10 / ADR-r5.1）
