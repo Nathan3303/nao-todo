@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared/locales'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
@@ -240,7 +241,9 @@ const {
                 >
                     未安排 {{ unscheduledCount }}
                 </nue-button>
-                <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
+                <nue-button theme="ghost,small" @click="onGoToday">{{
+                    t('calendar.today')
+                }}</nue-button>
             </nue-div>
         </nue-div>
 

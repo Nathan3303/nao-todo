@@ -688,7 +688,8 @@ const zhCN: LocaleMessages = {
     'pomodoro.recordSaveFailed': '专注记录保存失败：{error}',
 
     // Calendar
-    'calendar.today': '跳转至今天',
+    'calendar.today': '今天',
+    'calendar.now': '现在',
     'calendar.createTask': '新增待办事项',
     'calendar.monthTitle': '{year} 年 {month} 月',
     'calendar.weekday.mon': '一',

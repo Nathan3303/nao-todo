@@ -704,7 +704,8 @@ const enUS: LocaleMessages = {
     'pomodoro.recordSaveFailed': 'Failed to save focus record: {error}',
 
     // Calendar
-    'calendar.today': 'Go to Today',
+    'calendar.today': 'Today',
+    'calendar.now': 'Now',
     'calendar.createTask': 'New Task',
     'calendar.monthTitle': '{year}-{month}',
     'calendar.weekday.mon': 'Mon',

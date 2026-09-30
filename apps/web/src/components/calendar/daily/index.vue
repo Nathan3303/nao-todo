@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { t } from '@nao-todo/shared/locales'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, nextTick, ref } from 'vue'
 import TaskBar from '../monthly/task-bar.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
@@ -88,8 +88,16 @@ const {
     onPointerCancel,
     onBodyScroll,
     showStartFade,
-    showEndFade
+    showEndFade,
+    scrollToNow
 } = useDayViewport({ model, dayZoom, setDayZoom: viewContext?.setDayZoom })
+
+// @method 「现在」入口（T445 ②）：回到今天 + 视口定位到当前时间线
+//          （非今天 → 锚点回今天；已是今天 → 仍重新居中当前时刻，避免「现在」只在跨日时生效）
+const onGoNow = (): void => {
+    onGoToday()
+    void nextTick(scrollToNow)
+}
 const { drag, trackEl, startMove, startResize, startResizeStart, dragPreview, ghostStyle } =
     useDayDrag()
 </script>
@@ -158,7 +166,9 @@ const { drag, trackEl, startMove, startResize, startResizeStart, dragPreview, gh
                 >
                     未安排 {{ unscheduledCount }}
                 </nue-button>
-                <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
+                <nue-button theme="ghost,small" @click="onGoNow">{{
+                    t('calendar.now')
+                }}</nue-button>
             </nue-div>
         </nue-div>
 

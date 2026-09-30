@@ -669,6 +669,7 @@ export interface LocaleMessages {
 
     // Calendar
     'calendar.today': string
+    'calendar.now': string
     'calendar.createTask': string
     'calendar.monthTitle': string
     'calendar.weekday.mon': string
