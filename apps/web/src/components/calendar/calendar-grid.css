@@ -104,24 +104,6 @@
     cursor: default;
 }
 
-/* 月/周/日视图切换（分段按钮：零间隙贴合；T445 ① 落在侧边栏顶部 / 侧栏隐藏时紧凑态兜底） */
-.cal-view-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
-    border: 1px solid var(--cal-border);
-    border-radius: var(--nue-primary-radius);
-    overflow: hidden;
-}
-.cal-view-btn {
-    border-radius: 0 !important;
-}
-.cal-view-btn.is-active {
-    background: var(--cal-select-bg);
-    color: var(--cal-fg);
-    font-weight: 600;
-}
-
 /* 切换区与右侧控件之间的垂直分割线 */
 .cal-view-sep {
     align-self: center;

@@ -89,12 +89,17 @@ const onKeyDown = (event: KeyboardEvent): void => {
         :class="{
             'is-done': isDone,
             'is-overdue': isOverdue,
-            'has-cont-start': contStart,
-            'has-cont-end': contEnd,
+            'is-start': !contStart,
+            'is-end': !contEnd,
             'is-drag-source': dragging,
             'is-sticky-label': stickyLabel
         }"
-        :style="[pos, { '--cal-pri': barColor }]"
+        :style="{
+            '--seg-left': pos.left,
+            '--seg-width': pos.width,
+            '--seg-top': pos.top,
+            '--cal-pri': barColor
+        }"
         :title="titleSuffix ? `${task.name}（${titleSuffix}）` : task.name"
         :aria-label="task.name"
         tabindex="0"
@@ -103,23 +108,13 @@ const onKeyDown = (event: KeyboardEvent): void => {
         @pointerdown="onPointerDown"
         @keydown="onKeyDown"
     >
-        <span
-            v-if="contStart"
-            class="cal-cont cal-cont--start"
-            data-testid="cal-cont-start"
-            aria-hidden="true"
-        ></span>
-        <span
-            v-if="contEnd"
-            class="cal-cont cal-cont--end"
-            data-testid="cal-cont-end"
-            aria-hidden="true"
-        ></span>
         <span class="cal-item-text">{{ task.name }}</span>
         <!-- F4 改期触发器 = NueDropdown（reschedule-menu）：
              有截止时刻（showTime 且 endAt 合法）→ 触发器显示 HH:mm（常显）；
-             否则 → 三点图标（fallback，悬停/聚焦出现） -->
+             否则 → 三点图标（fallback，悬停/聚焦出现）。
+             T447：接续末端（contEnd）不渲染该动作（该段不是任务真实结束，无「改结束日期」语义） -->
         <reschedule-menu
+            v-if="!contEnd"
             :scheduled="true"
             :busy="busy"
             :anchor-key="anchorKey"
@@ -154,6 +149,9 @@ const onKeyDown = (event: KeyboardEvent): void => {
 /* ── 任务条（月/周共用；父级根容器需定义 --cal-* 令牌） ── */
 .cal-item {
     position: absolute;
+    left: var(--seg-left);
+    top: var(--seg-top);
+    width: var(--seg-width);
     height: 20px; /* TASK-07：16→20 行高增加（GRID_ITEM_STEP 同步 22） */
     display: flex;
     align-items: center;
@@ -169,6 +167,7 @@ const onKeyDown = (event: KeyboardEvent): void => {
     transition: background 60ms;
     box-sizing: border-box;
     outline: none;
+    --cal-item-inset: 2px; /* T447：真实首/尾端与格子边线的左右留白 */
 }
 .cal-item:hover {
     background: var(--cal-chip-bg-hover);
@@ -221,31 +220,30 @@ const onKeyDown = (event: KeyboardEvent): void => {
     opacity: 0.3;
 }
 
-/* 跨周/跨日连续标记（短横线）：被可视区间边界截断的一侧显示；左=承接上一段，右=续接下一段。
-   历史（CAL-04 A1 / 57c55b46）为 5px 圆点，TASK-07 移除；此处按用户规格恢复『连续』语义但改形为短横线。 */
-.cal-cont {
-    position: absolute;
-    top: 50%;
-    width: 7px;
-    height: 2px;
-    margin-top: -1px;
-    border-radius: 1px;
-    background: color-mix(in srgb, var(--cal-fg) 62%, var(--cal-bg));
-    pointer-events: none;
+/* 首/尾端圆角 + 左右留白（T447）：**真实开始/结束端**圆角且**内缩 `--cal-item-inset`**，
+   **被截断（接续）端**直角且**紧贴格子边线**。圆角 6px = 主题既有 `--nue-primary-radius`（不新增 token）。
+   故 单段=两端圆角且两侧内缩 · 首段=左圆内缩/右直角紧贴 · 中段=两端直角紧贴 · 末段=左直角紧贴/右圆内缩。
+   内缩经 `--seg-*` 变量在 CSS 内完成（不改父级几何口径；`left`/`width` 改由变量驱动）。 */
+.cal-item.is-start {
+    left: calc(var(--seg-left) + var(--cal-item-inset));
+    border-top-left-radius: var(--nue-primary-radius);
+    border-bottom-left-radius: var(--nue-primary-radius);
 }
-.cal-cont--start {
-    left: 4px;
+.cal-item.is-end {
+    border-top-right-radius: var(--nue-primary-radius);
+    border-bottom-right-radius: var(--nue-primary-radius);
 }
-.cal-cont--end {
-    right: 4px;
+/* 仅真实开始端：左移 + 收窄一份（右缘不变，紧贴） */
+.cal-item.is-start:not(.is-end) {
+    width: calc(var(--seg-width) - var(--cal-item-inset));
 }
-
-/* 带连续标记的条体：为短横线预留文本间距（名称 ellipsis 不压标记） */
-.cal-item.has-cont-start {
-    padding-left: 15px;
+/* 仅真实结束端：右缘内缩一份（左缘不变，紧贴） */
+.cal-item.is-end:not(.is-start) {
+    width: calc(var(--seg-width) - var(--cal-item-inset));
 }
-.cal-item.has-cont-end {
-    padding-right: 15px;
+/* 单段（两端均真实）：左移 + 收窄两份（两侧各内缩一份） */
+.cal-item.is-start.is-end {
+    width: calc(var(--seg-width) - 2 * var(--cal-item-inset));
 }
 
 /* F4 改期触发器（NueButton pure/icon 三点 / TASK-18 时间文本）：

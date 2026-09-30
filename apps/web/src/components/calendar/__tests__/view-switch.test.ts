@@ -70,6 +70,33 @@ describe('T445 ① CalendarViewSwitch', () => {
         expect(w.findAll('.cal-view-btn').map((b) => b.text())).toEqual(['Month', 'Week', 'Day'])
     })
 
+    it('segmented：滑块 Tab 指示器随当前视图平移（month/week/day → 0/100%/200%）', () => {
+        const month = mountSwitch('segmented', 'month', vi.fn())
+        const week = mountSwitch('segmented', 'week', vi.fn())
+        const day = mountSwitch('segmented', 'day', vi.fn())
+        const transformOf = (w: ReturnType<typeof mountSwitch>): string =>
+            (w.find('[data-testid="calendar-view-thumb"]').element as HTMLElement).style.transform
+        expect(month.find('[data-testid="calendar-view-thumb"]').exists()).toBe(true)
+        expect(transformOf(month)).toBe('translateX(0%)')
+        expect(transformOf(week)).toBe('translateX(100%)')
+        expect(transformOf(day)).toBe('translateX(200%)')
+    })
+
+    it('segmented：选中态底色由指示器承担（按钮透明），指示器尊重 prefers-reduced-motion', () => {
+        const css = Object.values(
+            import.meta.glob('../view-switch.vue', {
+                query: '?raw',
+                import: 'default',
+                eager: true
+            }) as Record<string, string>
+        ).join('\n')
+        expect(css).toContain('.cal-view-thumb')
+        expect(css).toContain('background: var(--cal-select-bg)')
+        expect(css).toContain('transition: transform 180ms ease')
+        expect(css).toContain('prefers-reduced-motion: reduce')
+        expect(css).toContain('background: transparent')
+    })
+
     it('compact：触发器 = 当前视图名；下拉三项 data-executeid = 子路由名', () => {
         const w = mountSwitch('compact', 'week', vi.fn())
         expect(w.find('[data-testid="calendar-view-switch-compact"]').text()).toBe('周')

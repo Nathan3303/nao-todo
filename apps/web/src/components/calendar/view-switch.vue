@@ -42,6 +42,11 @@ const currentLabelKey = computed<LocaleKey>(() => {
     return 'calendar.view.month'
 })
 const isActive = (name: CalendarViewName): boolean => CALENDAR_VIEW_NAMES[name] === props.current
+// @computed 滑块 Tab 指示器位置（当前视图序号；无匹配时回 0）
+const thumbIndex = computed(() => {
+    const index = ITEMS.findIndex((item) => isActive(item.name))
+    return index < 0 ? 0 : index
+})
 
 // @method 切换（透传给调用方；已是当前视图亦由调用方幂等处理）
 const switchTo = (name: CalendarViewName): void => props.onSwitch(name)
@@ -54,12 +59,19 @@ const onExecute = (id: string): void => {
 
 <template>
     <!-- 分段态：侧边栏顶部 -->
-    <nue-div
+    <nue-button-group
         v-if="variant === 'segmented'"
         class="cal-view-toggle"
         role="group"
         :aria-label="t('calendar.viewSwitch')"
     >
+        <!-- 滑块指示器（随当前视图平移；装饰性） -->
+        <span
+            class="cal-view-thumb"
+            data-testid="calendar-view-thumb"
+            aria-hidden="true"
+            :style="{ transform: `translateX(${thumbIndex * 100}%)` }"
+        ></span>
         <nue-button
             v-for="item in ITEMS"
             :key="item.name"
@@ -73,7 +85,7 @@ const onExecute = (id: string): void => {
         >
             {{ t(item.labelKey) }}
         </nue-button>
-    </nue-div>
+    </nue-button-group>
 
     <!-- 紧凑态：侧栏隐藏时的内容区头部兜底（当前视图名 + 下拉三项） -->
     <nue-dropdown
@@ -111,6 +123,58 @@ const onExecute = (id: string): void => {
 </template>
 
 <style scoped>
+/* 月/周/日视图切换（T445 ① 落侧边栏顶部；T447 改**滑块 Tab** 样式：指示器随当前视图平移）。
+   不新增 token；指示器用 `--cal-select-bg` 与既有选中底色一致。 */
+.cal-view-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--nue-primary-radius);
+    box-shadow: none;
+    overflow: hidden;
+}
+
+/* 滑块指示器：三等分宽，靠 transform 平移；尊重 prefers-reduced-motion */
+.cal-view-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: calc(100% / 3);
+    border-radius: var(--nue-primary-radius);
+    background: var(--cal-select-bg);
+    transition: transform 180ms ease;
+    pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .cal-view-thumb {
+        transition: none;
+    }
+}
+
+/* 按钮浮于指示器之上：均分宽、透明底；选中态仅变色（底色由指示器承担） */
+.cal-view-toggle > .cal-view-btn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    margin: 0;
+    border-radius: 0 !important;
+    background: transparent;
+    box-shadow: none;
+}
+.cal-view-toggle > .cal-view-btn:not(.is-active):hover {
+    background: var(--cal-hover);
+}
+.cal-view-toggle > .cal-view-btn.is-active,
+.cal-view-toggle > .cal-view-btn.is-active:hover {
+    background: transparent;
+    color: var(--cal-fg);
+    font-weight: 600;
+}
+
 /* 模式菜单内容（外层卡片/定位由 NueDropdown 承担；样式与改期菜单同源，不另起体系） */
 .vswitch {
     display: flex;

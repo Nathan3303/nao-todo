@@ -59,6 +59,32 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     :on-switch="switchCalendarView"
                 />
             </nue-div>
+            <nue-div class="extra-row">
+                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
+                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
+                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
+                <nue-div class="weekstart-row" gap="8px">
+                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
+                    <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
+                        <nue-button
+                            theme="small,ghost"
+                            class="weekstart-btn"
+                            :class="{ 'is-active': weekStart === 'sunday' }"
+                            @click="setWeekStart('sunday')"
+                        >
+                            周日
+                        </nue-button>
+                        <nue-button
+                            theme="small,ghost"
+                            class="weekstart-btn"
+                            :class="{ 'is-active': weekStart === 'monday' }"
+                            @click="setWeekStart('monday')"
+                        >
+                            周一
+                        </nue-button>
+                    </nue-div>
+                </nue-div>
+            </nue-div>
             <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">
@@ -101,33 +127,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                         </nue-checkbox-group>
                     </nao-smart-list>
                 </nue-collapse>
-            </nue-div>
-            <nue-divider />
-            <nue-div class="extra-row">
-                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
-                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
-                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
-                <nue-div class="weekstart-row" gap="8px">
-                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
-                    <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'sunday' }"
-                            @click="setWeekStart('sunday')"
-                        >
-                            周日
-                        </nue-button>
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'monday' }"
-                            @click="setWeekStart('monday')"
-                        >
-                            周一
-                        </nue-button>
-                    </nue-div>
-                </nue-div>
             </nue-div>
         </nue-div>
     </teleport>
