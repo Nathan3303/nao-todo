@@ -31,7 +31,6 @@ const title = computed(() => {
     return [pomodoroName, taskName].filter(Boolean).join(' / ')
 })
 </script>
-F
 <template>
     <nue-div
         theme="card,pomodoro-records-row"
