@@ -123,18 +123,21 @@ const onExecute = (id: string): void => {
 </template>
 
 <style scoped>
-/* 月/周/日视图切换（T445 ① 落侧边栏顶部；T447 改**滑块 Tab** 样式：指示器随当前视图平移）。
-   不新增 token；指示器用 `--cal-select-bg` 与既有选中底色一致。 */
+/* 月/周/日视图切换（T445 ① 落侧边栏顶部；T447 改滑块 Tab：指示器随当前视图平移）。
+   T448 根因修复：侧栏在日历令牌组（`.nue-calendar-host` 等）之外 ⇒ `--cal-*` 未定义 ⇒ 改用既有 `nue-*` token。
+   槽底 = 主文字色 8% 混合页面底色；容器边 = 55% 混合；指示器 = 页面底色；选中字 = 主文字色；未选中字 = 次要文字色。 */
 .cal-view-toggle {
     position: relative;
     display: flex;
     align-items: center;
     gap: 0;
     width: 100%;
-    border: 1px solid var(--cal-border);
+    /* 槽底色（与页面底区分） */
+    background: color-mix(in srgb, var(--nue-primary-text-color) 8%, var(--nue-primary-color-0));
     border-radius: var(--nue-primary-radius);
     box-shadow: none;
     overflow: hidden;
+    padding: var(--nue-padding-2xs);
 }
 
 /* 滑块指示器：三等分宽，靠 transform 平移；尊重 prefers-reduced-motion */
@@ -145,7 +148,10 @@ const onExecute = (id: string): void => {
     left: 0;
     width: calc(100% / 3);
     border-radius: var(--nue-primary-radius);
-    background: var(--cal-select-bg);
+    /* 背离槽底的“浮起”选中块（页面底色） */
+    background: var(--nue-primary-color-0);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--nue-primary-text-color) 16%, var(--nue-primary-color-0));
     transition: transform 180ms ease;
     pointer-events: none;
 }
@@ -155,7 +161,7 @@ const onExecute = (id: string): void => {
     }
 }
 
-/* 按钮浮于指示器之上：均分宽、透明底；选中态仅变色（底色由指示器承担） */
+/* 按钮浮于指示器之上：均分宽、透明底；选中态由指示器 + 字色/字重承担 */
 .cal-view-toggle > .cal-view-btn {
     position: relative;
     z-index: 1;
@@ -164,14 +170,16 @@ const onExecute = (id: string): void => {
     border-radius: 0 !important;
     background: transparent;
     box-shadow: none;
+    color: var(--nue-secondary-text-color);
 }
 .cal-view-toggle > .cal-view-btn:not(.is-active):hover {
-    background: var(--cal-hover);
+    background: color-mix(in srgb, var(--nue-primary-text-color) 6%, transparent);
+    color: var(--nue-primary-text-color);
 }
 .cal-view-toggle > .cal-view-btn.is-active,
 .cal-view-toggle > .cal-view-btn.is-active:hover {
     background: transparent;
-    color: var(--cal-fg);
+    color: var(--nue-primary-text-color);
     font-weight: 600;
 }
 
