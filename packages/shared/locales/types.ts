@@ -50,6 +50,8 @@ export interface LocaleMessages {
     'sync.section.queue': string
     'sync.section.conflict': string
     'sync.section.error': string
+    'sync.section.diagnostic': string
+    'sync.droppedFields': string
     'sync.conflict.title': string
     'sync.conflict.foldLimit': string
     'sync.conflict.foldEvicted': string

@@ -65,6 +65,8 @@ export const STRUCTURED_LOG_EVENTS = {
     SYNC_PUSH_COMPLETED: 'sync.push.completed',
     SYNC_PUSH_FAILED: 'sync.push.failed',
     SYNC_PUSH_UNCONFIRMED: 'sync.push.unconfirmed',
+    /** 推送载荷含、服务端不承载的**非白名单**字段（T471 / DEF-44 诊断） */
+    SYNC_PUSH_DROPPED_FIELDS: 'sync.push.dropped-fields',
     SYNC_PUSH_LOCK_SKIPPED: 'sync.push.lock.skipped',
     SYNC_PUSH_LOCK_UNAVAILABLE: 'sync.push.lock.unavailable',
     /** journal 专用锁（跨路径互斥，ADR §9.3） */

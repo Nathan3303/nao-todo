@@ -369,6 +369,15 @@ watch(
                     </nue-text>
                 </div>
             </li>
+            <!-- 诊断：部分字段云端暂不承载（T471 信息级；说人话、不露内部键名；非可处置项 ⇒ 不作主徽标） -->
+            <li v-if="status.droppedFieldCount > 0" class="sync-panel__section">
+                <span class="sync-panel__section-title">{{ t('sync.section.diagnostic') }}</span>
+                <div class="sync-panel__section-body">
+                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                        {{ t('sync.droppedFields', { count: status.droppedFieldCount }) }}
+                    </nue-text>
+                </div>
+            </li>
         </nue-dropdown>
         <!-- T338：冲突对话框（入口 = 面板行「冲突 N」；NueDialog 传送至 body 弹层池） -->
         <!-- T347：底部「关闭」/ × → close；Esc → before-close；三条路径均归还焦点到入口按钮 -->
