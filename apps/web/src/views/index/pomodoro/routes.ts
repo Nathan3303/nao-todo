@@ -6,12 +6,12 @@ const routes: RouteRecordRaw = {
     children: [
         { path: '', redirect: '/pomodoro/timer' },
         {
-            path: 'pomodoros',
+            path: 'pomodoros/:taskId?',
             name: 'pomodoro-collection',
             component: () => import('@/components/pomodoro/collection/index.vue')
         },
         {
-            path: 'records',
+            path: 'records/:taskId?',
             name: 'pomodoro-records',
             component: () => import('@/components/pomodoro/records/index.vue')
         },
