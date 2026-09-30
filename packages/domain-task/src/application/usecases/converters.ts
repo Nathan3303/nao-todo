@@ -226,7 +226,9 @@ export const createTaskCommentViewObjectToValueObject = (
         createCommentViewObject.taskId,
         createCommentViewObject.content,
         createCommentViewObject.attachments || [],
-        createCommentViewObject.isTopUp || false
+        createCommentViewObject.isTopUp || false,
+        createCommentViewObject.nickname || '',
+        createCommentViewObject.avatar || ''
     )
 }
 
