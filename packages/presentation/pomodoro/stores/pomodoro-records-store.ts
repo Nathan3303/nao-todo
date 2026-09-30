@@ -7,7 +7,7 @@ export const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () =>
         addRecord,
         addRecords,
         getRecord,
-        setOnRecordCreated
+        onRecordCreated
     } = usePomodoroRecordStoreBase()
 
     return {
@@ -15,6 +15,6 @@ export const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () =>
         addRecord,
         addRecords,
         getRecord,
-        setOnRecordCreated
+        onRecordCreated
     }
 })

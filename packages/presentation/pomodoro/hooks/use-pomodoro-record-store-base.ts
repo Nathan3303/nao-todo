@@ -10,17 +10,34 @@ export const usePomodoroRecordStoreBase = () => {
         getItem: getRecord
     } = useMapperStoreBase<PomodoroRecordViewObject>()
 
-    let onRecordCreated: ((record: PomodoroRecordViewObject) => void) | null = null
+    /**
+     * 「记录创建」订阅者集合（**多订阅者**；`T473` 取代原**单回调 setter**）
+     * @description 原实现为单回调槽（`cb | null`），有两个缺陷：
+     *              ① 第二个注册者**覆盖**第一个；
+     *              ② 任一消费方卸载时置 `null` 会**清空他人回调**（Pinia 单例下真实可达）。
+     */
+    const recordCreatedSubscribers = new Set<(record: PomodoroRecordViewObject) => void>()
 
-    const setOnRecordCreated = (cb: ((record: PomodoroRecordViewObject) => void) | null) => {
-        onRecordCreated = cb
+    /**
+     * 注册「记录创建」订阅
+     * @description 注册为**追加**（非覆盖），返回**幂等**注销句柄（仅移除本次注册；重复调用安全）。
+     * @param cb 订阅回调
+     * @returns 注销句柄
+     */
+    const onRecordCreated = (cb: (record: PomodoroRecordViewObject) => void): (() => void) => {
+        recordCreatedSubscribers.add(cb)
+        return () => {
+            recordCreatedSubscribers.delete(cb)
+        }
     }
 
     const addRecord = (record: PomodoroRecordViewObject) => {
         const exists = getRecord(record.id)
         originalAddRecord(record)
         if (!exists) {
-            onRecordCreated?.(record)
+            // 对**快照**迭代：派发过程中注销不会跳过其它订阅者
+            const subscribersSnapshot = Array.from(recordCreatedSubscribers)
+            for (const cb of subscribersSnapshot) cb(record)
         }
     }
 
@@ -45,7 +62,7 @@ export const usePomodoroRecordStoreBase = () => {
         addRecord,
         getRecord,
         addRecords,
-        setOnRecordCreated
+        onRecordCreated
     }
 }
 

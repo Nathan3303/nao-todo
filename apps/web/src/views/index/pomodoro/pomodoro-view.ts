@@ -78,8 +78,8 @@ export const usePomodoroView = () => {
     /**
      * 今日专注记录 loader（T451）
      * @description **entry 级唯一实例**（页面级侧栏常驻）：`usePomodoroRecordLoader` 内含
-     *              `AddNewRecordId` 订阅 + `recordsStore.setOnRecordCreated`（单例语义，
-     *              多实例会互相覆盖）⇒ 仅在此创建，供侧栏消费；不在 use-pomodoro-page 内重复创建。
+     *              `AddNewRecordId` 订阅 + `recordsStore.onRecordCreated`（T473 起为多订阅者，
+     *              多实例并存不再互相覆盖/清空）⇒ 仍建议仅在此创建（单一入口），供侧栏消费。
      */
     const recordLoader = usePomodoroRecordLoader(
         pomodoroRecordUseCase,
