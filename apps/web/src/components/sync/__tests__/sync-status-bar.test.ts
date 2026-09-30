@@ -31,6 +31,7 @@ type MockSyncStatus = {
     failedCount: number
     preferenceFailedCount: number
     conflictCount: number
+    droppedFieldCount: number
     paused: boolean
     lastError: string | null
 }
@@ -44,6 +45,7 @@ const defaultStatus = (): MockSyncStatus => ({
     failedCount: 0,
     preferenceFailedCount: 0,
     conflictCount: 0,
+    droppedFieldCount: 0,
     paused: false,
     lastError: null
 })
@@ -68,6 +70,7 @@ vi.mock('@/hooks', async () => {
         failedCount: 0,
         preferenceFailedCount: 0,
         conflictCount: 0,
+        droppedFieldCount: 0,
         paused: false,
         lastError: null
     })
@@ -592,5 +595,33 @@ describe('SyncStatusBar - 数据可信度指示（ADR D-4 / D-5）', () => {
 
         expect(badge()).toBe('is-data-alert')
         expect(ariaLabel()).toBe('同步 · 尚未同步完成，数据可能不完整')
+    })
+})
+
+describe('T471 同步面板诊断条目（droppedFields 消费）', () => {
+    it('有字段漂移 ⇒ 渲染信息级诊断；文案说人话、不露内部键名', async () => {
+        status().value = { ...defaultStatus(), droppedFieldCount: 2 }
+        await openWithPanel()
+
+        const text = panelText()
+        expect(text).toContain('诊断')
+        expect(text).toContain('有 2 项改动未能完整同步')
+        // ⛔ 不暴露内部键名/事件名（C 端原则）
+        for (const token of [
+            'droppedFields',
+            'icon',
+            'sortId',
+            'deletedAt',
+            'attachments',
+            'isTopUp',
+            'totalDuration'
+        ]) {
+            expect(text).not.toContain(token)
+        }
+    })
+
+    it('无字段漂移 ⇒ 不渲染诊断条目', async () => {
+        await openWithPanel()
+        expect(panelText()).not.toContain('诊断')
     })
 })

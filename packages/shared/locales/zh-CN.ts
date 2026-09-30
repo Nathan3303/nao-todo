@@ -53,6 +53,8 @@ const zhCN: LocaleMessages = {
     'sync.section.queue': '待处理',
     'sync.section.conflict': '冲突',
     'sync.section.error': '错误',
+    'sync.section.diagnostic': '诊断',
+    'sync.droppedFields': '有 {count} 项改动未能完整同步（部分字段云端暂不支持）',
     'sync.conflict.title': '冲突记录',
     'sync.conflict.foldLimit': '冲突记录已达上限，更早的记录可能已折叠',
     'sync.conflict.foldEvicted': '更早的冲突记录已折叠（最旧记录已丢弃）',

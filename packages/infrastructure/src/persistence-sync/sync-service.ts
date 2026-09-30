@@ -7,6 +7,7 @@
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
 import type { Table } from 'dexie'
+import { pickUnexpectedDroppedFields } from './dropped-fields'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { localDatabase, type SyncQueueRecord } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
@@ -269,6 +270,8 @@ interface PushResult {
     serverUpdatedAt?: string
     /** 服务端判定（T143 additive + 2B `stale`）：`applied`/`noop`/`stale`/`conflict`/`skipped`/`error` */
     outcome?: string
+    /** 载荷含、服务端 sync DTO 不承载的 JSON 键（T466 additive；空时服务端省略该键） */
+    droppedFields?: string[]
 }
 
 /** 单表续拉游标状态（DEF-6）：`updatedAt/cursorId` 为**本轮请求**游标，`lastEnd*` 为上一页**原始**末尾 */
@@ -1184,6 +1187,9 @@ export class SyncService {
             const resultByKey = new Map(results.map((r) => [`${r.table}:${r.id}`, r]))
             const pushed = new Set(resultByKey.keys())
             let unconfirmed = false
+            // T471 / DEF-44：本次推送「非白名单被丢弃字段」的条目级聚合（供 (i) 诊断日志 + (ii) 面板信息条目）
+            let droppedFieldRows = 0
+            const droppedFieldNames = new Set<string>()
             for (const item of dueQueue) {
                 const key = `${item.table}:${item.entityId}`
                 const snapshot = snapshotRevisions.get(key)
@@ -1205,6 +1211,15 @@ export class SyncService {
                 }
                 const result = resultByKey.get(key)
                 const outcome = result?.outcome
+                // T471 / DEF-44：消费 additive `droppedFields`（缺省/空 ⇒ no-op）；仅**白名单外**计入「真·漂移」
+                const unexpectedDroppedFields = pickUnexpectedDroppedFields(
+                    result?.droppedFields,
+                    item.table
+                )
+                if (unexpectedDroppedFields.length > 0) {
+                    droppedFieldRows += 1
+                    for (const field of unexpectedDroppedFields) droppedFieldNames.add(field)
+                }
                 // §9.1.4 / R-15 / R-18 / DP-2B-4：`error` 必须消费 —— **不出队** + 业务退避
                 //   （否则 2A 窄窗：服务端失败但客户端已出队 ⇒ 本地改动静默丢失）
                 if (outcome === 'error') {
@@ -1263,6 +1278,16 @@ export class SyncService {
                     await syncTracker.removeQueued(item.table, item.entityId)
                 }
             }
+            // T471 / DEF-44：(i) 结构化日志（仅非白名单 = 真·漂移）+ (ii) 覆盖式落定面板信息条目计数。
+            //   ⛔ 不阻塞出队（字段漂移非用户可处置项；阻塞只会把「静默丢字段」换成「永久不出队」）。
+            if (droppedFieldRows > 0) {
+                logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PUSH_DROPPED_FIELDS, {
+                    userId,
+                    rows: droppedFieldRows,
+                    fields: [...droppedFieldNames].sort()
+                })
+            }
+            syncStatus.setDroppedFieldCount(droppedFieldRows)
             // T326 / B②：派生行版本回执（additive；字段缺省/未知表 ⇒ no-op，旧服务端行为逐字不变）
             await this.applyDerivedUpdates(data.data?.derivedUpdates)
             // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）

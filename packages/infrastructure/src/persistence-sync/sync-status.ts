@@ -51,6 +51,12 @@ export interface SyncStatusState {
      *              由 `conflict-journal` 写入后落定，供状态面可见「冲突 N」。
      */
     conflictCount: number
+    /**
+     * 最近一次推送中「被服务端丢弃非白名单字段」的**条目数**（T471 / DEF-44；信息级诊断）
+     * @description 每次推送运行**覆盖式**落定（无漂移 ⇒ 归 0）；**不计入** `pendingCount`/`failedCount`；
+     *              ⛔ 不阻塞出队（字段漂移非可处置项）。
+     */
+    droppedFieldCount: number
     /** 最近一次运行的按执行序首个错误信息 */
     lastError: string | null
     /** 最近一次运行的错误列表（保序去重） */
@@ -81,6 +87,7 @@ export class SyncStatus {
         failedCount: 0,
         preferenceFailedCount: 0,
         conflictCount: 0,
+        droppedFieldCount: 0,
         lastError: null,
         errors: [],
         errorCount: 0,
@@ -173,6 +180,15 @@ export class SyncStatus {
      */
     setConflictCount(count: number): void {
         this.set({ conflictCount: count })
+    }
+
+    /**
+     * 落定本次推送「被丢弃非白名单字段」的条目数（T471 / DEF-44）
+     * @description 覆盖式写入（每次推送运行末调用；无漂移 ⇒ 传 0 自行清除）；
+     *              独立字段，不改变 `pendingCount`/`failedCount` 语义。
+     */
+    setDroppedFieldCount(count: number): void {
+        this.set({ droppedFieldCount: count })
     }
 
     /**
