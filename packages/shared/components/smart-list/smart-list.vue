@@ -9,7 +9,6 @@ const emit = defineEmits<NaoSmartListEmits>()
 const count = computed(() => props.count ?? props.links?.length)
 </script>
 
-F
 <template>
     <nue-collapse-item :name="collapseItemName" theme="smart-list">
         <template #header="{ collapse, state }">
