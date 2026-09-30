@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import dayjs from 'dayjs'
@@ -61,6 +61,8 @@ const nowMinutes = (): number => dayjs().hour() * 60 + dayjs().minute()
 let wrapper: VueWrapper | null = null
 
 afterEach(() => {
+    // T478：撤销 Date 假时钟，避免污染其它用例（仅假 Date，timer 始终真实）
+    vi.useRealTimers()
     wrapper?.unmount()
     wrapper = null
     document.body.innerHTML = ''
@@ -69,6 +71,10 @@ afterEach(() => {
 
 beforeEach(() => {
     setLocale('zh-CN')
+    // T478：冻结参考时刻 ⇒ 用例在任意真实日期 / 时区（CST / UTC）稳定。
+    // 只假 `Date`（保留真实 timer）⇒ `flushPromises` 的 scheduler 不受影响。默认取正午（滚动居中 > 0）。
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-21T12:00:00'))
 })
 
 describe('T445 ② 日视图「现在」入口', () => {
@@ -159,5 +165,42 @@ describe('T445 ② 日视图「现在」入口', () => {
 
         const expected = clamp(nowMinutes() - viewport / 2, 0, axisWidth - viewport)
         expect(Math.abs(body.scrollLeft - expected)).toBeLessThanOrEqual(2)
+    })
+
+    it('刚过零点（00:05）⇒ 日期回到今天 + 视口钳制在左端（scrollLeft=0，边界期望正确）', async () => {
+        // T478：保留「零点边界」真实场景 —— 此时当前时间线贴近左端 ⇒ 钳制为 0（不是「未滚动」缺陷）
+        vi.setSystemTime(new Date('2026-09-21T00:05:00'))
+        wrapper = await mountDaily()
+        const w = wrapper
+
+        const viewport = 480
+        const axisWidth = DAY_MINUTES
+        const body = w.find('.day-body').element as HTMLElement
+        const scroll = w.find('.day-scroll').element as HTMLElement
+        Object.defineProperty(body, 'clientWidth', { value: viewport, configurable: true })
+        scroll.getBoundingClientRect = () =>
+            ({
+                width: axisWidth,
+                left: 0,
+                top: 0,
+                height: 0,
+                right: axisWidth,
+                bottom: 0
+            }) as DOMRect
+
+        // 先离开今天（否则「回到今天」无法区分）
+        await w.find('[title="前一天"]').trigger('click')
+        await flushPromises()
+
+        const expected = clamp(nowMinutes() - viewport / 2, 0, axisWidth - viewport)
+        // 边界断言：零点后钳制到左端（而非中午的居中值）
+        expect(expected).toBe(0)
+
+        const nowBtn = w.findAll('button').find((b) => b.text().trim() === '现在')!
+        await nowBtn.trigger('click')
+        await flushPromises()
+
+        expect(w.find('.day-title').text()).toBe(dayjs().format('YYYY 年 M 月 D 日'))
+        expect(body.scrollLeft).toBe(0)
     })
 })

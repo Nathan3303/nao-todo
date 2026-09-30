@@ -234,6 +234,12 @@ describe('T45-AC2 月格轨道序与日内抽屉同源（同一 sortedTasks 前�
         const { wrapper, result } = mountMonthly()
         await flushPromises()
 
+        // T478：把「参考当月」显式注入被测模型（2026-09）⇒ 不依赖真实时钟（跨月 / 跨时区稳定）。
+        // 月模型默认取 `dayjs()` 的真实当月；此前写死 2026-09-21 的 fixture 一旦跨月就落不进网格。
+        result.value!.jumpToMonth(2026, 9)
+        result.value!.selectDate('2026-09-21')
+        await flushPromises()
+
         const dayOrder = result.value!.getDayTasks('2026-09-21').map((t) => t.name)
         const row = result.value!.model.value.rows.find((r) => r.segments.length >= 4)!
         const laneOrder = [...row.segments].sort((a, b) => a.lane - b.lane).map((s) => s.task.name)
