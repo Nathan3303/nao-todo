@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test'
 
 /**
- * DEF-64：注销/恢复账户按钮归并到库标准 `destructive` 主题；app 层自造 `danger`/`warning` 覆盖已删除。
+ * DEF-64：账户按钮归并到库标准主题（注销 `destructive` / 恢复 `primary`）；app 层自造 `danger`/`warning` 覆盖已删除。
  * @description 源级防回归：
- *              ① 3 处按钮使用库标准 `destructive`，不再使用 app 自造 `danger`；
+ *              ① 注销账户按钮（×2）用库标准 `destructive`；恢复账户按钮（×1）用 `primary`
+ *                 （正向操作，不用破坏性样式）；均不再使用 app 自造 `danger`；
  *              ② `apps/web/src/themes/button.css` 覆盖文件已删除、themes 入口不再引用。
  *              背景：app 层覆盖会顶掉主题 AA 配色（`DEF-64` 实测 warning 实心仅 2.97:1）；
- *              归并到库语义（`destructive` 已达 AA）后 app 覆盖无存在必要。
+ *              归并到库语义后 app 覆盖无存在必要。
  */
 
 const deactiveManagerModules = import.meta.glob(
@@ -39,12 +40,15 @@ const countOccurrences = (haystack: string, needle: string): number =>
     haystack.split(needle).length - 1
 
 describe('DEF-64 注销/恢复账户按钮归并库 destructive 主题', () => {
-    it('3 处按钮使用 destructive，且不再使用自造 danger', () => {
+    it('注销按钮（×2）用 destructive、恢复按钮（×1）用 primary，且不再使用自造 danger', () => {
         const manager = sourceOf(deactiveManagerModules)
         const dialog = sourceOf(deactiveUserModules)
 
-        expect(countOccurrences(manager, 'theme="destructive"')).toBe(2)
+        // 注销账户（deactive-manager:41）+ 注销确认提交（deactive-user:108）⇒ destructive
+        expect(countOccurrences(manager, 'theme="destructive"')).toBe(1)
         expect(countOccurrences(dialog, 'theme="destructive"')).toBe(1)
+        // 恢复账户（deactive-manager:55）⇒ primary（正向操作，不用破坏性样式）
+        expect(countOccurrences(manager, 'theme="primary"')).toBe(1)
 
         expect(manager).not.toContain('theme="danger"')
         expect(dialog).not.toContain('theme="danger"')

@@ -52,7 +52,7 @@ const handleRestore = async () => {
             :disabled="profile.isInDeactiveCooldown"
             @click="handleRestore"
             icon="restore"
-            theme="destructive"
+            theme="primary"
         >
             {{ t('user.restoreWarningTitle') }}
         </nue-button>
