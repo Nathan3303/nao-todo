@@ -59,26 +59,21 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                 <nue-divider />
                 <!-- 今日专注（T455 B）：仅「番茄专注 / 正计时」显示；loader 仍 entry 级常驻（C1 修后数据正确） -->
                 <nue-div class="today-section" flex="1">
-                    <nue-collapse v-model="collapseItems" theme="menu">
-                        <nue-collapse-item name="today" title="今日专注">
-                            <pomodoro-record-list
-                                hide-header
-                                compact
-                                :records="todayRecords"
-                                :loading="recordLoading"
-                                :disabled-next-page="recordIsDone"
-                                @next-page="handleNextPage"
-                            />
-                        </nue-collapse-item>
-                    </nue-collapse>
+                    <pomodoro-record-list
+                        compact
+                        :records="todayRecords"
+                        :loading="recordLoading"
+                        :disabled-next-page="recordIsDone"
+                        @next-page="handleNextPage"
+                    />
                 </nue-div>
             </template>
-            <nue-div vertical gap="0.25rem" flex="none" justify="end">
+            <!-- <nue-div vertical gap="0.25rem" flex="none" justify="end">
                 <nue-button icon="plus" theme="ghost" @click="handleOpenCreator">
                     新建常用番茄专注
                 </nue-button>
-                <!-- <nue-button icon="ntd-history">查看历史专注记录</nue-button> -->
-            </nue-div>
+                <nue-button icon="ntd-history">查看历史专注记录</nue-button>
+            </nue-div> -->
         </nue-div>
     </teleport>
 </template>
@@ -90,7 +85,6 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
     height: 100%;
     padding: 1rem;
     overflow: auto;
-    gap: var(--nue-gap-lg);
 
     /* 今日专注区块：占满剩余高度并允许内部滚动（列表自身无限滚动） */
     > .today-section {

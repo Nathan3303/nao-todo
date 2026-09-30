@@ -46,10 +46,11 @@ const durationToString = (duration: number) => {
             <nue-div theme="title">
                 <nue-icon name="focus3" />
                 <nue-text theme="title">今日专注</nue-text>
+                <nue-text>{{ totalDurationString }}</nue-text>
             </nue-div>
         </nue-div>
         <nue-div theme="card">
-            <nue-text theme="duration">专注时长 {{ totalDurationString }}</nue-text>
+            <!-- <nue-text theme="duration">专注时长 </nue-text> -->
             <nue-div theme="pomodoro-records-info">
                 <nue-text theme="count">{{ props.records.length }} 条专注记录</nue-text>
                 <nue-text theme="count">/</nue-text>
@@ -175,6 +176,7 @@ const durationToString = (duration: number) => {
             min-height: 0;
             overflow-y: auto;
             max-height: none;
+            padding-top: var(--nue-padding-xs);
 
             .nue-div--rows {
                 flex-direction: column;
