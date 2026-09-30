@@ -5,7 +5,9 @@ import type { PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
 import { usePomodorosStore } from '../../stores'
 
 defineOptions({ name: 'PomodoroRecordsCompRow' })
-const props = defineProps<{ record: PomodoroRecordViewObject }>()
+const props = withDefaults(defineProps<{ record: PomodoroRecordViewObject; compact?: boolean }>(), {
+    compact: false
+})
 
 const pomodorosStore = usePomodorosStore()
 
@@ -29,9 +31,12 @@ const title = computed(() => {
     return [pomodoroName, taskName].filter(Boolean).join(' / ')
 })
 </script>
-F
 <template>
-    <nue-div theme="card,pomodoro-records-row" :data-has-note="!!record.note">
+    <nue-div
+        theme="card,pomodoro-records-row"
+        :class="{ 'is-compact': props.compact }"
+        :data-has-note="!!record.note"
+    >
         <nue-div theme="title-and-duration">
             <nue-text theme="task" :clamped="1">{{ title }}</nue-text>
             <nue-text theme="meta">
@@ -82,6 +87,30 @@ F
         font-size: var(--nue-text-sm);
         color: var(--nue-primary-color-500);
         word-break: break-word;
+    }
+
+    /* T456 ②：侧栏紧凑态（additive，默认不改）—— 标题两行（任务/元信息各一行）+ 字号 xs */
+    &.is-compact {
+        padding: var(--nue-padding-xs);
+
+        > .nue-div--title-and-duration {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 2px;
+
+            > .nue-text--task,
+            > .nue-text--meta {
+                font-size: var(--nue-text-xs);
+                white-space: normal;
+            }
+        }
+
+        /* 注：未选中态原为 color-500（在 color-100 底上 <4.5:1）⇒ 紧凑态改 color-600 达标 */
+        > .nue-text--note {
+            font-size: var(--nue-text-xs);
+            color: var(--nue-primary-color-600);
+        }
     }
 }
 </style>

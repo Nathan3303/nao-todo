@@ -5,16 +5,14 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain-pomodoro'
 import {
     usePomodoroFocusStore,
-    usePomodoroRecordLoader,
     usePomodoroRecordsStore,
     usePomodoroSessionStore,
     usePomodoroTimerStore
 } from '@nao-todo/presentation/pomodoro'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@nao-todo/shared/constants'
-import { type DialogManager, type Subscriber } from '@nao-todo/shared/hooks'
-import dayjs from 'dayjs'
+import { type DialogManager } from '@nao-todo/shared/hooks'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import { computed, inject, onMounted } from 'vue'
+import { computed, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 // 番茄钟 Tab 类型
@@ -25,7 +23,7 @@ export type PomodoroTab = 'timer' | 'focus'
  * @description 合并番茄专注（倒计时）和正计时（累计计时）两种模式，
  *              通过路由参数 :type(timer|focus) 切换 Tab，共享记录加载与笔记。
  */
-export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subscriber) => {
+export const usePomodoroPage = (dialogManager: DialogManager) => {
     const route = useRoute()
     const router = useRouter()
     const { showTaskDetails } = inject(POMODORO_VIEW_CONTEXT_KEY)!
@@ -55,20 +53,10 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     })
 
     // ========================================================================
-    // Record Loader（不过滤 type → 同时展示番茄钟和正计时记录）
+    // Record UseCase（创建设置；今日列表 loader 已上移至 entry 级，T451）
     // ========================================================================
 
     const pomodoroRecordUseCase = usePomodoroRecordUseCase(recordsStore)
-
-    const recordLoader = usePomodoroRecordLoader(
-        pomodoroRecordUseCase,
-        {
-            startTime: dayjs().startOf('day').toISOString(),
-            endTime: dayjs().endOf('day').toISOString(),
-            sort: 'startAt:desc'
-        },
-        subscriber
-    )
 
     timerStore.setCreateRecordFn(async (record) => {
         const [result, err] = await pomodoroRecordUseCase.createRecord(record)
@@ -114,14 +102,6 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         }
     }
 
-    const handleNextPage = async () => {
-        await recordLoader.loadNextPage()
-    }
-
-    onMounted(async () => {
-        await recordLoader.loadFirstPage()
-    })
-
     // ========================================================================
     // Timer Handlers
     // ========================================================================
@@ -166,8 +146,9 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         timerStore.adjustTime(delta)
     }
 
+    // @method 「结束专注」：落库已专注时长后回 idle（T456 ①：原 `reset` 不落库 ⇒ 侧栏/记录页无此记录）
     const handleReset = () => {
-        timerStore.reset()
+        timerStore.end()
     }
 
     const handleOpenSettings = () => {
@@ -243,12 +224,8 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         presetId,
         presetName,
         handleSelectPreset,
-        todayRecords: recordLoader.records,
         noteText: computed(() => sessionStore.noteText),
         setNoteText: (text: string) => sessionStore.setNoteText(text),
-        recordLoading: computed(() => recordLoader.states.loading),
-        recordIsDone: computed(() => recordLoader.states.isDone),
-        handleNextPage,
         showTaskDetails,
         // Timer
         handleStart,

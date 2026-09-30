@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-    PomodoroTimer,
-    PomodoroFocus,
-    PomodoroRecordList,
-    PomodoroNoteInputer
-} from '@nao-todo/presentation/pomodoro'
+import { PomodoroTimer, PomodoroFocus, PomodoroNoteInputer } from '@nao-todo/presentation/pomodoro'
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroFocusDependDropdown } from './focus-depend-dropdown'
 import { PomodoroHeader } from './header'
@@ -14,7 +9,7 @@ import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroPage' })
 
-const { dialogManager, subscriber, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+const { dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
@@ -25,12 +20,8 @@ const {
     handleClearTask,
     presetName,
     handleSelectPreset,
-    todayRecords,
     noteText,
     setNoteText,
-    recordLoading,
-    recordIsDone,
-    handleNextPage,
     handleStart,
     handleAdjustTime,
     handleReset,
@@ -38,7 +29,7 @@ const {
     handleMainAction,
     handleCancel,
     handleEnd
-} = usePomodoroPage(dialogManager, subscriber)
+} = usePomodoroPage(dialogManager)
 
 const { phase, remainingSeconds, totalSeconds, isRunning } = storeToRefs(timerStore)
 const { status, elapsedSeconds } = storeToRefs(focusStore)
@@ -106,14 +97,6 @@ const dependLabel = computed(() => {
                     >
                     </pomodoro-focus>
                 </nue-div>
-                <!-- 专注记录 -->
-                <pomodoro-record-list
-                    style="grid-area: today"
-                    :records="todayRecords"
-                    :loading="recordLoading"
-                    :disabled-next-page="recordIsDone"
-                    @next-page="handleNextPage"
-                />
                 <!-- 专注笔记 -->
                 <pomodoro-note-inputer
                     style="grid-area: note"
@@ -126,11 +109,12 @@ const dependLabel = computed(() => {
 </template>
 
 <style scoped>
+/* T451：「今日专注」已移入侧边栏 ⇒ 内容区单列（timer / note），删 today 区与 ≤950px 分支 */
 #Pomodoro > .nue-main .nue-content {
     display: grid;
-    grid-template-columns: auto-fill minmax(20rem, 3fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas: 'timer today' 'note today';
+    grid-template-columns: 1fr;
+    grid-template-rows: 4fr 2fr;
+    grid-template-areas: 'timer' 'note';
     width: 100%;
     height: 100%;
     flex: none;
@@ -138,13 +122,6 @@ const dependLabel = computed(() => {
     overflow: visible;
     padding: var(--nue-padding-df);
     box-sizing: border-box;
-
-    @media (max-width: 950px) {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(auto-fit);
-        grid-template-areas: 'timer' 'note' 'today';
-        gap: var(--nue-gap-lg);
-    }
 
     > .nue-div--timer-wrapper {
         flex-direction: column;

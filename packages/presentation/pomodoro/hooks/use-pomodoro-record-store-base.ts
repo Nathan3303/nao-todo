@@ -24,9 +24,17 @@ export const usePomodoroRecordStoreBase = () => {
         }
     }
 
+    /**
+     * 批量写入记录
+     * @description T455 修复：**列表查询（读路径）不得触发 `onRecordCreated`**。
+     *              `PomodoroRecordUseCase.getRecords` 会把查询结果写入 store（`addRecords`），
+     *              若此处触发「新建」回调，会把**别页查询到的记录**误报为新建
+     *              ⇒ 侧栏「今日专注」loader 的 `prependRecordId` 被污染。
+     *              「新建」信号现仅在 `addRecord`（`createRecord` 写入路径）触发。
+     */
     const addRecords = (newRecords: PomodoroRecordViewObject[]) => {
         newRecords.forEach((record) => {
-            addRecord(record)
+            originalAddRecord(record)
         })
     }
 
