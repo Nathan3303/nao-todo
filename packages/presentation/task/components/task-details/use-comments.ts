@@ -5,6 +5,7 @@ import { inject, ref } from 'vue'
 import { TaskCommentHandler } from '../../handlers'
 import type { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
@@ -19,7 +20,12 @@ const useComments = (taskDetailsStore: TaskDetailsStore) => {
     const { taskCommentUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @handler 任务评论处理程序
-    const commentHandler = new TaskCommentHandler(taskCommentUseCase)
+    // DEF-69：本地优先下评论写本地库，创建时从当前用户 store 补齐作者昵称/头像
+    const { profile } = storeToRefs(useUserStore())
+    const commentHandler = new TaskCommentHandler(taskCommentUseCase, () => ({
+        nickname: profile.value?.nickname,
+        avatar: profile.value?.avatar
+    }))
 
     // @presetStates
     const {

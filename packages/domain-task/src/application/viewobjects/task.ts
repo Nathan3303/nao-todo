@@ -146,6 +146,9 @@ export type CreateTaskCommentViewObject = {
     content: TaskCommentViewObject['content']
     attachments?: TaskCommentViewObject['attachments']
     isTopUp?: TaskCommentViewObject['isTopUp']
+    // 作者信息：本地优先下用于新增评论立即展示（服务端拉取后以其为准）
+    nickname?: TaskCommentViewObject['nickname']
+    avatar?: TaskCommentViewObject['avatar']
 }
 
 // 更新任务评论视图对象

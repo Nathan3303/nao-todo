@@ -16,7 +16,8 @@ import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 
 /**
  * 本地任务评论仓储实现
- * @description 本地场景无用户体系，avatar/nickname 置空
+ * @description 本地优先下评论立即可见；作者昵称/头像由展示层随创建入参补齐
+ *              （服务端拉取后以其为准）。
  */
 export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
@@ -48,8 +49,8 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
                 createVO.content,
                 createVO.attachments ?? [],
                 createVO.isTopUp,
-                '',
-                ''
+                createVO.avatar,
+                createVO.nickname
             )
             await putWithSyncBaseAndEnqueue(
                 this.db,

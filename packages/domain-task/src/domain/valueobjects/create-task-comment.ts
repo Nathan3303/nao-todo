@@ -12,7 +12,9 @@ export class CreateTaskCommentValueObject {
         public taskId: string, // 任务ID
         public content: string, // 评论内容
         public attachments: string[], // 附件列表
-        public isTopUp: boolean // 是否是充值评论
+        public isTopUp: boolean, // 是否是充值评论
+        public nickname: string = '', // 评论用户昵称（本地优先下由展示层补齐）
+        public avatar: string = '' // 评论用户头像（本地优先下由展示层补齐）
     ) {}
 
     /**
