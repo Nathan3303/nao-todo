@@ -435,6 +435,31 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     }
 
     /**
+     * 结束专注（创建记录并重置）
+     * @description 用户点击「结束专注」时调用；与正计时 `end()` 语义一致。
+     *              与 `skip()` 的区别：不进入休息，直接回 idle；break 阶段结束时仅重置（不记录）。
+     *              `reset()` 仍保留为「真取消 / 互斥安全网」（不记录）。
+     */
+    const end = () => {
+        if (phase.value === 'idle') return
+        driver.stop()
+        if (phase.value === 'focus') {
+            const elapsed = calcElapsed()
+            const record = buildRecord(elapsed)
+            if (createRecordFn) {
+                persistPomodoroRecord(
+                    createRecordFn,
+                    record,
+                    '[Pomodoro] Failed to create record on end:'
+                )
+            }
+            sendNotification('专注完成', `已完成 ${formatMinutes(elapsed)} 的专注`)
+        }
+        sessionStore.clearCurrentSession()
+        resetToIdle()
+    }
+
+    /**
      * 跳过当前阶段
      * - focus 跳过：创建部分记录 → 进入休息
      * - break 跳过：递增轮次 → 下一轮专注或 idle
@@ -541,6 +566,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         pause,
         resume,
         reset,
+        end,
         skip,
         adjustTime,
         updateConfig,

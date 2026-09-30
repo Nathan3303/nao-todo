@@ -146,8 +146,9 @@ export const usePomodoroPage = (dialogManager: DialogManager) => {
         timerStore.adjustTime(delta)
     }
 
+    // @method 「结束专注」：落库已专注时长后回 idle（T456 ①：原 `reset` 不落库 ⇒ 侧栏/记录页无此记录）
     const handleReset = () => {
-        timerStore.reset()
+        timerStore.end()
     }
 
     const handleOpenSettings = () => {
