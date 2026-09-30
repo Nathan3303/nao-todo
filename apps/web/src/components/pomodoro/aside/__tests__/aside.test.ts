@@ -100,12 +100,24 @@ const recordList = (): VueWrapper => wrapper!.findComponent({ name: 'PomodoroRec
 const recordListProps = (): Record<string, unknown> =>
     recordList().props() as unknown as Record<string, unknown>
 
+const asideCss = (): string =>
+    Object.values(
+        import.meta.glob('../aside.vue', {
+            query: '?raw',
+            import: 'default',
+            eager: true
+        }) as Record<string, string>
+    )
+        .join('\n')
+        .replace(/\s+/g, ' ')
+
 describe('T451 ① 今日专注入侧栏（NueCollapse）', () => {
     it('侧栏渲染「今日专注」collapse，且列表 hideHeader（标题不重复）', async () => {
         await mountAside('/pomodoro/timer')
         expect(wrapper!.text()).toContain('今日专注')
         // 列表自身内置标题已隐藏（避免与 collapse 标题重复；统计卡的「今日专注目标」不算标题）
         expect(recordListProps().hideHeader).toBe(true)
+        expect(recordListProps().compact).toBe(true)
         expect(recordList().find('.nue-div--header').exists()).toBe(false)
     })
 
@@ -146,6 +158,15 @@ describe('T455 B 「今日专注」仅计时页显示', () => {
         await mountAside('/pomodoro/records')
         expect(recordList().exists()).toBe(false)
         expect(wrapper!.text()).not.toContain('今日专注')
+    })
+
+    it('T456 ③ 源级：展开态折叠内容填满高度（概览固定 + 列表可滚）；收起态 0 高', () => {
+        const flat = asideCss()
+        expect(flat).toContain("data-collapsed='false'] .nue-collapse-item__content")
+        expect(flat).toContain('height: auto !important')
+        expect(flat).toContain('min-height: 0')
+        expect(flat).toContain("data-collapsed='true'] .nue-collapse-item__content")
+        expect(flat).toContain('height: 0 !important')
     })
 })
 

@@ -5,7 +5,10 @@ import RecordListItem from './record-list-item.vue'
 import type { PomodoroRecordsCompProps, PomodoroRecordsCompEmits } from './types'
 
 defineOptions({ name: 'PomodoroRecordList' })
-const props = withDefaults(defineProps<PomodoroRecordsCompProps>(), { hideHeader: false })
+const props = withDefaults(defineProps<PomodoroRecordsCompProps>(), {
+    hideHeader: false,
+    compact: false
+})
 const emit = defineEmits<PomodoroRecordsCompEmits>()
 
 const dailyGoal = ref<number>(18000)
@@ -80,6 +83,7 @@ const durationToString = (duration: number) => {
                             v-for="record in records"
                             :key="record.id"
                             :record="record"
+                            :compact="props.compact"
                         />
                     </nue-div>
                     <template #loading>
@@ -102,6 +106,9 @@ const durationToString = (duration: number) => {
 .nue-div--pomodoro-records {
     flex-direction: column;
     gap: var(--nue-gap-xs);
+    /* T456 ③：占满 collapse 内容高度，供内部列表滚动（概览不滚） */
+    height: 100%;
+    min-height: 0;
 
     > .nue-div--header {
         flex-direction: column;
@@ -124,6 +131,7 @@ const durationToString = (duration: number) => {
     }
 
     > .nue-div--card {
+        flex: none;
         flex-direction: column;
         gap: var(--nue-gap-2xs);
         font-size: var(--nue-text-xs);
@@ -156,13 +164,17 @@ const durationToString = (duration: number) => {
     }
 
     > .nue-div--main {
+        flex: 1;
+        min-height: 0;
         flex-direction: column;
         gap: var(--nue-gap-2xs);
         font-size: var(--nue-text-sm);
 
         > .nue-infinite-scroll-wrapper {
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            max-height: 100%;
+            max-height: none;
 
             .nue-div--rows {
                 flex-direction: column;

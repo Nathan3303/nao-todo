@@ -63,6 +63,7 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                         <nue-collapse-item name="today" title="今日专注">
                             <pomodoro-record-list
                                 hide-header
+                                compact
                                 :records="todayRecords"
                                 :loading="recordLoading"
                                 :disabled-next-page="recordIsDone"
@@ -102,10 +103,36 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
         :deep(.nue-collapse--menu) {
             gap: 0;
+            /* T456 ③：折叠区占满 today-section，内容列（概览固定 + 列表滚动） */
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         :deep(.nue-collapse-item) {
             border: none;
+        }
+
+        /* 展开态：折叠内容填满剩余高度（翻越组件的行内 --height），供列表滚动、概览固定 */
+        :deep(.nue-collapse-item[data-collapsed='false']) {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :deep(.nue-collapse-item[data-collapsed='false'] .nue-collapse-item__content) {
+            height: auto !important;
+            max-height: none !important;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        :deep(.nue-collapse-item[data-collapsed='true'] .nue-collapse-item__content) {
+            height: 0 !important;
+            overflow: hidden;
         }
     }
 }

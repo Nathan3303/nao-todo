@@ -14,18 +14,31 @@ const mountList = (props: {
     loading?: boolean
     disabledNextPage?: boolean
     hideHeader?: boolean
+    compact?: boolean
 }): VueWrapper =>
     mount(RecordList, {
         props: {
             records: (props.records ?? []) as never,
             loading: props.loading ?? false,
             disabledNextPage: props.disabledNextPage ?? false,
-            ...(props.hideHeader === undefined ? {} : { hideHeader: props.hideHeader })
+            ...(props.hideHeader === undefined ? {} : { hideHeader: props.hideHeader }),
+            ...(props.compact === undefined ? {} : { compact: props.compact })
         },
         global: { stubs: { RecordListItem: true } }
     })
 
 const loadingError = (w: VueWrapper) => w.findComponent({ name: 'LoadingError' })
+
+const rawCss = (): string =>
+    Object.values(
+        import.meta.glob('../record-list.vue', {
+            query: '?raw',
+            import: 'default',
+            eager: true
+        }) as Record<string, string>
+    )
+        .join('\n')
+        .replace(/\s+/g, ' ')
 
 describe('T451 PomodoroRecordList', () => {
     it('默认（hideHeader 未传）⇒ 渲染内置「今日专注」标题（默认路径观感不变）', () => {
@@ -63,5 +76,19 @@ describe('T451 PomodoroRecordList', () => {
         expect(loadingError(withData).props('loading')).toBe(false)
         expect(loadingError(withData).props('empty')).toBe(false)
         withData.unmount()
+    })
+
+    it('T456 ②：compact 透传给条目（源级）', () => {
+        expect(rawCss()).toContain(':compact="props.compact"')
+    })
+
+    it('T456 ③ 源级：概览固定（flex:none）+ 列表滚动（flex:1 / min-height:0 / overflow-y:auto）', () => {
+        const flat = rawCss()
+        expect(flat).toContain('height: 100%')
+        expect(flat).toContain('min-height: 0')
+        expect(flat).toContain('flex: none')
+        expect(flat).toContain('flex: 1')
+        expect(flat).toContain('overflow-y: auto')
+        expect(flat).not.toContain('max-height: 100%')
     })
 })

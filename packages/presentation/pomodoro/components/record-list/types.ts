@@ -15,6 +15,11 @@ export type PomodoroRecordsCompProps = {
      * @description T451：移入侧栏 NueCollapse 时由 collapse 标题承载，避免标题重复；默认路径不变。
      */
     hideHeader?: boolean
+    /**
+     * 紧凑条目（默认 false）
+     * @description T456 ②：侧栏窄宽度下条目两行 + 字号 xs；默认路径不变。
+     */
+    compact?: boolean
 }
 
 /**
