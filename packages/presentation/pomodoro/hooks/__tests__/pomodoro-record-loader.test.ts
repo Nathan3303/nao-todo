@@ -93,4 +93,27 @@ describe('T455 侧栏「今日专注」不被其它页查询污染（C1）', () 
         expect(ids(sidebar)[0]).toBe('new1')
         expect(ids(sidebar).sort()).toEqual(['new1', 't1'])
     })
+
+    it('两个 loader 并存互不干扰：真实创建 ⇒ 两者都即时置顶（T473 多订阅者）', async () => {
+        setActivePinia(createPinia())
+        const subscriber = makeSubscriber()
+
+        const sidebar = usePomodoroRecordLoader(
+            makeUsecase([rec('t1')]),
+            { sort: 'startAt:desc' } as never,
+            subscriber
+        )
+        await sidebar.loadFirstPage()
+        const other = usePomodoroRecordLoader(
+            makeUsecase([rec('r1')]),
+            { sort: 'startAt:desc' } as never,
+            subscriber
+        )
+        await other.loadFirstPage()
+
+        // 旧实现：后注册者覆盖先注册者 ⇒ 只有 other 收到；T473 后两者都收到
+        usePomodoroRecordsStore().addRecord(rec('new1'))
+        expect(ids(sidebar)[0]).toBe('new1')
+        expect(ids(other)[0]).toBe('new1')
+    })
 })

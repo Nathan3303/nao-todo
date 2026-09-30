@@ -201,12 +201,15 @@ export const usePomodoroRecordLoader = (
             prependRecordId(id)
         }
         subscriber.subscribe('AddNewRecordId', handleNewRecordId)
-        recordsStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
-            subscriber.emit('AddNewRecordId', record.id)
-        })
+        // T473：注册返回**注销句柄**（多订阅者）—— 卸载只移除自己的回调，不再清空他人
+        const unsubscribeRecordCreated = recordsStore.onRecordCreated(
+            (record: PomodoroRecordViewObject) => {
+                subscriber.emit('AddNewRecordId', record.id)
+            }
+        )
         onUnmounted(() => {
             subscriber.unsubscribe('AddNewRecordId', handleNewRecordId)
-            recordsStore.setOnRecordCreated(null)
+            unsubscribeRecordCreated()
         })
     }
 
