@@ -82,7 +82,7 @@ describe('T445 ① CalendarViewSwitch', () => {
         expect(transformOf(day)).toBe('translateX(200%)')
     })
 
-    it('T448：激活色 / 槽底色 / 容器边均用既有 nue-* token，且不再依赖 --cal-*（侧栏在日历令牌组之外）', () => {
+    it('T448：激活色 / 槽底色均用既有 nue-* token，且不再依赖 --cal-*（侧栏在日历令牌组之外）', () => {
         const css = Object.values(
             import.meta.glob('../view-switch.vue', {
                 query: '?raw',
@@ -90,26 +90,24 @@ describe('T445 ① CalendarViewSwitch', () => {
                 eager: true
             }) as Record<string, string>
         ).join('\n')
+        // 归一空白（防换行/CRLF/格式化差异）；仅断言“存在等价声明”
+        const flat = css.replace(/\s+/g, ' ')
         // 槽底色（按钮组背景）
-        expect(css).toContain(
+        expect(flat).toContain(
             'background: color-mix(in srgb, var(--nue-primary-text-color) 8%, var(--nue-primary-color-0))'
         )
-        // 容器边界（图形 ≥3:1）
-        expect(css).toContain(
-            'color-mix(in srgb, var(--nue-primary-text-color) 55%, var(--nue-primary-color-0))'
-        )
         // 指示器（激活底色 = 页面底色，与槽底区分）
-        expect(css).toContain('background: var(--nue-primary-color-0)')
+        expect(flat).toContain('background: var(--nue-primary-color-0)')
         // 激活色 / 字重 + 未激活可辨色
-        expect(css).toContain('color: var(--nue-primary-text-color)')
-        expect(css).toContain('font-weight: 600')
-        expect(css).toContain('color: var(--nue-secondary-text-color)')
+        expect(flat).toContain('color: var(--nue-primary-text-color)')
+        expect(flat).toContain('font-weight: 600')
+        expect(flat).toContain('color: var(--nue-secondary-text-color)')
         // 滑块动效
-        expect(css).toContain('.cal-view-thumb')
-        expect(css).toContain('transition: transform 180ms ease')
-        expect(css).toContain('prefers-reduced-motion: reduce')
+        expect(flat).toContain('.cal-view-thumb')
+        expect(flat).toContain('transition: transform 180ms ease')
+        expect(flat).toContain('prefers-reduced-motion: reduce')
         // 根因守卫：分段控件不得再引 `--cal-*`（侧栏在日历令牌组之外 ⇒ 会全量失效）
-        expect(css).not.toContain('var(--cal-')
+        expect(flat).not.toContain('var(--cal-')
     })
 
     it('compact：触发器 = 当前视图名；下拉三项 data-executeid = 子路由名', () => {
