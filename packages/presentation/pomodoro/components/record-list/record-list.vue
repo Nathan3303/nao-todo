@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import RecordListItem from './record-list-item.vue'
 import type { PomodoroRecordsCompProps, PomodoroRecordsCompEmits } from './types'
 
 defineOptions({ name: 'PomodoroRecordList' })
-const props = defineProps<PomodoroRecordsCompProps>()
+const props = withDefaults(defineProps<PomodoroRecordsCompProps>(), { hideHeader: false })
 const emit = defineEmits<PomodoroRecordsCompEmits>()
 
 const dailyGoal = ref<number>(18000)
@@ -43,7 +44,7 @@ const durationToString = (duration: number) => {
 
 <template>
     <nue-div theme="pomodoro-records">
-        <nue-div theme="header">
+        <nue-div v-if="!props.hideHeader" theme="header">
             <nue-div theme="title">
                 <nue-icon name="focus3" />
                 <nue-text theme="title">今日专注</nue-text>
@@ -67,30 +68,37 @@ const durationToString = (duration: number) => {
             </nue-div>
         </nue-div>
         <nue-div theme="main">
-            <nue-div v-if="props.records.length === 0 && !props.loading" theme="empty">
-                <nue-text>暂无专注记录</nue-text>
-            </nue-div>
-            <nue-infinite-scroll
-                v-else
-                @load-more="emit('nextPage')"
-                :loading="loading"
-                :disabled="disabledNextPage"
-                trigger-height="2px"
+            <!-- T451：加载/空态统一用 LoadingError（本仓硬约束，不得自绘） -->
+            <loading-error
+                :loading="props.loading && props.records.length === 0"
+                :empty="props.records.length === 0 && !props.loading"
+                empty-message="暂无专注记录"
             >
-                <nue-div theme="rows">
-                    <record-list-item v-for="record in records" :key="record.id" :record="record" />
-                </nue-div>
-                <template #loading>
-                    <nue-div theme="loading-bar">
-                        <nue-text size="var(--nue-text-xs)">加载中...</nue-text>
+                <nue-infinite-scroll
+                    @load-more="emit('nextPage')"
+                    :loading="loading"
+                    :disabled="disabledNextPage"
+                    trigger-height="2px"
+                >
+                    <nue-div theme="rows">
+                        <record-list-item
+                            v-for="record in records"
+                            :key="record.id"
+                            :record="record"
+                        />
                     </nue-div>
-                </template>
-                <template #disabled>
-                    <nue-div v-if="records.length > 0" theme="done-bar">
-                        <nue-text size="var(--nue-text-xs)">已加载全部记录</nue-text>
-                    </nue-div>
-                </template>
-            </nue-infinite-scroll>
+                    <template #loading>
+                        <nue-div theme="loading-bar">
+                            <nue-text size="var(--nue-text-xs)">加载中...</nue-text>
+                        </nue-div>
+                    </template>
+                    <template #disabled>
+                        <nue-div v-if="records.length > 0" theme="done-bar">
+                            <nue-text size="var(--nue-text-xs)">已加载全部记录</nue-text>
+                        </nue-div>
+                    </template>
+                </nue-infinite-scroll>
+            </loading-error>
         </nue-div>
     </nue-div>
 </template>
@@ -154,14 +162,6 @@ const durationToString = (duration: number) => {
         flex-direction: column;
         gap: var(--nue-gap-2xs);
         font-size: var(--nue-text-sm);
-
-        > .nue-div--empty {
-            justify-content: center;
-            align-items: center;
-            padding: var(--nue-padding-df);
-            color: var(--nue-primary-color-400);
-            font-size: var(--nue-text-xs);
-        }
 
         > .nue-infinite-scroll-wrapper {
             overflow-y: auto;

@@ -2,6 +2,7 @@ import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     usePomodoroFocusStore,
+    usePomodoroRecordLoader,
     usePomodoroRecordsStore,
     usePomodoroSessionStore,
     usePomodorosStore,
@@ -13,7 +14,8 @@ import {
     useTasksStore
 } from '@nao-todo/presentation/task'
 import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared/hooks'
-import { inject, provide } from 'vue'
+import dayjs from 'dayjs'
+import { computed, inject, onMounted, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
 import {
     usePomodoroUseCase,
@@ -72,6 +74,25 @@ export const usePomodoroView = () => {
     const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
     const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
     const subTaskUseCase = useTaskUseCase(taskDetailsStore)
+
+    /**
+     * 今日专注记录 loader（T451）
+     * @description **entry 级唯一实例**（页面级侧栏常驻）：`usePomodoroRecordLoader` 内含
+     *              `AddNewRecordId` 订阅 + `recordsStore.setOnRecordCreated`（单例语义，
+     *              多实例会互相覆盖）⇒ 仅在此创建，供侧栏消费；不在 use-pomodoro-page 内重复创建。
+     */
+    const recordLoader = usePomodoroRecordLoader(
+        pomodoroRecordUseCase,
+        {
+            startTime: dayjs().startOf('day').toISOString(),
+            endTime: dayjs().endOf('day').toISOString(),
+            sort: 'startAt:desc'
+        },
+        appSubscriber
+    )
+    onMounted(() => {
+        void recordLoader.loadFirstPage()
+    })
 
     /**
      * 响应式侧边栏
@@ -153,7 +174,13 @@ export const usePomodoroView = () => {
         isUseFloatAside,
         switchDisplayAside,
         getProjectName,
-        showTaskDetails
+        showTaskDetails,
+        todayRecords: recordLoader.records,
+        recordLoading: computed(() => recordLoader.states.loading),
+        recordIsDone: computed(() => recordLoader.states.isDone),
+        handleNextPage: async () => {
+            await recordLoader.loadNextPage()
+        }
     })
 
     /**

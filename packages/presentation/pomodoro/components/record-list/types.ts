@@ -10,6 +10,11 @@ export type PomodoroRecordsCompProps = {
     records: PomodoroRecordViewObject[]
     loading: boolean
     disabledNextPage: boolean
+    /**
+     * 隐藏内置标题（默认 false）
+     * @description T451：移入侧栏 NueCollapse 时由 collapse 标题承载，避免标题重复；默认路径不变。
+     */
+    hideHeader?: boolean
 }
 
 /**
