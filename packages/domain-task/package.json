@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/domain-task",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "author": "Nathan Lee",
     "main": "index.ts",
     "files": [

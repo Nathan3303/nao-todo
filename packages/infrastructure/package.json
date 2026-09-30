@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/infrastructure",
-    "version": "0.8.2",
+    "version": "0.8.3",
     "author": "Nathan Lee",
     "license": "MIT",
     "main": "index.ts",
