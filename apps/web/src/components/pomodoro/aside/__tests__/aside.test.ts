@@ -100,17 +100,6 @@ const recordList = (): VueWrapper => wrapper!.findComponent({ name: 'PomodoroRec
 const recordListProps = (): Record<string, unknown> =>
     recordList().props() as unknown as Record<string, unknown>
 
-const asideCss = (): string =>
-    Object.values(
-        import.meta.glob('../aside.vue', {
-            query: '?raw',
-            import: 'default',
-            eager: true
-        }) as Record<string, string>
-    )
-        .join('\n')
-        .replace(/\s+/g, ' ')
-
 describe('T451 ① 今日专注入侧栏', () => {
     it('侧栏渲染「今日专注」列表（T459 用户改为直接渲染，不再走 collapse；列表自带标题）', async () => {
         await mountAside('/pomodoro/timer')
@@ -159,15 +148,6 @@ describe('T455 B 「今日专注」仅计时页显示', () => {
         await mountAside('/pomodoro/records')
         expect(recordList().exists()).toBe(false)
         expect(wrapper!.text()).not.toContain('今日专注')
-    })
-
-    it('T456 ③ 源级：展开态折叠内容填满高度（概览固定 + 列表可滚）；收起态 0 高', () => {
-        const flat = asideCss()
-        expect(flat).toContain("data-collapsed='false'] .nue-collapse-item__content")
-        expect(flat).toContain('height: auto !important')
-        expect(flat).toContain('min-height: 0')
-        expect(flat).toContain("data-collapsed='true'] .nue-collapse-item__content")
-        expect(flat).toContain('height: 0 !important')
     })
 })
 
