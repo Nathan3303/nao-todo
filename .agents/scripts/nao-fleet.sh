@@ -26,12 +26,16 @@
 #   NAO_CLOSE_BUSY_PATTERN=<ERE>             close 的在跑 turn 判定正则（默认内置 pi 状态行标记）
 #   NAO_TASKS_STATE=<path>                   任务状态文件（默认 docs/tasks-state.md，供残留检测/回收闸门）
 #
-# 在线判定（status / close / ensure 判重共用）
+# 在线判定与 pane 定位（status / close / ensure 判重共用）
 #   pi 启动后用 OSC 0 把终端标题设为 "π - <会话名> - <cwd basename>" 并改写 argv
-#   （/proc/<pid>/cmdline 只剩 "pi"）⇒ 判定一律面向「终端标题 / pi-intercom 名册 /
-#   tmux·screen 会话名」，不使用 `pgrep --name`（历史假阴性根因）。
-#   名册经 $PI_AGENT_DIR/npm/node_modules/pi-intercom/cli.ts（一次调用、进程内缓存），
-#   不可用时回退 tmux/screen；仍无法确认「不在线」时 close 不做静默 no-op（exit 非 0）。
+#   （/proc/<pid>/cmdline 只剩 "pi"）⇒ 不使用 `pgrep --name`（历史假阴性根因）。
+#   ⚠️ 标题可能被外部改写（PM 实测变为 "pi:c"）⇒ pane 定位按三层后备（find_pane_for）：
+#     ① 终端标题契约（最快）
+#     ② pi-intercom 名册 tmuxPane（注册时读 $TMUX_PANE；与标题改名无关，权威）
+#     ③ 本仓「未被认领 pi pane」唯一兜底（启发式；歧义即 warn，不猜）
+#   名册由 intercom-probe.mts（一次调用、进程内缓存，含 tmuxPane）取；探针不可用回退
+#   pi-intercom 官方 cli.ts（无 tmuxPane），再不可用回退 tmux/screen 会话名；
+#   仍无法确认「不在线」时 close 不做静默 no-op（exit 非 0）。
 #
 # tmux 宿主行为
 #   - 已在 tmux 内（$TMUX 存在）：当前窗口分屏拉起，不新建窗口。
@@ -295,11 +299,25 @@ detect_host() {
 #   ① pi-intercom 名册（权威在线名单；跨 tmux/ghostty/ptyxis/screen 宿主）
 #   ② tmux pane_title（pi 自设；与 pane_start_command 是否为空无关）
 #   ③ tmux detached 会话 / screen 会话名 nao-<会话名>
+# ⚠️ 标题可被外部改写（实测 "pi:c"）⇒ find_pane_for 再叠三层后备：标题契约 →
+#   名册 tmuxPane（$TMUX_PANE，权威）→ 本仓未认领 pi pane 唯一兜底。
 # repo（可选）：给出时要求标题 basename / 名册 cwd 一致，避免跨项目同名会话互串。
 
 PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
 PI_TITLE="π"
+# 含 tmuxPane 的名册探针（标题被改写时定位 pane 的权威依据）
+INTERCOM_PROBE="$SKILLS_DIR/.agents/scripts/intercom-probe.mts"
 _INTERCOM_JSON=""; _INTERCOM_PROBED=0
+
+# 以 15s 超时跑 tsx（有 timeout 才用；无则裸跑）；stdout/stderr 原样透传
+_node_tsx() {
+  local tsx="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 15 node "$tsx" "$@"
+  else
+    node "$tsx" "$@"
+  fi
+}
 
 repo_abspath() { ( cd "$1" >/dev/null 2>&1 && pwd ) 2>/dev/null || true; }
 repo_basename() {
@@ -309,6 +327,8 @@ repo_basename() {
 }
 
 # intercom 名册 JSON（一次调用、进程内缓存）；不可用返回 1（不 die）
+#   ① intercom-probe.mts（含 tmuxPane，标题被改写仍可定位 pane）
+#   ② pi-intercom 官方 cli.ts list --json（无 tmuxPane，仅 name/cwd/status）
 intercom_list_json() {
   if (( _INTERCOM_PROBED )); then
     [[ -n "$_INTERCOM_JSON" ]] && printf '%s' "$_INTERCOM_JSON"
@@ -317,13 +337,14 @@ intercom_list_json() {
   _INTERCOM_PROBED=1
   local dir="$PI_AGENT_DIR/npm/node_modules/pi-intercom"
   local tsx="$PI_AGENT_DIR/npm/node_modules/tsx/dist/cli.mjs"
-  [[ -f "$dir/cli.ts" && -f "$tsx" ]] || return 1
+  [[ -f "$tsx" ]] || return 1
   command -v node >/dev/null 2>&1 || return 1
-  local out
-  if command -v timeout >/dev/null 2>&1; then
-    out="$(timeout 15 node "$tsx" "$dir/cli.ts" list --json 2>/dev/null)" || return 1
-  else
-    out="$(node "$tsx" "$dir/cli.ts" list --json 2>/dev/null)" || return 1
+  local out=""
+  if [[ -f "$INTERCOM_PROBE" ]]; then
+    out="$(_node_tsx "$tsx" "$INTERCOM_PROBE" "$PI_AGENT_DIR" 2>/dev/null)" || out=""
+  fi
+  if [[ -z "$out" && -f "$dir/cli.ts" ]]; then
+    out="$(_node_tsx "$tsx" "$dir/cli.ts" list --json 2>/dev/null)" || out=""
   fi
   [[ -n "$out" ]] || return 1
   _INTERCOM_JSON="$out"
@@ -351,8 +372,13 @@ intercom_online() {
   return 1
 }
 
-# 会话所在的 tmux pane（pi 自设标题 "π - <会话名> - <repo basename>"）
-find_pane_for() {
+# 会话所在的 tmux pane。三层后备（标题可被外部改写，如 "pi:c"）：
+#   ① 终端标题契约 "π - <会话名> - <repo basename>"（pi 自设；最快）
+#   ② pi-intercom 名册 tmuxPane（注册时读 $TMUX_PANE；与标题改名无关，权威）
+#   ③ 本仓「未被认领 pi pane」唯一兜底（启发式：pane_current_command=pi 且
+#      pane_current_path=repo；歧义时 warn，不猜）
+# repo（可选）：给出时要求标题 basename / 名册 cwd / pane 当前路径一致，避免跨项目同名互串。
+find_pane_by_title() {
   local name="$1" repo="${2:-}" base=""
   command -v tmux >/dev/null 2>&1 || return 0
   if [[ -n "$repo" ]]; then base="$(repo_basename "$repo")"; fi
@@ -361,7 +387,101 @@ find_pane_for() {
         { t=$2
           if (b != "") { if (t == p " - " n " - " b) { print $1; exit } }
           else if (index(t, p " - " n " - ") == 1) { print $1; exit }
-        }'
+        }' || true
+}
+
+# tmux pane 是否存活（名册 tmuxPane 可能滞后于 pane 关闭）
+tmux_pane_live() {
+  [[ -n "$1" ]] || return 1
+  command -v tmux >/dev/null 2>&1 || return 1
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null | grep -qxF "$1"
+}
+
+# 名册中该会话的 tmux pane（注册时读 $TMUX_PANE；标题被改写仍有效）
+intercom_pane_for() {
+  local name="$1" repo="${2:-}" abs="" json
+  json="$(intercom_list_json 2>/dev/null)" || return 0
+  [[ -n "$json" ]] || return 0
+  if [[ -n "$repo" ]]; then abs="$(repo_abspath "$repo")"; fi
+  awk -v n="$name" -v a="$abs" '
+    /"name":[[:space:]]*"/ { s=$0; sub(/.*"name":[[:space:]]*"/,"",s); sub(/".*/,"",s); cn=s }
+    /"cwd":[[:space:]]*"/  { s=$0; sub(/.*"cwd":[[:space:]]*"/,"",s);  sub(/".*/,"",s);  cc=s }
+    /"tmuxPane":[[:space:]]*"/ {
+      s=$0; sub(/.*"tmuxPane":[[:space:]]*"/,"",s); sub(/".*/,"",s); cp=s
+      if (cn == n && (a == "" || cc == a) && cp != "") { print cp; exit }
+    }
+  ' <<< "$json"
+}
+
+# 名册中该会话的活动状态（无记录则空）；pi-intercom 状态值如 idle / thinking / tool:bash
+# 标题被改写或 pane 不可判时，这是「在跑 turn」的权威信号。
+intercom_status_for() {
+  local name="$1" repo="${2:-}" abs="" json
+  json="$(intercom_list_json 2>/dev/null)" || return 0
+  [[ -n "$json" ]] || return 0
+  if [[ -n "$repo" ]]; then abs="$(repo_abspath "$repo")"; fi
+  awk -v n="$name" -v a="$abs" '
+    /"name":[[:space:]]*"/   { s=$0; sub(/.*"name":[[:space:]]*"/,"",s);   sub(/".*/,"",s); cn=s; cs="" }
+    /"status":[[:space:]]*"/ { s=$0; sub(/.*"status":[[:space:]]*"/,"",s); sub(/".*/,"",s); cs=s }
+    /"cwd":[[:space:]]*"/ {
+      s=$0; sub(/.*"cwd":[[:space:]]*"/,"",s); sub(/".*/,"",s); cc=s
+      if (cn == n && (a == "" || cc == a)) { print cs; exit }
+    }
+  ' <<< "$json"
+}
+
+# 本仓所有「当前前台命令为 pi」的 pane：pane_id<TAB>pane_current_path
+# pane_current_command 与标题/argv 无关，是标题被改写时的可靠进程特征。
+pi_panes() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  tmux list-panes -a -F "#{pane_id}"$'\t'"#{pane_current_command}"$'\t'"#{pane_current_path}" 2>/dev/null \
+    | awk -F'\t' '{ c=$2; sub(/^.*\//,"",c); if (c=="pi") print $1 "\t" $3 }' || true
+}
+
+# 兜底：本仓 pi pane 中「未被其它会话认领」且唯一者
+# 认领来源 = 标题契约命中的 pane + 名册 tmuxPane（二者任一即视为已识别）
+fallback_pane_for() {
+  local name="$1" repo="$2" abs="" cp j v
+  command -v tmux >/dev/null 2>&1 || return 0
+  abs="$(repo_abspath "$repo")"; [[ -n "$abs" ]] || return 0
+  local -A claimed=()
+  while IFS= read -r cp; do
+    [[ -n "$cp" ]] && claimed["$cp"]=1
+  done < <(tmux list-panes -a -F "#{pane_id}"$'\t'"#{pane_title}" 2>/dev/null \
+             | awk -F'\t' -v t="$PI_TITLE" '$2 ~ "^" t " - " { print $1 }')
+  j="$(intercom_list_json 2>/dev/null)" || j=""
+  if [[ -n "$j" ]]; then
+    cp="$(printf '%s\n' "$j" | sed -n 's/.*"tmuxPane":[[:space:]]*"\([^"]*\)".*/\1/p')"
+    while IFS= read -r v; do [[ -n "$v" ]] && claimed["$v"]=1; done <<< "$cp"
+  fi
+  local -a cand=()
+  local pid ppath
+  while IFS=$'\t' read -r pid ppath; do
+    [[ "$ppath" == "$abs" ]] || continue
+    [[ -n "${claimed[$pid]:-}" ]] && continue
+    cand+=("$pid")
+  done < <(pi_panes)
+  if (( ${#cand[@]} == 1 )); then
+    printf '%s\n' "${cand[0]}"; return 0
+  fi
+  if (( ${#cand[@]} > 1 )); then
+    warn "标题被改写且名册无 pane 记录：$abs 内有多个未认领 pi pane（${cand[*]}）→ 无法唯一确定 $name"
+  fi
+  return 0
+}
+
+find_pane_for() {
+  local name="$1" repo="${2:-}" pane=""
+  # ① 终端标题契约
+  pane="$(find_pane_by_title "$name" "$repo")"
+  [[ -n "$pane" ]] && { printf '%s\n' "$pane"; return 0; }
+  # ② pi-intercom 名册 tmuxPane（权威；标题被改写仍有效）
+  pane="$(intercom_pane_for "$name" "$repo")"
+  if [[ -n "$pane" ]] && tmux_pane_live "$pane"; then printf '%s\n' "$pane"; return 0; fi
+  # ③ 本仓未认领 pi pane 唯一兜底
+  pane="$(fallback_pane_for "$name" "$repo")"
+  [[ -n "$pane" ]] && { printf '%s\n' "$pane"; return 0; }
+  return 0
 }
 
 # 该会话名对应的 pi 进程 PID（经 pane 句柄取 pane_pid 及其子进程中 comm=pi 者）
@@ -395,25 +515,45 @@ offline_verifiable() {
 }
 
 # 本机可见的会话名（tmux 标题 + tmux/screen 会话 + 名册），供 status 枚举；已去重
+# ⚠️ 每条枚举 `|| true`：set -e + pipefail 下 `screen -ls`（无 socket 时 rc=1）或
+#    `tmux`（无 server 时 rc=1）会中断其余枚举，使「名册回退」永远走不到 —— 必疾。
 visible_session_names() {
   { if command -v tmux >/dev/null 2>&1; then
-      tmux list-panes -a -F '#{pane_title}' 2>/dev/null \
+      { tmux list-panes -a -F '#{pane_title}' 2>/dev/null || true; } \
         | sed -n "s/^${PI_TITLE} - \([A-Za-z0-9_-]*\) - .*/\1/p"
-      tmux list-sessions -F '#{session_name}' 2>/dev/null | sed -n 's/^nao-//p'
+      { tmux list-sessions -F '#{session_name}' 2>/dev/null || true; } \
+        | sed -n 's/^nao-//p'
     fi
     if command -v screen >/dev/null 2>&1; then
-      screen -ls 2>/dev/null | sed -n 's/.*[0-9]\.nao-\([A-Za-z0-9_-]*\).*/\1/p'
+      { screen -ls 2>/dev/null || true; } \
+        | sed -n 's/.*[0-9]\.nao-\([A-Za-z0-9_-]*\).*/\1/p'
     fi
-    intercom_roster 2>/dev/null | awk -F'\t' 'NF {print $1}'
-  } | awk '!seen[$0]++'
+    intercom_roster 2>/dev/null || true
+  } | awk -F'\t' 'NF {print $1}' | awk '!seen[$0]++'
 }
 
-# 该 pane 末 3 行是否显示在跑 turn（启发式：状态行标记；回执/产物以 PM 核对清单为准）
+# 未能归属到任何会话名的 pi pane（标题不符契约且名册无 tmuxPane 记录）：
+# 输出 pane_id<TAB>pane_title；供 status 做「非静默」提示（不假装看不到）。
+unattributed_pi_panes() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  local claimed p tt
+  claimed="$(intercom_list_json 2>/dev/null | sed -n 's/.*"tmuxPane":[[:space:]]*"\([^"]*\)".*/\1/p')" || claimed=""
+  while IFS=$'\t' read -r p tt; do
+    [[ -n "$p" ]] || continue
+    grep -qxF "$p" <<< "$claimed" && continue
+    printf '%s\t%s\n' "$p" "$tt"
+  done < <(tmux list-panes -a -F "#{pane_id}"$'\t'"#{pane_current_command}"$'\t'"#{pane_title}" 2>/dev/null \
+             | awk -F'\t' -v t="$PI_TITLE" '{ c=$2; sub(/^.*\//,"",c); if (c!="pi") next; if ($3 ~ "^" t " - ") next; print $1 "\t" $3 }' || true)
+}
+
+# 该 pane 是否显示在跑 turn（启发式：扫末 12 行找状态行标记；回执/产物以 PM 核对清单为准）
+# ⚠️ 窗口不能只用末 3 行：pi 状态行（如 "⠦ Working"）上方还有分隔线，实测会落到第 4 行以外。
+# 真伪由 roster 状态(intercom_status_for)交叉；此处仅作 pane 级补充。
 pane_busy() {
-  local pane="$1" tail3
-  tail3="$(tmux capture-pane -p -t "$pane" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -3)"
-  [[ -n "$tail3" ]] || return 1
-  grep -qE "$CLOSE_BUSY_PATTERN" <<< "$tail3"
+  local pane="$1" window
+  window="$(tmux capture-pane -p -t "$pane" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -12)"
+  [[ -n "$window" ]] || return 1
+  grep -qE "$CLOSE_BUSY_PATTERN" <<< "$window"
 }
 
 # 任务在 tasks-state 的归处：
@@ -951,6 +1091,16 @@ cmd_status() {
   done < <(visible_session_names)
   (( found )) || echo '  （无）'
   [[ -f "$TASKS_STATE" ]] || echo "  （$TASKS_STATE 不存在，残留判定已跳过）"
+  # 标题被改写/无名的 pi pane：非静默——显式列出，供人工核对
+  local -a orph=()
+  local pn pt
+  while IFS=$'\t' read -r pn pt; do
+    [[ -n "$pn" ]] && orph+=("$pn($pt)")
+  done < <(unattributed_pi_panes)
+  if (( ${#orph[@]} > 0 )); then
+    warn "以下 pi pane 标题不符契约且名册无 pane 记录，无法归属会话名：${orph[*]}"
+    warn "  （标题可能被外部改写；用 intercom({action:'list'}) 人工核对，或按 pane_id 处理）"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -958,7 +1108,7 @@ cmd_status() {
 cmd_close() {
   local force="$1" task="$2" target="$3"
   [[ -n "$target" ]] || die "close 需要目标：角色别名或派生会话名（如 rd-be / rd-be-T1 或 rd-infra / rd-infra-T1）"
-  local name repo cls bus pane pids r ok
+  local name repo cls bus pane pids r ok st
   intercom_list_json >/dev/null 2>&1 || true   # 预热名册缓存
   if [[ -n "$task" ]]; then
     resolve_role "$target"
@@ -997,18 +1147,28 @@ cmd_close() {
     return 1
   fi
 
-  # 闸门②：在跑 turn（tmux 可判；非 tmux 宿主无法判 → 需 --force）
+  # 闸门②：在跑 turn（pane 标记 + roster 状态双重信号）
   pane="$(find_pane_for "$name" "$repo")"
-  if [[ -n "$pane" ]]; then
-    # 显式双分支赋值：pane 空闲时 bus 必须落为 ""。
-    # 曾用 `pane_busy "$pane" && bus=…`：pane_busy 为假时 && 短路，bus 在 set -u 下未绑定 → 行 1007 崩溃。
-    if pane_busy "$pane"; then
-      bus="tmux pane $pane 末行显示在跑 turn"
+  bus=""
+  # 显式双分支赋值：pane 空闲时 bus 必须落为 ""。
+  # 曾用 `pane_busy "$pane" && bus=…`：pane_busy 为假时 && 短路，bus 在 set -u 下未绑定 → 行 1007 崩溃。
+  if [[ -n "$pane" ]] && pane_busy "$pane"; then
+    bus="tmux pane $pane 显示在跑 turn"
+  fi
+  st="$(intercom_status_for "$name" "$repo")"
+  if [[ -z "$bus" ]]; then
+    case "$st" in
+      ""|idle|\?) ;;   # 无状态或空闲 → 不阻塞
+      *) bus="pi-intercom 名册状态=$st（在跑 turn）" ;;
+    esac
+  fi
+  # 既无 pane 也无名册状态 ⇒ 确实无法判定 → 拒绝（不静默 no-op）
+  if [[ -z "$bus" && -z "$pane" && -z "$st" ]]; then
+    if command -v tmux >/dev/null 2>&1; then
+      bus="tmux 宿主但未定位到该会话的 pane（标题契约 / 名册 tmuxPane / 仓库兜底均未命中）"
     else
-      bus=""
+      bus="非 tmux 宿主，无法确认是否在跑 turn"
     fi
-  else
-    bus="非 tmux 宿主，无法确认是否在跑 turn"
   fi
   if [[ -n "$bus" && "$force" != true ]]; then
     warn "拒绝回收 $name：$bus"
