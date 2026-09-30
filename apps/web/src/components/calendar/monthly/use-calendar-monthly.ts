@@ -58,10 +58,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         rescheduleBusyId,
         scheduleBusy,
         runBatchSchedule,
-        undoAction,
         undoBusy,
-        undoLast,
-        dismissUndoAction,
         scheduleToDay,
         deferToToday
     } = useCalendarSchedule({ taskUseCase })
@@ -286,13 +283,10 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         unscheduledTasks,
         // —— 单条排期/改期（F4）busy 标识（逐任务防连点，月/周条 + 抽屉行共用） ——
         rescheduleBusyId,
-        // —— 批量排期（F3）+ U2 最近一次撤销（M2/F4、M3/F1 复用） ——
+        // —— 批量排期（F3）+ 撤销写回防连点（宿主拖拽 busy 判据复用 `undoBusy`） ——
         scheduleBusy,
         runBatchSchedule,
-        undoAction,
         undoBusy,
-        undoLast,
-        dismissUndoAction,
         createTaskOnDay,
         createTaskAt,
         openTaskDetails,

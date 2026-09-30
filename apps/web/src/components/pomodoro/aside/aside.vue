@@ -3,18 +3,14 @@ import { computed, inject, onMounted, ref, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { PomodoroRecordList } from '@nao-todo/presentation/pomodoro'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'PomodoroAside' })
 
 // @contexts
-const { isDisplayAside, dialogManager, todayRecords, recordLoading, recordIsDone, handleNextPage } =
+const { isDisplayAside, todayRecords, recordLoading, recordIsDone, handleNextPage } =
     inject(POMODORO_VIEW_CONTEXT_KEY)!
 const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
-// @viewState 今日专注区块（默认展开；不持久化）
-const collapseItems = ref<string[]>(['today'])
 
 // @computed 子视图导航目标：携带当前 taskId ⇒ 切换子视图不丢详情参数（T451）
 const route = useRoute()
@@ -27,9 +23,6 @@ const navRoutes = computed(() => ({
     collection: { name: 'pomodoro-collection', params: { taskId: currentTaskId.value } },
     records: { name: 'pomodoro-records', params: { taskId: currentTaskId.value } }
 }))
-
-//打开新建常用番茄专注对话框
-const handleOpenCreator = () => dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)
 
 /**
  * 处理侧边栏延时传送
@@ -68,12 +61,6 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                     />
                 </nue-div>
             </template>
-            <!-- <nue-div vertical gap="0.25rem" flex="none" justify="end">
-                <nue-button icon="plus" theme="ghost" @click="handleOpenCreator">
-                    新建常用番茄专注
-                </nue-button>
-                <nue-button icon="ntd-history">查看历史专注记录</nue-button>
-            </nue-div> -->
         </nue-div>
     </teleport>
 </template>
@@ -94,40 +81,6 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
         overflow: hidden;
         flex-direction: column;
         align-items: stretch;
-
-        :deep(.nue-collapse--menu) {
-            gap: 0;
-            /* T456 ③：折叠区占满 today-section，内容列（概览固定 + 列表滚动） */
-            height: 100%;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        :deep(.nue-collapse-item) {
-            border: none;
-        }
-
-        /* 展开态：折叠内容填满剩余高度（翻越组件的行内 --height），供列表滚动、概览固定 */
-        :deep(.nue-collapse-item[data-collapsed='false']) {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        :deep(.nue-collapse-item[data-collapsed='false'] .nue-collapse-item__content) {
-            height: auto !important;
-            max-height: none !important;
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        :deep(.nue-collapse-item[data-collapsed='true'] .nue-collapse-item__content) {
-            height: 0 !important;
-            overflow: hidden;
-        }
     }
 }
 </style>

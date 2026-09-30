@@ -26,16 +26,6 @@ export class UserEntity extends Entity {
         super(id, createdAt, updatedAt, deletedAt)
     }
 
-    // 是否是管理员
-    get isAdmin(): boolean {
-        return this.state === 1
-    }
-
-    // 是否是VIP
-    get isVIP(): boolean {
-        return this.state === 2
-    }
-
     // 是否已注销（待注销）
     get isDeactived(): boolean {
         return !!this.deactivedAt && dayjs(this.deactivedAt).isValid()
