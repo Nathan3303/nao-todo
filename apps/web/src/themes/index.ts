@@ -6,7 +6,6 @@ import './variables.css'
 
 import './avatar.css'
 import './badge.css'
-import './button.css'
 import './collapse.css'
 import './confirm.css'
 import './container.css'

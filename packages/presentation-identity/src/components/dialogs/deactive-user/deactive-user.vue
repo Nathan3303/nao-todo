@@ -105,7 +105,7 @@ onMounted(() => {
                                     <nue-button
                                         :disabled="submitButtonDisabled"
                                         :loading="loading"
-                                        theme="danger"
+                                        theme="destructive"
                                         type="submit"
                                     >
                                         {{ t('user.deactiveSubmit') }}
