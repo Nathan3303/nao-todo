@@ -10,10 +10,10 @@ import { segmentStyleOf, useCalendarGrid } from './use-calendar-grid'
 import { useMonthJump } from './use-month-jump'
 import CalendarSortDropdown from './calendar-sort-dropdown.vue'
 import CalendarMonthGrid from './calendar-month-grid.vue'
+import CalendarViewSwitch from '../view-switch.vue'
 import { isInteractiveKeyTarget } from './keyboard-nav'
 import {
     GRID_COLUMNS,
-    GRID_ROWS,
     weekdaysOf,
     type CalendarOverflow,
     type CalendarRow,
@@ -21,6 +21,7 @@ import {
 } from './monthly-layout'
 import { CALENDAR_MONTHLY_CONTEXT_KEY } from '../monthly-context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import type { CalendarViewName } from '@/views/index/calendar/view-routes'
 
 defineOptions({ name: 'CalendarMonthGrid' })
 
@@ -66,6 +67,12 @@ const {
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+// @method 侧栏隐藏时的头部紧凑切换（回调 = 月视图上下文既有 onGo*，应用内即路由切换）
+const switchFromMonth = (name: CalendarViewName): void => {
+    if (name === 'calendar-weekly') onGoWeekView()
+    else if (name === 'calendar-day') onGoDayView()
+}
 
 // —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；未测得前回退 3） ——
 const calBodyEl = ref<HTMLElement | null>(null)
@@ -143,13 +150,15 @@ const quickSubmit = (dateKey: string, name: string) => {
 // @method 任务条定位样式（连续条按列区间铺满；O2 共享几何纯函数）
 const segStyle = segmentStyleOf
 
-// @method 跨行续接标记：行尾（后续行继续）只在与网格内下一行相接处显示
-const isRowEnd = (seg: { colEnd: number; isEnd: boolean }, row: CalendarRow): boolean =>
-    row.row < GRID_ROWS - 1 && seg.colEnd === GRID_COLUMNS - 1 && !seg.isEnd
+// @method 跨行连续标记：任务在本行末尾续接（colEnd=末列 且 任务未结束）
+//          —— T446 裁定去掉 `row.row < GRID_ROWS-1` 守卫：任务延续到网格最后一行之外（跨月）也显示
+const isRowEnd = (seg: { colEnd: number; isEnd: boolean }): boolean =>
+    seg.colEnd === GRID_COLUMNS - 1 && !seg.isEnd
 
-// @method 跨行续接标记：行首（承接上一行）只在与网格内上一行相接处显示
-const isRowStart = (seg: { colStart: number; isStart: boolean }, row: CalendarRow): boolean =>
-    row.row > 0 && seg.colStart === 0 && !seg.isStart
+// @method 跨行连续标记：任务在本行开头承接（colStart=首列 且 任务非起始）
+//          —— 对称去掉 `row.row > 0` 守卫：任务从网格上一行之外（跨月）延续进来也显示
+const isRowStart = (seg: { colStart: number; isStart: boolean }): boolean =>
+    seg.colStart === 0 && !seg.isStart
 
 // @method 日期格 Enter 激活（O7 焦点管理：与点击同语义；格内交互控件/输入放行原生行为）
 const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
@@ -224,35 +233,15 @@ const {
             </nue-div>
             <nue-div align="center" gap="var(--nue-gap-xs)">
                 <calendar-sort-dropdown v-model="sort" />
-                <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
-                    <nue-button
-                        theme="small,ghost"
-                        class="cal-view-btn is-active"
-                        title="当前：月视图"
-                        aria-pressed="true"
-                    >
-                        月
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="cal-view-btn"
-                        title="切换周视图"
-                        aria-pressed="false"
-                        @click="onGoWeekView"
-                    >
-                        周
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="cal-view-btn"
-                        title="切换日视图"
-                        aria-pressed="false"
-                        @click="onGoDayView"
-                    >
-                        日
-                    </nue-button>
-                </nue-div>
-                <span class="cal-view-sep" aria-hidden="true"></span>
+                <!-- T445 ① 视图切换已移入侧边栏；侧栏隐藏时此紧凑入口兜底 -->
+                <template v-if="!isDisplayAside">
+                    <calendar-view-switch
+                        variant="compact"
+                        current="month"
+                        :on-switch="switchFromMonth"
+                    />
+                    <span class="cal-view-sep" aria-hidden="true"></span>
+                </template>
                 <nue-button
                     theme="ghost,small"
                     :disabled="unscheduledDisabled"
@@ -371,8 +360,8 @@ const {
                             :task="seg.task"
                             :pos="segStyle(seg)"
                             :show-time="showEndTimeInMonth(seg, rv.row)"
-                            :cont-start="isRowStart(seg, rv.row)"
-                            :cont-end="isRowEnd(seg, rv.row)"
+                            :cont-start="isRowStart(seg)"
+                            :cont-end="isRowEnd(seg)"
                             :busy="rescheduleBusyId === seg.task.id"
                             :dragging="
                                 drag.session.active &&

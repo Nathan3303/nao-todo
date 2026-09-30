@@ -81,11 +81,18 @@ const Host = defineComponent({
     }
 })
 
-// nue-dropdown 未注册时不会渲染 `#trigger` 作用域插槽（月份标题在内）→ 用 stub 提供 trigger
+// nue-dropdown 未注册时不会渲染 `#trigger` 作用域插槽（月份标题在内）→ 用 stub 提供 trigger；
+// 同时模拟 NueDropdown 的 execute 委托（点 `[data-executeid]` 上抛）⇒ 紧凑视图切换下拉可用
 const DropdownStub = defineComponent({
     name: 'NueDropdown',
-    setup(_, { slots }) {
-        return () => h('div', [slots.trigger?.({ trigger: () => {} }), slots.default?.()])
+    emits: ['execute'],
+    setup(_, { slots, emit }) {
+        const onClick = (event: MouseEvent): void => {
+            const el = (event.target as Element | null)?.closest('[data-executeid]')
+            if (el) emit('execute', el.getAttribute('data-executeid'))
+        }
+        return () =>
+            h('div', { onClick }, [slots.trigger?.({ trigger: () => {} }), slots.default?.()])
     }
 })
 
@@ -114,12 +121,13 @@ const press = async (key: string): Promise<void> => {
     await flushPromises()
 }
 
+// T446 ①：视图切换已移入侧边栏；standalone/无侧栏时用内容区头部紧凑入口（data-executeid = 子路由名）
 const toDayView = async (w: VueWrapper): Promise<void> => {
-    await w.find('[title="切换日视图"]').trigger('click')
+    await w.find('[data-executeid="calendar-day"]').trigger('click')
     await flushPromises()
 }
 const toWeekView = async (w: VueWrapper): Promise<void> => {
-    await w.find('[title="切换周视图"]').trigger('click')
+    await w.find('[data-executeid="calendar-weekly"]').trigger('click')
     await flushPromises()
 }
 

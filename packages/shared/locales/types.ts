@@ -670,6 +670,10 @@ export interface LocaleMessages {
     // Calendar
     'calendar.today': string
     'calendar.now': string
+    'calendar.view.month': string
+    'calendar.view.week': string
+    'calendar.view.day': string
+    'calendar.viewSwitch': string
     'calendar.createTask': string
     'calendar.monthTitle': string
     'calendar.weekday.mon': string

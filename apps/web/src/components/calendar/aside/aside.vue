@@ -6,8 +6,15 @@ import {
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared/constants'
-import { ref, inject, watch, nextTick, onMounted } from 'vue'
+import { ref, inject, watch, computed, nextTick, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import useCalendarSmartList from './use-calendar-smart-list'
+import CalendarViewSwitch from '../view-switch.vue'
+import {
+    resolveViewSwitch,
+    viewModeOfRouteName,
+    type CalendarViewName
+} from '@/views/index/calendar/view-routes'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
@@ -18,6 +25,17 @@ const { isDisplayAside, dialogManager, hideCompleted, weekStart, setWeekStart, p
 const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
 const collapseItemsRecord = ref(['projects', 'tags'])
+
+// @viewSwitch 侧边栏顶部的子视图切换（T445 ①）：route.name 派生当前态，`router.replace` 切换
+const route = useRoute()
+const router = useRouter()
+const viewMode = computed(() => viewModeOfRouteName(route?.name))
+const switchCalendarView = (name: CalendarViewName): void => {
+    if (!router || !route) return
+    const target = resolveViewSwitch(router, route, name)
+    if (!target) return
+    void router.replace(target)
+}
 
 // 恢复侧边栏显示：与任务页 aside 一致，展开应用左侧子栏以承载筛选内容
 onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
@@ -33,6 +51,15 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
+            <!-- T445 ① 子视图切换（月/周/日）落侧边栏顶部；其下分割线与既有区块一致 -->
+            <nue-div class="view-switch-row">
+                <calendar-view-switch
+                    variant="segmented"
+                    :current="viewMode"
+                    :on-switch="switchCalendarView"
+                />
+            </nue-div>
+            <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">
                     <nao-smart-list
@@ -107,6 +134,20 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 </template>
 
 <style scoped>
+/* 顶部视图切换（T445 ①）：等宽三格铺满侧栏，沿用全局 `.cal-view-toggle`/`.cal-view-btn` 风格 */
+.view-switch-row {
+    width: 100%;
+    padding: 0.25rem 0 0.5rem;
+
+    .cal-view-toggle {
+        width: 100%;
+    }
+
+    .cal-view-btn {
+        flex: 1;
+    }
+}
+
 .nue-div--aside-wrapper {
     flex: auto;
 

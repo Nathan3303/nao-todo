@@ -3,7 +3,9 @@ import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { t } from '@nao-todo/shared/locales'
 import { computed, inject, nextTick, ref } from 'vue'
 import TaskBar from '../monthly/task-bar.vue'
+import CalendarViewSwitch from '../view-switch.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
+import type { CalendarViewName } from '@/views/index/calendar/view-routes'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { DAY_ZOOM_DEFAULT, dayAxisSpecOf, type DayZoom } from './day-zoom'
 import { useCalendarDay } from './use-calendar-day'
@@ -100,6 +102,12 @@ const onGoNow = (): void => {
 }
 const { drag, trackEl, startMove, startResize, startResizeStart, dragPreview, ghostStyle } =
     useDayDrag()
+
+// @method 侧栏隐藏时的头部紧凑切换（回调 = 日视图上下文既有 onGo*）
+const switchFromDay = (name: CalendarViewName): void => {
+    if (name === 'calendar-monthly') onGoMonth()
+    else if (name === 'calendar-weekly') onGoWeek()
+}
 </script>
 
 <template>
@@ -128,35 +136,15 @@ const { drag, trackEl, startMove, startResize, startResizeStart, dragPreview, gh
             </nue-div>
             <nue-div align="center" gap="var(--nue-gap-xs)">
                 <calendar-sort-dropdown v-model="sort" />
-                <nue-div class="day-view-toggle" role="group" aria-label="视图切换">
-                    <nue-button
-                        theme="small,ghost"
-                        class="day-view-btn"
-                        title="切换月视图"
-                        aria-pressed="false"
-                        @click="onGoMonth"
-                    >
-                        月
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="day-view-btn"
-                        title="切换周视图"
-                        aria-pressed="false"
-                        @click="onGoWeek"
-                    >
-                        周
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="day-view-btn is-active"
-                        title="当前：日视图"
-                        aria-pressed="true"
-                    >
-                        日
-                    </nue-button>
-                </nue-div>
-                <span class="day-view-sep" aria-hidden="true"></span>
+                <!-- T445 ① 视图切换已移入侧边栏；侧栏隐藏时此紧凑入口兜底 -->
+                <template v-if="!isDisplayAside">
+                    <calendar-view-switch
+                        variant="compact"
+                        current="day"
+                        :on-switch="switchFromDay"
+                    />
+                    <span class="cal-view-sep" aria-hidden="true"></span>
+                </template>
                 <nue-button
                     data-testid="day-unscheduled-entry"
                     theme="ghost,small"

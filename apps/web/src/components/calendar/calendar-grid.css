@@ -104,10 +104,8 @@
     cursor: default;
 }
 
-/* 月/周/日视图切换（分段按钮：零间隙贴合） */
-.cal-view-toggle,
-.wk-view-toggle,
-.day-view-toggle {
+/* 月/周/日视图切换（分段按钮：零间隙贴合；T445 ① 落在侧边栏顶部 / 侧栏隐藏时紧凑态兜底） */
+.cal-view-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0;
@@ -115,23 +113,17 @@
     border-radius: var(--nue-primary-radius);
     overflow: hidden;
 }
-.cal-view-btn,
-.wk-view-btn,
-.day-view-btn {
+.cal-view-btn {
     border-radius: 0 !important;
 }
-.cal-view-btn.is-active,
-.wk-view-btn.is-active,
-.day-view-btn.is-active {
+.cal-view-btn.is-active {
     background: var(--cal-select-bg);
     color: var(--cal-fg);
     font-weight: 600;
 }
 
 /* 切换区与右侧控件之间的垂直分割线 */
-.cal-view-sep,
-.wk-view-sep,
-.day-view-sep {
+.cal-view-sep {
     align-self: center;
     width: 1px;
     height: 16px;
