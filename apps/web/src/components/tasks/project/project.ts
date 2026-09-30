@@ -44,9 +44,15 @@ const useProjectView = (props: ProjectViewProps) => {
     const switchViewType = async (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        return router.replace({ name: 'tasks-project-main', params: { viewType } }).then(() => {
-            preference.value!.viewType = viewType
-        })
+        // T474b：透传当前 taskId（否则同名 replace 丢弃该参数 ⇒ 详情面板被关）
+        return router
+            .replace({
+                name: 'tasks-project-main',
+                params: { viewType, taskId: router.currentRoute.value.params.taskId }
+            })
+            .then(() => {
+                preference.value!.viewType = viewType
+            })
     }
 
     // @state 清单详情
