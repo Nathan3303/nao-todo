@@ -103,6 +103,18 @@ const onKeyDown = (event: KeyboardEvent): void => {
         @pointerdown="onPointerDown"
         @keydown="onKeyDown"
     >
+        <span
+            v-if="contStart"
+            class="cal-cont cal-cont--start"
+            data-testid="cal-cont-start"
+            aria-hidden="true"
+        ></span>
+        <span
+            v-if="contEnd"
+            class="cal-cont cal-cont--end"
+            data-testid="cal-cont-end"
+            aria-hidden="true"
+        ></span>
         <span class="cal-item-text">{{ task.name }}</span>
         <!-- F4 改期触发器 = NueDropdown（reschedule-menu）：
              有截止时刻（showTime 且 endAt 合法）→ 触发器显示 HH:mm（常显）；
@@ -209,7 +221,32 @@ const onKeyDown = (event: KeyboardEvent): void => {
     opacity: 0.3;
 }
 
-/* 跨行续接圆点已移除（TASK-07：仅视觉，contStart/contEnd 数据承接语义保留） */
+/* 跨周/跨日连续标记（短横线）：被可视区间边界截断的一侧显示；左=承接上一段，右=续接下一段。
+   历史（CAL-04 A1 / 57c55b46）为 5px 圆点，TASK-07 移除；此处按用户规格恢复『连续』语义但改形为短横线。 */
+.cal-cont {
+    position: absolute;
+    top: 50%;
+    width: 7px;
+    height: 2px;
+    margin-top: -1px;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--cal-fg) 62%, var(--cal-bg));
+    pointer-events: none;
+}
+.cal-cont--start {
+    left: 4px;
+}
+.cal-cont--end {
+    right: 4px;
+}
+
+/* 带连续标记的条体：为短横线预留文本间距（名称 ellipsis 不压标记） */
+.cal-item.has-cont-start {
+    padding-left: 15px;
+}
+.cal-item.has-cont-end {
+    padding-right: 15px;
+}
 
 /* F4 改期触发器（NueButton pure/icon 三点 / TASK-18 时间文本）：
    图标形式悬停/聚焦时才出现；时间形式常显。条内小尺寸，不挤名称 */
