@@ -85,14 +85,14 @@ describe('T447 任务条圆角区分首尾', () => {
         expect(classes()).toContain('is-end')
     })
 
-    it('圆角值复用主题 token `--nue-primary-radius`（6px），左/右分别绑定且互不覆盖', () => {
+    it('圆角值复用主题 token `--nue-radius-sm`（0.25rem = 4px），左/右分别绑定且互不覆盖', () => {
         const css = styleText()
         const start = cssRule(css, '.cal-item.is-start')
         const end = cssRule(css, '.cal-item.is-end')
-        expect(start).toContain('border-top-left-radius: var(--nue-primary-radius)')
-        expect(start).toContain('border-bottom-left-radius: var(--nue-primary-radius)')
-        expect(end).toContain('border-top-right-radius: var(--nue-primary-radius)')
-        expect(end).toContain('border-bottom-right-radius: var(--nue-primary-radius)')
+        expect(start).toContain('border-top-left-radius: var(--nue-radius-sm)')
+        expect(start).toContain('border-bottom-left-radius: var(--nue-radius-sm)')
+        expect(end).toContain('border-top-right-radius: var(--nue-radius-sm)')
+        expect(end).toContain('border-bottom-right-radius: var(--nue-radius-sm)')
     })
 
     it('左右留白：真实首/尾端内缩 `--cal-item-inset`，接续端紧贴（不改内缩）', () => {

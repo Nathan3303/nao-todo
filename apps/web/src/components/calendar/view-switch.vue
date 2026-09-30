@@ -137,7 +137,6 @@ const onExecute = (id: string): void => {
     border-radius: var(--nue-primary-radius);
     box-shadow: none;
     overflow: hidden;
-    padding: var(--nue-padding-2xs);
 }
 
 /* 滑块指示器：三等分宽，靠 transform 平移；尊重 prefers-reduced-motion */
@@ -171,6 +170,8 @@ const onExecute = (id: string): void => {
     background: transparent;
     box-shadow: none;
     color: var(--nue-secondary-text-color);
+    justify-content: center;
+    align-items: center;
 }
 .cal-view-toggle > .cal-view-btn:not(.is-active):hover {
     background: color-mix(in srgb, var(--nue-primary-text-color) 6%, transparent);

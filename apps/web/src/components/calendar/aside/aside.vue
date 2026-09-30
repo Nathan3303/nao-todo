@@ -58,8 +58,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     :current="viewMode"
                     :on-switch="switchCalendarView"
                 />
-            </nue-div>
-            <nue-div class="extra-row">
                 <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
                 <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
                 <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
@@ -133,29 +131,21 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 </template>
 
 <style scoped>
-/* 顶部视图切换（T445 ①）：等宽三格铺满侧栏，沿用全局 `.cal-view-toggle`/`.cal-view-btn` 风格 */
-.view-switch-row {
-    width: 100%;
-    padding: 0.25rem 0 0.5rem;
-
-    .cal-view-toggle {
-        width: 100%;
-    }
-
-    .cal-view-btn {
-        flex: 1;
-    }
-}
-
 .nue-div--aside-wrapper {
     flex: auto;
 
-    > .extra-row {
+    /* 顶部视图切换（T445 ①）：等宽三格铺满侧栏，沿用全局 `.cal-view-toggle`/`.cal-view-btn` 风格 */
+    > .view-switch-row {
         width: 100%;
-        padding: 0.25rem 0;
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
         gap: 0;
+        flex: none;
+
+        .cal-view-toggle {
+            width: 100%;
+            margin-bottom: var(--nue-padding-sm);
+        }
 
         /* 与 smart-list 内 checkbox 一致：默认字号/色值 + 去除默认横向内距保持左对齐 */
         > .nue-checkbox {

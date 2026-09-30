@@ -221,17 +221,17 @@ const onKeyDown = (event: KeyboardEvent): void => {
 }
 
 /* 首/尾端圆角 + 左右留白（T447）：**真实开始/结束端**圆角且**内缩 `--cal-item-inset`**，
-   **被截断（接续）端**直角且**紧贴格子边线**。圆角 6px = 主题既有 `--nue-primary-radius`（不新增 token）。
+   **被截断（接续）端**直角且**紧贴格子边线**。圆角 4px = 主题既有 `--nue-radius-sm`（0.25rem；不新增 token）。
    故 单段=两端圆角且两侧内缩 · 首段=左圆内缩/右直角紧贴 · 中段=两端直角紧贴 · 末段=左直角紧贴/右圆内缩。
    内缩经 `--seg-*` 变量在 CSS 内完成（不改父级几何口径；`left`/`width` 改由变量驱动）。 */
 .cal-item.is-start {
     left: calc(var(--seg-left) + var(--cal-item-inset));
-    border-top-left-radius: var(--nue-primary-radius);
-    border-bottom-left-radius: var(--nue-primary-radius);
+    border-top-left-radius: var(--nue-radius-sm);
+    border-bottom-left-radius: var(--nue-radius-sm);
 }
 .cal-item.is-end {
-    border-top-right-radius: var(--nue-primary-radius);
-    border-bottom-right-radius: var(--nue-primary-radius);
+    border-top-right-radius: var(--nue-radius-sm);
+    border-bottom-right-radius: var(--nue-radius-sm);
 }
 /* 仅真实开始端：左移 + 收窄一份（右缘不变，紧贴） */
 .cal-item.is-start:not(.is-end) {
