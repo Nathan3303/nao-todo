@@ -6,8 +6,15 @@ import {
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared/constants'
-import { ref, inject, watch, nextTick, onMounted } from 'vue'
+import { ref, inject, watch, computed, nextTick, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import useCalendarSmartList from './use-calendar-smart-list'
+import CalendarViewSwitch from '../view-switch.vue'
+import {
+    resolveViewSwitch,
+    viewModeOfRouteName,
+    type CalendarViewName
+} from '@/views/index/calendar/view-routes'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
@@ -18,6 +25,17 @@ const { isDisplayAside, dialogManager, hideCompleted, weekStart, setWeekStart, p
 const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
 const collapseItemsRecord = ref(['projects', 'tags'])
+
+// @viewSwitch 侧边栏顶部的子视图切换（T445 ①）：route.name 派生当前态，`router.replace` 切换
+const route = useRoute()
+const router = useRouter()
+const viewMode = computed(() => viewModeOfRouteName(route?.name))
+const switchCalendarView = (name: CalendarViewName): void => {
+    if (!router || !route) return
+    const target = resolveViewSwitch(router, route, name)
+    if (!target) return
+    void router.replace(target)
+}
 
 // 恢复侧边栏显示：与任务页 aside 一致，展开应用左侧子栏以承载筛选内容
 onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
@@ -33,6 +51,39 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
+            <!-- T445 ① 子视图切换（月/周/日）落侧边栏顶部；其下分割线与既有区块一致 -->
+            <nue-div class="view-switch-row">
+                <calendar-view-switch
+                    variant="segmented"
+                    :current="viewMode"
+                    :on-switch="switchCalendarView"
+                />
+                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
+                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
+                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
+                <nue-div class="weekstart-row" gap="8px">
+                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
+                    <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
+                        <nue-button
+                            theme="small,ghost"
+                            class="weekstart-btn"
+                            :class="{ 'is-active': weekStart === 'sunday' }"
+                            @click="setWeekStart('sunday')"
+                        >
+                            周日
+                        </nue-button>
+                        <nue-button
+                            theme="small,ghost"
+                            class="weekstart-btn"
+                            :class="{ 'is-active': weekStart === 'monday' }"
+                            @click="setWeekStart('monday')"
+                        >
+                            周一
+                        </nue-button>
+                    </nue-div>
+                </nue-div>
+            </nue-div>
+            <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">
                     <nao-smart-list
@@ -75,33 +126,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     </nao-smart-list>
                 </nue-collapse>
             </nue-div>
-            <nue-divider />
-            <nue-div class="extra-row">
-                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
-                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
-                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
-                <nue-div class="weekstart-row" gap="8px">
-                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
-                    <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'sunday' }"
-                            @click="setWeekStart('sunday')"
-                        >
-                            周日
-                        </nue-button>
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'monday' }"
-                            @click="setWeekStart('monday')"
-                        >
-                            周一
-                        </nue-button>
-                    </nue-div>
-                </nue-div>
-            </nue-div>
         </nue-div>
     </teleport>
 </template>
@@ -110,12 +134,18 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 .nue-div--aside-wrapper {
     flex: auto;
 
-    > .extra-row {
+    /* 顶部视图切换（T445 ①）：等宽三格铺满侧栏，沿用全局 `.cal-view-toggle`/`.cal-view-btn` 风格 */
+    > .view-switch-row {
         width: 100%;
-        padding: 0.25rem 0;
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
         gap: 0;
+        flex: none;
+
+        .cal-view-toggle {
+            width: 100%;
+            margin-bottom: var(--nue-padding-sm);
+        }
 
         /* 与 smart-list 内 checkbox 一致：默认字号/色值 + 去除默认横向内距保持左对齐 */
         > .nue-checkbox {

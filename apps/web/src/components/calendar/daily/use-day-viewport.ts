@@ -190,6 +190,7 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         onPointerCancel,
         onBodyScroll,
         showStartFade,
-        showEndFade
+        showEndFade,
+        scrollToNow
     }
 }

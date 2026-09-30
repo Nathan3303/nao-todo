@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared/locales'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
@@ -14,6 +15,8 @@ import { buildCalendarEmptyState } from '../monthly/empty-state'
 import { showEndTimeInWeek } from '../monthly/segment-time'
 import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
+import CalendarViewSwitch from '../view-switch.vue'
+import type { CalendarViewName } from '@/views/index/calendar/view-routes'
 
 import '../calendar-grid.css'
 
@@ -59,6 +62,12 @@ const {
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+// @method 侧栏隐藏时的头部紧凑切换（回调 = 周视图上下文既有 onGo*）
+const switchFromWeek = (name: CalendarViewName): void => {
+    if (name === 'calendar-monthly') onGoMonth()
+    else if (name === 'calendar-day') onGoDay()
+}
 
 // —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；首帧回退 3） ——
 const bodyEl = ref<HTMLElement | null>(null)
@@ -203,35 +212,15 @@ const {
             </nue-div>
             <nue-div align="center" gap="var(--nue-gap-xs)">
                 <calendar-sort-dropdown v-model="sort" />
-                <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
-                    <nue-button
-                        theme="small,ghost"
-                        class="wk-view-btn"
-                        title="切回月视图"
-                        aria-pressed="false"
-                        @click="onGoMonth"
-                    >
-                        月
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="wk-view-btn is-active"
-                        title="当前：周视图"
-                        aria-pressed="true"
-                    >
-                        周
-                    </nue-button>
-                    <nue-button
-                        theme="small,ghost"
-                        class="wk-view-btn"
-                        title="切换日视图"
-                        aria-pressed="false"
-                        @click="onGoDay"
-                    >
-                        日
-                    </nue-button>
-                </nue-div>
-                <span class="wk-view-sep" aria-hidden="true"></span>
+                <!-- T445 ① 视图切换已移入侧边栏；侧栏隐藏时此紧凑入口兜底 -->
+                <template v-if="!isDisplayAside">
+                    <calendar-view-switch
+                        variant="compact"
+                        current="week"
+                        :on-switch="switchFromWeek"
+                    />
+                    <span class="cal-view-sep" aria-hidden="true"></span>
+                </template>
                 <nue-button
                     theme="ghost,small"
                     :disabled="unscheduledDisabled"
@@ -240,7 +229,9 @@ const {
                 >
                     未安排 {{ unscheduledCount }}
                 </nue-button>
-                <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
+                <nue-button theme="ghost,small" @click="onGoToday">{{
+                    t('calendar.today')
+                }}</nue-button>
             </nue-div>
         </nue-div>
 
