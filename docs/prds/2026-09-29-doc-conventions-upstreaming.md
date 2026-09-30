@@ -15,16 +15,19 @@
 ## 2. 逐条需求与验收口径
 
 **2.1 发版说明写作规范上游化（`T434`）**
+
 - 新增 `.agents/common/release-notes.md`（58 行，通用化表述）
 - 新增模板 `.agents/templates/release-notes.md.example`（53 行）
 - 接线：`skills/github-flow.md` §发布 · `checklists/pm.md` 发布红线 · `templates/AGENTS.md.example` · `output-format.md` 指针
 - 规范要点：**面向用户的简明版置顶**（GitHub Release 正文与仓库 `docs/releases/vX.Y.Z.md` 顶部一致）· ⛔ **不得出现内部术语/编号**（`DEF-xx` / `Txxx` / 提交哈希 / 守卫名 / 测试例数 ⇒ 移入末尾「技术细节（可略过）」）· 建议结构（一句话概括 → ✨ 更好用了 → 🐛 修好了 → ⚠️ 请留意 → 📦 更小更快 → 已知未处理 → 技术细节）· **行为变更必须写清用户视角后果** · **不追溯历史 Release**
 
 **2.2 「默认不使用表格」规范上游化（含 PRD）（`T435`）**
+
 - `.agents/checklists/deliverable-docs.md` 新增 **§七 排版：默认不使用表格** —— **PRD 显式点名**；列出三处最常误写（需求清单 / AC / 范围·非范围）；例外：≤5 行且 ≤4 列；⛔ 不追溯历史文档
 - **自证**：把 `deliverable-docs.md` 自身那张超限表格**改成列表**
 
 **2.3 版本与发布**
+
 - 上游版本 **`0.9.5 → 0.10.0`**（MINOR：新增规范能力）
 - 上游 `docs/releases/v0.10.0.md` **自身示范两条规范**（全程无表格 · 简明版置顶）
 - 门禁：`check` rc=0（roles=6 / files=42）· `check:agents` rc=0 · `npm test` rc=0 · dry-run 显示 `public` · **失败演练**（删 `common/release-notes.md` ⇒ `check` rc=1 并列出 3 处缺失引用）
@@ -32,6 +35,7 @@
 - **PM 独立核验**（防 registry 传播延迟误判，连查 2–3 次带 `?t=` 穿透）：`sha256 = 3680ae52f6e3a70320e3a1f81c1bfdead51f474d210820dd0b3dffb9261aeda9`，与上游 dry-run **逐字节一致** · 46 文件 · 两条规范随包 · 全局 CLI 升 `0.10.0`
 
 **2.4 四仓同步（`T436` / `T437` / `T438`）**
+
 - `nao-todo`（`#156`）· `nao-todo-server`（`#44`）· `nue-ui`（直推）· 上游 `nao-skills` 自身
 - 验收：四仓 `nao-fleet.sh` **sha 全等上游**；`nue-ui` 顺带修 fmt 缺口（`fmt.ignorePatterns` 补 `.agents/**`、`.codegraph/**`、`.pi/**`）⇒ 同步后「与上游不同」数 **31 → 0**
 
