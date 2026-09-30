@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/presentation",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "author": "Nathan Lee",
     "license": "MIT",
     "type": "module",
