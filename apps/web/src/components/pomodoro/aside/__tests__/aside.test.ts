@@ -111,14 +111,15 @@ const asideCss = (): string =>
         .join('\n')
         .replace(/\s+/g, ' ')
 
-describe('T451 ① 今日专注入侧栏（NueCollapse）', () => {
-    it('侧栏渲染「今日专注」collapse，且列表 hideHeader（标题不重复）', async () => {
+describe('T451 ① 今日专注入侧栏', () => {
+    it('侧栏渲染「今日专注」列表（T459 用户改为直接渲染，不再走 collapse；列表自带标题）', async () => {
         await mountAside('/pomodoro/timer')
         expect(wrapper!.text()).toContain('今日专注')
-        // 列表自身内置标题已隐藏（避免与 collapse 标题重复；统计卡的「今日专注目标」不算标题）
-        expect(recordListProps().hideHeader).toBe(true)
+        expect(recordList().exists()).toBe(true)
         expect(recordListProps().compact).toBe(true)
-        expect(recordList().find('.nue-div--header').exists()).toBe(false)
+        // T459：移除 NueCollapse 包裹 ⇒ 列表直接显示自带标题（hide-header 不再传入）
+        expect(wrapper!.find('.nue-collapse--menu').exists()).toBe(false)
+        expect(recordList().find('.nue-div--header').exists()).toBe(true)
     })
 
     it('列表拿到 todayRecords 数据与分页态', async () => {
