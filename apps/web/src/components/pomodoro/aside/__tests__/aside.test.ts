@@ -125,6 +125,30 @@ describe('T451 ① 今日专注入侧栏（NueCollapse）', () => {
     })
 })
 
+describe('T455 B 「今日专注」仅计时页显示', () => {
+    it('番茄专注 / 正计时 ⇒ 渲染「今日专注」区块', async () => {
+        await mountAside('/pomodoro/timer')
+        expect(recordList().exists()).toBe(true)
+        expect(wrapper!.text()).toContain('今日专注')
+
+        wrapper!.unmount()
+        await mountAside('/pomodoro/focus')
+        expect(recordList().exists()).toBe(true)
+    })
+
+    it('常用专注 / 专注记录 ⇒ 不渲染该区块（导航仍在）', async () => {
+        await mountAside('/pomodoro/pomodoros')
+        expect(recordList().exists()).toBe(false)
+        expect(wrapper!.text()).not.toContain('今日专注')
+        expect(wrapper!.findAll('a').length).toBeGreaterThanOrEqual(4)
+
+        wrapper!.unmount()
+        await mountAside('/pomodoro/records')
+        expect(recordList().exists()).toBe(false)
+        expect(wrapper!.text()).not.toContain('今日专注')
+    })
+})
+
 describe('T451 ② 侧栏导航携带 taskId（子视图切换不重置详情）', () => {
     it('在 /pomodoro/timer/abc ⇒ 链接切到四个子视图均保留 abc', async () => {
         const { router } = await mountAside('/pomodoro/timer/abc')

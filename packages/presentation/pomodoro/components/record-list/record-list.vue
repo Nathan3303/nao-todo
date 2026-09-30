@@ -22,11 +22,6 @@ const dailyGoalProgress = computed(() => {
     return (totalDuration.value / dailyGoal.value) * 100
 })
 
-const sessionCount = computed(() => {
-    const sessions = new Set(props.records.map((record) => record.sessionId))
-    return sessions.size
-})
-
 const fanqieCount = computed(() => {
     return props.records.reduce((acc, cur) => acc + (cur.type ? 1 : 1), 0)
 })
@@ -55,11 +50,11 @@ const durationToString = (duration: number) => {
             <nue-div theme="pomodoro-records-info">
                 <nue-text theme="count">{{ props.records.length }} 条专注记录</nue-text>
                 <nue-text theme="count">/</nue-text>
-                <nue-text theme="count">已收获 {{ fanqieCount }} 个番茄</nue-text>
+                <nue-text theme="count">{{ fanqieCount }} 个番茄</nue-text>
             </nue-div>
             <nue-div theme="daily-goal">
                 <nue-div justify="space-between">
-                    <nue-text theme="goal">今日专注目标 {{ durationToString(dailyGoal) }}</nue-text>
+                    <nue-text theme="goal">今日目标 {{ durationToString(dailyGoal) }}</nue-text>
                     <nue-text theme="goal-count">
                         已完成 {{ dailyGoalProgress.toFixed(0) }} %
                     </nue-text>
@@ -111,28 +106,30 @@ const durationToString = (duration: number) => {
     > .nue-div--header {
         flex-direction: column;
         gap: var(--nue-gap-2xs);
-        font-size: var(--nue-text-sm);
+        font-size: var(--nue-text-xs);
 
         > .nue-div--title {
             gap: var(--nue-gap-xs);
             align-items: center;
 
             > .nue-icon {
-                font-size: var(--nue-text-df);
+                font-size: var(--nue-text-sm);
             }
 
             > .nue-text--title {
                 margin-right: auto;
-                font-size: var(--nue-text-df2);
+                font-size: var(--nue-text-sm);
             }
         }
     }
 
     > .nue-div--card {
         flex-direction: column;
-        gap: var(--nue-gap-xs);
-        font-size: var(--nue-text-sm);
+        gap: var(--nue-gap-2xs);
+        font-size: var(--nue-text-xs);
         color: var(--nue-primary-color-600);
+        padding: 0;
+        border: none;
 
         > .nue-text--duration {
             color: var(--nue-primary-color-900);

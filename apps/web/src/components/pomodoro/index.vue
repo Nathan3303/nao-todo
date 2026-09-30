@@ -9,7 +9,7 @@ import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroPage' })
 
-const { dialogManager, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+const { dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
@@ -113,7 +113,7 @@ const dependLabel = computed(() => {
 #Pomodoro > .nue-main .nue-content {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 4fr 2fr;
     grid-template-areas: 'timer' 'note';
     width: 100%;
     height: 100%;
