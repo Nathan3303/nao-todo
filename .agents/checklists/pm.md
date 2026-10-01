@@ -56,7 +56,7 @@ description: PM 交付核对清单（按需，交付/派发前读取）
 - [ ] Issue 与 `docs/` 双源（正文抄进 Issue，或状态只留平台）？
 - [ ] 未过验收 / 门禁未绿就打 tag 或 release，或 tag 指向非 main 合并提交？（见 `github-flow.md`）
 - [ ] `git push --force` 到 main/共享分支（未经用户明确授权并指明分支）？
-- [ ] release notes 不可读（纯编号/类名/路径），或未落盘 `docs/releases/`？（规范：@.agents/common/release-notes.md —— 面向用户简明版置顶、内部信息下沉、正文不用表格）
+- [ ] release notes 不可读（纯编号/类名/路径），或未落盘 `docs/releases/`？（规范：@.agents/common/release-notes.md —— 面向用户「本次更新」置顶、内部信息下沉、正文不用表格）
 - [ ] 降级（无 `gh` / 无远端）未在 `tasks-state` 与回执中标注？
 
 ## 交付检查清单（完整 36 项）

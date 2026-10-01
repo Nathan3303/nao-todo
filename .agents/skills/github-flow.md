@@ -54,7 +54,7 @@ PM 在**立项 / 终签 / 发布**时读取；RD 在**起分支 / 开 PR / 合�
 - 门禁：AC 全过 + 验收闭环 + main 门禁全绿 + 工作区干净 + PR 已合并。
 - **优先 `gh`**：`gh release create <tag> --title "<用户可读标题>" --notes-file docs/releases/<version>.md`。
 - 探测：`gh auth status` 按 **exit code** 判定（`keyring` 警告但 exit 0 **仍可用**，可 `gh api user` 复核）；**不自动 `gh auth login`**（涉用户凭证）。
-- release notes 落盘 `docs/releases/<version>.md`（**写作规范（强约束）：@.agents/common/release-notes.md** —— 面向用户简明版置顶、内部编号 / 文件名 / 属性名一律下沉「技术细节」、正文不用表格；骨架见 @.agents/templates/release-notes.md.example）。
+- release notes 落盘 `docs/releases/<version>.md`（**写作规范（强约束）：@.agents/common/release-notes.md** —— 面向用户「本次更新」置顶、内部编号 / 文件名 / 属性名一律下沉「技术细节」、正文不用表格；骨架见 @.agents/templates/release-notes.md.example）。
 - 回滚：未 push → `git tag -d`；已 push → **不删远端 tag**，改发下一个 PATCH 修正（用户明确要求才删）。
 
 ## 离线 / 无远端降级
