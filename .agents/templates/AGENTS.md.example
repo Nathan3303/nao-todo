@@ -24,7 +24,7 @@
 - <命令纪律，如：禁 cat 全文读代码，用 CodeGraph 或 sed 行段>
 - <依赖限制 / 禁止事项>
 - **Git 流程（GitHub Flow）**：一个需求一条分支 `feat/<issue-id>-<slug>`；工作期 `wip()` 小步提交 + 路径级暂存（禁 `git add -A`）；**PM 验收通过后由 RD 在 PR 上 squash 合并**（main = 1 条/需求）；**禁直推 main**。
-- **发布与仓库治理**：PM 负责 Issue / PR 验收评论 / tag / release / `.github/` 模板（优先 `gh`，不可用降级 `git`）；**发版说明写法遵循 `@.agents/common/release-notes.md`**（面向用户简明版置顶、内部信息下沉、正文不用表格）。
+- **发布与仓库治理**：PM 负责 Issue / PR 验收评论 / tag / release / `.github/` 模板（优先 `gh`，不可用降级 `git`）；**发版说明写法遵循 `@.agents/common/release-notes.md`**（面向用户「本次更新」置顶、内部信息下沉、正文不用表格）。
 
 ## 与 nao 机制衔接
 
