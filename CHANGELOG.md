@@ -2,6 +2,20 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.5] - 2026-09-30
+
+发布批次：**A 组小件批 + 同步「半写」可见 + 任务详情跨视图保留 + 工程清理**（`T465`–`T489`：`aside` 死代码清理（用户裁定底部两按钮永久取消）· `DEF-39` 语义修正（移除把账户状态当角色的 `isAdmin`/`isVIP`）· `DEF-64` 账户按钮归并库语义（`destructive` + `primary`，删除 app 层死覆盖）· `DEF-60` 收窄 0 消费导出 · `DEF-44` **客户端消费 `SyncResult.droppedFields`**（additive 护栏 + 白名单 6 类 + 防漂移双向校验 + 同步面板信息级诊断）· `T473`「记录创建」通知改**多订阅者** · **`DEF-72`** tasks 切换视图类型丢失 `taskId` ⇒ 详情面板被关（`T474` 审计发现、真实 vue-router 实测证伪 ADR 原论断）· `T478` 日期炸弹用例修复（注入/冻结时钟）· 两处 SFC 游离字符清理）。**Tag `v1.12.5`** · root `1.12.5` · `apps/web` / `apps/desktop` `1.12.5` · `packages/infrastructure` `0.8.3 → 0.8.4` · `packages/presentation` `0.8.1 → 0.8.2` · `packages/shared` `1.4.3 → 1.4.4` · `packages/presentation-identity` `1.2.1 → 1.2.2` · `packages/domain-identity` `1.2.0 → 1.2.1`（`apps/mobile` / `packages/presentation-react` 零改动，不动）。详见 `docs/releases/v1.12.5.md`。
+
+### 行为变更（请留意）
+
+- **账户按钮配色统一到主题**（`DEF-64`）：设置页「**注销账户**」由 app 自造实心红改为库标准 `destructive`（**描边**）· 「**恢复账户**」改为 `primary`（恢复属正向操作）；同时**删除 `apps/web/src/themes/button.css` 的两段自造覆盖**（其 `danger` 会顶掉主题 AA）。对比度按**真实弹窗底色**实测：描边 7.39/6.16、`primary` 13.95/9.39。
+- **番茄页侧栏底部两按钮下线**（`「新建常用番茄专注」/「查看历史专注记录」`）—— 用户 2026-09-30 裁定**永久取消**；`aside` 相关死代码一并清理。
+- **清单「停用」态与番茄钟「归档」态可同步**（服务端 `#45`：`deactivedAt`/`archivedAt` 按既有 `NullableString` **真三态**承载）⇒ **需服务端同步部署**才生效。
+- **同步「半写」不再静默**（`DEF-44`）：客户端消费 additive `SyncResult.droppedFields` ⇒ 非白名单字段被服务端丢弃时产生**日志 + 同步面板「错误/诊断」区信息级诊断**（**不阻塞出队**、**不新增与「冲突 N」并列的主徽标**）；**已知不支持的 6 类字段白名单**（`projects`/`tags` 的 `icon`/`sortId`、`pomodoros.totalDuration`、`taskComments.attachments/isTopUp/deletedAt`、`taskCheckItems.deletedAt`、`pomodoroRecords.deletedAt`）不提示；**防漂移用例**以「客户端发送集 − 服务端承载集 === 白名单」**精确相等**双向校验。
+- **tasks 切换视图类型保留任务详情**（`DEF-72`）：三处 `switchViewType` 显式透传当前 `taskId`；**共存关键 = `undefined` 省略可选参数段** ⇒ 「切视图保留参数」与「`closeDetails` 仍能清参数」并用例证明。
+- **`DEF-39` 语义修正**：移除 `isAdmin: state===1` / `isVIP: state===2`（`state` 实为**账户状态**，`state===1` = 已注销；服务端无 VIP 概念；且全仓 **0 消费**）。
+- **`T473` 多订阅者**：「记录创建」通知由**单回调**（后注册覆盖前者、卸载可能误清他人）改为 **多订阅者 + 注销句柄**（快照派发）⇒ 内部健壮性，无用户可见变化。
+
 ## [v1.12.4] - 2026-09-30
 
 发布批次：**日历与番茄专注页面优化 + 评论作者显示 + 「今日专注」串数据修复**（`T445`–`T460`：日历子视图切换入侧栏（滑块 Tab）/ 日视图「现在」定位并居中 / 任务条首尾圆角区分 / 接续末端收敛改期入口 · 番茄「今日专注」入侧栏（常展开、两行条目 `compact`、概览固定 + 列表滚动）· 番茄子视图切换不重置任务详情 · 番茄页头部悬浮 · **`DEF-69`** 新增评论作者显示 · **`DEF-71`** 番茄「结束专注」落库 · `getRecords` 读路径误触发「新记录」回调的串数据修复 · 两处 SFC 游离字符清理）。**Tag `v1.12.4`** · root `1.12.4` · `apps/web` / `apps/desktop` `1.12.4` · `packages/presentation` `0.8.0 → 0.8.1` · `packages/shared` `1.4.2 → 1.4.3` · `packages/domain-task` `1.4.0 → 1.4.1` · `packages/infrastructure` `0.8.2 → 0.8.3`（`apps/mobile` / `packages/presentation-react` 零改动，不动）。详见 `docs/releases/v1.12.4.md`。
