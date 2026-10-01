@@ -1,0 +1,5 @@
+# 跨平台行尾：关闭自动转换，既有 CRLF 基线零改动；仅根 AGENTS.md 钉死 LF
+# 注：用 /AGENTS.md（根限定）—— 裸 AGENTS.md 会同时匹配 apps/mobile/AGENTS.md（库内 CRLF）
+#     从而触发该文件归一为 LF 的 churn（fresh clone 可复现）
+* -text
+/AGENTS.md text eol=lf
