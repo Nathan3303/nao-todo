@@ -17,7 +17,7 @@
 - **用户原话四条**：①「移除 excluded 的 switch」②「archived 的 switch 增加 label」③④「下拉列表中 Item 之间的间隙小一档，并且优化下拉列表按钮中的已选文本显示」。
 - **①② 根因（读码确证）**：`NueSwitch`（`nue-ui@1.13.0`）只渲染 `circle` / `text` 两个具名插槽，**默认插槽被静默丢弃**；而 `search-filter-bar.vue`（L244–262）把两处文案写在默认插槽里 ⇒ **界面上两个开关完全没有文字**，只是两个无法理解的拨片。
 - **③ 定位**：项间隙来自主题 `.nue-dropdown--menu > .nue-div--block { gap: var(--nue-gap-xs) }`；本仓 `apps/web/src/themes/dropdown.css` 只覆盖了 `padding: 0`、**未覆盖 gap** ⇒ 收紧一档 = `--nue-gap-xs → --nue-gap-2xs`。
-- **③ 影响面**：`theme="menu"` 下拉共 **8 个组件 / 13 处**（任务·标签 / 清单 / 内建清单筛选、日历月视图排序、搜索筛选栏、搜索侧栏等）⇒ 视觉变化横跨任务与日历页，需在视觉走查中对照。
+- **③ 影响面（arch 评审更正）**：`theme="menu"` 的**下拉**共 **7 个组件 / 11 处**（任务·标签 / 清单 / 内建清单筛选 · 任务侧栏 · 日历月视图排序 · 搜索筛选栏 ×4 · 搜索侧栏 ×2）⇒ 视觉变化横跨任务与日历页，需在视觉走查中对照。⚠️ 原记「8 组件 13 处」把 **2 处 `nue-collapse theme="menu"`**（`calendar/aside` · `search/aside`）误计入 —— 其样式为 `.nue-collapse--menu`、**不含 `nue-dropdown` 类**，不被本选择器命中。
 - **④ 现状**：四处触发器均为「维度名 + 裸数字」（如「优先级 2」，见 L67–88 等）。`filter-count`（圆形计数徽标）与 `filter-trigger--active`（激活底色）是 `b874ec4e` 初版设计，后被 `cca0c161`（用户样式提交）撤掉、样式留存为**死 CSS** ⇒ 本项是**新设计决策**，非恢复回归。
 
 ## 2. 目标指标
@@ -50,8 +50,14 @@
 
 ## 5. 业务规则
 
-- **① 移除面（单一清单，逐项做完）**：`search-filter-bar.vue`（开关 + prop + emit）· `views/index/search/entry.vue`（绑定）· `components/search/use-search.ts`（ref / `queryState` / `applyQuery` / `watch` / sweep 入参）· `search-query.ts`（state 字段 + URL `excluded` 序列化与解析 + 等值比较）· `search-tasks.ts`（option；过滤**恒**排除已删除 / 已放弃）· `saved-search.ts`（序列化字段）· `quick-search.ts`（预置字段）· 三处 locales（`search.includeExcluded` 死键删除）· 相关测试。
-- **① 向后兼容（硬要求）**：旧 URL（`?excluded=1`）与 localStorage 内旧常用搜索 / 历史里携带的该字段**一律忽略、不得报错**（无迁移、无提示、无残留 UI）。
+- **① 移除面（单一清单，逐项做完；arch 评审逐点确认 + 已补 4 项遗漏）**：`search-filter-bar.vue`（开关 + prop + emit + 类）· `views/index/search/entry.vue`（绑定）· `components/search/use-search.ts`（ref / `queryState` / `applyQuery` / `watch` / sweep 入参 / rows 传参 / 导出）· `search-query.ts`（state 字段 + `EXCLUDED_ON` 常量 + URL 序列化与解析 + 等值比较）· `search-tasks.ts`（option；过滤**恒**排除已删除 / 已放弃）· `saved-search.ts`（序列化字段）· `quick-search.ts`（预置字段）· 三处 locales（`search.includeExcluded` 死键删除）· 相关测试。
+    - **补漏 1（必删死码）**：`use-search.ts` 的 `ROOT_STATUS_VARIANTS_INCLUDED` 仅被 `sweepRootsInto` 使用、无外部引用 ⇒ 删除，并把 `variants` 分支简化为单变体（恒 `DEFAULT`）。
+    - **补漏 2（必删死 UI + 死键）**：`entry.vue` 中 `row.task.isDeleted` / `isGivenUp` 两处行内徽标变**不可达死 UI**；`search.state.deleted` / `search.state.givenUp` 两个 locale 键**仅此两处使用** ⇒ 一并清理。⚠️ **`search-row__badge--excluded` 样式必须保留** —— archived 徽标仍在用，**勿按类名删 CSS**。
+    - **补漏 3（常量与注释漂移）**：`EXCLUDED_ON` 显式列入删除项；`search-query.ts` 头注与 `ARCHIVED_ON` 的「镜像 `EXCLUDED_ON`」注释同步更正。
+    - **补漏 4（测试面 = 10 文件，非「相关测试」四字）**：`search-query.test.ts` · `search-tasks.test.ts` · `saved-search.test.ts` · `quick-search.test.ts` · `use-saved-search.test.ts` · `aside.test.ts` · `aside-toggle.test.ts` · `search-include-archived.baseline.test.ts`（**以其为比较锚点的 `search.state.deleted` 断言须连带改**）· `search-include-archived.wiring.test.ts` · infra `local-task-archive-search.baseline.test.ts`（仅注释）。
+    - **已核实无遗漏（arch）**：`GetTasksOptions` / infrastructure / 服务端均无该字段（引擎排除靠 `buildRootQuery` 的 `isDeleted` / `isGivenUp` 变体）⇒ **无服务端契约变更**；无请求 / 结果缓存 key 含它（`sessionCache` 不按 query 分键）；`use-saved-search` 无查询去重口径；URL 无其它读取点。
+    - **中间态已评估并否决**：保留 URL 解析但恒 `false` **不改善兼容**（行为等同），却留下死路径 / 常量 / 测试并造成序列化与等值比较两难 ⇒ 采纳**彻底移除**（代价：无）。
+- **① 向后兼容（硬要求，arch 评审确认成立）**：旧 URL（`?excluded=1`）与 localStorage 内**旧常用搜索**携带的该字段**一律忽略、不得报错**（无迁移、无提示、无残留 UI）。机制已核实：`parseSearchQuery` 移除读取后**根本不读**该参数、`searchQueryEquals` 两侧都不含该字段 ⇒ **不触发 replace**（参数惰性残留在地址栏，属可接受）；`saved-search.ts` 的 `normalizeQuery` **逐字段显式构造、从不 spread raw** ⇒ 旧键静默丢弃、读路径不回写。⛔ **不加「写回清字段」**（会引入加载时一次 replace navigation，收益仅 URL 美观）。⚠️ 措辞更正：`search-history.ts`（关键词历史）**只存字符串**、从不存 query state ⇒ 原「历史里携带该字段」**并不存在**，非兼容项。
 - **② 开关**：文字沿用既有 `search.includeArchived` 键；切换只走既有 `toggleArchived` emit；键盘 Enter / Space 与点击文字等价；⛔ **不改 `nue-switch` 组件本身**（用兄弟元素 + 属性透传实现）。
 - **③ 只改 gap 值**：不动 `padding` / 项高 / 字号 / 圆角 / 阴影 / 动画；⛔ 不新增 token。
 - **④ 名称解析在筛选栏本地完成**（复用既有 `projectOptions` / `tagOptions` / `priorityOptions` / `stateOptions`）⇒ ⛔ 不改引擎、不新增状态；顺序按各维度选项顺序；维度与名称之间用「：」或空格、多项之间用「、」（最终形态由视觉走查定稿）。
@@ -79,7 +85,8 @@
 ## 8. 上线闭环
 
 - **立项**：Issue（TL;DR / AC 编号 / 优先级 / 本文件指针；正文留 `docs/`）。
-- **架构评审**：① 变更了客户端**持久契约字段**（URL 查询参数 + localStorage 常用搜索）⇒ 开工确认后、派发前请 `arch-designer` 复核「移除 + 忽略旧字段」的兼容口径与影响面。
+- **架构评审（已完成）**：① 变更了客户端**持久契约字段**（URL 查询参数 + localStorage 常用搜索）⇒ 已由 `arch-designer` 复核：**① 有条件可行**（条件 = 本文件按评审结论已修订：③ 数字更正 · 补漏 1–4 纳入）· **③ 可行**（无布局假设被破坏；保持全局、不做局部覆盖）· 中间态已否决。
+- **ADR**：结论落 `docs/adr/2026-10-07-search-filter-refine.md`（由 arch 撰写、与立项 docs PR 同批入库）。
 - **分支 / PR**：`feat/<issue-id>-search-filter-refine` → PR（squash 合并，RD 执行）。
 - **门禁（worker 自跑并回执精确数字）**：`vp check` 0 error · 全仓 `vp test`（文件 / 例 / 红数）· 5 守卫 rc0 · `webapp build` + `desktop:build` rc0 · 移动端 diff 0。
 - **发布**：PATCH（`1.12.7`）· tag 指向 main 合并提交 · Release 说明含面向用户「本次更新」段。
@@ -89,4 +96,5 @@
 
 - 范围 / AC 变更须 PM 书面同意，并回写本文件 + `docs/tasks-state.md`。
 - ① 变更了 URL 与 localStorage 的持久契约：兼容口径 = **忽略旧字段**（无迁移）；将来若要恢复「纳入已删除 / 已放弃」能力，须重走本文件并评估兼容。
+- **架构评审留痕（2026-10-07，`arch-designer`）**：①「有条件可行」· ③「可行」· 中间态否决 · ③ 影响面更正为 7 组件 11 处 · 补漏 4 项已纳入本文件。
 - **优先级**：战略筛子通过（信息可理解性 · 与全站下拉一致性 · 不阻塞既有交付）· MoSCoW = **Should** · RICE（Reach ≈ 搜索页全部用户 · Impact 1 · Confidence 1.0 · Effort 1.5 人天 ⇒ 得分 0.67，属小件）。
