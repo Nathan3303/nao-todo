@@ -211,6 +211,8 @@ const zhCN: LocaleMessages = {
     'common.loadFailed': '加载失败',
     'common.reminder': '待办任务提醒',
     'common.snooze': '稍后提醒',
+    'common.collapseAside': '收起侧边栏',
+    'common.expandAside': '展开侧边栏',
 
     // Search（SEA-04）
     'search.emptyHint': '输入关键词，查找全部任务的名称与备注',

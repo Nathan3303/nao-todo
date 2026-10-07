@@ -204,6 +204,8 @@ export interface LocaleMessages {
     'common.loadFailed': string
     'common.reminder': string
     'common.snooze': string
+    'common.collapseAside': string
+    'common.expandAside': string
 
     // Search（SEA-04）
     'search.emptyHint': string

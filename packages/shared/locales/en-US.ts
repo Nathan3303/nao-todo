@@ -214,6 +214,8 @@ const enUS: LocaleMessages = {
     'common.loadFailed': 'Load failed',
     'common.reminder': 'To-Do Task Reminder',
     'common.snooze': 'Snooze Reminder',
+    'common.collapseAside': 'Collapse sidebar',
+    'common.expandAside': 'Expand sidebar',
 
     // Search（SEA-04）
     'search.emptyHint': 'Type a keyword to search task names and notes',
