@@ -2,6 +2,14 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.6] - 2026-10-07
+
+发布批次：**搜索页侧边栏收起 / 展开按钮**（`T504`：搜索页搜索栏左侧新增与全站一致的收起 / 展开入口（复用 `INDEX_VIEW_CONTEXT_KEY.switchDisplayAside` 同一开关，**未新增状态**）· 工具栏行改 flex（按钮定宽 + 输入框占满剩余宽度并垂直居中）· `title` + `aria-label` 随态中英齐备 · 新增组件测试锁定「位置 / 两态 / 负向闭环」；i18n 新增 `common.collapseAside` / `common.expandAside`）。**Tag `v1.12.6`** · root `1.12.6` · `apps/web` / `apps/desktop` `1.12.6` · `packages/shared` `1.4.4 → 1.4.5`（新增 2 个 i18n 键）；`packages/presentation` / `packages/infrastructure` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 本批零改动，不 bump。详见 `docs/releases/v1.12.6.md`。
+
+### 行为变更（请留意）
+
+- **搜索页搜索栏左侧新增「收起 / 展开侧边栏」按钮**（`T504`）：行为与任务 / 番茄 / 日历 / 设置页**完全一致**（同一 `switchDisplayAside` 单一真源 ⇒ 左侧栏 `300px ↔ 70px` 图标轨道、搜索子侧栏随之显隐）；按钮**两态恒可见**、图标与提示随态切换。⇒ **用户可见后果**：搜索框左移出按钮空间，**输入区宽度略微收窄、位置右移**；收起侧栏后结果区明显变宽。**不持久化**（沿用现状：进入搜索页默认展开）。
+
 ## [v1.12.5] - 2026-09-30
 
 发布批次：**A 组小件批 + 同步「半写」可见 + 任务详情跨视图保留 + 工程清理**（`T465`–`T489`：`aside` 死代码清理（用户裁定底部两按钮永久取消）· `DEF-39` 语义修正（移除把账户状态当角色的 `isAdmin`/`isVIP`）· `DEF-64` 账户按钮归并库语义（`destructive` + `primary`，删除 app 层死覆盖）· `DEF-60` 收窄 0 消费导出 · `DEF-44` **客户端消费 `SyncResult.droppedFields`**（additive 护栏 + 白名单 6 类 + 防漂移双向校验 + 同步面板信息级诊断）· `T473`「记录创建」通知改**多订阅者** · **`DEF-72`** tasks 切换视图类型丢失 `taskId` ⇒ 详情面板被关（`T474` 审计发现、真实 vue-router 实测证伪 ADR 原论断）· `T478` 日期炸弹用例修复（注入/冻结时钟）· 两处 SFC 游离字符清理）。**Tag `v1.12.5`** · root `1.12.5` · `apps/web` / `apps/desktop` `1.12.5` · `packages/infrastructure` `0.8.3 → 0.8.4` · `packages/presentation` `0.8.1 → 0.8.2` · `packages/shared` `1.4.3 → 1.4.4` · `packages/presentation-identity` `1.2.1 → 1.2.2` · `packages/domain-identity` `1.2.0 → 1.2.1`（`apps/mobile` / `packages/presentation-react` 零改动，不动）。详见 `docs/releases/v1.12.5.md`。
