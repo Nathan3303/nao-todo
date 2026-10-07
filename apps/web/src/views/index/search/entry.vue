@@ -64,6 +64,8 @@ const {
     init,
     isLoading: viewLoading,
     error: viewError,
+    isDisplayAside,
+    switchDisplayAside,
     savedSearch,
     searchHistory
 } = useSearchView()
@@ -277,6 +279,21 @@ watch(
                 <nue-content fill class="search-page">
                     <nue-div vertical class="search-toolbar" gap="var(--nue-gap-sm)">
                         <div ref="searchBoxRef" class="search-input-row">
+                            <nue-button
+                                :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
+                                theme="icon,ghost"
+                                :title="
+                                    isDisplayAside
+                                        ? t('common.collapseAside')
+                                        : t('common.expandAside')
+                                "
+                                :aria-label="
+                                    isDisplayAside
+                                        ? t('common.collapseAside')
+                                        : t('common.expandAside')
+                                "
+                                @click="switchDisplayAside"
+                            />
                             <nue-input
                                 :model-value="keyword"
                                 icon="search"
@@ -581,6 +598,16 @@ watch(
 
 .search-input-row {
     width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--nue-gap-xs);
+}
+.search-input-row > .nue-button {
+    flex: none;
+}
+.search-input-row > .nue-input {
+    flex: 1;
+    min-width: 0;
 }
 .search-input-row :deep(input) {
     font-size: var(--nue-text-df2);
