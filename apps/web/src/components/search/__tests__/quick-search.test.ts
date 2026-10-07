@@ -16,7 +16,7 @@ describe('quick-search - 预置定义', () => {
             expect(preset.query.keyword).toBe('')
             expect(preset.query.projectIds).toEqual([])
             expect(preset.query.tagIds).toEqual([])
-            expect(preset.query.includeExcluded).toBe(false)
+            expect(preset.query.includeArchived).toBe(false)
         }
     })
 

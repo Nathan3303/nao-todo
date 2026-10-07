@@ -13,9 +13,8 @@ import {
  * T178b 用例先行 · 红基线（清单归档 —— 面7 搜索开关：URL 深链 + i18n，行为级）
  *
  * 真源：`docs/adr/2026-09-24-project-archive.md` §15.2（`T175b` 冻结命名）：
- *   - `SearchQueryState.includeArchived: boolean`（与 `includeExcluded` 并列）；
- *   - URL 参数 **`archived=1`**（镜像既有 `excluded=1` / `EXCLUDED_ON` 范式）
- *     ⇒ `parse` / `serialize` / `equals` 三处同步；
+ *   - `SearchQueryState.includeArchived: boolean`；
+ *   - URL 参数 **`archived=1`** ⇒ `parse` / `serialize` / `equals` 三处同步；
  *   - 结果标识键 **`search.state.archived`**、开关标签 **`search.includeArchived`**（中/英）。
  *
  * ⚠️ 红基线：`includeArchived` 尚未入选 `SearchQueryState`（`archived=1` 被忽略）⇒ 本文件应 **红**。
@@ -40,7 +39,7 @@ const dict = (locale: 'zh-CN' | 'en-US'): Record<string, string> =>
 describe('T178b · 面7 URL 深链 archived=1（parse / serialize / equals）', () => {
     it("parseSearchQuery({ archived: '1' }) ⇒ includeArchived === true", () => {
         expect(parse({ archived: '1' }).includeArchived).toBe(true)
-        // 数组取首值（镜像 excluded=1 范式）
+        // 数组取首值
         expect(parse({ archived: ['1', '0'] }).includeArchived).toBe(true)
     })
 
@@ -90,12 +89,12 @@ describe('T178b · 面7 i18n 文案键（ADR §15.2 冻结名）', () => {
         }
     )
 
-    it('结果标识可与其它状态标识区分（archived ≠ deleted）', () => {
+    it('结果标识可与「已删除」区分（archived ≠ deleted）', () => {
         const archivedZh = dict('zh-CN')['search.state.archived'] ?? ''
         const archivedEn = dict('en-US')['search.state.archived'] ?? ''
         expect(archivedZh).not.toBe('')
         expect(archivedEn).not.toBe('')
-        expect(archivedZh).not.toBe(dict('zh-CN')['search.state.deleted'])
-        expect(archivedEn).not.toBe(dict('en-US')['search.state.deleted'])
+        expect(archivedZh).not.toBe(dict('zh-CN')['common.deleted'])
+        expect(archivedEn).not.toBe(dict('en-US')['common.deleted'])
     })
 })

@@ -137,7 +137,6 @@ describe('T181 · UI 接线（search-filter-bar prop / toggleArchived 事件）'
                 selectedPriorities: [],
                 selectedStates: [],
                 active: false,
-                includeExcluded: false,
                 includeArchived,
                 canSave: false
             }
@@ -146,9 +145,9 @@ describe('T181 · UI 接线（search-filter-bar prop / toggleArchived 事件）'
     it('渲染「包含已归档」开关并上抛 toggleArchived(true)', async () => {
         const wrapper = mountBar(false)
         const switches = wrapper.findAllComponents(NueSwitch)
-        // 归档开关与「包含已删除/已放弃」同族同位置（紧邻其后）
-        expect(switches).toHaveLength(2)
-        const archivedSwitch = switches[1]!
+        // T505 ① 移除 excluded 开关后，筛选栏仅剩归档一个开关
+        expect(switches).toHaveLength(1)
+        const archivedSwitch = switches[0]!
         archivedSwitch.vm.$emit('update:model-value', true)
         await nextTick()
         expect(wrapper.emitted('toggleArchived')?.[0]).toEqual([true])
@@ -157,7 +156,7 @@ describe('T181 · UI 接线（search-filter-bar prop / toggleArchived 事件）'
 
     it('关闭态切换上抛 toggleArchived(false)', async () => {
         const wrapper = mountBar(true)
-        const archivedSwitch = wrapper.findAllComponents(NueSwitch)[1]!
+        const archivedSwitch = wrapper.findAllComponents(NueSwitch)[0]!
         archivedSwitch.vm.$emit('update:model-value', false)
         await nextTick()
         expect(wrapper.emitted('toggleArchived')?.[0]).toEqual([false])

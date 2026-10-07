@@ -23,7 +23,6 @@ const EMPTY_QUERY: SearchQueryState = {
     tagIds: [],
     priorities: [],
     states: [],
-    includeExcluded: false,
     includeArchived: false
 }
 
@@ -176,7 +175,7 @@ describe('saved-search - 容错与降级', () => {
         expect(readSavedSearches(storage)).toEqual([])
     })
 
-    it('损坏条目丢弃；非法枚举值过滤；includeExcluded 布尔化', () => {
+    it('损坏条目丢弃；非法枚举值过滤', () => {
         const storage = makeMemoryStorage()
         storage.data[SAVED_SEARCH_STORAGE_KEY] = JSON.stringify([
             { id: '1', name: 'ok', query: { keyword: 'k' }, createdAt: 't' },
@@ -188,8 +187,7 @@ describe('saved-search - 容错与降级', () => {
                 name: 'filtered',
                 query: {
                     priorities: ['high', 'bogus'],
-                    states: ['done', 'nope'],
-                    includeExcluded: 'yes'
+                    states: ['done', 'nope']
                 },
                 createdAt: 't'
             }
@@ -199,7 +197,23 @@ describe('saved-search - 容错与降级', () => {
         expect(list[0]!.query).toEqual(makeQuery({ keyword: 'k' }))
         expect(list[1]!.query.priorities).toEqual(['high'])
         expect(list[1]!.query.states).toEqual(['done'])
-        expect(list[1]!.query.includeExcluded).toBe(false)
+    })
+
+    it('T505 AC2：旧 localStorage 条目携带 includeExcluded 被忽略且不报错', () => {
+        const storage = makeMemoryStorage()
+        storage.data[SAVED_SEARCH_STORAGE_KEY] = JSON.stringify([
+            {
+                id: '1',
+                name: '旧条目',
+                query: { keyword: 'k', includeExcluded: true },
+                createdAt: 't'
+            }
+        ])
+        expect(() => readSavedSearches(storage)).not.toThrow()
+        const list = readSavedSearches(storage)
+        expect(list).toHaveLength(1)
+        expect(list[0]!.query).toEqual(makeQuery({ keyword: 'k' }))
+        expect(list[0]!.query).not.toHaveProperty('includeExcluded')
     })
 
     it('存储抛错：读写降级为空列表，不抛错', () => {

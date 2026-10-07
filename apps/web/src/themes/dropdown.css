@@ -11,6 +11,7 @@
 
         > .nue-div--block {
             padding: 0;
+            gap: var(--nue-gap-2xs);
         }
     }
 }

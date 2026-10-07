@@ -79,7 +79,6 @@ vi.mock('@/components/search/use-search', async () => {
             filterTagIds: ref([]),
             filterPriorities: ref([]),
             filterStates: ref([]),
-            includeExcluded: ref(false),
             includeArchived: ref(false),
             filtersActive: ref(false),
             toggleProjectFilter: vi.fn(),
@@ -93,7 +92,6 @@ vi.mock('@/components/search/use-search', async () => {
                 tagIds: [],
                 priorities: [],
                 states: [],
-                includeExcluded: false,
                 includeArchived: false
             }),
             applyQuery: hoisted.applyQuery

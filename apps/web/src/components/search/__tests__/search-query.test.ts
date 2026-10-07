@@ -10,7 +10,8 @@ import {
 
 /**
  * SEA-04 / S2：搜索 URL 深链编解码（纯函数）
- * @description 覆盖 D1 收件箱哨兵、空值省略、数组 CSV、去重、非法值忽略与往返一致。
+ * @description 覆盖 D1 收件箱哨兵、空值省略、数组 CSV、去重、非法值忽略与往返一致；
+ *              T505 ① 移除 `excluded=1` 后补 AC2：旧 URL 参数被忽略且不报错。
  */
 
 describe('parseSearchQuery - URL → 状态', () => {
@@ -35,16 +36,16 @@ describe('parseSearchQuery - URL → 状态', () => {
             tagIds: ['t1'],
             priorities: ['high', 'medium'],
             states: ['todo', 'in-progress'],
-            includeExcluded: false,
             includeArchived: false
         })
     })
 
-    it('S7b：excluded=1 解析为纳入已删除/已放弃；其他值忽略（AC9）', () => {
-        expect(parseSearchQuery({ excluded: '1' }).includeExcluded).toBe(true)
-        expect(parseSearchQuery({ excluded: '0' }).includeExcluded).toBe(false)
-        expect(parseSearchQuery({ excluded: ['1', '0'] }).includeExcluded).toBe(true)
-        expect(parseSearchQuery({ excluded: 'bogus' }).includeExcluded).toBe(false)
+    it('T505 AC2：旧 URL ?excluded=1 被忽略且不报错（无残留键）', () => {
+        expect(() => parseSearchQuery({ excluded: '1' })).not.toThrow()
+        const state = parseSearchQuery({ excluded: '1' })
+        expect(state).toEqual(EMPTY_SEARCH_QUERY)
+        expect(state).not.toHaveProperty('includeExcluded')
+        expect(parseSearchQuery({ excluded: ['1', '0'] })).toEqual(EMPTY_SEARCH_QUERY)
     })
 
     it('D1 收件箱哨兵：inbox token ↔ projectId=""（可与普通清单混排）', () => {
@@ -84,14 +85,13 @@ describe('serializeSearchQuery - 状态 → URL', () => {
         expect(serializeSearchQuery({ ...EMPTY_SEARCH_QUERY, keyword: '   ' })).toEqual({})
     })
 
-    it('四维 CSV 与收件箱哨兵回写 + excluded 开关', () => {
+    it('四维 CSV 与收件箱哨兵回写 + archived 开关（不再有 excluded）', () => {
         const state: SearchQueryState = {
             keyword: '买菜',
             projectIds: ['', 'p1'],
             tagIds: ['t1', 't2'],
             priorities: ['high'],
             states: ['todo'],
-            includeExcluded: true,
             includeArchived: false
         }
         expect(serializeSearchQuery(state)).toEqual({
@@ -99,12 +99,12 @@ describe('serializeSearchQuery - 状态 → URL', () => {
             project: 'inbox,p1',
             tag: 't1,t2',
             priority: 'high',
-            state: 'todo',
-            excluded: '1'
+            state: 'todo'
         })
-        expect(serializeSearchQuery({ ...state, includeExcluded: false })).not.toHaveProperty(
-            'excluded'
-        )
+        expect(serializeSearchQuery(state)).not.toHaveProperty('excluded')
+        expect(serializeSearchQuery({ ...state, includeArchived: true })).toMatchObject({
+            archived: '1'
+        })
     })
 })
 
@@ -116,7 +116,6 @@ describe('往返一致与等价判定', () => {
             tagIds: ['t1'],
             priorities: ['medium', 'low'],
             states: ['done'],
-            includeExcluded: true,
             includeArchived: false
         }
         expect(parseSearchQuery(serializeSearchQuery(state))).toEqual(state)
@@ -134,14 +133,13 @@ describe('往返一致与等价判定', () => {
             tagIds: [],
             priorities: [],
             states: [],
-            includeExcluded: false,
             includeArchived: false
         }
         expect(searchQueryEquals(base, { ...base })).toBe(true)
         expect(searchQueryEquals(base, { ...base, keyword: 'b' })).toBe(false)
         expect(searchQueryEquals(base, { ...base, projectIds: ['p2', 'p1'] })).toBe(false)
         expect(searchQueryEquals(base, { ...base, tagIds: ['t1'] })).toBe(false)
-        expect(searchQueryEquals(base, { ...base, includeExcluded: true })).toBe(false)
+        expect(searchQueryEquals(base, { ...base, includeArchived: true })).toBe(false)
     })
 })
 
@@ -152,7 +150,6 @@ describe('needsSearchQueryReExport - 本地真源对账（SEA-04-DEF-02 B 方案
         tagIds: [],
         priorities: ['high'],
         states: [],
-        includeExcluded: true,
         includeArchived: false
     }
 
@@ -165,10 +162,20 @@ describe('needsSearchQueryReExport - 本地真源对账（SEA-04-DEF-02 B 方案
         const raw = {
             q: '买菜',
             project: 'inbox',
-            priority: 'high',
-            excluded: '1'
+            priority: 'high'
         }
         expect(needsSearchQueryReExport(local, raw)).toBe(false)
+    })
+
+    it('T505 AC2：旧 URL 含 excluded 被忽略后仍等价 → 不触发回写', () => {
+        expect(
+            needsSearchQueryReExport(local, {
+                q: '买菜',
+                project: 'inbox',
+                priority: 'high',
+                excluded: '1'
+            })
+        ).toBe(false)
     })
 
     it('非法值被忽略后等价 → 不需再导出（不回写无意义导航）', () => {

@@ -9,8 +9,7 @@ import { makeTaskVO, setup } from './local-repos-test-helpers'
  * T178b 用例先行 · 红基线（清单归档 —— 面7 搜索「包含已归档」开关：仓储行为级）
  *
  * 真源：`docs/adr/2026-09-24-project-archive.md` §15.2（`T175b` 冻结命名）：
- *   - 共享查询选项 **`GetTasksOptions.includeArchived?: boolean`**（与 `includeExcluded` 对称）；
- *     语义 = **不按归档态过滤（包含已归档）**，且**优先级高于 `isArchived`**；
+ *   - 共享查询选项 **`GetTasksOptions.includeArchived?: boolean`**（语义 = **不按归档态过滤（包含已归档）**，且**优先级高于 `isArchived`**）；
  *   - 本地仓储 `list()`：**`includeArchived === 'true'` ⇒ 不加归档过滤**；
  *     否则维持 L1 默认排除 / 显式 `isArchived`。
  *
