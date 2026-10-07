@@ -25,7 +25,6 @@ const presetQuery = (overrides: Partial<SearchQueryState>): SearchQueryState => 
     tagIds: [],
     priorities: [],
     states: [],
-    includeExcluded: false,
     includeArchived: false,
     ...overrides
 })

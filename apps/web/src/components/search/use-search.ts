@@ -64,16 +64,8 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 /** 顶层查询状态变体（单一刻度；布尔值均显式传入，避免后端/本地仓库默认口径差异） */
 type RootStatusVariant = { isDeleted: boolean; isGivenUp: boolean }
 
-/** 默认口径：未删除/未归档/未放弃 */
-const ROOT_STATUS_VARIANTS_DEFAULT: RootStatusVariant[] = [{ isDeleted: false, isGivenUp: false }]
-
-/** S7b 开启后：四象限并集 = 普通 + 已删除 + 已放弃（归档由 P2 `includeArchived` 单独控制） */
-const ROOT_STATUS_VARIANTS_INCLUDED: RootStatusVariant[] = [
-    { isDeleted: false, isGivenUp: false },
-    { isDeleted: true, isGivenUp: false },
-    { isDeleted: false, isGivenUp: true },
-    { isDeleted: true, isGivenUp: true }
-]
+/** 顶层口径（单一变体）：未删除 / 未放弃（已删除、已放弃恒排除；归档由 `includeArchived` 单独控制） */
+const ROOT_STATUS_VARIANT: RootStatusVariant = { isDeleted: false, isGivenUp: false }
 
 /** 顶层列表查询（含已完成；id asc 稳定翻页；删除/放弃按变体条件化；归档按 includeArchived，P2） */
 export const buildRootQuery = (
@@ -133,7 +125,6 @@ const useSearchEngine = () => {
     const filterTagIds = ref<string[]>([...initialState.tagIds]) // 标签
     const filterPriorities = ref<string[]>([...initialState.priorities]) // 优先级 high/medium/low
     const filterStates = ref<string[]>([...initialState.states]) // 状态 todo/in-progress/done
-    const includeExcluded = ref<boolean>(initialState.includeExcluded) // S7b：纳入已删除/已放弃（archived 恒排除）
     const includeArchived = ref<boolean>(initialState.includeArchived) // P2：包含已归档（开 ⇒ 顶层/子任务均不过滤归档）
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -168,7 +159,6 @@ const useSearchEngine = () => {
             })
         )
         return searchTasks(base, debouncedKeyword.value, {
-            includeExcluded: includeExcluded.value,
             includeArchived: includeArchived.value
         })
     })
@@ -274,20 +264,10 @@ const useSearchEngine = () => {
         }
     }
 
-    /** 分页拉取顶层到集合（S7b：开启时四象限并集；P2：includeArchived 时纳入归档） */
-    const sweepRootsInto = async (
-        target: Set<string>,
-        includeExcluded: boolean,
-        includeArchived: boolean
-    ): Promise<void> => {
+    /** 分页拉取顶层到集合（已删除/已放弃恒排除；P2：includeArchived 时纳入归档） */
+    const sweepRootsInto = async (target: Set<string>, includeArchived: boolean): Promise<void> => {
         capped.value = false
-        const variants = includeExcluded
-            ? ROOT_STATUS_VARIANTS_INCLUDED
-            : ROOT_STATUS_VARIANTS_DEFAULT
-        for (const variant of variants) {
-            if (target.size >= MAX_ROWS) break
-            await sweepRootVariantInto(target, variant, includeArchived)
-        }
+        await sweepRootVariantInto(target, ROOT_STATUS_VARIANT, includeArchived)
     }
 
     /** 单父任务子任务补拉（失败抛出，由并发池计数；成功标记已枚举） */
@@ -364,7 +344,6 @@ const useSearchEngine = () => {
         tagIds: filterTagIds.value,
         priorities: filterPriorities.value,
         states: filterStates.value,
-        includeExcluded: includeExcluded.value,
         includeArchived: includeArchived.value
     }))
     // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；等价则短路避免回环）
@@ -375,14 +354,7 @@ const useSearchEngine = () => {
     }
     watch(keyword, writeQueryToUrl)
     watch(
-        [
-            filterProjectIds,
-            filterTagIds,
-            filterPriorities,
-            filterStates,
-            includeExcluded,
-            includeArchived
-        ],
+        [filterProjectIds, filterTagIds, filterPriorities, filterStates, includeArchived],
         writeQueryToUrl,
         { deep: true }
     )
@@ -409,7 +381,6 @@ const useSearchEngine = () => {
         filterTagIds.value = [...state.tagIds]
         filterPriorities.value = [...state.priorities]
         filterStates.value = [...state.states]
-        includeExcluded.value = state.includeExcluded
         includeArchived.value = state.includeArchived
     }
 
@@ -423,7 +394,7 @@ const useSearchEngine = () => {
         try {
             const nextIds = new Set<string>()
             try {
-                await sweepRootsInto(nextIds, includeExcluded.value, includeArchived.value)
+                await sweepRootsInto(nextIds, includeArchived.value)
             } catch (err) {
                 error.value = typeof err === 'string' ? err : String(err)
                 refreshing.value = false
@@ -457,12 +428,6 @@ const useSearchEngine = () => {
             reloadQueued = false
         }
     }
-
-    // @watch S7b 开关变化 → 重新按新口径拉取顶层（普通/删除/放弃四象限并集）
-    watch(includeExcluded, () => {
-        refreshing.value = !!sessionCache.value
-        void reloadRoots()
-    })
 
     // @watch P2 包含已归档开关 → 重新拉取顶层（纳入/移除归档任务）
     watch(includeArchived, () => {
@@ -520,7 +485,6 @@ const useSearchEngine = () => {
         filterTagIds,
         filterPriorities,
         filterStates,
-        includeExcluded,
         includeArchived,
         filtersActive,
         toggleProjectFilter,

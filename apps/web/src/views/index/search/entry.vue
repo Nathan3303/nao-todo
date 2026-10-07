@@ -49,7 +49,6 @@ const {
     filterTagIds,
     filterPriorities,
     filterStates,
-    includeExcluded,
     includeArchived,
     filtersActive,
     toggleProjectFilter,
@@ -309,14 +308,12 @@ watch(
                             :selected-priorities="filterPriorities"
                             :selected-states="filterStates"
                             :active="filtersActive"
-                            :include-excluded="includeExcluded"
                             :include-archived="includeArchived"
                             :can-save="canSaveSearch"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
-                            @toggle-excluded="includeExcluded = $event"
                             @toggle-archived="includeArchived = $event"
                             @clear="onClearFilters"
                             @save="onSaveSearch"
@@ -513,21 +510,6 @@ watch(
                                             class="search-row__badge"
                                         >
                                             {{ t('search.hitInDescription') }}
-                                        </nue-text>
-                                        <!-- S7b：已纳入的已删除/已放弃状态标识 -->
-                                        <nue-text
-                                            v-if="row.task.isDeleted"
-                                            size="var(--nue-text-xs)"
-                                            class="search-row__badge search-row__badge--excluded"
-                                        >
-                                            {{ t('search.state.deleted') }}
-                                        </nue-text>
-                                        <nue-text
-                                            v-if="row.task.isGivenUp"
-                                            size="var(--nue-text-xs)"
-                                            class="search-row__badge search-row__badge--excluded"
-                                        >
-                                            {{ t('search.state.givenUp') }}
                                         </nue-text>
                                         <!-- P2：已纳入的归档状态标识 -->
                                         <nue-text

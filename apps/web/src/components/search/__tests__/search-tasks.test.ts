@@ -96,7 +96,7 @@ describe('searchTasks - 过滤', () => {
         expect(searchTasks([child], '买菜')).toEqual([])
     })
 
-    it('S7b includeExcluded=true：纳入 deleted/given-up，archived 恒排除', () => {
+    it('T505：includeArchived=true 也不纳入 deleted/given-up（恒排除）', () => {
         const base = makeTask({ id: 't1', name: '买菜' })
         const tasks = [
             base,
@@ -105,9 +105,10 @@ describe('searchTasks - 过滤', () => {
             { ...base, id: 't4', isGivenUp: true },
             { ...base, id: 't5', isDeleted: true, isGivenUp: true }
         ]
-        const ids = searchTasks(tasks, '买菜', { includeExcluded: true }).map((r) => r.task.id)
-        expect(ids).toEqual(['t1', 't2', 't4', 't5'])
-        // 默认（未传 options）仍与开启前口径一致
+        expect(searchTasks(tasks, '买菜', { includeArchived: true }).map((r) => r.task.id)).toEqual(
+            ['t1', 't3']
+        )
+        // 默认（未传 options）仍排除 archived / deleted / given-up
         expect(searchTasks(tasks, '买菜').map((r) => r.task.id)).toEqual(['t1'])
     })
 

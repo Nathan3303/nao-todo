@@ -23,10 +23,8 @@ export type SearchRow = {
     descriptionOnlyHit: boolean
 }
 
-/** 搜索选项（S7b / P2：范围开关） */
+/** 搜索选项（P2：范围开关） */
 export type SearchTasksOptions = {
-    /** 是否纳入已删除/已放弃（默认 false；archived 由 includeArchived 控制） */
-    includeExcluded?: boolean
     /** 是否纳入已归档（默认 false，P2 / ADR §15.2） */
     includeArchived?: boolean
 }
@@ -97,7 +95,7 @@ export const isTaskHit = (task: TaskViewObject, kwLower: string): boolean =>
  * @description 排序：名称命中 > 仅备注命中；组内「短命中」优先（命中位置更靠前，
  *              同位置取名称更短）；平局 updatedAt 倒序（再做 id 稳定收敛）。
  *              已归档默认排除，options.includeArchived 开启后纳入（P2）；
- *              已删除/已放弃默认排除，options.includeExcluded 开启后纳入（S7b）。
+ *              已删除/已放弃恒排除（T505 移除 includeExcluded 后无 UI 可达）。
  */
 export const searchTasks = (
     tasks: TaskViewObject[],
@@ -106,14 +104,13 @@ export const searchTasks = (
 ): SearchRow[] => {
     const kwLower = keyword.trim().toLowerCase()
     if (!kwLower) return []
-    const includeExcluded = options.includeExcluded === true
     const includeArchived = options.includeArchived === true
     type RankKey = [number, number, number]
     type RankedRow = { rank: RankKey; row: SearchRow }
     const ranked: RankedRow[] = []
     for (const task of tasks) {
         if (task.isArchived && !includeArchived) continue
-        if (!includeExcluded && (task.isDeleted || task.isGivenUp)) continue
+        if (task.isDeleted || task.isGivenUp) continue
         const nameHitStart = hitStartIndexOf(task.name, kwLower)
         const nameHit = nameHitStart >= 0
         const descriptionHitStart = hitStartIndexOf(task.description, kwLower)

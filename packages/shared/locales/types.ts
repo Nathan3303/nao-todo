@@ -212,12 +212,9 @@ export interface LocaleMessages {
     'search.history.title': string
     'search.history.clear': string
     'search.history.remove': string
-    'search.includeExcluded': string
     'search.includeArchived': string
     'search.hitInDescription': string
-    'search.state.deleted': string
     'search.state.archived': string
-    'search.state.givenUp': string
     'search.placeholder': string
     'search.foundCount': string
     'search.enumerating': string
@@ -237,7 +234,6 @@ export interface LocaleMessages {
     'search.filter.priority': string
     'search.filter.state': string
     'search.filter.noTags': string
-    'search.filter.selectedCount': string
     'search.filter.clear': string
     'search.saved.title': string
     'search.saved.saveButton': string
@@ -410,6 +406,9 @@ export interface LocaleMessages {
     'task.priority.medium': string
     'task.priority.low': string
     'task.priority.none': string
+    'task.priority.short.high': string
+    'task.priority.short.medium': string
+    'task.priority.short.low': string
     'task.column.name': string
     'task.column.description': string
     'task.column.state': string
