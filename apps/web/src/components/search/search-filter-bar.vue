@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { t } from '@nao-todo/shared/locales'
+import type { LocaleKey } from '@nao-todo/shared'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/presentation/task'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
@@ -61,6 +62,13 @@ const tagOptions = computed(() =>
 const priorityOptions = computed(() => TaskPrioritySelectOptions.value)
 const stateOptions = computed(() => TaskStateSelectOptions.value)
 
+/** 优先级短名（仅搜索筛选栏触发器展示；下拉面板项与其它页面仍用长名 label） */
+const PRIORITY_SHORT_NAME_KEYS: Partial<Record<string, LocaleKey>> = {
+    high: 'task.priority.short.high',
+    medium: 'task.priority.short.medium',
+    low: 'task.priority.short.low'
+}
+
 /** 触发器展示项（id/名称/可选色点） */
 type FilterTriggerItem = { id: string; name: string; color?: string }
 
@@ -77,7 +85,10 @@ const tagSelected = computed<FilterTriggerItem[]>(() =>
 const prioritySelected = computed<FilterTriggerItem[]>(() =>
     byOptionOrder(
         props.selectedPriorities,
-        priorityOptions.value.map((option) => ({ id: option.value, name: option.label }))
+        priorityOptions.value.map((option) => {
+            const shortKey = PRIORITY_SHORT_NAME_KEYS[option.value]
+            return { id: option.value, name: shortKey ? t(shortKey) : option.label }
+        })
     )
 )
 const stateSelected = computed<FilterTriggerItem[]>(() =>

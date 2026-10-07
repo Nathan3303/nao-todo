@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { setLocale } from '@nao-todo/shared/locales'
+import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import type { ProjectViewObject } from '@nao-todo/domain-project'
 import type { TagViewObject } from '@nao-todo/domain-tag'
 import { useProjectsStore } from '@nao-todo/presentation/project'
@@ -165,9 +167,24 @@ describe('T505 ④ 触发器显示已选名称', () => {
         expect(triggerText(TRIGGER.state)).toBe('状态 待办、正在进行 +1')
     })
 
-    it('名称取自既有选项标签（优先级标签即「高优先级」等，不另造短名）', () => {
+    it('优先级用短名：1 项 / ≥3 项（触发器专用）', async () => {
         mountBar({ selectedPriorities: ['high'] })
-        expect(triggerText(TRIGGER.priority)).toBe('优先级 高优先级')
+        expect(triggerText(TRIGGER.priority)).toBe('优先级 高')
+        await wrapper!.setProps({ selectedPriorities: ['high', 'medium', 'low'] })
+        expect(triggerText(TRIGGER.priority)).toBe('优先级 低、中 +1')
+    })
+
+    it('锁：优先级下拉面板项仍用长名（短名未污染全局）', async () => {
+        mountBar()
+        await wrapper!.findAll('.filter-trigger')[TRIGGER.priority]!.trigger('click')
+        await nextTick()
+        const titles = wrapper!
+            .findAllComponents(InnerDropdownOption)
+            .map((option) => option.props('title'))
+        expect(titles).toContain('高优先级')
+        expect(titles).toContain('中优先级')
+        expect(titles).toContain('低优先级')
+        expect(titles).not.toContain('高')
     })
 
     it('清单名称本地解析（含收件箱哨兵）', () => {
