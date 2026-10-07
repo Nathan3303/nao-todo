@@ -1,6 +1,6 @@
 # 2026-10-07 搜索页侧边栏收起 / 展开按钮 PRD
 
-> **状态**：**待开工确认**（2026-10-07 立项；需求原话见 §1）。
+> **状态**：**✅ 已交付并随 `v1.12.6` 发布**（2026-10-07 立项 · 2026-10-07 交付闭环；需求原话见 §1，交付证据见 §8 末「交付结果」）。
 > **依据**：用户 2026-10-07 在 PM 会话中的原话 · 现状读码（`apps/web/src/views/index/search/*` 与全站 10 处同类入口）。
 > **硬约束**：**移动端零改动**（`packages/presentation-react` / `apps/mobile`）· 不改搜索业务逻辑与服务端契约 · 不新增 `nue-*` token 或组件 · C 端界面原则（`AGENTS.md` / `DESIGN.md`）。
 
@@ -77,6 +77,14 @@
 - **门禁（worker 自跑并回执精确数字）**：`vp check` 0 error · 全仓 `vp test`（文件 / 例 / 红数）· 五个守卫（`guard:ddd` / `guard:barrel-imports` / `guard:mobile-imports` / `guard:test-location` / `guard:gate-pathspec`）rc0 · `webapp build` + `desktop:build` rc0 · 移动端 diff 0。
 - **发布**：SemVer **MINOR**（root / webapp / desktopapp；`packages/shared` 因新增 i18n 键 ⇒ PATCH）· tag 指向 main 合并提交 · Release 说明含面向用户「本次更新」段。
 - **视觉验收**：由用户按可勾选清单执行（位置 / 图标 / 两态 / 中英文案）。
+
+**交付结果（2026-10-07）**
+
+- 代码 PR **#178 已 squash 合并** ⇒ main `46d67f9b`（本需求恰好 1 条提交、无 `wip()`；5 文件 + 2 文档）
+- 发版 PR **#179 已 squash 合并** ⇒ main `57886c27`（7 文件：4 个 `package.json` + `CHANGELOG.md` + `docs/releases/v1.12.6.md` + 台账）
+- **注解 tag `v1.12.6`**（tag 对象 `c9e8bd07` → peeled `57886c27`）· Release 已发布（非 draft / 非 prerelease；8 项产物；三份 `latest*.yml` 版本号均 `1.12.6`；正文与 `docs/releases/v1.12.6.md` **逐字同源**）
+- 门禁：`vp check` 0 error · 全仓 `vp test` **230 文件 / 1806 例 / 0 红** · 5 个守卫 rc0 · 双端 build rc0 · 移动端 diff 0 · 本单 4/4；PR CI（#178 / #179）`check` + `test` 双 success；tag 构建 workflow success（3m36s）
+- AC 验收：**AC1–AC6 全过**（AC4 的抽屉动画与像素观感由用户视觉走查确认 —— 用户 2026-10-07「视觉检验通过」）
 
 ## 9. 变更治理
 
