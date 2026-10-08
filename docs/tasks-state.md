@@ -571,3 +571,17 @@
     - 同类教训参见上文 2026-09-22 「PM 笔误（CHANGELOG 提交号）」：**PM 的文本编辑也需逐条核验**，不能只靠“看起来对”。
 - 2026-09-23：**PM 事故（staging 围栏）—— `git add <pathspec>` + 裸 `git commit` **不是**精确提交** —— 我方 docs 提交时执行了 `git add docs/prds/… docs/tasks-state.md` 后跟**裸 `git commit`**；而 qa **已 `git add`** 其 D12 测试修正（待 commit），于是**裸 commit 提交了整个 index**，把 qa 的 33 行（25/8）测试改动一并带走（qa 随后的独立 commit 被判空：`lint-staged … prevented an empty git commit`）。**根因**：`git add` 只决定「加入 index」；`git commit`（无 pathspec）提交的是**整个 index**，不是「你刚 add 的那些」。**纪律**：① **提交前必须 `git diff --cached --name-only` 核对 index 实际内容**；② 需严格只提交自己的文件时用 **`git commit --only <paths>`**（而非 `git add` + 裸 `commit`）；③ 其他写者有 staged 未提交改动时，**PM 必须等其提交完成再提交**（同 cwd 单写者）。**处置留痕**：内容无丢失（测试修正正确、已核验尽在本提交内），仅归属错位；已 `git commit --amend -m` 改写 message 说明双重内容（`4ade1a7d` → `dc856192`，树未变），并在 message 内注明 PM 失误。**附带观察**：qa 的 aborted commit 留下 `stash@{0}`（lint-staged 自动备份），qa 已自验 `git diff stash@{0}` 为空后 `git stash drop`（处置正确）；本次 amend 后已复验 **index 干净、stash 无残留**。
 - 2026-09-23：**PM 事故（文档 EOL 与 index 残留，已自捕自修）** —— 我用 `write` 新建 `docs/prds/2026-09-23-web-offline-recon.md` 时输出的是 **LF**，而本仓 `.editorconfig` 规定 `[*] end_of_line = crlf` ⇒ 我随后 `git add` 把 **LF 版本**留在 index，而 `git commit --only` 按工作区内容（已被 pre-commit 钩子的 `vp check --fix` 归一为 CRLF）提交 ⇒ 出现 `MM` + **整文件级 diff（324/324）**，一度被我误读为「变更丢失 / 发布事故」。**实测澄清**：HEAD 与工作区**均为 CRLF**（197/197、126/126，与同目录既有文档一致），`git diff HEAD` 为**空** ⇒ 内容无误、EOL 合规。**纪律**：① **新建文档先归一 EOL 再提交**（写完即确认与 `.editorconfig` 一致，或先跑 `vp check --fix <file>`），避免 index 与工作区 EOL 不一致；② 见到**整文件级 diff** 时**先量 CR 行数**再定性，**禁用 `-w` / `--ignore-all-space` 判「无实质差异」**（该口径会隐藏整文件 EOL 翻转，见 2026-09-21 同条教训）；③ `MM` 多为 **index 残留**，`git reset HEAD -- <paths>` 即可（**不动工作区内容**）。
+
+## 外部批次：T506 nao-fleet 0.12.0 迁移（上游 PM 代管 · 2026-10-08）
+
+> 本批改的是**机制形态**（非业务需求）：由上游 PM（nao-skills）派发、`rd-infra-T506` 执行、`qa-T506` 验证。
+> PRD（权威）：`docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md` · 本仓 Issue：#188 · 上游跟踪：nao-skills #18（已交付）· #22（qq-notify 文档/shim 缺口）
+
+| 任务编号 | 会话          | 概要                                                                                              | 状态   |
+| :------- | :------------ | :------------------------------------------------------------------------------------------------ | :----- |
+| T506-1   | rd-infra-T506 | V1–V3 验证 → 执行迁移 → AGENTS.md / tasks-state 引用修正 → .gitignore 调整 → CHANGELOG → Draft PR | 进行中 |
+| T506-2   | qa-T506       | 用例先行 + 独立验证 AC1–AC6 + PR 评论门禁精确数字                                                 | 进行中 |
+| T506-3   | 上游 PM       | Issue 转实施单 · 验收 · 授权合并 · 归档                                                           | 进行中 |
+
+- 分支：`feat/188-nao-fleet-migration` · Reviewer：**无**（纯形态迁移 + 文档；设计已由上游 ADR 定稿）
+- 非范围：`packages/` · `apps/` · `vite.config.ts` · 历史归档文档 · 另两仓
