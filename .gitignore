@@ -44,5 +44,9 @@ apps/desktop/stats.html
 .reasonix/
 
 # 运行时 / 派生目录（AGENTS.md 明令不得提交）
-.pi/
+.pi/*
+!.pi/settings.json
 .codegraph/
+
+# 机制迁移本地备份（BR4：不入库；回滚靠 git 历史 + 本地备份）
+.agents/.nao-obsolete/

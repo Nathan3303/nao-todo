@@ -1,0 +1,5 @@
+{
+  "packages": [
+    "npm:@nathan33/nao-skill@0.12.0"
+  ]
+}
