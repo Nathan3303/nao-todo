@@ -1,6 +1,6 @@
 # 2026-10-07 搜索筛选栏细化 PRD（① 移除 excluded 开关 · ② archived 补标签 · ③ 下拉项间隙 · ④ 触发器已选显示）
 
-> **状态**：**待开工确认**（2026-10-07 立项；用户原话见 §1，四项口径按 §3.1 裁决执行）。
+> **状态**：**✅ 已交付并随 `v1.12.7` 发布**（2026-10-07 立项 · 2026-10-08 交付闭环 + **用户视觉验收通过**；需求原话见 §1，交付证据见 §8 末「交付结果」）。
 > **依据**：用户 2026-10-07 原话 · 现状读码（`apps/web/src/components/search/*` · `apps/web/src/themes/dropdown.css` · `nue-ui@1.13.0` 的 `NueSwitch` 与 `nue-dropdown--menu` 主题样式）· 2026-10-07 需求澄清四项裁决。
 > **硬约束**：**移动端零改动**（`packages/presentation-react` / `apps/mobile`）· 不改服务端契约与搜索算法语义（除 ① 的客户端契约字段移除）· 不新增 `nue-*` token / 组件 · C 端界面原则（`AGENTS.md` / `DESIGN.md`）。
 
@@ -91,6 +91,15 @@
 - **门禁（worker 自跑并回执精确数字）**：`vp check` 0 error · 全仓 `vp test`（文件 / 例 / 红数）· 5 守卫 rc0 · `webapp build` + `desktop:build` rc0 · 移动端 diff 0。
 - **发布**：PATCH（`1.12.7`）· tag 指向 main 合并提交 · Release 说明含面向用户「本次更新」段。
 - **视觉验收**：由用户按可勾选清单执行（含 ③ 的**跨页面一致性对照**与 ④ 的折叠 / 省略形态）。
+
+**交付结果（2026-10-08）**
+
+- 代码：PR **#183** `4df168f2`（主实现，23 文件）· 视觉走查补丁 PR **#184** `5051f04d`（维度名与已选名称之间加全角冒号「：」）· PR **#185** `bb915327`（文字层级：维度名 / 分隔符用 `--nue-secondary-text-color`、已选名称用 `--nue-primary-text-color` + `font-weight: 500`；静态契约测试锁「无新色值」）
+- 文档：立项 PR **#182** `9591ce75`（PRD + ADR + `DEF-73` + 台账 + 产品待办）
+- 发版：PR **#186** `30b7d0e4`（6 文件：4 个 `package.json` + `CHANGELOG.md` + `docs/releases/v1.12.7.md`）· **注解 tag `v1.12.7`**（tag 对象 `00dc84f4` → peeled `30b7d0e4`）· Release 已发布（非 draft / 非 prerelease；**8 项产物**；三份 `latest*.yml` 版本号均 `1.12.7`；正文与 `docs/releases/v1.12.7.md` **逐字同源**）
+- 门禁：`vp check` 0 error · 全仓 `vp test` **231 文件 / 1824 例 / 0 红** · 5 守卫 rc0 · 双端 build rc0 · 移动端 diff 0 · 本单 `search-filter-bar.test.ts` 16 例；PR CI（#183/#184/#185/#186）`check` + `test` 双 success；tag 构建 workflow success（3m56s）；main CI success（2m37s）
+- AC 验收：**AC1–AC7 全过**（AC4 的间隙视觉跨 7 组件对照、④ 的折叠 / 省略 / 层级观感由**用户 2026-10-08 视觉验收通过**）
+- 过程留痕：`#184` 的 squash 主题因服务端取了分支提交信息而带 `wip()` 前缀（内容正确、恰 1 条提交）⇒ **接受并登记**；**过程修正** = 此后授权合并一律显式带 `--subject`（`#185`/`#186` 已验证生效）
 
 ## 9. 变更治理
 
