@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.7] - 2026-10-07
+
+发布批次：**搜索筛选栏细化（四项）**（`T505`：① 全链移除 `includeExcluded`（UI + 引擎 + URL `excluded` + 常用搜索/快捷预置 + 死码 `ROOT_STATUS_VARIANTS_INCLUDED` + 死徽标 + 4 个死键；兼容口径 = **忽略旧字段**，无迁移、无服务端契约变更）· ② 「包含已归档」开关补**可见文字标签 + a11y**（`role="switch"` / `aria-checked` / `tabindex` / Enter·Space / 点文字切换；规避 `NueSwitch` 忽略默认插槽的上游缺口）· ③ 全局 `theme="menu"` 下拉项间隙 `--nue-gap-xs → --nue-gap-2xs`（影响 7 组件 / 11 处）· ④ 筛选触发器改**显示已选名称**（含文字层级：维度名/**分隔符**次级色、已选名称正文色 + `font-weight: 500`；仅既有令牌 ⇒ 明暗自适应、无新色值）（≤2 全显、≥3 前 2 + `+N`、标签色点、超宽省略；维度名与已选之间用**全角冒号「：」**；新增纯展示件 `filter-trigger-label.vue`）+ 优先级短名（仅触发器）· 架构评审：① 有条件可行 · ③ 可行 · 中间态否决）。**Tag `v1.12.7`** · root `1.12.7` · `apps/web` / `apps/desktop` `1.12.7` · `packages/shared` `1.4.5 → 1.4.6`（新增 `task.priority.short.*` 3 键 + 删 4 死键）；`packages/infrastructure` **仅测试文件变更**（按 `T478` 先例不 bump）· `packages/presentation` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 零改动不 bump。前置：代码 PR `#183`（`4df168f2`）+ 立项文档 PR `#182`（`9591ce75`）+ 视觉走查补丁 PR `#184`（`5051f04d`）+ PR `#185`（`bb915327`，文字层级）。详见 `docs/releases/v1.12.7.md`。
+
+### 行为变更（请留意）
+
+- **搜索不再能搜到「已删除 / 已放弃」任务**（`T505` ①）：筛选栏的「纳入已删除/已放弃」开关**整条移除**（该开关本就无任何文字，见 `DEF-73`）⇒ 已删除 / 已放弃任务**无 UI 可达**（已登记产品待办：将来如需另立单补入口）。
+- **旧链接 / 旧常用搜索的兼容**：URL `?excluded=1` 不再被读取；旧 localStorage 常用搜索里的该字段在 `normalizeQuery` 逐字段构造时**静默丢弃**（不报错、不迁移、读路径不回写）⇒ 用户可见后果 = 「该条件不再生效，其余条件照常」。
+- **筛选栏：少了 excluded 开关，归档开关补上文字与键盘可达**：点文字可切换；Tab 可聚焦（`:focus-visible` 描边）；Space / Enter 可切换；开关暴露 `role="switch"` 与 `aria-checked`（随态翻转）。⛔ 未改 `nue-ui` 组件（文字用兄弟元素承载）。
+- **全站 `theme="menu"` 下拉项间隙收紧一档**（`T505` ③）：影响任务·标签/清单/内建清单筛选 · 任务侧栏 · 日历月视图排序 · 搜索筛选栏 · 搜索侧栏共 **7 组件 / 11 处**；项高 / 内边距 / 字号 / 圆角**不变**（`nue-collapse theme="menu"` 不受影响）。
+- **筛选触发器改显示已选名称**（`T505` ④）：原「维度名 + 裸数字」→「维度名 名称A、名称B」（≤2）/「…、… +N」（≥3）；标签项带色点；优先级维度用**短名**（「优先级 高、中」），**下拉面板项与其它页面仍用「高优先级」等长名**（有锁测试防全局污染）；去掉原「仅计数」`aria-label`（连带删 `search.filter.selectedCount` 死键），可访问名 = 可见文本、保留 `aria-expanded`。
+
 ## [v1.12.6] - 2026-10-07
 
 发布批次：**搜索页侧边栏收起 / 展开按钮**（`T504`：搜索页搜索栏左侧新增与全站一致的收起 / 展开入口（复用 `INDEX_VIEW_CONTEXT_KEY.switchDisplayAside` 同一开关，**未新增状态**）· 工具栏行改 flex（按钮定宽 + 输入框占满剩余宽度并垂直居中）· `title` + `aria-label` 随态中英齐备 · 新增组件测试锁定「位置 / 两态 / 负向闭环」；i18n 新增 `common.collapseAside` / `common.expandAside`）。**Tag `v1.12.6`** · root `1.12.6` · `apps/web` / `apps/desktop` `1.12.6` · `packages/shared` `1.4.4 → 1.4.5`（新增 2 个 i18n 键）；`packages/presentation` / `packages/infrastructure` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 本批零改动，不 bump。详见 `docs/releases/v1.12.6.md`。
