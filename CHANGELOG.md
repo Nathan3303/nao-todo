@@ -2,6 +2,10 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## 机制变更（无版本号） - 2026-10-08
+
+**nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
+
 ## [v1.12.7] - 2026-10-07
 
 发布批次：**搜索筛选栏细化（四项）**（`T505`：① 全链移除 `includeExcluded`（UI + 引擎 + URL `excluded` + 常用搜索/快捷预置 + 死码 `ROOT_STATUS_VARIANTS_INCLUDED` + 死徽标 + 4 个死键；兼容口径 = **忽略旧字段**，无迁移、无服务端契约变更）· ② 「包含已归档」开关补**可见文字标签 + a11y**（`role="switch"` / `aria-checked` / `tabindex` / Enter·Space / 点文字切换；规避 `NueSwitch` 忽略默认插槽的上游缺口）· ③ 全局 `theme="menu"` 下拉项间隙 `--nue-gap-xs → --nue-gap-2xs`（影响 7 组件 / 11 处）· ④ 筛选触发器改**显示已选名称**（含文字层级：维度名/**分隔符**次级色、已选名称正文色 + `font-weight: 500`；仅既有令牌 ⇒ 明暗自适应、无新色值）（≤2 全显、≥3 前 2 + `+N`、标签色点、超宽省略；维度名与已选之间用**全角冒号「：」**；新增纯展示件 `filter-trigger-label.vue`）+ 优先级短名（仅触发器）· 架构评审：① 有条件可行 · ③ 可行 · 中间态否决）。**Tag `v1.12.7`** · root `1.12.7` · `apps/web` / `apps/desktop` `1.12.7` · `packages/shared` `1.4.5 → 1.4.6`（新增 `task.priority.short.*` 3 键 + 删 4 死键）；`packages/infrastructure` **仅测试文件变更**（按 `T478` 先例不 bump）· `packages/presentation` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 零改动不 bump。前置：代码 PR `#183`（`4df168f2`）+ 立项文档 PR `#182`（`9591ce75`）+ 视觉走查补丁 PR `#184`（`5051f04d`）+ PR `#185`（`bb915327`，文字层级）。详见 `docs/releases/v1.12.7.md`。

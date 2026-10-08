@@ -22,7 +22,7 @@
 
 ## 需求分支 / PR / 发布（PM 维护）
 
-> 细则见 `@.agents/skills/github-flow.md`；本区只记**运行时**状态。
+> 细则见 `$NAO_SKILLS/.agents/skills/github-flow.md`（`$NAO_SKILLS` = **机制包根**，nao-skill 0.12.0 起；非项目根）；本区只记**运行时**状态。
 
 - **流程状态：✅ 已启用 GitHub flow（2026-09-24 用户拍板）** —— 约束已落 `AGENTS.md` 项目红线；PR 模板已建 `.github/pull_request_template.md`（同时消掉 v0.7.0 体检的唯一 warn）
 - **⚠️ 会话名/任务号不一致（有意，勿误回收）**：`T157`（`DEF-33/34` 修复）由**会话 `rd-fe-T155`**执行（复用诊断会话，避免同 cwd 双写者）⇒ `nao-fleet.sh status` 会报「`rd-fe-T155` ? `T155` 仅散文提及 → 核对后 `close`」，**此为预期**；按本项目收窗纪律（终态回执 + `capture-pane` 无 `Working` + 产物落盘）核对后再回收，**不得**仅凭该提示回收
@@ -504,9 +504,9 @@
 
 ## 四、治理待办（待用户决定）
 
-- **`.agents/**` —— ✅ 已纳入版本管理（2026-09-22 用户决定）**：提交 **`2c8cba0d`**（**29 文件**：角色卡 5 / 公共规范 2 / 技能 8 / 清单 5 / 模板 4 / 脚本 2 / `.nao-version` / `roles.yaml`）。**提交后核验**：钩子未改动资产（工作区 = HEAD）、HEAD 内资产 **LF 保持**（CRLF = 0）、`roles.yaml` 缩进 **2/4 保持**、`nao-fleet.sh check` **exit 0**、`vp check` exit 0；敏感信息扫描**干净**（无凭据/私钥）。**⚠️ 仍需人工保持的不变量**：`.agents/**` 在 `fmt.ignorePatterns` 内（oxfmt 不接管）⇒ **LF + `roles.yaml` 2/4 缩进靠人守**。**⚠️ 守卫缺口 → ✅ 已补齐（2026-09-23）**：原 `check` **不校验 EOL**（nao-skill-dev 指出；**并诚实澄清**：缩进违例此前已会因 `load_manifest` 的严格 awk 子集 **隐式硬失败**，故真正的缺口**只有 EOL 一项**，缩进只是「无独立分组输出」）。用户 2026-09-23 决定**只请上游补校验**（未采纳本仓 `.editorconfig` 定向段），上游已交付 **v0.6.1 `dcd3914`**（`check_eol` + `check_roles_indent`，并入新分组 `== 文本契约 ==`，失败 rc=1，且**报告先于解析 die**），本仓已同步 **`7284e116`** ⇒ 现 `check exit 0` **真覆盖** EOL + 缩进（PM 已独立验证 4 条正/负路径）。**剩余唯一暴露面**：编辑器/IDE 按 `.editorconfig` 保存时把 `.agents/**` 转 CRLF（oxfmt 路径已由 `fmt.ignorePatterns` 关闭）——即**能被守卫发现，但未被预防**。
-- **`.codegraph/**`、`.pi/**`**：已由 `.gitignore` 排除（`.gitignore:47-48`），**不提交**（索引/运行时产物）。
-- **`.agents` 格式化冲突根治项**：① **已完成** —— `.agents/**` 已加入 `vite.config.ts` 的 `fmt.ignorePatterns`（oxfmt 不再接管，CRLF/缩进漂移根因已消除）；② **✅ 已完成（2026-09-23）** —— **只请上游补校验**（用户决定，**不**在本仓加 `.editorconfig` 定向段 ⇒ 只「防漏检」不加「防产生」）：上游 nao-skills `dcd3914`（**v0.6.1**）为 `check` 新增 `check_eol`（`.agents/**` 含 CR 即 fail 并列文件；排除 `.nao-obsolete/`）+ `check_roles_indent`（角色 id 2 空格 / 字段 4 空格 / 禁 Tab，带行号），并入分组 `== 文本契约 ==`；本仓已同步 `7284e116`。**PM 独立验证（不采信自述）**：正向 exit 0（`✓ 29 个文本文件全 LF`）；注入 CRLF → exit 1 且**列出文件名**；注入 Tab/1 空格角色/5 空格字段 → exit 1 且**逐行号**报错，且 `文本契约`（第 6 行）**先于** `角色清单`（第 13 行）输出；`.nao-obsolete/legacy.md` 放 CRLF → exit 0（排除生效，分母仍 29）。原「让 awk 解析器容忍 CRLF/4 空格」的防御性设想**未采纳**（改为显式校验）。
+- **`.agents/**` 版本管理 —— ✅ 已纳入版本管理（2026-09-22 用户决定；**2026-10-08 随 `T506` 迁移改口径**）**：原提交 **`2c8cba0d`**（29 文件机制副本）与「**LF + `roles.yaml` 2/4 缩进靠人守**」不变量**已随机制迁入包内而作废** —— 机制单一事实来源 = `@nathan33/nao-skill@0.12.0` 包内 `.agents/`，项目内 `.agents/` 只剩 shim + 项目自有 skill + 标记/备份；EOL/缩进由 `fleet check`「文本契约」分组对**包内**把关（历史留痕见 §六 勘误与 v0.6.1 同步记录）。
+- **`.codegraph/**`、`.pi/**`**：`.codegraph/**` 仍被 `.gitignore` 排除（索引产物，不提交）；**`.pi/**` 自 2026-10-08（`T506`）改口径** —— **`.pi/settings.json`（机制 pin，唯一版本权威）入库**，其余 `.pi/*`（含 `.pi/APPEND_SYSTEM.md` 与 `.pi/npm/`）忽略（`.gitignore` = `.pi/*` + `!.pi/settings.json`）。
+- **`.agents` 格式化冲突根治项 —— ✅ 2026-10-08 随 `T506` 迁移收口（前提消失）**：原问题（项目内 `.agents/**` 机制副本的 CRLF/缩进漂移）已因**机制迁入包内**而消失；项目侧仅剩 shim 与自有 skill，`.agents/**` 仍在 `vite.config.ts` 的 `fmt.ignorePatterns` 内（不归 oxfmt 接管）；包内文本契约由 `fleet check`「文本契约」分组（`check_eol` + `check_roles_indent`）把关。
 - **上游工具缺陷（建议回流 nao-skills / 报 vite-plus issue）**：**`vp config` 不尊重 `.editorconfig`** —— 版本 `vp v0.2.6`（`vite-plus@0.2.6`，devDependency 走 `catalog:`）。**最小复现（4 步）**：① `.editorconfig` 含 `[*] end_of_line = crlf` 且某文件含 `<!--VITE PLUS START/END-->` 区块；② `vp check --fix <file>` ⇒ 全 CRLF（干净）；③ `vp config`（= `prepare`）⇒ **托管区块被重写为 LF**（CRLF 116 → 101、新增 15 个 LF 行）⇒ 工作区**立刻变脏**；④ 再 `vp check --fix` ⇒ 又回全 CRLF ⇒ **无限 ping-pong**。**期望**：注入器应尊重目标文件既有 EOL / `.editorconfig`。**影响面**：任何「CRLF 项目 + Vite+ 托管区块」每次 `pnpm install` 后必现无意义 diff。**本仓已规避**（`.editorconfig` 对 `AGENTS.md` 指定 LF）。
 - **命中抽检固化 ✅（T92，`149305fe`）**：已落 `scripts/electron-smoke/checks/day-view-hit.mjs`（feature `day-view`）。**待办：端到端实跑**（需注入 `NAO_QA_EMAIL`/`NAO_QA_PASSWORD`）：`node scripts/electron-smoke/run.mjs --launch --feature day-view`；重点 `bars`/`blank`/`allday`/`ticks` 与 `zoom`（×1/×4）。T92 已用**真实渲染 + 仓库真实 CSS 的合成 DOM** 验证各判据，并做**回归有效性实测**（把 track 改回 `pointer-events: auto` ⇒ `stack`/`blank`/`overlay.track` 三条转红）。
 - **`AGENTS.md` 危险警告已过期——已修正（2026-09-23）**：原段写道「跑过一次 `vp check --fix` 或提交钩子后 `.agents/**` 会被转 CRLF、`roles.yaml` 会被重排」，**实拍已不成立**：`.agents/**` 在 `vite.config.ts` 的 `fmt.ignorePatterns` 内 ⇒ **实测全仓 `vp check --fix` 前后 `.agents` 脏项恒为 0**、`roles.yaml` CR=0 且缩进 2/4 保持、`fleet check` exit 0；叠加 nao-skill **v0.6.1** 的 EOL/缩进守卫后，**唯一剩余暴露面 = 编辑器/IDE 保存**（且能被 `check` 发现）。**影响**：rd-fe 曾据旧文限缩 `--fix` 范围（无害但前提错），并在回执里把它记为 C2 偏差。**已改写该段**（并注明「勿再据旧文报警 / 无需限缩 `--fix` 范围」）。
@@ -571,3 +571,18 @@
     - 同类教训参见上文 2026-09-22 「PM 笔误（CHANGELOG 提交号）」：**PM 的文本编辑也需逐条核验**，不能只靠“看起来对”。
 - 2026-09-23：**PM 事故（staging 围栏）—— `git add <pathspec>` + 裸 `git commit` **不是**精确提交** —— 我方 docs 提交时执行了 `git add docs/prds/… docs/tasks-state.md` 后跟**裸 `git commit`**；而 qa **已 `git add`** 其 D12 测试修正（待 commit），于是**裸 commit 提交了整个 index**，把 qa 的 33 行（25/8）测试改动一并带走（qa 随后的独立 commit 被判空：`lint-staged … prevented an empty git commit`）。**根因**：`git add` 只决定「加入 index」；`git commit`（无 pathspec）提交的是**整个 index**，不是「你刚 add 的那些」。**纪律**：① **提交前必须 `git diff --cached --name-only` 核对 index 实际内容**；② 需严格只提交自己的文件时用 **`git commit --only <paths>`**（而非 `git add` + 裸 `commit`）；③ 其他写者有 staged 未提交改动时，**PM 必须等其提交完成再提交**（同 cwd 单写者）。**处置留痕**：内容无丢失（测试修正正确、已核验尽在本提交内），仅归属错位；已 `git commit --amend -m` 改写 message 说明双重内容（`4ade1a7d` → `dc856192`，树未变），并在 message 内注明 PM 失误。**附带观察**：qa 的 aborted commit 留下 `stash@{0}`（lint-staged 自动备份），qa 已自验 `git diff stash@{0}` 为空后 `git stash drop`（处置正确）；本次 amend 后已复验 **index 干净、stash 无残留**。
 - 2026-09-23：**PM 事故（文档 EOL 与 index 残留，已自捕自修）** —— 我用 `write` 新建 `docs/prds/2026-09-23-web-offline-recon.md` 时输出的是 **LF**，而本仓 `.editorconfig` 规定 `[*] end_of_line = crlf` ⇒ 我随后 `git add` 把 **LF 版本**留在 index，而 `git commit --only` 按工作区内容（已被 pre-commit 钩子的 `vp check --fix` 归一为 CRLF）提交 ⇒ 出现 `MM` + **整文件级 diff（324/324）**，一度被我误读为「变更丢失 / 发布事故」。**实测澄清**：HEAD 与工作区**均为 CRLF**（197/197、126/126，与同目录既有文档一致），`git diff HEAD` 为**空** ⇒ 内容无误、EOL 合规。**纪律**：① **新建文档先归一 EOL 再提交**（写完即确认与 `.editorconfig` 一致，或先跑 `vp check --fix <file>`），避免 index 与工作区 EOL 不一致；② 见到**整文件级 diff** 时**先量 CR 行数**再定性，**禁用 `-w` / `--ignore-all-space` 判「无实质差异」**（该口径会隐藏整文件 EOL 翻转，见 2026-09-21 同条教训）；③ `MM` 多为 **index 残留**，`git reset HEAD -- <paths>` 即可（**不动工作区内容**）。
+
+## 外部批次：T506 nao-fleet 0.12.0 迁移（上游 PM 代管 · 2026-10-08）
+
+> 本批改的是**机制形态**（非业务需求）：由上游 PM（nao-skills）派发、`rd-infra-T506` 执行、`qa-T506` 验证。
+> PRD（权威）：`docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md` · 本仓 Issue：#188 · 上游跟踪：nao-skills #18（已交付）· #22（qq-notify 文档/shim 缺口）
+
+| 任务编号 | 会话          | 概要                                                                                              | 状态                                         |
+| :------- | :------------ | :------------------------------------------------------------------------------------------------ | :------------------------------------------- |
+| T506-1   | rd-infra-T506 | V1–V3 验证 → 执行迁移 → AGENTS.md / tasks-state 引用修正 → .gitignore 调整 → CHANGELOG → Draft PR | **已完成**（待合并）                         |
+| T506-2   | qa-T506       | 用例先行 + 独立验证 AC1–AC6 + PR 评论门禁精确数字                                                 | **已完成**（72 PASS / 0 FAIL；全仓门禁全绿） |
+| T506-3   | 上游 PM       | Issue 转实施单 · 验收 · 授权合并 · 归档                                                           | **验收通过**（已授权 squash 合并）           |
+
+- 分支：`feat/188-nao-fleet-migration` · Reviewer：**无**（纯形态迁移 + 文档；设计已由上游 ADR 定稿）
+- 非范围：`packages/` · `apps/` · `vite.config.ts` · 历史归档文档 · 另两仓
+- **形态说明（2026-10-08 迁移后）**：`.agents/` 顶层仅 —— `scripts/`（仅 shim `nao-fleet.sh`）· `skills/`（仅项目自有 `nue-ui`）· `.nao-obsolete/`（本地备份，不入库）· `.nao-version` · `.nao-migrated`；机制本体在 `.pi/npm/node_modules/@nathan33/nao-skill/.agents/`（`$NAO_SKILLS`），pin 见 `.pi/settings.json`。本文件以上各条目中出现的 `.agents/**` 路径均为**迁移前形态的历史事实**（BR3：不改）。
