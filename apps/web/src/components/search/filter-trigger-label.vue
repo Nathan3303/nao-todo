@@ -24,7 +24,7 @@ const FOLD_LIMIT = 2
     <span class="filter-trigger-label">
         <span class="filter-trigger-label__dim">{{ label }}</span>
         <template v-for="(item, index) in items.slice(0, FOLD_LIMIT)" :key="item.id">
-            <span class="filter-trigger-label__sep">{{ index === 0 ? ' ' : '、' }}</span>
+            <span class="filter-trigger-label__sep">{{ index === 0 ? '：' : '、' }}</span>
             <span
                 v-if="item.color"
                 class="filter-trigger-label__dot"

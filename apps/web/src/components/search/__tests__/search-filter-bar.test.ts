@@ -146,32 +146,37 @@ describe('T505 ③ 下拉项间隙（全局契约，静态读 CSS）', () => {
 })
 
 describe('T505 ④ 触发器显示已选名称', () => {
-    it('未选时只显示维度名', () => {
+    it('未选时只显示维度名（锁：无尾随分隔符）', () => {
         mountBar()
-        expect(triggerText(TRIGGER.priority)).toBe('优先级')
         expect(triggerText(TRIGGER.project)).toBe('清单')
+        expect(triggerText(TRIGGER.tag)).toBe('标签')
+        expect(triggerText(TRIGGER.priority)).toBe('优先级')
+        expect(triggerText(TRIGGER.state)).toBe('状态')
+        for (const trigger of wrapper!.findAll('.filter-trigger')) {
+            expect(trigger.text()).not.toContain('：')
+        }
     })
 
-    it('1 项：维度名 + 名称', () => {
+    it('1 项：维度名 + 「：」+ 名称', () => {
         mountBar({ selectedStates: ['todo'] })
-        expect(triggerText(TRIGGER.state)).toBe('状态 待办')
+        expect(triggerText(TRIGGER.state)).toBe('状态：待办')
     })
 
     it('2 项：全显，且按各维度选项顺序（todo → in-progress → done）', () => {
         mountBar({ selectedStates: ['in-progress', 'todo'] })
-        expect(triggerText(TRIGGER.state)).toBe('状态 待办、正在进行')
+        expect(triggerText(TRIGGER.state)).toBe('状态：待办、正在进行')
     })
 
     it('≥3 项：前 2 项 + 「+N」', () => {
         mountBar({ selectedStates: ['done', 'todo', 'in-progress'] })
-        expect(triggerText(TRIGGER.state)).toBe('状态 待办、正在进行 +1')
+        expect(triggerText(TRIGGER.state)).toBe('状态：待办、正在进行 +1')
     })
 
     it('优先级用短名：1 项 / ≥3 项（触发器专用）', async () => {
         mountBar({ selectedPriorities: ['high'] })
-        expect(triggerText(TRIGGER.priority)).toBe('优先级 高')
+        expect(triggerText(TRIGGER.priority)).toBe('优先级：高')
         await wrapper!.setProps({ selectedPriorities: ['high', 'medium', 'low'] })
-        expect(triggerText(TRIGGER.priority)).toBe('优先级 低、中 +1')
+        expect(triggerText(TRIGGER.priority)).toBe('优先级：低、中 +1')
     })
 
     it('锁：优先级下拉面板项仍用长名（短名未污染全局）', async () => {
@@ -189,12 +194,12 @@ describe('T505 ④ 触发器显示已选名称', () => {
 
     it('清单名称本地解析（含收件箱哨兵）', () => {
         mountBar({ selectedProjectIds: ['', 'p2'] })
-        expect(triggerText(TRIGGER.project)).toBe('清单 收集箱、生活')
+        expect(triggerText(TRIGGER.project)).toBe('清单：收集箱、生活')
     })
 
     it('标签项带色点（用户数据色，非色值令牌）', () => {
         mountBar({ selectedTagIds: ['t1'] })
-        expect(triggerText(TRIGGER.tag)).toBe('标签 紧急')
+        expect(triggerText(TRIGGER.tag)).toBe('标签：紧急')
         const tagTrigger = wrapper!.findAll('.filter-trigger')[TRIGGER.tag]!
         const dot = tagTrigger.find('.filter-trigger-label__dot')
         expect(dot.exists()).toBe(true)
@@ -203,7 +208,7 @@ describe('T505 ④ 触发器显示已选名称', () => {
 
     it('AC6：超宽折叠 + 触发器最大宽度 / 内部文本可收缩省略（源码契约）', () => {
         mountBar({ selectedProjectIds: ['', 'p1', 'p2'] })
-        expect(triggerText(TRIGGER.project)).toBe('清单 收集箱、工作 +1')
+        expect(triggerText(TRIGGER.project)).toBe('清单：收集箱、工作 +1')
         expect(barSource).toMatch(/\.filter-trigger\s*\{[^}]*max-width/m)
         expect(barSource).toMatch(
             /\.filter-trigger :deep\(\.nue-button__text\)\s*\{[^}]*min-width:\s*0/m
