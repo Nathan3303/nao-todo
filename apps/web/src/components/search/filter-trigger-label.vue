@@ -44,8 +44,19 @@ const FOLD_LIMIT = 2
     white-space: nowrap;
 }
 
+/* 层级（仅令牌，明暗自适应）：维度名次级、已选名称正文色 + 中等字重 */
+.filter-trigger-label__dim {
+    color: var(--nue-secondary-text-color);
+}
+
+.filter-trigger-label__name {
+    color: var(--nue-primary-text-color);
+    font-weight: 500;
+}
+
 .filter-trigger-label__sep {
     white-space: pre;
+    color: var(--nue-secondary-text-color);
 }
 
 .filter-trigger-label__dot {

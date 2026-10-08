@@ -35,6 +35,12 @@ const barModules = import.meta.glob('/apps/web/src/components/search/search-filt
 }) as Record<string, string>
 const dropdownCss = themeModules['/apps/web/src/themes/dropdown.css'] ?? ''
 const barSource = barModules['/apps/web/src/components/search/search-filter-bar.vue'] ?? ''
+const triggerLabelModules = import.meta.glob(
+    '/apps/web/src/components/search/filter-trigger-label.vue',
+    { query: '?raw', import: 'default', eager: true }
+) as Record<string, string>
+const triggerLabelSource =
+    triggerLabelModules['/apps/web/src/components/search/filter-trigger-label.vue'] ?? ''
 
 const makeProject = (id: string, name: string, sortId: number): ProjectViewObject =>
     ({ id, name, sortId, isArchived: false, isDeleted: false }) as unknown as ProjectViewObject
@@ -213,6 +219,26 @@ describe('T505 ④ 触发器显示已选名称', () => {
         expect(barSource).toMatch(
             /\.filter-trigger :deep\(\.nue-button__text\)\s*\{[^}]*min-width:\s*0/m
         )
+    })
+})
+
+describe('T505c 触发器文字层级（静态契约；jsdom 不渲染 scoped 颜色）', () => {
+    it('维度名/分隔符=次要色，已选名称=正文色 + 中等字重；不引入新色值', () => {
+        expect(triggerLabelSource).toMatch(
+            /\.filter-trigger-label__dim\s*\{[^}]*color:\s*var\(--nue-secondary-text-color\)/
+        )
+        expect(triggerLabelSource).toMatch(
+            /\.filter-trigger-label__sep\s*\{[^}]*color:\s*var\(--nue-secondary-text-color\)/
+        )
+        expect(triggerLabelSource).toMatch(
+            /\.filter-trigger-label__name\s*\{[^}]*color:\s*var\(--nue-primary-text-color\)/
+        )
+        expect(triggerLabelSource).toMatch(
+            /\bcolor:\s*var\(--nue-primary-text-color\)[\s\S]*?font-weight:\s*500/
+        )
+        // ⛔ 不引入新色值（仅令牌）
+        expect(triggerLabelSource).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
+        expect(triggerLabelSource).not.toMatch(/\brgba?\(/)
     })
 })
 
