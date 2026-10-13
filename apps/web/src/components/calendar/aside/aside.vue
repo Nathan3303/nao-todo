@@ -62,20 +62,17 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
+            <calendar-view-switch
+                variant="segmented"
+                :current="viewMode"
+                :on-switch="switchCalendarView"
+            />
             <!-- T445 ① 子视图切换（月/周/日）落侧边栏顶部；其下分割线与既有区块一致 -->
             <nue-div class="view-switch-row">
-                <calendar-view-switch
-                    variant="segmented"
-                    :current="viewMode"
-                    :on-switch="switchCalendarView"
-                />
-                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
-                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
-                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
                 <nue-div class="weekstart-row" gap="8px">
-                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">{{
-                        t('calendar.weekStart')
-                    }}</nue-text>
+                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">
+                        {{ t('calendar.weekStart') }}
+                    </nue-text>
                     <calendar-segmented-switch
                         :fill="false"
                         :items="weekStartItems"
@@ -84,6 +81,9 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                         @update:model-value="onWeekStartChange"
                     />
                 </nue-div>
+                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
+                <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
+                <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
             </nue-div>
             <nue-divider />
             <nue-div theme="smart-list-wrapper">
@@ -145,11 +145,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
         gap: 0;
         flex: none;
 
-        /* 日/月/周 分段件（视图切换）铺满侧栏后的底距留存 */
-        > :deep(.segmented-toggle) {
-            margin-bottom: var(--nue-padding-sm);
-        }
-
         /* 与 smart-list 内 checkbox 一致：默认字号/色值 + 去除默认横向内距保持左对齐 */
         > .nue-checkbox {
             padding: 0;
@@ -157,17 +152,12 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 
         > .weekstart-row {
             width: 100%;
-            padding: 0.25rem 0 0.5rem;
             align-items: center;
             justify-content: space-between;
+            height: var(--nue-box-size-df);
 
             .weekstart-label {
-                color: color-mix(
-                    in srgb,
-                    var(--nue-primary-text-color) 62%,
-                    var(--nue-primary-color-0)
-                );
-                flex: none;
+                color: var(--nue-primary-color-700);
             }
         }
     }
