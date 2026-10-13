@@ -9,7 +9,9 @@ import {
 import { ref, inject, watch, computed, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import useCalendarSmartList from './use-calendar-smart-list'
+import { t } from '@nao-todo/shared/locales'
 import CalendarViewSwitch from '../view-switch.vue'
+import CalendarSegmentedSwitch from '../segmented-switch.vue'
 import {
     resolveViewSwitch,
     viewModeOfRouteName,
@@ -40,6 +42,15 @@ const switchCalendarView = (name: CalendarViewName): void => {
 // 恢复侧边栏显示：与任务页 aside 一致，展开应用左侧子栏以承载筛选内容
 onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
+// @computed 周起始分段件段定义（T512）：2 段，选中态由 `weekStart` 驱动，点击调 `setWeekStart`
+const weekStartItems = computed(() => [
+    { label: t('calendar.sunday'), value: 'sunday' },
+    { label: t('calendar.monday'), value: 'monday' }
+])
+const onWeekStartChange = (value: string): void => {
+    if (value === 'sunday' || value === 'monday') setWeekStart(value)
+}
+
 /**
  * 处理侧边栏延时传送
  * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
@@ -62,25 +73,16 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                 <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
                 <nue-checkbox v-model="pomodoroBadge">专注徽标</nue-checkbox>
                 <nue-div class="weekstart-row" gap="8px">
-                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
-                    <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'sunday' }"
-                            @click="setWeekStart('sunday')"
-                        >
-                            周日
-                        </nue-button>
-                        <nue-button
-                            theme="small,ghost"
-                            class="weekstart-btn"
-                            :class="{ 'is-active': weekStart === 'monday' }"
-                            @click="setWeekStart('monday')"
-                        >
-                            周一
-                        </nue-button>
-                    </nue-div>
+                    <nue-text size="var(--nue-text-sm)" class="weekstart-label">{{
+                        t('calendar.weekStart')
+                    }}</nue-text>
+                    <calendar-segmented-switch
+                        :fill="false"
+                        :items="weekStartItems"
+                        :model-value="weekStart"
+                        :aria-label="t('calendar.weekStart')"
+                        @update:model-value="onWeekStartChange"
+                    />
                 </nue-div>
             </nue-div>
             <nue-divider />
@@ -134,7 +136,8 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 .nue-div--aside-wrapper {
     flex: auto;
 
-    /* 顶部视图切换（T445 ①）：等宽三格铺满侧栏，沿用全局 `.cal-view-toggle`/`.cal-view-btn` 风格 */
+    /* 顶部视图切换（T445 ①）+ 周起始（T512）：分段视觉/交互由通用件 `segmented-switch` 承担。
+       下方留白与既有观感一致（toggle 底距 = padding-sm）；分段宽度策略：日/月/周铺满（fill），周起始自适应。 */
     > .view-switch-row {
         width: 100%;
         display: flex;
@@ -142,8 +145,8 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
         gap: 0;
         flex: none;
 
-        .cal-view-toggle {
-            width: 100%;
+        /* 日/月/周 分段件（视图切换）铺满侧栏后的底距留存 */
+        > :deep(.segmented-toggle) {
             margin-bottom: var(--nue-padding-sm);
         }
 
@@ -165,29 +168,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     var(--nue-primary-color-0)
                 );
                 flex: none;
-            }
-
-            .weekstart-toggle {
-                display: inline-flex;
-                align-items: center;
-                gap: 0;
-                border: 1px solid var(--nue-border-color);
-                border-radius: var(--nue-primary-radius);
-                overflow: hidden;
-
-                .weekstart-btn {
-                    border-radius: 0 !important;
-                }
-
-                .weekstart-btn.is-active {
-                    background: color-mix(
-                        in srgb,
-                        var(--nue-primary-text-color) 9%,
-                        var(--nue-primary-color-0)
-                    );
-                    color: var(--nue-primary-text-color);
-                    font-weight: 600;
-                }
             }
         }
     }

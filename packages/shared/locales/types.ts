@@ -677,6 +677,9 @@ export interface LocaleMessages {
     'calendar.view.week': string
     'calendar.view.day': string
     'calendar.viewSwitch': string
+    'calendar.weekStart': string
+    'calendar.sunday': string
+    'calendar.monday': string
     'calendar.createTask': string
     'calendar.monthTitle': string
     'calendar.weekday.mon': string

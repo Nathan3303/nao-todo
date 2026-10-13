@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import type { CalendarViewMode } from '@/components/calendar/use-calendar-host'
+import CalendarSegmentedSwitch from './segmented-switch.vue'
 import {
     CALENDAR_VIEW_NAMES,
     isCalendarViewName,
@@ -12,6 +13,7 @@ import {
  * 日历子视图切换器（T445 ①）—— 唯一实现，两态复用（**纯展示件**：当前态 + 切换回调由调用方注入）
  * @description
  *  - `segmented`（默认）：三格分段按钮，落在日历侧边栏顶部（`CalendarAside`，回调 = 路由切换）；
+ *    分段视觉/交互由 T512 通用件 `CalendarSegmentedSwitch` 承担（3 段、铺满），本组件只提供段定义与切换语义；
  *  - `compact`：仅「当前视图名 + 下拉三项」，落在各视图内容区头部，**侧栏隐藏时的兜底入口**
  *    （回调 = 该视图上下文既有的 `onGo*`，应用内即路由切换，standalone 自足态亦可切换）。
  *  切换语义（路由真源 / 幂等短路 / taskId·query 透传）由调用方的 `onSwitch` 决定，本组件不直接读路由。
@@ -42,14 +44,25 @@ const currentLabelKey = computed<LocaleKey>(() => {
     return 'calendar.view.month'
 })
 const isActive = (name: CalendarViewName): boolean => CALENDAR_VIEW_NAMES[name] === props.current
-// @computed 滑块 Tab 指示器位置（当前视图序号；无匹配时回 0）
-const thumbIndex = computed(() => {
-    const index = ITEMS.findIndex((item) => isActive(item.name))
-    return index < 0 ? 0 : index
-})
+
+// @computed 分段态段定义（T512 通用件消费）：值 = 视图态（与 `current` 直接可比），testId 沿用既有定位约定
+const segmentedItems = computed(() =>
+    ITEMS.map((item) => ({
+        label: t(item.labelKey),
+        value: CALENDAR_VIEW_NAMES[item.name],
+        testId: `calendar-view-${CALENDAR_VIEW_NAMES[item.name]}`,
+        title: t(item.labelKey)
+    }))
+)
 
 // @method 切换（透传给调用方；已是当前视图亦由调用方幂等处理）
 const switchTo = (name: CalendarViewName): void => props.onSwitch(name)
+
+// @method 分段点击：视图态 → 子路由名（透传给调用方）
+const onSegmentedChange = (value: string): void => {
+    const item = ITEMS.find((it) => CALENDAR_VIEW_NAMES[it.name] === value)
+    if (item) switchTo(item.name)
+}
 
 // @method 紧凑态下拉 execute：data-executeid = 子路由名
 const onExecute = (id: string): void => {
@@ -58,34 +71,15 @@ const onExecute = (id: string): void => {
 </script>
 
 <template>
-    <!-- 分段态：侧边栏顶部 -->
-    <nue-button-group
+    <!-- 分段态：侧边栏顶部（T512 通用分段件：3 段铺满；滑块/选中/hover/动效降级均在件内） -->
+    <calendar-segmented-switch
         v-if="variant === 'segmented'"
-        class="cal-view-toggle"
-        role="group"
+        fill
+        :items="segmentedItems"
+        :model-value="current"
         :aria-label="t('calendar.viewSwitch')"
-    >
-        <!-- 滑块指示器（随当前视图平移；装饰性） -->
-        <span
-            class="cal-view-thumb"
-            data-testid="calendar-view-thumb"
-            aria-hidden="true"
-            :style="{ transform: `translateX(${thumbIndex * 100}%)` }"
-        ></span>
-        <nue-button
-            v-for="item in ITEMS"
-            :key="item.name"
-            theme="small,ghost"
-            class="cal-view-btn"
-            :class="{ 'is-active': isActive(item.name) }"
-            :data-testid="`calendar-view-${CALENDAR_VIEW_NAMES[item.name]}`"
-            :title="t(item.labelKey)"
-            :aria-pressed="isActive(item.name)"
-            @click="switchTo(item.name)"
-        >
-            {{ t(item.labelKey) }}
-        </nue-button>
-    </nue-button-group>
+        @update:model-value="onSegmentedChange"
+    />
 
     <!-- 紧凑态：侧栏隐藏时的内容区头部兜底（当前视图名 + 下拉三项） -->
     <nue-dropdown
@@ -123,66 +117,8 @@ const onExecute = (id: string): void => {
 </template>
 
 <style scoped>
-/* 月/周/日视图切换（T445 ① 落侧边栏顶部；T447 改滑块 Tab：指示器随当前视图平移）。
-   T448 根因修复：侧栏在日历令牌组（`.nue-calendar-host` 等）之外 ⇒ `--cal-*` 未定义 ⇒ 改用既有 `nue-*` token。
-   槽底 = 主文字色 8% 混合页面底色；容器边 = 55% 混合；指示器 = 页面底色；选中字 = 主文字色；未选中字 = 次要文字色。 */
-.cal-view-toggle {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    width: 100%;
-    /* 槽底色（与页面底区分） */
-    background: color-mix(in srgb, var(--nue-primary-text-color) 8%, var(--nue-primary-color-0));
-    border-radius: var(--nue-primary-radius);
-    box-shadow: none;
-    overflow: hidden;
-}
-
-/* 滑块指示器：三等分宽，靠 transform 平移；尊重 prefers-reduced-motion */
-.cal-view-thumb {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: calc(100% / 3);
-    border-radius: var(--nue-primary-radius);
-    /* 背离槽底的“浮起”选中块（页面底色） */
-    background: var(--nue-primary-color-0);
-    box-shadow: inset 0 0 0 1px
-        color-mix(in srgb, var(--nue-primary-text-color) 16%, var(--nue-primary-color-0));
-    transition: transform 180ms ease;
-    pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-    .cal-view-thumb {
-        transition: none;
-    }
-}
-
-/* 按钮浮于指示器之上：均分宽、透明底；选中态由指示器 + 字色/字重承担 */
-.cal-view-toggle > .cal-view-btn {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    margin: 0;
-    border-radius: 0 !important;
-    background: transparent;
-    box-shadow: none;
-    color: var(--nue-secondary-text-color);
-    justify-content: center;
-    align-items: center;
-}
-.cal-view-toggle > .cal-view-btn:not(.is-active):hover {
-    background: color-mix(in srgb, var(--nue-primary-text-color) 6%, transparent);
-    color: var(--nue-primary-text-color);
-}
-.cal-view-toggle > .cal-view-btn.is-active,
-.cal-view-toggle > .cal-view-btn.is-active:hover {
-    background: transparent;
-    color: var(--nue-primary-text-color);
-    font-weight: 600;
-}
+/* 分段态视觉由 T512 通用件 `segmented-switch.vue` 承担（防漂移单一来源）。
+   本文件仅保留 compact 兜底态样式。 */
 
 /* 模式菜单内容（外层卡片/定位由 NueDropdown 承担；样式与改期菜单同源，不另起体系） */
 .vswitch {
