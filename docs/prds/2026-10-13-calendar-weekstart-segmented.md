@@ -87,6 +87,13 @@
 - **发布**：SemVer **PATCH**（root / `apps/web` / `apps/desktop` `1.12.7 → 1.12.8`；`packages/shared` 因新增 i18n 键 PATCH）——依据：同类小件 T504 / T505 分别随 `v1.12.6` / `v1.12.7` 以 PATCH 发布；发版时机沿用「新需求做完统一发一次版」（用户定）。
 - **视觉验收**：由用户按可勾选清单执行（两处观感一致 / 滑块平移 / 标签位置 / 中英文案 / 键盘 focus）。
 
+**交付结果（2026-10-13）**
+
+- 立项文档 PR **#192 已 squash 合并** ⇒ main `699ee0d7` · 代码 PR **#193 已 squash 合并** ⇒ main `158b3839`（本需求恰好 1 条提交、无 `wip()`）· 发版 PR **#194 已 squash 合并** ⇒ main `7b4e7114`
+- **注解 tag `v1.12.8`**（tag 对象 `db0da7b2` → peeled `7b4e7114`）· Release 已发布（非 draft / 非 prerelease，标题「v1.12.8 —— 日历侧边栏「周起始」选择改分段滑块」；正文与 `docs/releases/v1.12.8.md` 同源）
+- 门禁：`vp check` 0 error · 全仓 `vp test` **232 文件 / 1834 例 / 0 红**（Node 24.20.0 = CI 口径）· 5 守卫 rc0 · 双端 build rc0 · 移动端 diff 0 · PR CI（#192/#193/#194）`check` + `test` 全 SUCCESS
+- AC 验收：**AC1–AC7 全过**（PM 读码 + 变更 diff + CI 独立证据，未重复跑 worker 门禁）；像素观感与键盘手感由用户视觉走查确认（勾选清单已交）
+
 ## 9. 变更治理
 
 - 范围 / AC 变更须 PM 书面同意，并回写本文件 + `docs/tasks-state.md`。
