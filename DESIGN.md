@@ -109,6 +109,28 @@
 - 主操作：`theme="primary,small"`（如「保留我的修改」）；次操作：`theme="small,ghost"`；纯文本：`theme="pure,small"`。
 - 覆盖类动作前给**安全提示**（一句话说明「选择后以谁为准」）。
 
+### 4.5 分段选择（滑块式多选一）—— 实例化组件 `segmented-switch`
+
+> 组件：`apps/web/src/components/calendar/segmented-switch.vue`（**唯一实现 · 单一来源**，T512 自日历「日/月/周」抽出）；测试：`apps/web/src/components/calendar/__tests__/segmented-switch.test.ts`。
+
+**适用**：同一维度下 N 个互斥选项的切换（N ≥ 2，常见 2–3，选项短），需「当前项一眼可见」——如日历「月 / 周 / 日」视图切换、「周起始」。
+
+**不适用**：选项 ≥ 5 或需更多说明 ⇒ 用 `nue-dropdown` 下拉；布尔二态开关 ⇒ `nue-checkbox` / `nue-switch`。
+
+**用法**（纯展示件：状态 / 切换语义由调用方注入）：
+
+- `items`：`{ label, value, testId?, title? }[]`（N 段等分宽）；`modelValue`：当前选中值（未命中时滑块回 0），点击上抛 `update:modelValue`。
+- `ariaLabel`：组可访问名（走 i18n 键）；`fill?`：`true` 铺满容器 / `false` 宽度自适应（默认 `true`）；`thumbTestId?`：滑块定位 id。
+- 选中迁移 / 幂等切换语义由调用方决定（例：日历视图切换走路由、周起始走 `setWeekStart`）。
+
+**视觉契约**（已锁定；改动须同步本条款与组件测试）：槽底 = 主文字色 **8%** 混合页面底色；指示器 = 页面底色浮起 + **16%** 内描边；选中 = 主文字色加粗；未选中 = 次要文字色；hover = 6% 混合；**180ms 平移 + `prefers-reduced-motion` 降级**。⛔ **只可用既有 `nue-*` token，禁引 `--cal-*`**（日历侧栏在 `.nue-calendar-host` 令牌组之外，T448 根因）。
+
+**a11y**：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器 `aria-hidden` 装饰性；键盘 Tab 可达 + focus 可见。
+
+**两个调用方只允许两轴不同**：段数（N）与宽度策略（`fill`）；其余视觉 / 交互逐项一致（防漂移）。
+
+**复用红线**：新增同类「分段多选一」UX ⇒ **一律复用本组件**，不得另写分段样式或另起同类组件。
+
 ---
 
 ## 5. 可访问性基线
@@ -149,6 +171,7 @@
 - [ ] 主 / 次按钮分明；覆盖类动作有安全提示
 - [ ] 新增 i18n 键三处齐备；字段标签走映射（未映射有可读回退）
 - [ ] ⛔ 未新增色板 / 组件体系（如需新增 ⇒ 先报 PM）
+- [ ] 分段多选一 UX ⇒ **复用 `segmented-switch`**（§4.5 单一来源），不另写分段样式
 - [ ] 移动端红线：`packages/presentation-react` / `apps/mobile` 不随桌面 / Web 需求改动
 
 ---
