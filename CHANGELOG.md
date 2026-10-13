@@ -6,6 +6,10 @@
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
 
+## [v1.12.9] - 2026-10-13
+
+发布批次：**T512 视觉走查定稿 + 分段选择复用文档**（`T512b`：① 用户亲手微调的侧栏布局定稿 —— 视图切换移出 `.view-switch-row` 独立成行、行内重排（周起始 + 两开关）、`.weekstart-row` 高 = `--nue-box-size-df`、标签色 `--nue-primary-color-700`、移除分段底距规则；模板恢复 `weekstart-label` 类 ⇒ 模板 / CSS / 测试三方一致、行为断言未删）② DESIGN.md 新增 **§4.5「分段选择（segmented-switch）」复用范围** + §8 检查清单条目 —— 后续同类「分段多选一」UX 一律复用、防样式漂移）。**Tag `v1.12.9`** · root / `apps/web` / `apps/desktop` `1.12.9`；`packages/shared` 及以下包零改动不 bump。前置：PR `#197`（`f6906342`）+ `#196`（`f2cece52`）+ `#198`（`ea96aaec`）。详见 `docs/releases/v1.12.9.md`。
+
 ## [v1.12.8] - 2026-10-13
 
 发布批次：**日历侧边栏「周起始」选择 UI 对齐「日/月/周」分段切换**（`T512`：抽出通用「分段切换」展示件 `segmented-switch.vue`（N 段等分 + 滑块指示器 `calc(100%/N)` + `translateX` 整段平移 + `prefers-reduced-motion` 降级 + `role="group"`/每段 `aria-pressed`；仅既有 `nue-*` token、零 `--cal-*`）—— 单一来源防两处样式漂移；「日/月/周」视图切换 `segmented` 态改引通用件（3 段铺满，外观与行为零变化，既有行为断言一条未删）· 侧栏「周起始」改引通用件（2 段自适应、标签在左，`weekStart` 驱动 + `setWeekStart`）· i18n 新增 `calendar.weekStart` / `calendar.sunday` / `calendar.monday` 3 键三处齐备（顺带修掉英文界面显示中文的既有小缺口））。**Tag `v1.12.8`** · root `1.12.8` · `apps/web` / `apps/desktop` `1.12.8` · `packages/shared` `1.4.6 → 1.4.7`（新增 3 个 i18n 键）；`packages/presentation` / `packages/infrastructure` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 本批零改动，不 bump。前置：立项文档 PR `#192`（`699ee0d7`）+ 代码 PR `#193`（`158b3839`）。详见 `docs/releases/v1.12.8.md`。
