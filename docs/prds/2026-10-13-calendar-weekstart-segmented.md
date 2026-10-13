@@ -1,6 +1,6 @@
 # 2026-10-13 日历侧边栏「周起始」选择 UI 对齐「日/月/周」分段切换 PRD
 
-> **状态**：**待开工确认**（2026-10-13 立项；用户三项口径已拍板，见 §5 末）。
+> **状态**：**✅ 已交付并随 `v1.12.8` 发布**（2026-10-13 立项 · 2026-10-13 交付闭环；需求原话见 §1，三项口径见 §5 末，交付证据见 §8 末「交付结果」）。
 > **依据**：用户 2026-10-13 在 PM 会话中的原话（「把日历界面侧边栏中的周起始的选择 UI 组件样式改为与『日月周』切换组件一致」）· 现状读码（`apps/web/src/components/calendar/view-switch.vue`、`apps/web/src/components/calendar/aside/aside.vue`）。
 > **硬约束**：**移动端零改动**（`packages/presentation-react` / `apps/mobile`）· 周起始与视图切换的状态语义不变 · 不新增 `nue-*` token 或色板 · C 端界面原则（`AGENTS.md` / `DESIGN.md`）。
 

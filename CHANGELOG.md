@@ -6,6 +6,15 @@
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
 
+## [v1.12.8] - 2026-10-13
+
+发布批次：**日历侧边栏「周起始」选择 UI 对齐「日/月/周」分段切换**（`T512`：抽出通用「分段切换」展示件 `segmented-switch.vue`（N 段等分 + 滑块指示器 `calc(100%/N)` + `translateX` 整段平移 + `prefers-reduced-motion` 降级 + `role="group"`/每段 `aria-pressed`；仅既有 `nue-*` token、零 `--cal-*`）—— 单一来源防两处样式漂移；「日/月/周」视图切换 `segmented` 态改引通用件（3 段铺满，外观与行为零变化，既有行为断言一条未删）· 侧栏「周起始」改引通用件（2 段自适应、标签在左，`weekStart` 驱动 + `setWeekStart`）· i18n 新增 `calendar.weekStart` / `calendar.sunday` / `calendar.monday` 3 键三处齐备（顺带修掉英文界面显示中文的既有小缺口））。**Tag `v1.12.8`** · root `1.12.8` · `apps/web` / `apps/desktop` `1.12.8` · `packages/shared` `1.4.6 → 1.4.7`（新增 3 个 i18n 键）；`packages/presentation` / `packages/infrastructure` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 本批零改动，不 bump。前置：立项文档 PR `#192`（`699ee0d7`）+ 代码 PR `#193`（`158b3839`）。详见 `docs/releases/v1.12.8.md`。
+
+### 行为变更（请留意）
+
+- **日历侧边栏「周起始」从描边按钮对改为滑块分段**（`T512`）：与顶部「日 / 月 / 周」切换同一套视觉（槽底 + 浮起指示块 + 选中加粗），点击后滑块平滑移到所选档，日历每周第一天按新口径重排（取值/持久化语义不变）。
+- **英文界面补全**（`T512`）：以前「周起始 / 周日 / 周一」在英文界面显示中文，现显 “Week starts on / Sunday / Monday”。
+
 ## [v1.12.7] - 2026-10-07
 
 发布批次：**搜索筛选栏细化（四项）**（`T505`：① 全链移除 `includeExcluded`（UI + 引擎 + URL `excluded` + 常用搜索/快捷预置 + 死码 `ROOT_STATUS_VARIANTS_INCLUDED` + 死徽标 + 4 个死键；兼容口径 = **忽略旧字段**，无迁移、无服务端契约变更）· ② 「包含已归档」开关补**可见文字标签 + a11y**（`role="switch"` / `aria-checked` / `tabindex` / Enter·Space / 点文字切换；规避 `NueSwitch` 忽略默认插槽的上游缺口）· ③ 全局 `theme="menu"` 下拉项间隙 `--nue-gap-xs → --nue-gap-2xs`（影响 7 组件 / 11 处）· ④ 筛选触发器改**显示已选名称**（含文字层级：维度名/**分隔符**次级色、已选名称正文色 + `font-weight: 500`；仅既有令牌 ⇒ 明暗自适应、无新色值）（≤2 全显、≥3 前 2 + `+N`、标签色点、超宽省略；维度名与已选之间用**全角冒号「：」**；新增纯展示件 `filter-trigger-label.vue`）+ 优先级短名（仅触发器）· 架构评审：① 有条件可行 · ③ 可行 · 中间态否决）。**Tag `v1.12.7`** · root `1.12.7` · `apps/web` / `apps/desktop` `1.12.7` · `packages/shared` `1.4.5 → 1.4.6`（新增 `task.priority.short.*` 3 键 + 删 4 死键）；`packages/infrastructure` **仅测试文件变更**（按 `T478` 先例不 bump）· `packages/presentation` / `packages/domain-*` / `packages/presentation-react` / `apps/mobile` 零改动不 bump。前置：代码 PR `#183`（`4df168f2`）+ 立项文档 PR `#182`（`9591ce75`）+ 视觉走查补丁 PR `#184`（`5051f04d`）+ PR `#185`（`bb915327`，文字层级）。详见 `docs/releases/v1.12.7.md`。
