@@ -27,7 +27,7 @@ const buildViewContext = () => ({
     selectedTagIds: ref<string[]>([]),
     hideCompleted: ref(false),
     weekStart: ref<'sunday' | 'monday'>('monday'),
-    setWeekStart: () => {},
+    setWeekStart: vi.fn(),
     pomodoroBadge: ref(true),
     setPomodoroBadge: () => {},
     clearFilter: () => {},
@@ -104,18 +104,19 @@ const mountAside = async () => {
     await router.push({ name: 'calendar-monthly' })
     await router.isReady()
     const replaceSpy = vi.spyOn(router, 'replace')
+    const calendarContext = buildViewContext()
     wrapper = mount(CalendarAside, {
         attachTo: document.body,
         global: {
             plugins: [pinia, nueUI, router],
             provide: {
-                [CALENDAR_VIEW_CONTEXT_KEY as symbol]: buildViewContext(),
+                [CALENDAR_VIEW_CONTEXT_KEY as symbol]: calendarContext,
                 [INDEX_VIEW_CONTEXT_KEY as symbol]: buildIndexContext()
             }
         }
     })
     await flushPromises()
-    return { router, replaceSpy }
+    return { router, replaceSpy, calendarContext }
 }
 
 const teleportedButton = (mode: string): HTMLElement | null =>
@@ -149,5 +150,66 @@ describe('T445 ① CalendarAside 顶部视图切换（侧栏显示态）', () =>
         expect(teleportedButton('month')!.textContent?.trim()).toBe('Month')
         expect(teleportedButton('week')!.textContent?.trim()).toBe('Week')
         expect(teleportedButton('day')!.textContent?.trim()).toBe('Day')
+    })
+})
+
+describe('T512 周起始 = 分段切换控件（与日/月/周同一通用件）', () => {
+    // 限定 `.weekstart-row` 作用域（日/月/周切换亦渲染 `.segmented-btn`，防串扰）
+    const weekButtons = (): NodeListOf<HTMLElement> =>
+        document.querySelectorAll<HTMLElement>(
+            '#SubPageAsideTeleportSlot .weekstart-row .segmented-btn'
+        )
+    const weekToggle = (): HTMLElement | null =>
+        document.querySelector<HTMLElement>(
+            '#SubPageAsideTeleportSlot .weekstart-row .segmented-toggle'
+        )
+    const weekLabel = (): HTMLElement | null =>
+        document.querySelector<HTMLElement>('#SubPageAsideTeleportSlot .weekstart-label')
+
+    it('渲染 2 格 + 左侧标签；选中态与 aria-pressed 随 weekStart（默认周一）', async () => {
+        await mountAside()
+        expect(weekLabel()!.textContent?.trim()).toBe('周起始')
+        const toggle = weekToggle()!
+        expect(toggle.getAttribute('role')).toBe('group')
+        expect(toggle.getAttribute('aria-label')).toBe('周起始')
+        const btns = weekButtons()
+        expect(btns.length).toBe(2)
+        expect(btns[0]!.textContent?.trim()).toBe('周日')
+        expect(btns[1]!.textContent?.trim()).toBe('周一')
+        // 默认 weekStart = monday ⇒ 第二格选中（滑块/字重 + aria-pressed 双重冗余）
+        expect(btns[0]!.getAttribute('aria-pressed')).toBe('false')
+        expect(btns[1]!.getAttribute('aria-pressed')).toBe('true')
+        expect(btns[1]!.classList.contains('is-active')).toBe(true)
+        expect(btns[0]!.classList.contains('is-active')).toBe(false)
+    })
+
+    it('点击「周日」⇒ 调用 setWeekStart(sunday)；状态语义由调用方承载', async () => {
+        const { calendarContext } = await mountAside()
+        const btns = weekButtons()
+        btns.item(0).click()
+        await flushPromises()
+        expect(calendarContext.setWeekStart).toHaveBeenCalledTimes(1)
+        expect(calendarContext.setWeekStart).toHaveBeenCalledWith('sunday')
+        // 点击只上抛值；选中态迁移由调用方（setWeekStart 改 weekStart ref）驱动
+        expect(btns.item(0).getAttribute('aria-pressed')).toBe('false')
+    })
+
+    it('选中态随 weekStart 变化（sunday → 第一格激活）', async () => {
+        const { calendarContext } = await mountAside()
+        calendarContext.weekStart.value = 'sunday'
+        await flushPromises()
+        const btns = weekButtons()
+        expect(btns[0]!.getAttribute('aria-pressed')).toBe('true')
+        expect(btns[1]!.getAttribute('aria-pressed')).toBe('false')
+        expect(btns[0]!.classList.contains('is-active')).toBe(true)
+    })
+
+    it('英文环境：Week starts on / Sunday / Monday', async () => {
+        setLocale('en-US')
+        await mountAside()
+        expect(weekLabel()!.textContent?.trim()).toBe('Week starts on')
+        const btns = weekButtons()
+        expect(btns[0]!.textContent?.trim()).toBe('Sunday')
+        expect(btns[1]!.textContent?.trim()).toBe('Monday')
     })
 })

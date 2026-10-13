@@ -8,7 +8,8 @@ import CalendarViewSwitch from '../view-switch.vue'
 /**
  * T445 ① 子视图切换器组件级契约（纯展示件：当前态 + onSwitch 注入）
  * @description 两态复用同一组件：
- *  - `segmented`：侧边栏顶部（三格分段，当前态高亮，点击上抛子路由名）；
+ *  - `segmented`：侧边栏顶部（三格分段，当前态高亮，点击上抛子路由名；
+ *    滑块/选中/hover/动效降级由 T512 通用件 `segmented-switch.vue` 承担，选择器已改为对应物）；
  *  - `compact`：内容区头部（侧栏隐藏兜底），触发器=当前视图名，下拉三项 data-executeid=子路由名。
  *  本组件不读路由；路由切换语义由调用方（侧边栏 = router.replace；头部 = 视图上下文 onGo*）承担。
  */
@@ -43,7 +44,7 @@ describe('T445 ① CalendarViewSwitch', () => {
     it('segmented：三格 = 月/周/日，当前态高亮，点击上抛子路由名', async () => {
         const onSwitch = vi.fn()
         const w = mountSwitch('segmented', 'month', onSwitch)
-        const btns = w.findAll('.cal-view-btn')
+        const btns = w.findAll('.segmented-btn')
         expect(btns.map((b) => b.text())).toEqual(['月', '周', '日'])
         expect(btns[0]!.classes()).toContain('is-active')
         expect(btns[1]!.classes()).not.toContain('is-active')
@@ -56,18 +57,18 @@ describe('T445 ① CalendarViewSwitch', () => {
 
     it('segmented：当前态随 current 变化（week/day）', () => {
         const week = mountSwitch('segmented', 'week', vi.fn())
-        expect(week.findAll('.cal-view-btn')[1]!.classes()).toContain('is-active')
+        expect(week.findAll('.segmented-btn')[1]!.classes()).toContain('is-active')
         const day = mountSwitch('segmented', 'day', vi.fn())
-        expect(day.findAll('.cal-view-btn')[2]!.classes()).toContain('is-active')
+        expect(day.findAll('.segmented-btn')[2]!.classes()).toContain('is-active')
     })
 
     it('i18n：英文渲染 Month / Week / Day；中文 月 / 周 / 日', async () => {
         const onSwitch = vi.fn()
         const w = mountSwitch('segmented', 'month', onSwitch)
-        expect(w.findAll('.cal-view-btn').map((b) => b.text())).toEqual(['月', '周', '日'])
+        expect(w.findAll('.segmented-btn').map((b) => b.text())).toEqual(['月', '周', '日'])
         setLocale('en-US')
         await w.vm.$nextTick()
-        expect(w.findAll('.cal-view-btn').map((b) => b.text())).toEqual(['Month', 'Week', 'Day'])
+        expect(w.findAll('.segmented-btn').map((b) => b.text())).toEqual(['Month', 'Week', 'Day'])
     })
 
     it('segmented：滑块 Tab 指示器随当前视图平移（month/week/day → 0/100%/200%）', () => {
@@ -75,16 +76,17 @@ describe('T445 ① CalendarViewSwitch', () => {
         const week = mountSwitch('segmented', 'week', vi.fn())
         const day = mountSwitch('segmented', 'day', vi.fn())
         const transformOf = (w: ReturnType<typeof mountSwitch>): string =>
-            (w.find('[data-testid="calendar-view-thumb"]').element as HTMLElement).style.transform
-        expect(month.find('[data-testid="calendar-view-thumb"]').exists()).toBe(true)
+            (w.find('[data-testid="segmented-thumb"]').element as HTMLElement).style.transform
+        expect(month.find('[data-testid="segmented-thumb"]').exists()).toBe(true)
         expect(transformOf(month)).toBe('translateX(0%)')
         expect(transformOf(week)).toBe('translateX(100%)')
         expect(transformOf(day)).toBe('translateX(200%)')
     })
 
     it('T448：激活色 / 槽底色均用既有 nue-* token，且不再依赖 --cal-*（侧栏在日历令牌组之外）', () => {
+        // T512：分段视觉已归 T512 通用件 `segmented-switch.vue`（CSS 归属文件随之迁移）
         const css = Object.values(
-            import.meta.glob('../view-switch.vue', {
+            import.meta.glob('../segmented-switch.vue', {
                 query: '?raw',
                 import: 'default',
                 eager: true
@@ -103,7 +105,7 @@ describe('T445 ① CalendarViewSwitch', () => {
         expect(flat).toContain('font-weight: 600')
         expect(flat).toContain('color: var(--nue-secondary-text-color)')
         // 滑块动效
-        expect(flat).toContain('.cal-view-thumb')
+        expect(flat).toContain('.segmented-thumb')
         expect(flat).toContain('transition: transform 180ms ease')
         expect(flat).toContain('prefers-reduced-motion: reduce')
         // 根因守卫：分段控件不得再引 `--cal-*`（侧栏在日历令牌组之外 ⇒ 会全量失效）
