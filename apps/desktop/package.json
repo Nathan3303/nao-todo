@@ -27,6 +27,9 @@
             "output": "release"
         },
         "mac": {
+            "icon": "build/icons/mac/icon.icns",
+            "identity": "-",
+            "hardenedRuntime": false,
             "target": [
                 "dmg",
                 "zip"

@@ -125,6 +125,27 @@ pnpm desktop:build
 pnpm desktop:dist
 ```
 
+#### 用现成安装包安装桌面端
+
+到 [Releases](https://github.com/Nathan3303/nao-todo/releases) 下载最新一版，按自己的系统选文件：
+
+- **macOS**：`.dmg`，文件名带 `arm64` 的（Apple 芯片机型；Intel 机型暂未提供）
+- **Windows**：`.exe`，双击安装，可选安装位置
+- **Linux**：`.AppImage`（给执行权限后直接运行）或 `.deb`（用系统安装器打开）
+
+**macOS 首次打开提示「已损坏，无法打开」怎么办？**
+
+这不是文件真的损坏了，而是这个应用没有做 Apple 的官方开发者签名认证，系统默认把来源不明的应用拦下来。放行很简单，二选一：
+
+- 去「系统设置 → 隐私与安全性」，页面下方会出现这个应用的提示，点「仍要打开」。
+- 或者在「终端」里执行下面这行，再双击打开：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/nao-todo.app
+```
+
+上面这行命令的意思是：去掉系统给这个应用打的「从网上下载、尚未获得信任」标记。只需做一次，之后正常双击即可打开。
+
 ### 构建
 
 ```bash
