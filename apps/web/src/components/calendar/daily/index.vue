@@ -83,6 +83,8 @@ const {
     nowLeft,
     nowText,
     nowEdge,
+    nowLabelEl,
+    nowLabelTransform,
     isPanning,
     onPointerDown,
     onPointerMove,
@@ -300,8 +302,8 @@ const switchFromDay = (name: CalendarViewName): void => {
                                 ></span>
                             </div>
                         </div>
-                        <!-- 当前时间线（仅今天）；顶端时刻文本（R8）经 `data-now` + CSS `attr()` 输出，
-                             零额外 DOM / 不新增定时器；贴端改类名（AC6b）避免被 `overflow-x: hidden` 裁切 -->
+                        <!-- 当前时间线（仅今天）；顶端时刻文本（R11）：真实文本节点（需可测宽度作**视口贴边**），
+                             位移 = inline `transform`（居中 + 轴端点 ⊕ 视口钳制）；带内不画格线（AC8d） -->
                         <div
                             v-if="model.isToday"
                             class="day-now-line"
@@ -312,7 +314,14 @@ const switchFromDay = (name: CalendarViewName): void => {
                             :data-now="nowText"
                             :style="{ left: nowLeft }"
                             aria-hidden="true"
-                        ></div>
+                        >
+                            <span
+                                ref="nowLabelEl"
+                                class="day-now-label"
+                                :style="{ transform: nowLabelTransform }"
+                                >{{ nowText }}</span
+                            >
+                        </div>
                         <!-- 拖动中的吸附刻度高亮线（AC2）：松手即移除 -->
                         <div
                             v-if="dragPreview"

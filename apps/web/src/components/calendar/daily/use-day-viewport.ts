@@ -13,6 +13,7 @@ import {
     prevDayZoom,
     type DayZoom
 } from './day-zoom'
+import { nowLabelLayoutOf } from './now-label'
 import { useDayPan } from './use-day-pan'
 
 /**
@@ -77,6 +78,7 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
             0,
             width - viewport
         )
+        syncScrollLeft()
     }
     /** 进入日视图：横向定位到当前时间（非今天 → 00:00） */
     const scrollToNow = (): void => {
@@ -86,10 +88,12 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         if (!body || width <= 0 || viewport <= 0) return
         if (!model.value.isToday) {
             body.scrollLeft = 0
+            syncScrollLeft()
             return
         }
         const nowMin = dayjs().hour() * 60 + dayjs().minute()
         body.scrollLeft = clamp((nowMin / DAY_MINUTES) * width - viewport / 2, 0, width - viewport)
+        syncScrollLeft()
     }
 
     // —— 当前时间线（仅锚点日=今天；30 秒更新；非今天不挂定时器） ——
@@ -108,23 +112,51 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         { immediate: true }
     )
     onUnmounted(() => clearInterval(timer))
-    const nowLeft = computed(() => {
-        const minutes = now.value.hour() * 60 + now.value.minute()
-        return `${(minutes / DAY_MINUTES) * 100}%`
-    })
+    // @computed 当前时刻（分钟，0–1439）—— 唯一时基派生源（`now` 由既有 30s 定时器推进）
+    const nowMinutes = computed(() => now.value.hour() * 60 + now.value.minute())
+    const nowLeft = computed(() => `${(nowMinutes.value / DAY_MINUTES) * 100}%`)
 
     // @computed 当前时刻文本（R8 / AC6a）：恒 `HH:mm`（两位补零、不随档位简化；dayjs 的分钟占位符是 `mm`）
-    //          沿用既有 `now` 时基（30s）⇒ **不新增定时器**；经 `data-now` + CSS `attr()` 输出，零额外 DOM
+    //          沿用既有 `now` 时基（30s）⇒ **不新增定时器**
     const nowText = computed(() => now.value.format('HH:mm'))
 
-    // @computed 当前时刻是否贴近轴端（AC6b：`00:00–00:30` / `23:30–24:00`）
-    //          ⇒ 文本与圆点向内偏移，避免被 `.day-body` 的 `overflow-x: hidden` 裁掉
+    // @computed 当前时刻是否贴近轴端（AC6b：`00:00–00:30` / `23:30–24:00`）—— 语义标记，
+    //          实际横向钳制由 `nowLabelTransform`（轴端点 ⊕ 视口，取更严格者）统一计算（R11）
     const nowEdge = computed<'start' | 'end' | 'center'>(() => {
-        const minutes = now.value.hour() * 60 + now.value.minute()
-        if (minutes <= NOW_EDGE_MINUTES) return 'start'
-        if (minutes >= DAY_MINUTES - NOW_EDGE_MINUTES) return 'end'
+        if (nowMinutes.value <= NOW_EDGE_MINUTES) return 'start'
+        if (nowMinutes.value >= DAY_MINUTES - NOW_EDGE_MINUTES) return 'end'
         return 'center'
     })
+
+    // —— R11 / AC8a·AC8b：文本宽度缓存 + 视口贴边（禁在滚动 / 拖拽帧内读布局） ——
+    // 宽度缓存 ==**只在三个时机重测**：① 挂载后首帧 ② `nowText` / 档位 / 容器宽变化 ③ 切日（`anchorKey`）。
+    // 读 `offsetWidth` 属布局读取 ⇒ 一律经 `nextTick`（rAF 之后）执行，**绝不**在 `onBodyScroll` / `pointermove` 内调用。
+    const nowLabelEl = ref<HTMLElement | null>(null)
+    const nowLabelW = ref(0)
+    const measureNowLabel = (): void => {
+        nowLabelW.value = nowLabelEl.value?.offsetWidth ?? 0
+    }
+
+    // 可见区域左缘：只在滚动回调的 rAF 内同步（`scrollLeft` 为纯属性读，不触发重排）
+    const scrollLeftPx = ref(0)
+    const syncScrollLeft = (): void => {
+        scrollLeftPx.value = bodyEl.value?.scrollLeft ?? 0
+    }
+
+    // @computed 文本中心相对线的偏移（轴端点 ⊕ 视口，取更严格者；纯函数 `nowLabelLayoutOf`）
+    const nowLabelOffsetPx = computed(() => {
+        const axisWidth = Number.parseFloat(scrollWidthCss.value)
+        return nowLabelLayoutOf({
+            lineX: (nowMinutes.value / DAY_MINUTES) * axisWidth,
+            labelWidth: nowLabelW.value,
+            axisWidth,
+            scrollLeft: scrollLeftPx.value,
+            viewportWidth: containerW.value
+        }).offsetPx
+    })
+
+    // @computed 文本横向位移（居中 + 钳制偏移；`-50%` = 以自身中心对齐线 x）
+    const nowLabelTransform = computed(() => `translateX(calc(-50% + ${nowLabelOffsetPx.value}px))`)
 
     // —— 缩放：写回（优先 entry 级 setter 以持久化；无 setter 时直改 ref） ——
     const applyZoom = (next: DayZoom): void => {
@@ -165,9 +197,12 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         showEndFade.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 1
     }
     const onBodyScroll = (): void => {
+        // R11 / AC8c：滚动帧内**只读** `scrollLeft`（纯属性，不做布局读取）⇒ 与遮罩同帧 rAF 批处理
+        syncScrollLeft()
         if (fadeRaf) return
         fadeRaf = requestAnimationFrame(() => {
             fadeRaf = 0
+            syncScrollLeft()
             updateFades()
         })
     }
@@ -178,16 +213,25 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         measureContainer()
         void nextTick(() => {
             scrollToNow()
+            syncScrollLeft()
             updateFades()
+            measureNowLabel()
         })
         if (typeof ResizeObserver === 'undefined') return
         resizeObserver = new ResizeObserver(() => {
             measureContainer()
+            syncScrollLeft()
             updateFades()
+            measureNowLabel() // AC8b：resize ⇒ 字号可能变 ⇒ 宽度缓存失效重测
         })
         if (bodyEl.value) resizeObserver.observe(bodyEl.value)
     })
     watch(dayZoom, () => void nextTick(updateFades))
+    // AC8b：缓存失效点 = 文本内容变化 / 档位切换 / 切日 / 容器宽变化（字号随根字号）—— 全部经 nextTick 重测
+    watch(
+        [nowText, dayZoom, containerW, () => model.value.anchorKey],
+        () => void nextTick(measureNowLabel)
+    )
     onUnmounted(() => {
         resizeObserver?.disconnect()
         if (fadeRaf) cancelAnimationFrame(fadeRaf)
@@ -201,6 +245,8 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         nowLeft,
         nowText,
         nowEdge,
+        nowLabelEl,
+        nowLabelTransform,
         isPanning,
         onPointerDown,
         onPointerMove,

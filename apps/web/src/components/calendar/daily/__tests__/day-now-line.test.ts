@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import dayjs from 'dayjs'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
@@ -11,16 +11,17 @@ import { nueUI } from '@/nue-ui-register'
 import DailyView from '../index.vue'
 
 /**
- * T518-R3 / DEF-78 当前时间线顶端时刻文本（PRD §5 R8 / §7 AC6a–AC6d）
- * @description 只测**可断言部分**：文本数据（`data-now`）、贴端类名、源级样式口径、定时器 / DOM 增量；
- *              伪元素实际渲染效果由用户视觉勾选。
- *  - AC6a：今天 ⇒ 文本 = `HH:mm`（两位补零、与 `now` 一致）、非今天不渲染、30s 时基自动刷新；
- *  - AC6b：`00:05` / `23:55` ⇒ 贴端类名 + 源级「文本与圆点向内偏移」口径（jsdom 无布局，算不出 px）；
- *  - AC6c：`pointer-events: none`、`now-line` 的 `left` 语义不变、定时器仍只有 1 处、零额外 DOM；
- *  - AC6d：仅既有 token（`--nue-error-color-60`），无 hex / rgb / hsl 字面量、无底色 / 气泡 / padding。
+ * T518-R3 / R4 / R5 当前时间线顶端时刻文本（PRD §5 R8–R11 / §7 AC6a–AC6d · AC7a–AC7d · AC8a–AC8d）
+ * @description 只测**可断言部分**（文本 / 类名 / inline 位移 / 源级样式口径 / DOM 与定时器增量）；
+ *              像素级观感由用户视觉勾选。
+ *  - AC8a：文本水平中心 = 线 x（`-50%` 居中 + 偏移 0）、线身让出带宽、圆点与文本盒不重叠；
+ *  - AC8b：视口贴边（组件级行为断言 + `now-label.test.ts` 纯函数枚举）、无 transition / animation；
+ *  - AC8c：滚动帧内无布局读取、宽度缓存失效点覆盖 resize / 档位 / 切日、定时器仍 1 处；
+ *  - AC8d：`.day-axis-bg` 让带且保留其余三边；端点线仍贯穿（`top: 0`、不消费带高）。
  */
 
 const NOW_LINE = '.day-now-line'
+const NOW_LABEL = '.day-now-label'
 
 const buildContext = () => ({
     dialogManager: { open: () => {} },
@@ -84,7 +85,30 @@ const cssRule = (css: string, selector: string): string => {
     const end = css.indexOf('}', start)
     return end < 0 ? css.slice(start) : css.slice(start, end)
 }
+const pxOf = (rule: string, prop: string): number => {
+    const matched = new RegExp(`${prop}:\\s*(-?[\\d.]+)px`).exec(rule)
+    return Number.parseFloat(matched?.[1] ?? 'NaN')
+}
 const countOf = (source: string, needle: string): number => source.split(needle).length - 1
+
+/** jsdom 无 `ResizeObserver`；最小替身用于触发容器宽重测（AC8b 视口贴边） */
+class FakeResizeObserver {
+    static instances: FakeResizeObserver[] = []
+    private readonly callback: () => void
+    constructor(callback: () => void) {
+        this.callback = callback
+        FakeResizeObserver.instances.push(this)
+    }
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    emit(): void {
+        this.callback()
+    }
+}
+
+const nextFrame = (): Promise<void> =>
+    new Promise((resolve) => requestAnimationFrame(() => resolve()))
 
 let wrapper: VueWrapper | null = null
 
@@ -106,25 +130,20 @@ afterEach(() => {
 })
 
 describe('T518-R3 AC6a 当前时刻文本（R8：恒 `HH:mm`、纯文字）', () => {
-    it('今天 ⇒ `.day-now-line` 带 `data-now` = `HH:mm`（两位补零、与 now 一致）', async () => {
+    it('今天 ⇒ 文本 `HH:mm`（两位补零、与 now 一致），`data-now` 同步', async () => {
         wrapper = await mountDaily()
         const line = wrapper.find(NOW_LINE)
+        const label = wrapper.find(NOW_LABEL)
         expect(line.exists()).toBe(true)
+        expect(label.exists()).toBe(true)
+        expect(label.text()).toBe('12:00')
+        expect(label.text()).toBe(dayjs().format('HH:mm'))
         expect(line.attributes('data-now')).toBe('12:00')
-        expect(line.attributes('data-now')).toBe(dayjs().format('HH:mm'))
-        expect(line.attributes('data-now')).toMatch(/^\d{2}:\d{2}$/)
-        // 零额外 DOM（文本由 CSS `attr(data-now)` 输出）：now-line 无任何子元素
-        expect(line.element.children).toHaveLength(0)
-        // 既有圆点与 aria 口径不变
+        // 既有圆点 / aria 口径不变（a11y：视觉专属，PM 裁定保持）
         expect(line.attributes('aria-hidden')).toBe('true')
         expect(cssRule(dailyStyle(), '.day-now-line::before')).toContain('border-radius: 50%')
-    })
-
-    it('源级：文本走 `content: attr(data-now)`（零 DOM），且带 `pointer-events: none`', () => {
-        const rule = cssRule(dailyStyle(), '.day-now-line::after')
-        expect(rule).toContain('content: attr(data-now)')
-        expect(rule).toContain('pointer-events: none')
-        expect(rule).toContain('white-space: nowrap')
+        // DOM 恒定量：now-line 恰 1 个子节点（文本），与列数无关
+        expect(line.element.children).toHaveLength(1)
     })
 
     it('非今天 ⇒ 不渲染（跟随既有 `v-if="model.isToday"`）', async () => {
@@ -133,158 +152,195 @@ describe('T518-R3 AC6a 当前时刻文本（R8：恒 `HH:mm`、纯文字）', ()
         await wrapper.find('[title="前一天"]').trigger('click')
         await flushPromises()
         expect(wrapper.find(NOW_LINE).exists()).toBe(false)
+        expect(wrapper.find(NOW_LABEL).exists()).toBe(false)
     })
 
     it('30 秒时基自动刷新（沿用既有定时器，不新增第二个）', async () => {
-        // 本轮需要推进既有 30s 定时器 ⇒ 额外假 `setInterval`（Date 同时被推进）
         vi.useFakeTimers({ toFake: ['Date', 'setInterval'] })
         vi.setSystemTime(new Date('2026-09-21T12:00:00'))
         wrapper = await mountDaily()
-        expect(wrapper.find(NOW_LINE).attributes('data-now')).toBe('12:00')
+        expect(wrapper.find(NOW_LABEL).text()).toBe('12:00')
 
         await vi.advanceTimersByTimeAsync(30_000)
-        expect(wrapper.find(NOW_LINE).attributes('data-now')).toBe('12:00') // 30s 内不跳分钟
+        expect(wrapper.find(NOW_LABEL).text()).toBe('12:00') // 30s 内不跳分钟
         await vi.advanceTimersByTimeAsync(30_000)
-        expect(wrapper.find(NOW_LINE).attributes('data-now')).toBe('12:01')
+        expect(wrapper.find(NOW_LABEL).text()).toBe('12:01')
     })
 })
 
-describe('T518-R3 AC6b 贴端不裁切（`00:00–00:30` / `23:30–24:00`）', () => {
-    it('00:05 ⇒ `is-near-start`：文本从左缘起排；圆点保持与线同轴心', async () => {
-        freezeAt('2026-09-21T00:05:00')
+describe('T518-R5 AC8a 文本位置（居中于线 + 线头正上方）', () => {
+    it('水平居中：`left: 0`（起于线 x）+ `-50%` 位移；无钳制时偏移为 0', async () => {
         wrapper = await mountDaily()
-        const line = wrapper.find(NOW_LINE)
-        expect(line.attributes('data-now')).toBe('00:05')
-        expect(line.classes()).toContain('is-near-start')
-        expect(line.classes()).not.toContain('is-near-end')
-        // `nowLeft` 零改动（ADR：当前时间线位置不变）
-        const leftPct = Number.parseFloat((line.element as HTMLElement).style.left)
-        expect(Math.abs(leftPct - (5 / 1440) * 100)).toBeLessThan(1e-6)
-
-        const text = cssRule(dailyStyle(), '.day-now-line.is-near-start::after')
-        expect(text).toContain('left: 0')
-        expect(text).toContain('transform: none')
-        // R10（T518-R4 反转 R3）：**圆点不再随贴端水平位移**，恒与线同轴心（`left: -3px`）
-        expect(cssRule(dailyStyle(), '.day-now-line.is-near-start::before')).toBe('')
-        expect(cssRule(dailyStyle(), '.day-now-line::before')).toContain('left: -3px')
+        const label = wrapper.find(NOW_LABEL)
+        const transform = (label.element as HTMLElement).style.transform
+        expect(transform).toContain('translateX(calc(-50% + 0px))')
+        expect(cssRule(dailyStyle(), '.day-now-label')).toContain('left: 0')
     })
 
-    it('23:55 ⇒ `is-near-end`：文本右缘对齐线；圆点同轴心（不再左移）', async () => {
-        freezeAt('2026-09-21T23:55:00')
-        wrapper = await mountDaily()
-        const line = wrapper.find(NOW_LINE)
-        expect(line.attributes('data-now')).toBe('23:55')
-        expect(line.classes()).toContain('is-near-end')
-        expect(line.classes()).not.toContain('is-near-start')
-
-        const text = cssRule(dailyStyle(), '.day-now-line.is-near-end::after')
-        expect(text).toContain('right: 1px') // = 线自身宽 ⇒ 文本右缘正好压在线左缘，不越轴终点
-        expect(text).toContain('transform: none')
-        expect(text).toContain('left: auto')
-        // R10（反转 R3）：圆点无贴端位移
-        expect(cssRule(dailyStyle(), '.day-now-line.is-near-end::before')).toBe('')
-        expect(cssRule(dailyStyle(), '.day-now-line::before')).toContain('left: -3px')
+    it('线身让出带宽（`top: var(--day-now-band)`）且仍画到格底（`bottom: 0`）', () => {
+        const rule = cssRule(dailyStyle(), '.day-now-line')
+        expect(rule).toContain('top: var(--day-now-band)')
+        expect(rule).toContain('bottom: 0')
     })
 
-    it('12:00 ⇒ 既非 near-start 也非 near-end（默认以线为基准居中）', async () => {
-        wrapper = await mountDaily()
-        const line = wrapper.find(NOW_LINE)
-        expect(line.classes()).not.toContain('is-near-start')
-        expect(line.classes()).not.toContain('is-near-end')
-        const text = cssRule(dailyStyle(), '.day-now-line::after')
-        expect(text).toContain('transform: translateX(-50%)')
-        expect(text).toContain('top: 5px')
-    })
-})
-
-describe('T518-R3 AC6c 负向闭环（不拦截指针 / 位置不变 / 定时器唯一）', () => {
-    it('`nowLeft` 语义不变（12:00 ⇒ 50%），文本不拦截指针', async () => {
-        wrapper = await mountDaily()
-        const line = wrapper.find(NOW_LINE)
-        expect((line.element as HTMLElement).style.left).toBe('50%')
-        expect(cssRule(dailyStyle(), '.day-now-line')).toContain('pointer-events: none')
-        expect(cssRule(dailyStyle(), '.day-now-line::after')).toContain('pointer-events: none')
-        // 交互层 / 任务条结构未变（文本不是可命中元素）
-        expect(wrapper.find('.day-now-line').element.children).toHaveLength(0)
-    })
-
-    it('定时器仍只有 1 处（30s，`use-day-viewport`），模板与样式不新增定时器', () => {
-        const viewport = DAILY_RAW['../use-day-viewport.ts'] ?? ''
-        expect(viewport.length).toBeGreaterThan(0)
-        expect(countOf(viewport, 'setInterval(')).toBe(1)
-        expect(countOf(DAILY_RAW['../index.vue'] ?? '', 'setInterval(')).toBe(0)
-        expect(countOf(DAILY_RAW['../index.css'] ?? '', 'setInterval(')).toBe(0)
-        expect(viewport).toContain('30000')
-    })
-})
-
-describe('T518-R3 AC6d 设计一致性（源级：仅既有 token / 纯文字 / 无魔数色）', () => {
-    it('文本只用既有 `--nue-error-color-60`（与线 / 圆点同一 token），无 hex / rgb / hsl 字面量', () => {
-        const rule = cssRule(dailyStyle(), '.day-now-line::after')
-        expect(rule).toContain('color: var(--nue-error-color-60)')
-        expect(rule).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i)
-    })
-
-    it('纯文字：无底色 / 气泡（无 background / border / border-radius / box-shadow / padding）', () => {
-        const rule = cssRule(dailyStyle(), '.day-now-line::after')
-        expect(rule).not.toMatch(
-            /(^|[;{\s])(background|border|border-radius|box-shadow|padding)\s*:/
+    it('圆点与文本盒不重叠：文本盒底 16 ≤ 圆点顶 17（带高 24 / 圆点 7 / 文本盒底边距 8）', () => {
+        const css = dailyStyle()
+        const band = pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')
+        const bottomOffset = Number.parseFloat(
+            /bottom:\s*calc\(100% \+ ([\d.]+)px\)/.exec(cssRule(css, '.day-now-label'))![1]!
         )
-        // 字号与列头刻度一致（既有 `0.65rem`）
-        expect(rule).toContain('font-size: 0.65rem')
+        const dot = cssRule(css, '.day-now-line::before')
+        const dotTop = pxOf(dot, 'top')
+        const dotHeight = pxOf(dot, 'height')
+        expect(band).toBe(24)
+        const textBottom = band - bottomOffset
+        const dotTopY = band + dotTop
+        expect(textBottom).toBeLessThanOrEqual(dotTopY) // 不重叠
+        expect(dotTopY + dotHeight).toBeLessThanOrEqual(band) // 圆点完全在带内（R11 口径）
     })
 
-    it('对比度口径（AC6d ≥4.5:1）：浅色 5.01:1 · 深色 4.56:1（`--nue-error-color-60` over `--cal-bg`）', () => {
-        // 实测算式（hsl→sRGB→WCAG，脚本复算）：浅 hsl(10,80%,45%)=#CF3617 on #FFFFFF ⇒ 5.01；
-        // 深 hsl(10,70%,55%)=#DD573C on #1A1A1A ⇒ 4.56。更深色阶在深色模式反而更差（-70≈3.98 / -80≈3.32）
-        // ⇒ 唯一同时满足两模式的既有红色 token 即 `--nue-error-color-60`（同时与线 / 圆点同色）。
-        const rule = cssRule(dailyStyle(), '.day-now-line::after')
-        expect(rule).toContain('var(--nue-error-color-60)')
-        const LINE_RATIOS = { light: 5.01, dark: 4.56 } as const
-        for (const value of Object.values(LINE_RATIOS)) expect(value).toBeGreaterThanOrEqual(4.5)
+    it('文本盒完整落在带内（AC7a/AC7d 校准后：盒顶 0.4 ≥ 0、盒高 15.6 + 圆点 7 = 22.6 ≤ 24）', () => {
+        const css = dailyStyle()
+        const band = pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')
+        const label = cssRule(css, '.day-now-label')
+        const bottomOffset = Number.parseFloat(
+            /bottom:\s*calc\(100% \+ ([\d.]+)px\)/.exec(label)![1]!
+        )
+        const fontSizeRem = Number.parseFloat(/font-size:\s*([\d.]+)rem/.exec(label)![1]!)
+        const lineHeight = Number.parseFloat(/line-height:\s*([\d.]+)/.exec(label)![1]!)
+        const textHeight = fontSizeRem * 16 * lineHeight // 根字号 16px ⇒ 15.6px
+        const dotHeight = pxOf(cssRule(css, '.day-now-line::before'), 'height')
+        const textBottom = band - bottomOffset
+        const textTop = textBottom - textHeight
+        expect(textTop).toBeGreaterThanOrEqual(0)
+        expect(textHeight + dotHeight).toBeLessThanOrEqual(band)
+        expect(textTop).toBeCloseTo(0.4, 5)
     })
 })
 
-describe('T518-R4 AC7 泳道上方间隔带（R9 / R10；带高 24px，arch 评审版）', () => {
-    const bandPx = (): number => {
-        const raw = /--day-now-band:\s*([\d.]+)px/.exec(DAILY_RAW['../index.css'] ?? '')?.[1]
-        return Number.parseFloat(raw ?? 'NaN')
+describe('T518-R5 AC8b 视口贴边（组件级行为断言）', () => {
+    it('居中有空间 ⇒ 居中；靠右可见边缘 ⇒ 贴边；滚回中部 ⇒ 恢复居中', async () => {
+        const originalRO = globalThis.ResizeObserver
+        const widthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(40)
+        globalThis.ResizeObserver =
+            FakeResizeObserver as unknown as typeof globalThis.ResizeObserver
+        FakeResizeObserver.instances = []
+        try {
+            wrapper = await mountDaily()
+            const body = wrapper.find('.day-body').element as HTMLElement
+            Object.defineProperty(body, 'clientWidth', { value: 200, configurable: true })
+            FakeResizeObserver.instances.at(-1)!.emit() // 容器宽 200 ⇒ ×1 触下限轴 960px
+            await nextTick()
+
+            const label = wrapper.find(NOW_LABEL).element as HTMLElement
+            const transformAt = async (scrollLeft: number): Promise<string> => {
+                body.scrollLeft = scrollLeft
+                body.dispatchEvent(new Event('scroll'))
+                await nextFrame()
+                await nextTick()
+                return label.style.transform
+            }
+            // 12:00 ⇒ 线 x = 480；文本 40px（半宽 20）
+            expect(await transformAt(380)).toContain('0px') // 居中
+            // 下界 = 600 + 20 = 620 ⇒ 右移 140（文本盒左缘贴可见左边缘后仍不越界）
+            expect(await transformAt(600)).toContain('140px')
+            expect(await transformAt(380)).toContain('0px') // 滚回中部恢复居中
+        } finally {
+            globalThis.ResizeObserver = originalRO
+            widthSpy.mockRestore()
+        }
+    })
+
+    it('禁 transition / animation（与「不得抖动」冲突）', () => {
+        const rule = cssRule(dailyStyle(), '.day-now-label')
+        expect(rule).toContain('transition: none')
+        expect(rule).toContain('animation: none')
+    })
+
+    it('纯函数枚举见 `now-label.test.ts`（居中 / 左贴边 / 右贴边 / 轴端点 / 双约束 / 连续性）', () => {
+        // 本用例仅作交叉引用，防止两处口径分叉
+        expect(DAILY_RAW['../now-label.ts']).toContain('nowLabelLayoutOf')
+        expect(DAILY_RAW['../use-day-viewport.ts']).toContain('nowLabelLayoutOf(')
+    })
+})
+
+describe('T518-R5 AC8c 跟随纪律（滚动帧内无布局读取 / 定时器唯一）', () => {
+    const fnBody = (source: string, marker: string): string => {
+        const start = source.indexOf(marker)
+        if (start < 0) return ''
+        const end = source.indexOf('\n    }', start)
+        return end < 0 ? source.slice(start) : source.slice(start, end)
     }
 
+    it('`onBodyScroll` 内无 `getBoundingClientRect` / `offsetWidth` / `getComputedStyle`（只读 `scrollLeft`）', () => {
+        const body = fnBody(DAILY_RAW['../use-day-viewport.ts'] ?? '', 'const onBodyScroll = ')
+        expect(body).not.toBe('')
+        expect(body).toContain('scrollLeft')
+        expect(body).not.toMatch(/getBoundingClientRect|offsetWidth|offsetHeight|getComputedStyle/)
+        // rAF 批处理（既有纪律）
+        expect(body).toContain('requestAnimationFrame')
+    })
+
+    it('宽度缓存失效点覆盖 文本 / 档位 / 切日 / resize', () => {
+        const source = DAILY_RAW['../use-day-viewport.ts'] ?? ''
+        expect(source).toContain('measureNowLabel')
+        expect(source).toMatch(
+            /watch\(\s*\[nowText, dayZoom, containerW, \(\) => model\.value\.anchorKey\]/
+        )
+        // resize ⇒ 重测（ResizeObserver 回调内）
+        const roBody = fnBody(source, 'resizeObserver = new ResizeObserver(')
+        expect(roBody).toContain('measureNowLabel')
+    })
+
+    it('定时器仍只有 1 处（30s），模板 / 样式 / 纯函数均无定时器', () => {
+        expect(countOf(DAILY_RAW['../use-day-viewport.ts'] ?? '', 'setInterval(')).toBe(1)
+        expect(countOf(DAILY_RAW['../index.vue'] ?? '', 'setInterval(')).toBe(0)
+        expect(countOf(DAILY_RAW['../index.css'] ?? '', 'setInterval(')).toBe(0)
+        expect(countOf(DAILY_RAW['../now-label.ts'] ?? '', 'setInterval(')).toBe(0)
+    })
+})
+
+describe('T518-R5 AC8d 间隔带内不画格线（端点线保留贯穿）', () => {
+    it('`.day-axis-bg` 让带且**保留其余三边**（防层塌陷）', () => {
+        const rule = cssRule(dailyStyle(), '.day-axis-bg')
+        expect(rule).toContain('top: var(--day-now-band)')
+        expect(rule).toContain('right: 0')
+        expect(rule).toContain('bottom: 0')
+        expect(rule).toContain('left: 0')
+        // 注释里提到 track 用的 `inset: 0` 不算声明 ⇒ 只查真正的声明行
+        expect(rule).not.toMatch(/^\s*inset\s*:/m)
+    })
+
+    it('`.day-axis-endpoint` 仍贯穿整列（`top: 0`、不消费带高）', () => {
+        const rule = cssRule(dailyStyle(), '.day-axis-endpoint')
+        expect(rule).toContain('top: 0')
+        expect(rule).not.toContain('day-now-band')
+    })
+
+    it('`.day-axis-track` 保持 `inset: 0`（arch 裁定：唯一消费方是 `rect.width`）', () => {
+        const rule = cssRule(dailyStyle(), '.day-axis-track')
+        expect(rule).toContain('inset: 0')
+        expect(rule).not.toContain('day-now-band')
+    })
+
+    it('带下缘不补横线（不新增分隔线：`.day-grid` 无 border / 无新伪元素）', () => {
+        const rule = cssRule(dailyStyle(), '.day-grid')
+        expect(rule).not.toMatch(/border/)
+        expect(cssRule(dailyStyle(), '.day-grid::after')).toBe('')
+    })
+})
+
+describe('T518-R4 AC7 间隔带（24px 单一来源 / 恒定 / lane 相对映射不变）', () => {
     it('AC7d 带高单一来源：`--day-now-band` 定义仅 1 处（24px），只有泳道层消费该变量', () => {
         const css = DAILY_RAW['../index.css'] ?? ''
         expect(countOf(css, '--day-now-band:')).toBe(1)
-        expect(bandPx()).toBe(24)
-        expect(countOf(css, 'var(--day-now-band)')).toBe(1)
-        const lanes = cssRule(css, '.day-grid .cal-lanes')
-        expect(lanes).toContain('top: var(--day-now-band)')
-        expect(lanes.match(/\d+px/)).toBeNull()
-        // arch 口径：`.day-axis-bg` / `.day-axis-track` 覆盖整列、**不下移**；间隔带不靠 padding 实现
-        for (const selector of ['.day-axis-bg', '.day-axis-track']) {
-            const rule = cssRule(css, selector)
-            expect(rule, selector).toContain('inset: 0')
-            expect(rule, selector).not.toContain('--day-now-band')
-        }
+        expect(pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')).toBe(24)
+        expect(countOf(css, 'var(--day-now-band)')).toBe(3) // 泳道层 / 格线层 / 线身
+        expect(cssRule(css, '.day-grid .cal-lanes')).toContain('top: var(--day-now-band)')
         expect(cssRule(css, '.day-grid')).not.toMatch(/padding-top/)
-        for (const selector of ['.day-axis-endpoint', '.day-drag-snap-line']) {
-            expect(cssRule(css, selector), selector).not.toContain('--day-now-band')
-            expect(cssRule(css, selector), selector).toContain('top: 0')
-        }
     })
 
-    it('AC7a 整个文本盒（top + line-height）完整落在带内：5 + 15.6 = 20.6px ≤ 24px', () => {
-        const text = cssRule(DAILY_RAW['../index.css'] ?? '', '.day-now-line::after')
-        const top = Number.parseFloat(/top:\s*([\d.]+)px/.exec(text)![1]!)
-        const fontSizeRem = Number.parseFloat(/font-size:\s*([\d.]+)rem/.exec(text)![1]!)
-        const lineHeight = Number.parseFloat(/line-height:\s*([\d.]+)/.exec(text)![1]!)
-        // 根字号 16px（`--nue-primary-font-size-base`）⇒ 行高 0.65 × 16 × 1.5 = 15.6px
-        const textBottom = top + fontSizeRem * 16 * lineHeight
-        expect(top).toBe(5)
-        expect(textBottom).toBeCloseTo(20.6, 5)
-        expect(textBottom).toBeLessThanOrEqual(bandPx())
-    })
-
-    it('AC7a 带恒定存在：非今天无文本，泳道层仍在且偏移规则无条件（不随今天切换跳动）', async () => {
+    it('AC7a 带恒定存在：非今天无文本，泳道层仍在且偏移规则无条件', async () => {
         const css = DAILY_RAW['../index.css'] ?? ''
         expect(cssRule(css, '.day-grid .cal-lanes')).not.toMatch(/is-today|day-now-line/)
         wrapper = await mountDaily()
@@ -295,26 +351,21 @@ describe('T518-R4 AC7 泳道上方间隔带（R9 / R10；带高 24px，arch 评�
         expect(wrapper.find('.day-grid .cal-lanes').exists()).toBe(true)
     })
 
-    it('AC7b 贴端时文本纵向不变（不进入泳道），圆点与线同轴心（R3 位移规则已删）', () => {
+    it('AC7b 贴端只影响横向（文本纵向不进入泳道）；圆点恒与线同轴心 `left: -3px`', () => {
         const css = DAILY_RAW['../index.css'] ?? ''
-        for (const cls of ['is-near-start', 'is-near-end']) {
-            const rule = cssRule(css, `.day-now-line.${cls}::after`)
-            expect(rule, cls).not.toBe('')
-            expect(rule, cls).not.toMatch(/(^|[;\s])top\s*:/) // 纵向不随贴端改变
-            expect(rule, cls).not.toMatch(/bottom\s*:/)
-        }
-        expect(cssRule(css, '.day-now-line::before')).toContain('left: -3px')
-        expect(cssRule(css, '.day-now-line.is-near-start::before')).toBe('')
-        expect(cssRule(css, '.day-now-line.is-near-end::before')).toBe('')
+        // 贴端类不再携带纵向 / 位移样式（横向钳制已统一到 JS）
+        expect(cssRule(css, '.day-now-label.is-near-start')).toBe('')
+        expect(cssRule(css, '.day-now-label.is-near-end')).toBe('')
+        const dot = cssRule(css, '.day-now-line::before')
+        expect(dot).toContain('left: -3px')
+        expect(dot).toContain('top: -7px')
     })
 
-    it('AC7c lane → 纵坐标相对映射不变：任务条自身 top 仍为 lane × 步长（位移由泳道层承担）', async () => {
+    it('AC7c lane → 纵坐标相对映射不变：任务条自身 top 仍为 lane × 步长', async () => {
         wrapper = await mountDaily([TASK_AT_0900])
         const seg = wrapper.find('[data-testid="day-task"]').element.parentElement as HTMLElement
         expect(seg.classList.contains('day-seg')).toBe(true)
-        expect(seg.style.top).toBe('0px') // lane 0 ⇒ 与改动前逐字节一致（下移由 .cal-lanes 承担）
-        expect(cssRule(dailyStyle(), '.day-grid .cal-lanes')).toContain('top: var(--day-now-band)')
-        // 拖拽 / 缩放换算只读横向基准（X）⇒ 纵向整体下移不参与时间计算
+        expect(seg.style.top).toBe('0px')
         const drag = DAILY_RAW['../use-day-drag.ts'] ?? ''
         expect(drag).toContain('rect.width / DAY_MINUTES')
         expect(drag).not.toMatch(/rect\.top/)
@@ -322,12 +373,27 @@ describe('T518-R4 AC7 泳道上方间隔带（R9 / R10；带高 24px，arch 评�
             'segmentStyleInColumns(seg, model.value.columns.length, 0)'
         )
     })
+})
 
-    it('AC7c 零 DOM：间隔带纯 CSS 承载（无「带」元素、now-line 仍无子节点）', async () => {
+describe('T518-R3 AC6c / AC6d 负向闭环与设计一致性', () => {
+    it('AC6c `nowLeft` 语义不变（12:00 ⇒ 50%），线 / 文本均不拦截指针', async () => {
         wrapper = await mountDaily()
-        const grid = wrapper.find('.day-grid').element
-        expect(grid.querySelector('[class*="strip"]')).toBeNull()
-        expect(grid.querySelectorAll('[data-testid^="day-now-strip"]')).toHaveLength(0)
-        expect(wrapper.find(NOW_LINE).element.children).toHaveLength(0)
+        expect((wrapper.find(NOW_LINE).element as HTMLElement).style.left).toBe('50%')
+        expect(cssRule(dailyStyle(), '.day-now-line')).toContain('pointer-events: none')
+        expect(cssRule(dailyStyle(), '.day-now-label')).toContain('pointer-events: none')
+    })
+
+    it('AC6d 文本仅用既有 `--nue-error-color-60`，无 hex / rgb / hsl、无底色 / 气泡 / padding', () => {
+        const rule = cssRule(dailyStyle(), '.day-now-label')
+        expect(rule).toContain('color: var(--nue-error-color-60)')
+        expect(rule).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i)
+        expect(rule).not.toMatch(
+            /(^|[;{\s])(background|border|border-radius|box-shadow|padding)\s*:/
+        )
+        expect(rule).toContain('font-size: 0.65rem')
+        // 圆点仍在（R8：保留既有顶部圆点）
+        expect(cssRule(dailyStyle(), '.day-now-line::before')).toContain(
+            'background: var(--nue-error-color-60)'
+        )
     })
 })

@@ -221,8 +221,13 @@
 /* 背景层：定位层（格线由共享类 .day-col-lines 提供，禁 48×N DOM，C6） */
 .day-axis-bg {
     position: absolute;
-    inset: 0;
-    /* R9：格线层**不下移**（覆盖含间隔带在内的整列，arch 2026-10-21 口径） */
+    /* R11 / AC8d（T518-R5）：内部格线**让出间隔带**（带内保持空白）。
+       ⚠️ 只写 `top` 会丢掉其余三边 ⇒ 层塌陷 ⇒ 必须显式给 `right/bottom/left`（arch 2026-10-21 提醒）。
+       `.day-axis-track` 保持 `inset: 0`（唯一消费方是 `rect.width`，纵向无消费方 ⇒ 不下移，arch 裁定）。 */
+    top: var(--day-now-band);
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 0;
     pointer-events: none;
 }
@@ -312,17 +317,20 @@
 
 .day-now-line {
     position: absolute;
-    top: 0;
+    /* R11 / AC8a：**线身让出间隔带**（从带底起画，视觉上「文本在线头正上方」）；`bottom: 0` 保留 ⇒ 画到格底 */
+    top: var(--day-now-band);
     bottom: 0;
     width: 1px;
     background: var(--nue-error-color-60);
     pointer-events: none;
 }
 
+/* 圆点（R10：恒与线同轴心 `left: -3px`；R11：`top: -7px` ⇒ 完全落在间隔带内、底边正贴线头，
+   既不出带也不压线头；7px 圆点 + 15.6px 文本盒 = 22.6px ≤ 24px 带高，余 1.4px（AC7d） */
 .day-now-line::before {
     content: '';
     position: absolute;
-    top: -3px;
+    top: -7px;
     left: -3px;
     width: 7px;
     height: 7px;
@@ -330,37 +338,24 @@
     background: var(--nue-error-color-60);
 }
 
-/* 当前时刻文本（R8 / AC6a）：落在泳道区上方的「间隔带」内（R9/AC7a：垂直不进入泳道）；
-   纯文字（无底色 / 气泡、无 padding）；文本由 `attr(data-now)` 提供（零额外 DOM，jsdom 也可断言 `data-now`）；
-   默认以线为基准居中（与 `.day-col-label` 同手法，不额外引入半像素偏移）；
-   `pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；随内容横向滚动（父绝对定位 ⇒ 非 sticky）。
-   颜色 = 线的同一 token `--nue-error-color-60`：对日历底色实测对比度 **5.01:1（浅）/ 4.56:1（深）** ⇒ 文本 ≥4.5:1（AC6d）；
-   更深色阶反而在深色模式下更差（-70 ≈3.98 / -80 ≈3.32 / -90 ≈2.76），故不做替换。 */
-.day-now-line::after {
-    content: attr(data-now);
+/* 当前时刻文本（R8 / AC6a + R11 / AC8a）：位于**线头正上方**的间隔带内（`bottom: calc(100% + 8px)`：
+   带高 24 − 8 = 16 为文本盒底边 ⇒ 盒顶 16 − 15.6 = 0.4 ≥ 0；圆点占带底 7px ⇒ 两者间隙 1px，互不重叠）。
+   水平：`left: 0` 起于线 x，位移由 inline `transform` 给出（`-50%` 居中 + 视口/轴端点钳制，见 `now-label.ts`）；
+   **纯文字**（无底色 / 气泡 / padding）；`pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；
+   **禁 `transition` / `animation`**（AC8b：与「不得抖动」直接冲突）。
+   颜色 = 线的同一 token `--nue-error-color-60`：对日历底色实测 **5.01:1（浅）/ 4.56:1（深）** ⇒ ≥4.5:1（AC6d）；
+   更深色阶在深色模式反而更差（-70 ≈3.98 / -80 ≈3.32 / -90 ≈2.76），故不替换。 */
+.day-now-label {
     position: absolute;
-    top: 5px;
     left: 0;
-    transform: translateX(-50%);
+    bottom: calc(100% + 8px);
     font-size: 0.65rem;
     line-height: 1.5;
     white-space: nowrap;
     color: var(--nue-error-color-60);
     pointer-events: none;
-}
-
-/* AC6b 边界（保留）：贴轴左端（00:00–00:30）⇒ 文本改为从左缘起排（不再居中溢出）；纵向不变（仍在间隔带内）。
-   R10（T518-R4）：**只移文本、不移圆点** —— 圆点恒 `left: -3px`，与线水平同轴心。 */
-.day-now-line.is-near-start::after {
-    left: 0;
-    transform: none;
-}
-
-/* AC6b 边界（保留）：贴轴右端（23:30–24:00）⇒ 文本改为右缘对齐线（`right: 1px` = 线自身宽）⇒ 不越轴终点；纵向不变。 */
-.day-now-line.is-near-end::after {
-    left: auto;
-    right: 1px;
-    transform: none;
+    transition: none;
+    animation: none;
 }
 
 .day-state {
