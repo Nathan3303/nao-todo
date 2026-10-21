@@ -252,3 +252,58 @@ describe('TASK-20 AC8 SFC 拆分契约（≤400 行 / sticky 锚定链）', () =
         expect(block).toContain('clip-path')
     })
 })
+
+describe('T518-R7 AC9 全天泳道置顶（R12：用户手工调整后纳入）', () => {
+    const ALLDAY_TASK = {
+        id: 'ad',
+        name: '全天任务',
+        state: 'todo',
+        priority: 'low',
+        startAt: null,
+        endAt: `${TODAY} 10:00:00`,
+        createdAt: '2026-09-01 00:00:00',
+        tags: []
+    } as unknown as TaskViewObject
+
+    it('`.day-scroll` 直接子节点顺序 = 全天泳道 → divider → 列头 → 网格', () => {
+        const wrapper = mountDaily(undefined, [ALLDAY_TASK])
+        const scroll = wrapper.find('.day-scroll').element
+        const children = Array.from(scroll.children)
+        const laneIdx = children.findIndex((el) => el.classList.contains('day-allday-lane'))
+        const headIdx = children.findIndex((el) => el.classList.contains('day-cols-head'))
+        const gridIdx = children.findIndex((el) => el.classList.contains('day-grid'))
+        // `nue-divider` 在未注册 nueUI 的挂载里是未解析的自定义元素，注册后为 `.nue-divider` ⇒ 两者都认
+        const dividerIdx = children.findIndex(
+            (el) => el.tagName === 'NUE-DIVIDER' || el.classList.contains('nue-divider')
+        )
+        expect(laneIdx).toBe(0)
+        expect(dividerIdx).toBe(1)
+        expect(headIdx).toBe(2)
+        expect(gridIdx).toBe(3)
+        wrapper.unmount()
+    })
+
+    it('「全天」文字标签不存在（R12 移除），但原因说明保留（data-allday-reason + title 后缀）', () => {
+        const wrapper = mountDaily(undefined, [ALLDAY_TASK])
+        const lane = wrapper.find('.day-allday-lane')
+        expect(lane.exists()).toBe(true)
+        expect(lane.find('.day-allday-label').exists()).toBe(false)
+        // 不得存在「纯文案 = 全天」的元素（任务名可能含「全天」二字，故按整段文本比对）
+        const labelLike = Array.from(lane.element.querySelectorAll('*')).filter(
+            (el) => (el.textContent ?? '').trim() === '全天' && el.children.length === 0
+        )
+        expect(labelLike).toHaveLength(0)
+        const bar = lane.find('.cal-item')
+        expect(bar.exists()).toBe(true)
+        expect(bar.attributes('data-allday-reason')).toBe('end-only')
+        expect(bar.attributes('title') ?? '').toContain('仅设了截止时间')
+        wrapper.unmount()
+    })
+
+    it('列头子节点数仍 = 列数（既有冻结契约不破）', () => {
+        const wrapper = mountDaily()
+        const heads = Array.from(wrapper.find('[data-testid="day-columns"]').element.children)
+        expect(heads).toHaveLength(48)
+        wrapper.unmount()
+    })
+})

@@ -2,17 +2,17 @@
     height: 100%;
     background: var(--cal-bg);
     overflow: hidden;
-    /* R9（T518-R4 / T518-R5c）：泳道区上方「间隔带」高度 —— **单一来源**（全仓仅此一处定义，日视图根作用域）。
-       推导：文本盒高 = `0.65rem × 1.5 = 0.975 × 根字号`；文本盒底 = 带高 − 8（`.day-now-label` 的 bottom 偏移）
-       ⇒ 需 `带高 − 8 ≥ 0.975 × 根字号`。仓内**没有**根字号声明（`html` 上无 `font-size`；`:root` 只定义
-       `--nue-primary-font-size` 变量，与 `rem` 无关）⇒ 真实根字号 = 浏览器默认值、**用户可改**：
-       24px 只容忍到 16.4px（+2.5%），故取 **26px** ⇒ 容忍根字号 **≤ 18.46px（+15%）**；
-       仍为整数 px（不引入子像素 ⇒ 泳道 / 任务条边缘不抗锯齿抖动）。
-       ⛔ 不用 `calc(0.975rem + …)` 随根字号缩放（会产生子像素带高）；⛔ 文本 `font-size` 不改 px（伤可访问性缩放）。
-       残留上限：根字号 ≥20px（+25%）仍会越带，届时重估带高（PRD §9 已登记）。
+    /* R9 / R13（T518-R4 / R7）：泳道区上方「间隔带」高度 —— **单一来源**（全仓仅此一处定义，日视图根作用域）。
+       几何硬约束：`文本盒(0.65rem × 1.3 = 0.845 × 根字号) + 圆点 7 + 间隙 1 ≤ 带高`。
+       仓内**没有**根字号声明（`html` 上无 `font-size`；`:root` 只定义 `--nue-primary-font-size` 变量，
+       与 `rem` 无关）⇒ 真实根字号 = 浏览器默认值、**用户可改**：
+       16px 装不下（13.52 + 8 = 21.52 > 16）；21/22px 能装但根字号容忍上限仅 +3.6%（= arch 指出的「假绿」区）；
+       `8 + 0.845 × 16 × 1.15 = 23.55` ⇒ **24px 是保住「根字号 +15%」的最紧值**（实测上限 **18.93px / +18%**）。
+       ⛔ 不用 `calc(0.845rem + …)` 随根字号缩放（会产生子像素带高 ⇒ 泳道 / 任务条边缘抗锯齿抖动）；
+       ⛔ 文本 `font-size` 不改 px（伤可访问性缩放）。残留上限：根字号 ≥20px（+25%）仍会越带，届时重估带高。
        只有**泳道层**（`.day-grid .cal-lanes`）整体下移该高度；`.day-axis-bg` / `.day-axis-track` 仍覆盖整列、
        任务条的 lane → 纵坐标相对映射不变（`topOffset` 仍为 0，C1）。 */
-    --day-now-band: 26px;
+    --day-now-band: 24px;
 }
 
 .day-allday-lane {
@@ -327,12 +327,15 @@
     top: var(--day-now-band);
     bottom: 0;
     width: 1px;
-    background: var(--nue-error-color-60);
+    /* T518-R6（用户裁定「不要红色」）：线与文本同取中性深灰 `--cal-fg`
+       （= `--nue-primary-text-color` = `primary-color-800`；浅色 ≈12.6:1、深色自动升 l80 ≈10:1
+       ⇒ 图形 ≥3:1、文本 ≥4.5:1 双重达标） */
+    background: var(--cal-fg);
     pointer-events: none;
 }
 
 /* 圆点（R10：恒与线同轴心 `left: -3px`；R11：`top: -7px` ⇒ 完全落在间隔带内、底边正贴线头，
-   既不出带也不压线头；7px 圆点 + 15.6px 文本盒（根字号 16 时）= 22.6px ≤ 26px 带高，余 3.4px（AC7d） */
+   既不出带也不压线头；7px 圆点 + 13.52px 文本盒（根字号 16 / lh 1.3）= 20.52px ≤ 24px 带高，余 3.48px（AC7d） */
 .day-now-line::before {
     content: '';
     position: absolute;
@@ -341,28 +344,31 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--nue-error-color-60);
+    background: var(--cal-fg);
 }
 
 /* 当前时刻文本（R8 / AC6a + R11 / AC8a）：位于**线头正上方**的间隔带内（`bottom: calc(100% + 8px)`：
-   带高 26 − 8 = 18 为文本盒底边 ⇒ 盒顶 18 − 15.6 = 2.4 ≥ 0（根字号 16 时）；圆点占带底 7px
-   （19–26）⇒ 与文本盒底（18）间隙 1px，互不重叠；根字号放大到 ≤18.46px 仍不越带）。
+   带高 24 − 8 = 16 为文本盒底边 ⇒ 盒顶 16 − 13.52 = 2.48 ≥ 0（根字号 16 / lh 1.3 时）；圆点占带内
+   `[17, 24]` ⇒ 与文本盒底（16）间隙 1px，互不重叠；根字号放大到 ≤18.93px 仍不越带）。
+   `padding: 0 var(--nue-padding-sm)` 为用户手工试验所加、R7 采纳（横向呼吸）；**已计入视口贴边测量**
+   （`offsetWidth` 天然含 padding ⇒ `nowLabelLayoutOf` 拿到的是含 padding 的实际盒宽）。
    水平：`left: 0` 起于线 x，位移由 inline `transform` 给出（`-50%` 居中 + 视口/轴端点钳制，见 `now-label.ts`）；
-   **纯文字**（无底色 / 气泡 / padding）；`pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；
+   **纯文字**（无底色 / 边框 / 圆角 / 阴影；横向 padding 见下）；`pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；
    **禁 `transition` / `animation`**（AC8b：与「不得抖动」直接冲突）。
-   颜色 = 线的同一 token `--nue-error-color-60`：对日历底色实测 **5.01:1（浅）/ 4.56:1（深）** ⇒ ≥4.5:1（AC6d）；
-   更深色阶在深色模式反而更差（-70 ≈3.98 / -80 ≈3.32 / -90 ≈2.76），故不替换。 */
+   颜色 = 与线 / 圆点同一 token `--cal-fg`（T518-R6 换色）：对日历底色浅色 ≈ **12.6:1**、深色 ≈ **10:1**
+   ⇒ 文本 ≥4.5:1、图形 ≥3:1 双重达标（AC6d）。 */
 .day-now-label {
     position: absolute;
     left: 0;
     bottom: calc(100% + 8px);
     font-size: 0.65rem;
-    line-height: 1.5;
+    line-height: 1.3;
     white-space: nowrap;
-    color: var(--nue-error-color-60);
+    color: var(--cal-fg);
     pointer-events: none;
     transition: none;
     animation: none;
+    padding: 0 var(--nue-padding-sm);
 }
 
 .day-state {

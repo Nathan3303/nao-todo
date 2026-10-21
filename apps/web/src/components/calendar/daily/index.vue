@@ -176,6 +176,31 @@ const switchFromDay = (name: CalendarViewName): void => {
                 @scroll="onBodyScroll"
             >
                 <div ref="scrollEl" class="day-scroll" :style="{ width: scrollWidthCss }">
+                    <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接）
+                         只读任务条（C6）：复用 task-bar、无手柄；原因分档由 data-allday-reason 承载 -->
+                    <div class="day-allday-lane day-col-lines" :class="gridLineModifier">
+                        <div class="day-allday-inner">
+                            <!-- <span class="day-allday-label">{{ t('calendar.allDay') }}</span> -->
+                            <div class="day-allday-items">
+                                <div
+                                    v-for="task in model.allDay"
+                                    :key="task.id"
+                                    class="day-allday-slot"
+                                >
+                                    <task-bar
+                                        class="day-allday-item"
+                                        :task="task"
+                                        :pos="{ left: '0', width: '100%', top: '0' }"
+                                        sticky-label
+                                        :title-suffix="ALLDAY_REASON_TEXT[alldayReasonOf(task)]"
+                                        :data-allday-reason="alldayReasonOf(task)"
+                                        @open="onOpenTask(task.id)"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <nue-divider />
                     <!-- 列头：垂直固定（sticky）、随内容层横向滚动；直接子节点数 = 列数 -->
                     <div
                         class="day-cols-head"
@@ -216,31 +241,6 @@ const switchFromDay = (name: CalendarViewName): void => {
                             >
                         </div>
                     </div>
-                    <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接）
-                         只读任务条（C6）：复用 task-bar、无手柄；原因分档由 data-allday-reason 承载 -->
-                    <div class="day-allday-lane day-col-lines" :class="gridLineModifier">
-                        <div class="day-allday-inner">
-                            <span class="day-allday-label">{{ t('calendar.allDay') }}</span>
-                            <div class="day-allday-items">
-                                <div
-                                    v-for="task in model.allDay"
-                                    :key="task.id"
-                                    class="day-allday-slot"
-                                >
-                                    <task-bar
-                                        class="day-allday-item"
-                                        :task="task"
-                                        :pos="{ left: '0', width: '100%', top: '0' }"
-                                        sticky-label
-                                        :title-suffix="ALLDAY_REASON_TEXT[alldayReasonOf(task)]"
-                                        :data-allday-reason="alldayReasonOf(task)"
-                                        @open="onOpenTask(task.id)"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <nue-divider />
                     <!-- 网格：仅 1 个背景层（禁 列数×N DOM，C6）；格线用 CSS 渐变 -->
                     <div class="day-grid">
                         <div
