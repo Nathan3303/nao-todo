@@ -245,7 +245,7 @@ const switchFromDay = (name: CalendarViewName): void => {
                             :class="gridLineModifier"
                             data-testid="day-axis-bg"
                         ></div>
-                        <!-- 轴端点边界线（R1 / R5）：00:00 与 24:00 各 1 条（2px，比内部小时线更重）；
+                        <!-- 轴端点边界线（R1 / R5）：00:00 与 24:00 各 1 条（1px = 与内部小时线同粗细，仅以更深颜色区分，T518-R2）；
                              位置由模型端点语义给出（`.is-start` = 轴起点 / `.is-end` = 轴终点），CSS 不写端点魔数（R6）；
                              DOM 增量恒为 2（与列数无关，NFR） -->
                         <span

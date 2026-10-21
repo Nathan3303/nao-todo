@@ -17,7 +17,8 @@ import { MIN_DAY_COLUMN_PX, dayAxisSpecOf, dayScrollWidthCss, type DayZoom } fro
  *  - AC2：首帧未测量（容器宽 ≤ 0 ⇒ 宽度回退 `列数 × 20px`）端点仍在、不丢失；
  *  - AC3：5 档 × {触下限列宽, 宽屏列宽} 枚举，末标签型式随档位（×1/×1.5 = `24`，×2/×3/×4 = `24:00`）；
  *  - AC4：回归基线 —— 内部格线修饰类 / `.day-axis-bg` 无子节点 / 刻度新建入口数量零变化；
- *  - AC5：端点样式仅用既有 `--cal-*`（无新增 token / 无 hex 字面量）、整像素落位、端标签非交互。
+ *  - AC5：端点样式仅用既有 `--cal-*`（无新增 token / 无 hex 字面量）、整像素落位、端标签非交互；
+ *    **T518-R2**：端点线 `1px`（与内部小时线同粗细）+ 颜色不变；端标签 `padding: 0` / 首标签 `padding-left: 0`（贴边）。
  */
 
 const ANCHOR = '2026-09-21'
@@ -297,13 +298,17 @@ describe('T518 AC4 回归基线（内部格线 / 列头结构零变化）', () =
 })
 
 describe('T518 AC5 设计一致性（源级：复用 `--cal-*` / 整像素 / 日视图限定）', () => {
-    it('端点线：仅既有 `--cal-*`（无 hex / rgb / hsl 字面量）、2px 比内部小时线（1px）更重、锚在轴两端', () => {
+    it('端点线：仅既有 `--cal-*`（无 hex / rgb / hsl 字面量）、**与内部小时线同粗细（1px，T518-R2）**、锚在轴两端', () => {
         const css = dailyStyle()
         const base = cssRule(css, '.day-axis-endpoint')
         expect(base).not.toBe('')
-        expect(base).toContain('width: 2px')
+        // T518-R2（R1 修订）：`2px → 1px`（与内部小时线同粗细），仅靠颜色区分
+        expect(base).toMatch(/width:\s*1px;/)
+        expect(base).not.toMatch(/width:\s*2px/)
         expect(base).toContain('var(--cal-fg)')
         expect(base).toContain('var(--cal-bg)')
+        // R2 修订：**颜色一字不改**（更深的 `--cal-fg` 55% over `--cal-bg`）
+        expect(base).toContain('background: color-mix(in srgb, var(--cal-fg) 55%, var(--cal-bg));')
         expect(base).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i)
         expect(base).toContain('pointer-events: none')
 
@@ -322,6 +327,20 @@ describe('T518 AC5 设计一致性（源级：复用 `--cal-*` / 整像素 / 日
         expect(label).toContain('white-space: nowrap')
         expect(label).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i)
         expect(cssRule(css, '.day-col-head.is-axis-end')).toContain('var(--cal-fg)')
+    })
+
+    it('T518-R2 端标签贴边：末标签 `padding: 0`、首标签 `padding-left: 0`（中间标签 `0 6px` 不变）', () => {
+        const css = dailyStyle()
+        // 末标签：`24` 文字右缘贴轴右端（不能是 `0 6px`）
+        const endLabel = cssRule(css, '.day-col-head.is-axis-end .day-axis-end-label')
+        expect(endLabel).toMatch(/padding:\s*0\s*;/)
+        expect(endLabel).not.toMatch(/padding:\s*0\s+6px/)
+        // 首标签：`00` 文字左缘贴轴左端；右侧 padding 保留（点击热区）
+        const firstLabel = cssRule(css, '.day-col-head.is-first-tick .day-col-label')
+        expect(firstLabel).toContain('padding-left: 0')
+        expect(firstLabel).not.toMatch(/padding-right:\s*0\s*;/)
+        // 中间标签维持现状
+        expect(cssRule(css, '.day-col-label')).toMatch(/padding:\s*0\s+6px\s*;/)
     })
 
     it('R5 作用域限定：周 / 月 / 宿主视图零引用端点类名（不继承）', () => {
