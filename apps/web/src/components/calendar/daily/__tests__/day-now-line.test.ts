@@ -351,12 +351,35 @@ describe('T518-R4 AC7 间隔带（24px 单一来源 / 恒定 / lane 相对映射
         expect(wrapper.find('.day-grid .cal-lanes').exists()).toBe(true)
     })
 
-    it('AC7b 贴端只影响横向（文本纵向不进入泳道）；圆点恒与线同轴心 `left: -3px`', () => {
-        const css = DAILY_RAW['../index.css'] ?? ''
-        // 贴端类不再携带纵向 / 位移样式（横向钳制已统一到 JS）
-        expect(cssRule(css, '.day-now-label.is-near-start')).toBe('')
-        expect(cssRule(css, '.day-now-label.is-near-end')).toBe('')
-        const dot = cssRule(css, '.day-now-line::before')
+    it('AC7b / R5b 贴端类名整组删除（轴端约束已在纯函数内）⇒ 源码 0 处 + 组件 classList 不含', async () => {
+        const sources = [
+            ['index.vue', DAILY_RAW['../index.vue'] ?? ''],
+            ['index.css', DAILY_RAW['../index.css'] ?? ''],
+            ['use-day-viewport.ts', DAILY_RAW['../use-day-viewport.ts'] ?? '']
+        ] as const
+        for (const [name, source] of sources) {
+            expect(source.length, name).toBeGreaterThan(0)
+            expect(countOf(source, 'is-near-start'), name).toBe(0)
+            expect(countOf(source, 'is-near-end'), name).toBe(0)
+        }
+        // 孤儿符号（`nowEdge` / 阈值常量）一并清除，防死代码回流
+        const viewport = DAILY_RAW['../use-day-viewport.ts'] ?? ''
+        expect(countOf(viewport, 'nowEdge')).toBe(0)
+        expect(countOf(viewport, 'NOW_EDGE_MINUTES')).toBe(0)
+
+        // 组件断言：常态（12:00）与 R3 时代会加类的时刻（00:05）都不带这两个类名
+        wrapper = await mountDaily()
+        expect(wrapper.find(NOW_LINE).classes()).not.toContain('is-near-start')
+        expect(wrapper.find(NOW_LINE).classes()).not.toContain('is-near-end')
+        wrapper.unmount()
+        wrapper = null
+        freezeAt('2026-09-21T00:05:00')
+        wrapper = await mountDaily()
+        expect(wrapper.find(NOW_LINE).classes()).not.toContain('is-near-start')
+        expect(wrapper.find(NOW_LINE).classes()).not.toContain('is-near-end')
+
+        // 圆点恒与线同轴心（R10）且在带内（R11）
+        const dot = cssRule(DAILY_RAW['../index.css'] ?? '', '.day-now-line::before')
         expect(dot).toContain('left: -3px')
         expect(dot).toContain('top: -7px')
     })

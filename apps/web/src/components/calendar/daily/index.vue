@@ -82,7 +82,6 @@ const {
     onWheel,
     nowLeft,
     nowText,
-    nowEdge,
     nowLabelEl,
     nowLabelTransform,
     isPanning,
@@ -307,10 +306,6 @@ const switchFromDay = (name: CalendarViewName): void => {
                         <div
                             v-if="model.isToday"
                             class="day-now-line"
-                            :class="{
-                                'is-near-start': nowEdge === 'start',
-                                'is-near-end': nowEdge === 'end'
-                            }"
                             :data-now="nowText"
                             :style="{ left: nowLeft }"
                             aria-hidden="true"

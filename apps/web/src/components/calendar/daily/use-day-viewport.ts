@@ -32,9 +32,6 @@ export type DayViewportDeps = {
     setDayZoom?: (zoom: DayZoom) => void
 }
 
-/** 当前时间标注的贴端阈值（分钟）：`00:00–00:30` / `23:30–24:00`（PRD AC6b） */
-const NOW_EDGE_MINUTES = 30
-
 export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) => {
     // @states 滚动宿主（`.day-body` 双轴滚动容器）与横向内容层（`.day-scroll`）
     const bodyEl = ref<HTMLElement | null>(null)
@@ -119,14 +116,6 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
     // @computed 当前时刻文本（R8 / AC6a）：恒 `HH:mm`（两位补零、不随档位简化；dayjs 的分钟占位符是 `mm`）
     //          沿用既有 `now` 时基（30s）⇒ **不新增定时器**
     const nowText = computed(() => now.value.format('HH:mm'))
-
-    // @computed 当前时刻是否贴近轴端（AC6b：`00:00–00:30` / `23:30–24:00`）—— 语义标记，
-    //          实际横向钳制由 `nowLabelTransform`（轴端点 ⊕ 视口，取更严格者）统一计算（R11）
-    const nowEdge = computed<'start' | 'end' | 'center'>(() => {
-        if (nowMinutes.value <= NOW_EDGE_MINUTES) return 'start'
-        if (nowMinutes.value >= DAY_MINUTES - NOW_EDGE_MINUTES) return 'end'
-        return 'center'
-    })
 
     // —— R11 / AC8a·AC8b：文本宽度缓存 + 视口贴边（禁在滚动 / 拖拽帧内读布局） ——
     // 宽度缓存 ==**只在三个时机重测**：① 挂载后首帧 ② `nowText` / 档位 / 容器宽变化 ③ 切日（`anchorKey`）。
@@ -244,7 +233,6 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         onWheel,
         nowLeft,
         nowText,
-        nowEdge,
         nowLabelEl,
         nowLabelTransform,
         isPanning,
