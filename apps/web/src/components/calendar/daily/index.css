@@ -13,7 +13,7 @@
        ⛔ 文本 `font-size` 不改 px（伤可访问性缩放）。残留上限：根字号 ≥20.12px 仍会越带，届时重估带高。
        只有**泳道层**（`.day-grid .cal-lanes`）整体下移该高度；`.day-axis-bg` / `.day-axis-track` 仍覆盖整列、
        任务条的 lane → 纵坐标相对映射不变（`topOffset` 仍为 0，C1）。 */
-    --day-now-band: 18px;
+    --day-now-band: 12px;
 }
 
 .day-allday-lane {
@@ -325,7 +325,7 @@
 .day-now-line {
     position: absolute;
     /* R11 / AC8a：**线身让出间隔带**（从带底起画，视觉上「文本在线头正上方」）；`bottom: 0` 保留 ⇒ 画到格底 */
-    top: var(--day-now-band);
+    top: 2px;
     bottom: 0;
     width: 1px;
     /* T518-R6（用户裁定「不要红色」）：线与文本同取中性深灰 `--cal-fg`
@@ -365,9 +365,9 @@
 .day-now-label {
     position: absolute;
     left: 0;
-    top: 0;
+    top: -10px;
     font-size: 0.65rem;
-    line-height: 1.3;
+    line-height: 1;
     white-space: nowrap;
     color: var(--cal-fg);
     pointer-events: none;
