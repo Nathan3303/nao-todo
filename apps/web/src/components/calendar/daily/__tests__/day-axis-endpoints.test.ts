@@ -12,6 +12,8 @@ import { MIN_DAY_COLUMN_PX, dayAxisSpecOf, dayScrollWidthCss, type DayZoom } fro
  * T518 / DEF-78 日视图时间轴端点（PRD `docs/prds/2026-10-21-day-axis-endpoints.md` §5 R1–R6 / §7 AC1–AC5）
  * @description 只测**可断言部分**（结构 + 行为自证）；纯视觉观感（线重 / 留白 / 是否「收住」）由用户勾选。
  *  - AC1：×4（列宽触 20px 下限）下 00:00 / 24:00 各 1 条端点线 + 首/末标签文本；
+ *  - AC1b（T518-R1 / R7）：内部标签一律居中 —— 末内部标签无 `is-last-tick`、首列仍 `is-first-tick`
+ *    （含源级防回归：`index.css` / `index.vue` 中该字符串 0 次）；
  *  - AC2：首帧未测量（容器宽 ≤ 0 ⇒ 宽度回退 `列数 × 20px`）端点仍在、不丢失；
  *  - AC3：5 档 × {触下限列宽, 宽屏列宽} 枚举，末标签型式随档位（×1/×1.5 = `24`，×2/×3/×4 = `24:00`）；
  *  - AC4：回归基线 —— 内部格线修饰类 / `.day-axis-bg` 无子节点 / 刻度新建入口数量零变化；
@@ -184,6 +186,46 @@ describe('T518 AC1 / AC3 端标签（R2 / D1：首 `00:00` 左对齐、末 `24:0
             w.unmount()
         })
     }
+})
+
+describe('T518-R1 AC1b 内部标签一律居中（R7：撤销末列右对齐保护）', () => {
+    for (const zoom of ZOOMS) {
+        it(`×${zoom} ⇒ 末内部标签无 \`is-last-tick\`（居中）、首列仍 \`is-first-tick\``, () => {
+            const spec = dayAxisSpecOf(zoom)
+            const w = mountDaily(zoom)
+            const heads = headChildren(w)
+            const tickHeads = heads.filter((el) => !!el.querySelector('.day-col-label'))
+            expect(tickHeads).toHaveLength(spec.columnMinutes === 30 ? 24 : 48)
+
+            // R7：末内部标签与其余内部标签同类（不再右对齐），全列头不得残留该类
+            const lastTick = tickHeads[tickHeads.length - 1]!
+            expect(lastTick.classList.contains('is-last-tick')).toBe(false)
+            expect(lastTick.querySelector('.is-last-tick')).toBeNull()
+            expect(heads.filter((el) => el.querySelector('.is-last-tick'))).toHaveLength(0)
+            // 末内部标签仍在（只改对齐，不删标签）；末列仍是端标签
+            const tickStepMin = spec.columnMinutes === 30 ? 60 : 30
+            const lastTickMin = Math.floor((1440 - 1) / tickStepMin) * tickStepMin
+            expect((lastTick.textContent ?? '').trim()).toBe(labelOf(zoom, lastTickMin))
+            expect(heads[spec.columns - 1]!.classList.contains('is-axis-end')).toBe(true)
+
+            // 首端保护保留（AC1b：`00:00` 仍左对齐）
+            expect(heads[0]!.classList.contains('is-first-tick')).toBe(true)
+            expect(heads.filter((el) => el.classList.contains('is-first-tick'))).toHaveLength(1)
+            w.unmount()
+        })
+    }
+
+    it('源级防回归：`index.css` 与 `index.vue` 中 `is-last-tick` 出现次数 = 0', () => {
+        for (const [path, source] of Object.entries(DAILY_RAW)) {
+            if (!path.endsWith('/index.css') && !path.endsWith('/index.vue')) continue
+            const hits = source.split('is-last-tick').length - 1
+            expect(hits, `${path} 不得残留 is-last-tick`).toBe(0)
+        }
+        // 首端保护的源码仍在（只删末列的）
+        expect(cssRule(dailyStyle(), '.day-col-head.is-first-tick .day-col-label')).toContain(
+            'transform: translateX(0)'
+        )
+    })
 })
 
 describe('T518 AC2 首帧未测量（容器宽 ≤ 0 ⇒ 回退 列数 × 20px）', () => {

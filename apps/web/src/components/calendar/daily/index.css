@@ -144,12 +144,10 @@
     transform: translateX(0);
 }
 
-.day-col-head.is-last-tick .day-col-label {
-    transform: translateX(-100%);
-}
-
 /* 轴终点标签（R2 / D1）：右对齐于轴终点（末列右缘 = 轴 100%），向左溢出到左侧空白列 ⇒ 不裁切；
-   颜色取 `--cal-fg`（文本 ≥4.5:1，`--cal-muted` 仅 ≈2.5:1）；非交互文本（C5 点击新建入口零变化） */
+   颜色取 `--cal-fg`（文本 ≥4.5:1，`--cal-muted` 仅 ≈2.5:1）；非交互文本（C5 点击新建入口零变化）
+   R7（T518-R1）：**内部标签一律居中**（`translateX(-50%)`）；轴末端对齐保护由本端标签唯一承担，
+   不再对末内部标签做 `translateX(-100%)`（否则 `23` / `23:30` 右偏到刻度线左侧，与其余标签不一致）。 */
 .day-col-head.is-axis-end {
     color: var(--cal-fg);
 }

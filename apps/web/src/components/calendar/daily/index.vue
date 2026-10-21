@@ -73,14 +73,8 @@ const { model, segStyle, title, emptyHint, alldayReasonOf } = useDayModel({
 })
 
 // 刻度标签与刻度新建入口（C5）/ 视口（档位·锚定·pan·遮罩·当前时间线）/ 任务条手势与写回（C8·C9·C13）
-const {
-    tickTextOf,
-    firstLabelIndex,
-    lastLabelIndex,
-    axisEndLabelIndex,
-    axisEndLabelText,
-    onCreateAtTick
-} = useDayTickCreate({ model, onCreateTaskAt })
+const { tickTextOf, firstLabelIndex, axisEndLabelIndex, axisEndLabelText, onCreateAtTick } =
+    useDayTickCreate({ model, onCreateTaskAt })
 const {
     bodyEl,
     scrollEl,
@@ -191,7 +185,6 @@ const switchFromDay = (name: CalendarViewName): void => {
                             class="day-col-head"
                             :class="{
                                 'is-first-tick': col.index === firstLabelIndex,
-                                'is-last-tick': col.index === lastLabelIndex,
                                 'is-axis-end': col.index === axisEndLabelIndex
                             }"
                             :aria-hidden="

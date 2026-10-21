@@ -274,15 +274,16 @@ describe('TASK-19B AC1 刻度标签 → 创建对话框（契约变更 A，取�
         const container = w.find('[data-testid="day-columns"]')
         expect(container.element.children).toHaveLength(48)
 
-        // r3：首/末带文本列边界类名（类可落在 .day-col-head 或 .day-col-label 上）
-        // T518：末列现承载轴终点标签（`24`），故「末带文本列」以**刻度按钮**为口径取（新增标签不是刻度入口）
+        // r3（T518-R1 / R7 变更）：**首列**边界保护保留；**末带文本列不再右对齐**（轴末端对齐由端标签承担）
+        // 口径仍为精确相等（未放宽）：末内部标签必须**没有** `is-last-tick`，且该类的右对齐保护已整体移除
         const heads = Array.from(container.element.children)
         const tickHeads = heads.filter((el) => !!el.querySelector('.day-col-label'))
         const hasTickClass = (el: Element, cls: string): boolean =>
             el.classList.contains(cls) || !!el.querySelector(`.${cls}`)
         expect(tickHeads).toHaveLength(24)
         expect(hasTickClass(tickHeads[0]!, 'is-first-tick')).toBe(true)
-        expect(hasTickClass(tickHeads[tickHeads.length - 1]!, 'is-last-tick')).toBe(true)
+        expect(hasTickClass(tickHeads[tickHeads.length - 1]!, 'is-last-tick')).toBe(false)
+        expect(heads.filter((el) => hasTickClass(el, 'is-last-tick'))).toHaveLength(0)
     })
 
     it('空文本列无 button（不可点 / 不参与 Tab）', async () => {
