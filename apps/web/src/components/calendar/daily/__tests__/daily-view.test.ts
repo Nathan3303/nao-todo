@@ -13,8 +13,9 @@ import { dayScrollWidthCss } from '../day-zoom'
 /**
  * TASK-16 日视图组件 DOM 契约（PRD §5.7 冻结 / C6 / C12）
  * @description
- *  - `[data-testid="day-columns"]`：×1 时子节点 48、其中有文本者 24（整点 24 个）；
+ *  - `[data-testid="day-columns"]`：×1 时子节点 48、其中有文本者 25（整点 24 + 轴终点 1）；
  *    其余档位按 ADR §3-D1 矩阵（×2=96/48、×4=288/48，R2 起 ×4=5min）；
+ *    **T518 变更**：末列新增轴终点标签（`24` / `24:00`，R2/D1）⇒ 「有文本列」各 +1（断言仍为精确相等，未放宽）。
  *  - `[data-testid="day-axis-bg"]`：其内 `[data-col]` 数量必须为 0（禁 48×N 背景 DOM）；
  *  - `[data-testid="day-unscheduled-entry"]`：日视图自建未安排入口（C12）。
  *  - TASK-19：`.day-scroll` 承载宽高（`.day-cols-head` 与全天泳道同处其中，泳道在 `.day-grid` 之上）。
@@ -81,14 +82,14 @@ const cssRule = (css: string, selector: string): string => {
 }
 
 describe('TASK-16 日视图 DOM 契约（C6 / C12）', () => {
-    it('列头容器 48 个子节点、其中 24 个有文本（整点）', () => {
+    it('列头容器 48 个子节点、其中 25 个有文本（整点 24 + 轴终点 1）', () => {
         const wrapper = mountDaily()
         const container = wrapper.find('[data-testid="day-columns"]')
         expect(container.exists()).toBe(true)
         const children = Array.from(container.element.children)
         expect(children).toHaveLength(48)
         const withText = children.filter((el) => (el.textContent ?? '').trim().length > 0)
-        expect(withText).toHaveLength(24)
+        expect(withText).toHaveLength(25)
         wrapper.unmount()
     })
 
@@ -109,11 +110,11 @@ describe('TASK-16 日视图 DOM 契约（C6 / C12）', () => {
 
 describe('TASK-19 档位矩阵列头（D1.1 / C6 / AC2）', () => {
     const MATRIX = [
-        { zoom: 1, columns: 48, labels: 24 },
-        { zoom: 1.5, columns: 48, labels: 24 },
-        { zoom: 2, columns: 96, labels: 48 },
-        { zoom: 3, columns: 96, labels: 48 },
-        { zoom: 4, columns: 288, labels: 48 }
+        { zoom: 1, columns: 48, labels: 25 },
+        { zoom: 1.5, columns: 48, labels: 25 },
+        { zoom: 2, columns: 96, labels: 49 },
+        { zoom: 3, columns: 96, labels: 49 },
+        { zoom: 4, columns: 288, labels: 49 }
     ] as const
 
     for (const row of MATRIX) {
@@ -249,5 +250,60 @@ describe('TASK-20 AC8 SFC 拆分契约（≤400 行 / sticky 锚定链）', () =
         expect(block).not.toBe('')
         expect(block).toContain('overflow: visible')
         expect(block).toContain('clip-path')
+    })
+})
+
+describe('T518-R7 AC9 全天泳道置顶（R12：用户手工调整后纳入）', () => {
+    const ALLDAY_TASK = {
+        id: 'ad',
+        name: '全天任务',
+        state: 'todo',
+        priority: 'low',
+        startAt: null,
+        endAt: `${TODAY} 10:00:00`,
+        createdAt: '2026-09-01 00:00:00',
+        tags: []
+    } as unknown as TaskViewObject
+
+    it('`.day-scroll` 直接子节点顺序 = 全天泳道 → divider → 列头 → 网格', () => {
+        const wrapper = mountDaily(undefined, [ALLDAY_TASK])
+        const scroll = wrapper.find('.day-scroll').element
+        const children = Array.from(scroll.children)
+        const laneIdx = children.findIndex((el) => el.classList.contains('day-allday-lane'))
+        const headIdx = children.findIndex((el) => el.classList.contains('day-cols-head'))
+        const gridIdx = children.findIndex((el) => el.classList.contains('day-grid'))
+        // `nue-divider` 在未注册 nueUI 的挂载里是未解析的自定义元素，注册后为 `.nue-divider` ⇒ 两者都认
+        const dividerIdx = children.findIndex(
+            (el) => el.tagName === 'NUE-DIVIDER' || el.classList.contains('nue-divider')
+        )
+        expect(laneIdx).toBe(0)
+        expect(dividerIdx).toBe(1)
+        expect(headIdx).toBe(2)
+        expect(gridIdx).toBe(3)
+        wrapper.unmount()
+    })
+
+    it('「全天」文字标签不存在（R12 移除），但原因说明保留（data-allday-reason + title 后缀）', () => {
+        const wrapper = mountDaily(undefined, [ALLDAY_TASK])
+        const lane = wrapper.find('.day-allday-lane')
+        expect(lane.exists()).toBe(true)
+        expect(lane.find('.day-allday-label').exists()).toBe(false)
+        // 不得存在「纯文案 = 全天」的元素（任务名可能含「全天」二字，故按整段文本比对）
+        const labelLike = Array.from(lane.element.querySelectorAll('*')).filter(
+            (el) => (el.textContent ?? '').trim() === '全天' && el.children.length === 0
+        )
+        expect(labelLike).toHaveLength(0)
+        const bar = lane.find('.cal-item')
+        expect(bar.exists()).toBe(true)
+        expect(bar.attributes('data-allday-reason')).toBe('end-only')
+        expect(bar.attributes('title') ?? '').toContain('仅设了截止时间')
+        wrapper.unmount()
+    })
+
+    it('列头子节点数仍 = 列数（既有冻结契约不破）', () => {
+        const wrapper = mountDaily()
+        const heads = Array.from(wrapper.find('[data-testid="day-columns"]').element.children)
+        expect(heads).toHaveLength(48)
+        wrapper.unmount()
     })
 })

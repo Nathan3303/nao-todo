@@ -2,6 +2,18 @@
     height: 100%;
     background: var(--cal-bg);
     overflow: hidden;
+    /* R9 / R13 / R14（T518-R4 / R7 / R8）：泳道区上方「间隔带」高度 —— **单一来源**（全仓仅此一处定义）。
+       几何：文本盒高 = `0.65rem × 1.3 = 0.845 × 根字号`；文本底边偏移 1px ⇒ 需 `带高 − 1 ≥ 0.845 × 根字号`。
+       **圆点已移出带外**（`.day-now-line::before` 的 `top: 0` ⇒ 落在带下的线头 = 泳道顶部）：
+       `文本 13.52 + 圆点 7 = 20.52 > 18` ⇒ 二者不可能同处 18px 带内；移出后**根字号上限反而更高**
+       （`(18 − 1) / 0.845 = 20.12px（+25.7%）`，优于 24px 时的 +18.3%）—— 这是收益，不是妥协。
+       仓内**没有**根字号声明（`html` 上无 `font-size`；`:root` 只定义 `--nue-primary-font-size` 变量，
+       与 `rem` 无关）⇒ 真实根字号 = 浏览器默认值、**用户可改**。
+       ⛔ 不用 `calc(0.845rem + …)` 随根字号缩放（会产生子像素带高 ⇒ 泳道 / 任务条边缘抗锯齿抖动）；
+       ⛔ 文本 `font-size` 不改 px（伤可访问性缩放）。残留上限：根字号 ≥20.12px 仍会越带，届时重估带高。
+       只有**泳道层**（`.day-grid .cal-lanes`）整体下移该高度；`.day-axis-bg` / `.day-axis-track` 仍覆盖整列、
+       任务条的 lane → 纵坐标相对映射不变（`topOffset` 仍为 0，C1）。 */
+    --day-now-band: 12px;
 }
 
 .day-allday-lane {
@@ -142,10 +154,28 @@
 
 .day-col-head.is-first-tick .day-col-label {
     transform: translateX(0);
+    /* T518-R2（R2 修订）：首标签去左内边距 ⇒ `00` 文字紧贴轴左端；右侧内边距保留（点击热区不缩水） */
+    padding-left: 0;
 }
 
-.day-col-head.is-last-tick .day-col-label {
+/* 轴终点标签（R2 / D1）：右对齐于轴终点（末列右缘 = 轴 100%），向左溢出到左侧空白列 ⇒ 不裁切；
+   颜色取 `--cal-fg`（文本 ≥4.5:1，`--cal-muted` 仅 ≈2.5:1）；非交互文本（C5 点击新建入口零变化）
+   T518-R2（R2 修订）：`padding: 0` ⇒ `24` 文字紧贴轴右端（中间标签仍保留既有 `0 6px`）。
+   R7（T518-R1）：**内部标签一律居中**（`translateX(-50%)`）；轴末端对齐保护由本端标签唯一承担，
+   不再对末内部标签做 `translateX(-100%)`（否则 `23` / `23:30` 右偏到刻度线左侧，与其余标签不一致）。 */
+.day-col-head.is-axis-end {
+    color: var(--cal-fg);
+}
+
+.day-col-head.is-axis-end .day-axis-end-label {
+    position: absolute;
+    left: 100%;
+    top: 0;
     transform: translateX(-100%);
+    padding: 0;
+    line-height: inherit;
+    white-space: nowrap;
+    cursor: default;
 }
 
 .day-grid {
@@ -162,6 +192,7 @@
 .day-axis-track {
     position: absolute;
     inset: 0;
+    /* R9：几何锚**不下移**（与 `.day-axis-bg` 同口径；拖拽换算只吃 `rect.width` + `clientX`，纵向零参与） */
     z-index: 1;
     pointer-events: none;
 }
@@ -197,9 +228,43 @@
 /* 背景层：定位层（格线由共享类 .day-col-lines 提供，禁 48×N DOM，C6） */
 .day-axis-bg {
     position: absolute;
-    inset: 0;
+    /* R11 / AC8d（T518-R5）：内部格线**让出间隔带**（带内保持空白）。
+       ⚠️ 只写 `top` 会丢掉其余三边 ⇒ 层塌陷 ⇒ 必须显式给 `right/bottom/left`（arch 2026-10-21 提醒）。
+       `.day-axis-track` 保持 `inset: 0`（唯一消费方是 `rect.width`，纵向无消费方 ⇒ 不下移，arch 裁定）。 */
+    top: var(--day-now-band);
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 0;
     pointer-events: none;
+}
+
+/* 泳道层（`.cal-lanes` 来自共享 `calendar-grid.css`，为月/周共用）—— **只在日视图作用域**下移间隔带高度，
+   月/周零影响（R9 / AC9 日视图限定）。lane → 纵坐标的相对映射（`top: lane × 行高`）不变（AC7c）。
+   ⛔ 不用 `.day-grid { padding-top }`：绝对定位包含块是 padding box ⇒ 任务条不会下移（arch 2026-10-21）。 */
+.day-grid .cal-lanes {
+    top: var(--day-now-band);
+}
+
+/* 轴端点边界线（R1 / R5，T518）：00:00 与 24:00 各 1 条；**与内部小时线同粗细（1px），仅以更深颜色区分**
+   （T518-R2：用户裁定不加粗；颜色 `--cal-fg` 55% over `--cal-bg` ⇒ 图形对比度 ≈3.2:1，≥3:1）；复用既有 `--cal-*`，不新增 token。
+   位置来自模型端点语义（`.is-start` = 轴起点、`.is-end` = 轴终点），CSS 不写端点坐标魔数（R6）；
+   轴宽 = 整数列宽之和 ⇒ 左右端点均为整像素（R4）；`.day-axis-endpoint` 仅日视图模板渲染（R5 作用域限定）。 */
+.day-axis-endpoint {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, var(--cal-fg) 55%, var(--cal-bg));
+    pointer-events: none;
+}
+
+.day-axis-endpoint.is-start {
+    left: 0;
+}
+
+.day-axis-endpoint.is-end {
+    right: 0;
 }
 
 /* 共享格线（背景层与全天泳道同用，单一来源；四级嵌套链 60/30/10/5）
@@ -259,22 +324,56 @@
 
 .day-now-line {
     position: absolute;
-    top: 0;
+    /* R11 / AC8a：**线身让出间隔带**（从带底起画，视觉上「文本在线头正上方」）；`bottom: 0` 保留 ⇒ 画到格底 */
+    top: 2px;
     bottom: 0;
     width: 1px;
-    background: var(--nue-error-color-60);
+    /* T518-R6（用户裁定「不要红色」）：线与文本同取中性深灰 `--cal-fg`
+       （= `--nue-primary-text-color` = `primary-color-800`；浅色 ≈12.6:1、深色自动升 l80 ≈10:1
+       ⇒ 图形 ≥3:1、文本 ≥4.5:1 双重达标） */
+    background: var(--cal-fg);
     pointer-events: none;
 }
 
+/* 圆点（R10：恒与线同轴心 `left: -3px`，不随 R14 变动；R14 / T518-R8：`top: 0` ⇒ 圆点 **移出间隔带**、
+   落在带下的线头 = 泳道顶部，占 `[18, 25]`；与文本盒底（17）间隙 1px）。
+   为何移出：`文本 13.52 + 圆点 7 = 20.52 > 18` ⇒ 二者不可能同处 18px 带内；移出后根字号上限升到 +25.7%。 */
 .day-now-line::before {
     content: '';
     position: absolute;
-    top: -3px;
+    top: 0;
     left: -3px;
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--nue-error-color-60);
+    background: var(--cal-fg);
+}
+
+/* 当前时刻文本（R8 / AC6a + R11 / AC8a + R15 / R9）：位于间隔带内、**顶对齐**（`top: 0`）：
+   带高 18 ⇒ 文本盒 `[0, 13.52]`（行高 0.65rem × 1.3 = 13.52，根字号 16 时）；圆点在带外线头 `[18, 25]`
+   ⇒ 文本↔圆点间隙 **4.48px**；根字号放大到 ≤ **21.30px（+33.1%）** 仍不越带。
+   ⚠️ **顶对齐是刻意的**（R15）：让文本紧贴上方列头，视觉距离只剩 `.day-scroll` 的 8px flex gap
+   （底对齐时为 8 + 3.48 = 11.48px）⇒ 请勿「顺手」改回底对齐；也**不要**改 `.day-scroll` 的 `gap`
+   （全视图共用，会连带影响泳道 / divider / 列头之间的距离）。
+   `padding: 0 var(--nue-padding-sm)` 为用户手工试验所加、R7 采纳（横向呼吸）；**已计入视口贴边测量**
+   （`offsetWidth` 天然含 padding ⇒ `nowLabelLayoutOf` 拿到的是含 padding 的实际盒宽）。
+   水平：`left: 0` 起于线 x，位移由 inline `transform` 给出（`-50%` 居中 + 视口/轴端点钳制，见 `now-label.ts`）；
+   **纯文字**（无底色 / 边框 / 圆角 / 阴影；横向 padding 见下）；`pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；
+   **禁 `transition` / `animation`**（AC8b：与「不得抖动」直接冲突）。
+   颜色 = 与线 / 圆点同一 token `--cal-fg`（T518-R6 换色）：对日历底色浅色 ≈ **12.6:1**、深色 ≈ **10:1**
+   ⇒ 文本 ≥4.5:1、图形 ≥3:1 双重达标（AC6d）。 */
+.day-now-label {
+    position: absolute;
+    left: 0;
+    top: -10px;
+    font-size: 0.65rem;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--cal-fg);
+    pointer-events: none;
+    transition: none;
+    animation: none;
+    padding: 0 var(--nue-padding-sm);
 }
 
 .day-state {

@@ -44,8 +44,8 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
 // @computed 周起始分段件段定义（T512）：2 段，选中态由 `weekStart` 驱动，点击调 `setWeekStart`
 const weekStartItems = computed(() => [
-    { label: t('calendar.sunday'), value: 'sunday' },
-    { label: t('calendar.monday'), value: 'monday' }
+    { label: t('calendar.weekday.sun'), value: 'sunday' },
+    { label: t('calendar.weekday.mon'), value: 'monday' }
 ])
 const onWeekStartChange = (value: string): void => {
     if (value === 'sunday' || value === 'monday') setWeekStart(value)
@@ -158,6 +158,7 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 
             .weekstart-label {
                 color: var(--nue-primary-color-700);
+                flex: 1;
             }
         }
     }

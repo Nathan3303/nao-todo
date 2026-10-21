@@ -73,16 +73,17 @@ const { model, segStyle, title, emptyHint, alldayReasonOf } = useDayModel({
 })
 
 // 刻度标签与刻度新建入口（C5）/ 视口（档位·锚定·pan·遮罩·当前时间线）/ 任务条手势与写回（C8·C9·C13）
-const { tickTextOf, firstLabelIndex, lastLabelIndex, onCreateAtTick } = useDayTickCreate({
-    model,
-    onCreateTaskAt
-})
+const { tickTextOf, firstLabelIndex, axisEndLabelIndex, axisEndLabelText, onCreateAtTick } =
+    useDayTickCreate({ model, onCreateTaskAt })
 const {
     bodyEl,
     scrollEl,
     scrollWidthCss,
     onWheel,
     nowLeft,
+    nowText,
+    nowLabelEl,
+    nowLabelTransform,
     isPanning,
     onPointerDown,
     onPointerMove,
@@ -175,40 +176,11 @@ const switchFromDay = (name: CalendarViewName): void => {
                 @scroll="onBodyScroll"
             >
                 <div ref="scrollEl" class="day-scroll" :style="{ width: scrollWidthCss }">
-                    <!-- 列头：垂直固定（sticky）、随内容层横向滚动；直接子节点数 = 列数 -->
-                    <div
-                        class="day-cols-head"
-                        data-testid="day-columns"
-                        :style="{ gridTemplateColumns: `repeat(${model.columns.length}, 1fr)` }"
-                    >
-                        <div
-                            v-for="col in model.columns"
-                            :key="col.index"
-                            class="day-col-head"
-                            :class="{
-                                'is-first-tick': col.index === firstLabelIndex,
-                                'is-last-tick': col.index === lastLabelIndex
-                            }"
-                            :aria-hidden="col.label === '' ? 'true' : undefined"
-                        >
-                            <!-- 新建入口（C5）：仅带文本刻度可点（原生 button，键盘可达） -->
-                            <button
-                                v-if="col.label"
-                                type="button"
-                                class="day-col-label"
-                                :aria-label="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
-                                :title="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
-                                @click="onCreateAtTick(col.index * axis.columnMinutes)"
-                            >
-                                {{ col.label }}
-                            </button>
-                        </div>
-                    </div>
                     <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接）
                          只读任务条（C6）：复用 task-bar、无手柄；原因分档由 data-allday-reason 承载 -->
                     <div class="day-allday-lane day-col-lines" :class="gridLineModifier">
                         <div class="day-allday-inner">
-                            <span class="day-allday-label">{{ t('calendar.allDay') }}</span>
+                            <!-- <span class="day-allday-label">{{ t('calendar.allDay') }}</span> -->
                             <div class="day-allday-items">
                                 <div
                                     v-for="task in model.allDay"
@@ -229,6 +201,46 @@ const switchFromDay = (name: CalendarViewName): void => {
                         </div>
                     </div>
                     <nue-divider />
+                    <!-- 列头：垂直固定（sticky）、随内容层横向滚动；直接子节点数 = 列数 -->
+                    <div
+                        class="day-cols-head"
+                        data-testid="day-columns"
+                        :style="{ gridTemplateColumns: `repeat(${model.columns.length}, 1fr)` }"
+                    >
+                        <div
+                            v-for="col in model.columns"
+                            :key="col.index"
+                            class="day-col-head"
+                            :class="{
+                                'is-first-tick': col.index === firstLabelIndex,
+                                'is-axis-end': col.index === axisEndLabelIndex
+                            }"
+                            :aria-hidden="
+                                col.label === '' && col.index !== axisEndLabelIndex
+                                    ? 'true'
+                                    : undefined
+                            "
+                        >
+                            <!-- 新建入口（C5）：仅带文本刻度可点（原生 button，键盘可达） -->
+                            <button
+                                v-if="col.label"
+                                type="button"
+                                class="day-col-label"
+                                :aria-label="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
+                                :title="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
+                                @click="onCreateAtTick(col.index * axis.columnMinutes)"
+                            >
+                                {{ col.label }}
+                            </button>
+                            <!-- 轴终点标签（R2 / D1：用户已裁定显示）：`24:00` 右对齐于轴终点、不裁切；
+                                 文本型式随档位（×1 / ×1.5 ⇒ `24`）。非交互：不新增「24 点创建任务」歧义入口（C5 零变化） -->
+                            <span
+                                v-else-if="col.index === axisEndLabelIndex"
+                                class="day-axis-end-label"
+                                >{{ axisEndLabelText }}</span
+                            >
+                        </div>
+                    </div>
                     <!-- 网格：仅 1 个背景层（禁 列数×N DOM，C6）；格线用 CSS 渐变 -->
                     <div class="day-grid">
                         <div
@@ -236,6 +248,18 @@ const switchFromDay = (name: CalendarViewName): void => {
                             :class="gridLineModifier"
                             data-testid="day-axis-bg"
                         ></div>
+                        <!-- 轴端点边界线（R1 / R5）：00:00 与 24:00 各 1 条（1px = 与内部小时线同粗细，仅以更深颜色区分，T518-R2）；
+                             位置由模型端点语义给出（`.is-start` = 轴起点 / `.is-end` = 轴终点），CSS 不写端点魔数（R6）；
+                             DOM 增量恒为 2（与列数无关，NFR） -->
+                        <span
+                            v-for="endpoint in model.axisEndpoints"
+                            :key="endpoint.key"
+                            class="day-axis-endpoint"
+                            :class="`is-${endpoint.key}`"
+                            :data-testid="`day-axis-endpoint-${endpoint.key}`"
+                            :data-minutes="endpoint.minutes"
+                            aria-hidden="true"
+                        ></span>
                         <!-- 交互层（覆盖于纯视觉背景之上；day-axis-bg 仍无子节点，C6）
                              仅作几何锚（`pointer-events: none`，禁拦截任务条）；空白平移由 .day-body 承接 -->
                         <div
@@ -277,13 +301,22 @@ const switchFromDay = (name: CalendarViewName): void => {
                                 ></span>
                             </div>
                         </div>
-                        <!-- 当前时间线（仅今天） -->
+                        <!-- 当前时间线（仅今天）；顶端时刻文本（R11）：真实文本节点（需可测宽度作**视口贴边**），
+                             位移 = inline `transform`（居中 + 轴端点 ⊕ 视口钳制）；带内不画格线（AC8d） -->
                         <div
                             v-if="model.isToday"
                             class="day-now-line"
+                            :data-now="nowText"
                             :style="{ left: nowLeft }"
                             aria-hidden="true"
-                        ></div>
+                        >
+                            <span
+                                ref="nowLabelEl"
+                                class="day-now-label"
+                                :style="{ transform: nowLabelTransform }"
+                                >{{ nowText }}</span
+                            >
+                        </div>
                         <!-- 拖动中的吸附刻度高亮线（AC2）：松手即移除 -->
                         <div
                             v-if="dragPreview"
