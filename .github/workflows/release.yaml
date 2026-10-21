@@ -43,93 +43,101 @@ jobs:
 
             # mac 打包自证（仅 mac 生效）：ad-hoc 签名 + 应用图标，任一不满足即让 job 红。
             # 注意：ad-hoc 签名未经公证，spctl 评估必然拒绝（预期行为）⇒ spctl 只打印作对照，不作门禁。
+            # 脚本内所有变量展开一律用 ${var}、所有输出信息一律纯 ASCII：
+            #   macOS runner 的 shell 是 /bin/bash 3.2.57，会把紧跟 $var 之后的多字节字符首字节
+            #   吞进变量名（⇒ set -u 报 unbound variable，T513 R1 真机踩到）；花括号 + ASCII 从结构上消除该类隐患。
             - name: Verify macOS package (ad-hoc signature + app icon)
               if: matrix.platform == 'mac'
               shell: bash
               run: |
                   set -euo pipefail
 
-                  fail() { echo "::error::$*"; exit 1; }
+                  # Second line of defence for the bash 3.2 multibyte-identifier trap: byte-oriented locale.
+                  export LC_ALL=C
+
+                  fail() { echo "::error::${*}" >&2; exit 1; }
 
                   SRC_ICON="apps/desktop/build/icons/mac/icon.icns"
-                  [ -f "$SRC_ICON" ] || fail "源图标缺失：$SRC_ICON"
-                  SRC_SHA=$(shasum -a 256 "$SRC_ICON" | awk '{print $1}')
-                  echo "源图标 sha256 = $SRC_SHA"
+                  [ -f "${SRC_ICON}" ] || fail "source icon missing: ${SRC_ICON}"
+                  SRC_SHA=$(shasum -a 256 "${SRC_ICON}" | awk '{print $1}')
+                  echo "source icon sha256 = ${SRC_SHA}"
 
-                  # 兼容 arm64（release/mac-arm64/…）与 x64（release/mac/…）两种产物布局
-                  [ -d apps/desktop/release ] || fail "产物目录不存在：apps/desktop/release"
+                  # arm64 => release/mac-arm64/, x64 => release/mac/
+                  [ -d apps/desktop/release ] || fail "output dir missing: apps/desktop/release"
                   APP_LIST=$(mktemp)
-                  find apps/desktop/release -maxdepth 2 -name '*.app' -type d > "$APP_LIST"
-                  APP_COUNT=$(wc -l < "$APP_LIST" | tr -d ' ')
-                  [ "$APP_COUNT" -eq 1 ] || fail "期望恰好 1 个 .app，实际 $APP_COUNT 个（apps/desktop/release 下）"
-                  APP=$(head -1 "$APP_LIST")
-                  echo "待校验 app = $APP"
+                  find apps/desktop/release -maxdepth 2 -name '*.app' -type d > "${APP_LIST}"
+                  APP_COUNT=$(wc -l < "${APP_LIST}" | tr -d ' ')
+                  [ "${APP_COUNT}" -eq 1 ] || fail "expected exactly 1 .app, got ${APP_COUNT} under apps/desktop/release"
+                  APP=$(head -1 "${APP_LIST}")
+                  echo "app under test = ${APP}"
 
                   verify_app() {
-                      local app="$1"
-                      local label="$2"
+                      local app="${1}"
+                      local label="${2}"
                       local dv sha plist_icon
 
-                      # 1) 必须是 ad-hoc 签名
-                      dv=$(codesign -dv --verbose=4 "$app" 2>&1 | tr -d '\r' || true)
-                      echo "----- codesign -dv --verbose=4 ($label) -----"
-                      echo "$dv"
-                      grep -q '^Signature=adhoc$' <<< "$dv" || fail "$label：签名不是 ad-hoc（期望 Signature=adhoc）"
+                      # 1) must be ad-hoc signed
+                      dv=$(codesign -dv --verbose=4 "${app}" 2>&1 | tr -d '\r' || true)
+                      echo "----- codesign -dv --verbose=4 (${label}) -----"
+                      echo "${dv}"
+                      grep -q '^Signature=adhoc$' <<< "${dv}" || fail "${label}: signature is not ad-hoc (expected Signature=adhoc)"
 
-                      # 2) 图标逐字节一致 + Info.plist 指向 icon.icns
-                      [ -f "$app/Contents/Resources/icon.icns" ] || fail "$label：缺少 Contents/Resources/icon.icns"
-                      sha=$(shasum -a 256 "$app/Contents/Resources/icon.icns" | awk '{print $1}')
-                      [ "$sha" = "$SRC_SHA" ] || fail "$label：图标 sha256 不一致（包内 $sha ≠ 源 $SRC_SHA）"
-                      plist_icon=$(plutil -extract CFBundleIconFile raw "$app/Contents/Info.plist") || fail "$label：Info.plist 无 CFBundleIconFile"
-                      [ "$plist_icon" = "icon.icns" ] || fail "$label：CFBundleIconFile=$plist_icon（期望 icon.icns）"
+                      # 2) icon byte-identical to source + Info.plist points at it
+                      [ -f "${app}/Contents/Resources/icon.icns" ] || fail "${label}: missing Contents/Resources/icon.icns"
+                      sha=$(shasum -a 256 "${app}/Contents/Resources/icon.icns" | awk '{print $1}')
+                      if [ "${sha}" != "${SRC_SHA}" ]; then
+                          fail "${label}: icon sha256 mismatch: packaged=${sha} expected=${SRC_SHA}"
+                      fi
+                      plist_icon=$(plutil -extract CFBundleIconFile raw "${app}/Contents/Info.plist") || fail "${label}: Info.plist has no CFBundleIconFile"
+                      [ "${plist_icon}" = "icon.icns" ] || fail "${label}: CFBundleIconFile=${plist_icon} (expected icon.icns)"
 
-                      echo "OK ($label)：adhoc 签名 + icon.icns 逐字节一致（$sha）+ CFBundleIconFile=$plist_icon"
+                      echo "OK (${label}): ad-hoc signature + icon.icns byte-identical (${sha}) + CFBundleIconFile=${plist_icon}"
                   }
 
-                  verify_app "$APP" "release app"
+                  verify_app "${APP}" "release app"
 
-                  # 对照用（不作门禁）：ad-hoc 未公证 ⇒ 预期被 Gatekeeper 拒绝
-                  spctl --assess --type execute "$APP" 2>&1 || echo "（预期）spctl 拒绝 ad-hoc 未公证包，仅作对照，不作门禁"
+                  # Contrast only (NOT a gate): ad-hoc + no notarization is expected to be rejected by Gatekeeper.
+                  spctl --assess --type execute "${APP}" 2>&1 || echo "(expected) spctl rejects the ad-hoc non-notarized bundle; contrast only, not a gate"
 
-                  # 3) 挂载 dmg，校验其内部 .app 同样满足 1+2，然后卸载
+                  # 3) mount the dmg, verify the bundled .app meets 1+2 as well, then detach
                   DMG_LIST=$(mktemp)
-                  find apps/desktop/release -maxdepth 1 -name '*.dmg' > "$DMG_LIST"
-                  DMG_COUNT=$(wc -l < "$DMG_LIST" | tr -d ' ')
-                  [ "$DMG_COUNT" -ge 1 ] || fail "未找到 .dmg 产物（apps/desktop/release）"
+                  find apps/desktop/release -maxdepth 1 -name '*.dmg' > "${DMG_LIST}"
+                  DMG_COUNT=$(wc -l < "${DMG_LIST}" | tr -d ' ')
+                  [ "${DMG_COUNT}" -ge 1 ] || fail "no .dmg artifact found under apps/desktop/release"
 
                   MOUNT_DIR=$(mktemp -d)
-                  MOUNT_DIR=$(cd "$MOUNT_DIR" && pwd -P)
+                  MOUNT_DIR=$(cd "${MOUNT_DIR}" && pwd -P)
                   ATTACHED=0
                   cleanup() {
-                      if [ "$ATTACHED" = "1" ]; then
-                          hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
+                      if [ "${ATTACHED}" = "1" ]; then
+                          hdiutil detach "${MOUNT_DIR}" -force >/dev/null 2>&1 || true
                       fi
-                      rm -rf "$MOUNT_DIR"
+                      rm -rf "${MOUNT_DIR}"
                   }
                   trap cleanup EXIT
 
                   while IFS= read -r DMG; do
-                      echo "===== 校验 dmg：$DMG ====="
+                      echo "===== verifying dmg: ${DMG} ====="
                       ATTACHED=0
                       for attempt in 1 2 3; do
-                          if hdiutil attach -nobrowse -readonly -mountpoint "$MOUNT_DIR" "$DMG" >/dev/null; then
+                          if hdiutil attach -nobrowse -readonly -mountpoint "${MOUNT_DIR}" "${DMG}" >/dev/null; then
                               ATTACHED=1
                               break
                           fi
-                          echo "hdiutil attach 第 $attempt 次失败，2s 后重试"
+                          echo "hdiutil attach attempt ${attempt} failed, retrying in 2s"
                           sleep 2
                       done
-                      [ "$ATTACHED" = "1" ] || fail "$DMG：挂载失败（已重试 3 次）"
+                      [ "${ATTACHED}" = "1" ] || fail "${DMG}: failed to mount dmg after 3 attempts"
 
-                      DMG_APP=$(find "$MOUNT_DIR" -maxdepth 1 -name '*.app' -type d | head -1)
-                      [ -n "$DMG_APP" ] || fail "$DMG：卷内未找到 .app"
-                      verify_app "$DMG_APP" "dmg:$DMG"
+                      DMG_APP=$(find "${MOUNT_DIR}" -maxdepth 1 -name '*.app' -type d | head -1)
+                      [ -n "${DMG_APP}" ] || fail "${DMG}: no .app found inside mounted volume"
+                      verify_app "${DMG_APP}" "dmg:${DMG}"
 
-                      hdiutil detach "$MOUNT_DIR" >/dev/null
+                      hdiutil detach "${MOUNT_DIR}" >/dev/null
                       ATTACHED=0
-                  done < "$DMG_LIST"
+                  done < "${DMG_LIST}"
 
-                  echo "macOS 打包校验全部通过"
+                  echo "macOS packaging verification passed"
 
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
