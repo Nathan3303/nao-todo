@@ -31,6 +31,9 @@ export type DayViewportDeps = {
     setDayZoom?: (zoom: DayZoom) => void
 }
 
+/** 当前时间标注的贴端阈值（分钟）：`00:00–00:30` / `23:30–24:00`（PRD AC6b） */
+const NOW_EDGE_MINUTES = 30
+
 export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) => {
     // @states 滚动宿主（`.day-body` 双轴滚动容器）与横向内容层（`.day-scroll`）
     const bodyEl = ref<HTMLElement | null>(null)
@@ -110,6 +113,19 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         return `${(minutes / DAY_MINUTES) * 100}%`
     })
 
+    // @computed 当前时刻文本（R8 / AC6a）：恒 `HH:mm`（两位补零、不随档位简化；dayjs 的分钟占位符是 `mm`）
+    //          沿用既有 `now` 时基（30s）⇒ **不新增定时器**；经 `data-now` + CSS `attr()` 输出，零额外 DOM
+    const nowText = computed(() => now.value.format('HH:mm'))
+
+    // @computed 当前时刻是否贴近轴端（AC6b：`00:00–00:30` / `23:30–24:00`）
+    //          ⇒ 文本与圆点向内偏移，避免被 `.day-body` 的 `overflow-x: hidden` 裁掉
+    const nowEdge = computed<'start' | 'end' | 'center'>(() => {
+        const minutes = now.value.hour() * 60 + now.value.minute()
+        if (minutes <= NOW_EDGE_MINUTES) return 'start'
+        if (minutes >= DAY_MINUTES - NOW_EDGE_MINUTES) return 'end'
+        return 'center'
+    })
+
     // —— 缩放：写回（优先 entry 级 setter 以持久化；无 setter 时直改 ref） ——
     const applyZoom = (next: DayZoom): void => {
         if (next === dayZoom.value) return
@@ -183,6 +199,8 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
         scrollWidthCss,
         onWheel,
         nowLeft,
+        nowText,
+        nowEdge,
         isPanning,
         onPointerDown,
         onPointerMove,

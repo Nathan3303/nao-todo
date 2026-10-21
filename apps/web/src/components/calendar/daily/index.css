@@ -316,6 +316,48 @@
     background: var(--nue-error-color-60);
 }
 
+/* 当前时刻文本（R8 / AC6a）：贴线顶端、纯文字（无底色 / 气泡、无 padding）；
+   文本由 `attr(data-now)` 提供（零额外 DOM，jsdom 也可断言 `data-now`）；
+   默认以线为基准居中（与 `.day-col-label` 同手法，不额外引入半像素偏移）；
+   `pointer-events: none` ⇒ 不拦截任务条 / 拖拽 / pan（AC6c）；随内容横向滚动（父绝对定位 ⇒ 非 sticky）。
+   颜色 = 线的同一 token `--nue-error-color-60`：对日历底色实测对比度 **5.01:1（浅）/ 4.56:1（深）** ⇒ 文本 ≥4.5:1（AC6d）；
+   更深色阶反而在深色模式下更差（-70 ≈3.98 / -80 ≈3.32 / -90 ≈2.76），故不做替换。 */
+.day-now-line::after {
+    content: attr(data-now);
+    position: absolute;
+    top: 5px;
+    left: 0;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    color: var(--nue-error-color-60);
+    pointer-events: none;
+}
+
+/* AC6b 边界：贴轴左端（00:00–00:30）⇒ 文本改为从左缘起排（不再居中溢出），
+   圆点右移贴合轴起点（原 `left: -3px` 在 00:00 附近会被 `overflow-x: hidden` 裁掉左侧 3px） */
+.day-now-line.is-near-start::after {
+    left: 0;
+    transform: none;
+}
+
+.day-now-line.is-near-start::before {
+    left: 0;
+}
+
+/* AC6b 边界：贴轴右端（23:30–24:00）⇒ 文本改为右缘对齐线（`right: 1px` = 线自身宽）⇒ 不越轴终点；
+   圆点左移一个自身宽（7px）⇒ 右侧不越界 */
+.day-now-line.is-near-end::after {
+    left: auto;
+    right: 1px;
+    transform: none;
+}
+
+.day-now-line.is-near-end::before {
+    left: -7px;
+}
+
 .day-state {
     position: absolute;
     inset: 0;

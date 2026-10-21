@@ -81,6 +81,8 @@ const {
     scrollWidthCss,
     onWheel,
     nowLeft,
+    nowText,
+    nowEdge,
     isPanning,
     onPointerDown,
     onPointerMove,
@@ -298,10 +300,16 @@ const switchFromDay = (name: CalendarViewName): void => {
                                 ></span>
                             </div>
                         </div>
-                        <!-- 当前时间线（仅今天） -->
+                        <!-- 当前时间线（仅今天）；顶端时刻文本（R8）经 `data-now` + CSS `attr()` 输出，
+                             零额外 DOM / 不新增定时器；贴端改类名（AC6b）避免被 `overflow-x: hidden` 裁切 -->
                         <div
                             v-if="model.isToday"
                             class="day-now-line"
+                            :class="{
+                                'is-near-start': nowEdge === 'start',
+                                'is-near-end': nowEdge === 'end'
+                            }"
+                            :data-now="nowText"
                             :style="{ left: nowLeft }"
                             aria-hidden="true"
                         ></div>
