@@ -184,53 +184,56 @@ describe('T518-R5 AC8a 文本位置（居中于线 + 线头正上方）', () => 
         expect(rule).toContain('bottom: 0')
     })
 
-    it('R14 圆点已移出带外：文本盒底 17 ≤ 圆点顶 18（带高 18 / 圆点 7 / 文本底边距 1）', () => {
+    it('R14/R15 圆点已移出带外：文本盒底 13.52 ≤ 圆点顶 18（带高 18 / 圆点 7 / 文本顶对齐）', () => {
         const css = dailyStyle()
         const band = pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')
-        const bottomOffset = Number.parseFloat(
-            /bottom:\s*calc\(100% \+ ([\d.]+)px\)/.exec(cssRule(css, '.day-now-label'))![1]!
-        )
+        const label = cssRule(css, '.day-now-label')
+        // R15（T518-R9）：底对齐 → **顶对齐**（`top: 0`），故无 `bottom: calc(…)` 偏移
+        expect(/bottom:\s*calc\(/.test(label)).toBe(false)
+        const labelTop = pxOf(label, 'top')
+        const fontSizeRem = Number.parseFloat(/font-size:\s*([\d.]+)rem/.exec(label)![1]!)
+        const lineHeight = Number.parseFloat(/line-height:\s*([\d.]+)/.exec(label)![1]!)
+        const textHeight = fontSizeRem * 16 * lineHeight // 13.52（默认根字号 16）
         const dot = cssRule(css, '.day-now-line::before')
         const dotTop = pxOf(dot, 'top')
         const dotHeight = pxOf(dot, 'height')
         expect(band).toBe(18) // R14（T518-R8）：用户「更紧一点，18px」
-        const textBottom = band - bottomOffset
+        expect([labelTop, dotTop, dotHeight]).toEqual([0, 0, 7])
+        const textBottom = labelTop + textHeight
         const dotTopY = band + dotTop
-        expect([bottomOffset, dotTop, dotHeight]).toEqual([1, 0, 7])
-        expect(textBottom).toBeLessThan(dotTopY) // 不重叠（间隙 1px）
-        expect([textBottom, dotTopY]).toEqual([17, 18])
+        expect(textBottom).toBeLessThan(dotTopY) // 不重叠
+        expect([Number(textBottom.toFixed(2)), dotTopY]).toEqual([13.52, 18])
+        // 文本↔圆点间隙 = 18 − 13.52 = 4.48（R15 实数）
+        expect(Number((dotTopY - textBottom).toFixed(2))).toBe(4.48)
         // 圆点完全落在带**外**（泳道顶部），不再是「带内」
         expect([dotTopY, dotTopY + dotHeight]).toEqual([18, 25])
     })
 
-    it('文本盒完整落在带内（AC7a/AC7d：盒顶 3.48 ≥ 0、盒高 13.52 ≤ 18；圆点已移出带外）', () => {
+    it('文本盒完整落在带内（AC7a/AC7d：顶对齐 ⇒ 文本盒 [0, 13.52]；圆点已移出带外）', () => {
         const css = dailyStyle()
         const band = pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')
         const label = cssRule(css, '.day-now-label')
-        const bottomOffset = Number.parseFloat(
-            /bottom:\s*calc\(100% \+ ([\d.]+)px\)/.exec(label)![1]!
-        )
+        const labelTop = pxOf(label, 'top')
         const fontSizeRem = Number.parseFloat(/font-size:\s*([\d.]+)rem/.exec(label)![1]!)
         const lineHeight = Number.parseFloat(/line-height:\s*([\d.]+)/.exec(label)![1]!)
-        // ⚠️ `16` 只是**默认根字号假设**（仓内没有 `html { font-size }`；`:root` 的
+        // ⚠️ `16` 只是**默认根字号假设**（仓内没有根字号声明；`:root` 的
         //    `--nue-primary-font-size` 是变量、与 `rem` 无关）⇒ 真实根字号是浏览器默认值且用户可改。
-        //    因此「盒顶 ≥ 0」对根字号有上限：`带高 − 1 ≥ 0.845 × root` ⇒ 18px 带高容忍 root ≤ 20.12px（+25.7%）。
+        //    R15 顶对齐后文本只受**带上缘**约束：`0 + 0.845 × root ≤ 带高` ⇒ 容忍 root ≤ 21.30px（+33.1%）。
         //    本用例按 16 断言具体数值，另由下一条断言「容忍上限 ≥ 20px」这一约束本身。
         const textHeight = fontSizeRem * 16 * lineHeight // 默认根字号 16 ⇒ 13.52px
-        const textBottom = band - bottomOffset
-        const textTop = textBottom - textHeight
+        const textTop = labelTop
+        const textBottom = textTop + textHeight
         expect(textHeight).toBeCloseTo(13.52, 5)
-        expect(textTop).toBeGreaterThanOrEqual(0)
-        // R14：圆点已移出带外 ⇒ 带内只需容纳文本盒（原「文本 + 圆点 ≤ 带高」因移出而自动成立）
-        expect(textHeight).toBeLessThanOrEqual(band)
-        expect([Number(textTop.toFixed(2)), textBottom]).toEqual([3.48, 17])
-        expect(textTop).toBeCloseTo(3.48, 5)
+        expect(textTop).toBe(0) // R15：顶对齐
+        // R14：圆点已移出带外 ⇒ 带内只需容纳文本盒
+        expect(textBottom).toBeLessThanOrEqual(band)
+        expect([textTop, Number(textBottom.toFixed(2))]).toEqual([0, 13.52])
 
-        // T518-R5c / R8：把「根字号可放大」这条约束本身钉死 —— 容忍上限 = (带高 − 底边偏移) / 0.845
-        // 根字号 16 时的 3.48px 余量允许 +25.7%（≈20.12px，优于 24px 带高时的 +18.3%）。
-        const rootFontCeiling = (band - bottomOffset) / (fontSizeRem * lineHeight)
+        // T518-R5c / R8 / R9：把「根字号可放大」这条约束钉死 —— 容忍上限 = (带高 − 顶部偏移) / 0.845
+        // 顶对齐后余量 = 18 − 13.52 = 4.48px ⇒ 允许 +33.1%（≈21.30px），优于底对齐时的 +25.7%。
+        const rootFontCeiling = (band - textTop) / (fontSizeRem * lineHeight)
         expect(rootFontCeiling).toBeGreaterThanOrEqual(20)
-        expect(rootFontCeiling).toBeCloseTo(20.12, 2)
+        expect(rootFontCeiling).toBeCloseTo(21.3, 1)
     })
 })
 
