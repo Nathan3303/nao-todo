@@ -13,6 +13,7 @@
 | **r3** | **2026-09-22** | **TASK-20 契约修订（用户裁决）**：① **缩放入口由三入口收敛为两入口** —— 移除头部 `−`/`+` 按钮（`data-testid="day-zoom-out/in"` 退役），保留 `Ctrl/⌘ ±` / `Ctrl/⌘ 0` 与 `Ctrl/⌘ + 滚轮`（见 §5.3 #11）；② **总宽公式改整数列宽**：`max(k × 容器宽, 列数 × 20px)` → **`max(列数 × ceil(k × 容器宽 / 列数), 列数 × 20px)`**（每列整数像素 ⇒ 消除格线子像素抗锯齿，见 §3-D3）；③ **格线细层对比度提升**（10min `30% → 55%`、5min `22% → 45%`，见 §3-D1.2）。**AC1 下界 `总宽 ≥ k × 容器宽` 仍成立**（向上取整只增不减）                                                                                                                                                                                                  |
 | **r4** | **2026-09-22** | **T88 待裁决落定（宽度函数形态）**：`dayScrollWidthCss(zoom, columns, containerW)` **返回 `"<int>px"`**（不再是 `max(calc(...))` CSS 串）；`containerW` 由**挂载 / `ResizeObserver` 读一次**（`pointermove` 仍禁读布局）；**`containerW <= 0`（未布局 / jsdom）→ 回退 `columns × 20px`**；值 = `max(columns × ceil(zoom × containerW ÷ columns), columns × 20)` ⇒ **每列整数像素**且 **`≥ zoom × containerW`（AC1 下界保持）**                                                                                                                                                                                                                                                                                       |
 | **r5** | **2026-10-21** | **日视图顶部「当前时刻间隔带」的纵向基准补注（T518-R4 / PRD `docs/prds/2026-10-21-day-axis-endpoints.md` R9/R10；带高归 PRD，不进本 ADR）**：泳道区上方恒占一条间隔带 ⇒ **绝对纵向基准整体下移该带高**，但**相对几何不变** —— lane → Y 的相对映射、`segmentStyleInColumns` 的 `topOffset` 仍为 `0`、拖拽 / 缩放 / pan 的判定（仅用 `rect.width` + `clientX`）与命中关系**均不变**。§D5 树图旧述「track / lanes / now-line 不变」按**相对**理解：lane 层绝对 `top` 由 `0` 改为该带高（单一来源变量）；`.day-axis-bg` / `.day-axis-track` 仍 `inset:0`（覆盖含带在内的整列）。**禁**把该高度塞进 `topOffset`（共享几何函数为月 / 日同源，C1「唯一几何实现」）。                                                        |
+| **r6** | **2026-10-21** | **时刻文本定位 + 间隔带空白（T518-R5 / PRD `docs/prds/2026-10-21-day-axis-endpoints.md` R11、AC8a–AC8d）**：① now-line **线身在日视图让带**（`top: var(--day-now-band)`），文本水平居中于线、垂直置于**线头正上方**；② **带内不画内部格线** ⇒ 日视图 `.day-axis-bg` 亦让带；③ **端点边界线 `.day-axis-endpoint` 保留贯穿**（属轴的框，非刻度线）；④ `.day-axis-track` **仍 `inset:0`**（唯一消费 = `rect.width`，纵向范围无消费方）。**本行取代 r5 的「`.day-axis-bg` / `.day-axis-track` 仍 `inset:0`（覆盖含带在内的整列）」**；r5 的「相对几何不变 / lane 让带」仍有效。视口贴边属展示层计算，**不入本 ADR**（口径见 PRD R11②③ / AC8b–AC8c，性能纪律沿用 interaction ADR C8）。                                   |
 
 ## 1. 事实基线（T77 读码结论）
 
@@ -127,7 +128,7 @@
       │                            背景复用共享格线类，**与 .day-grid 同列宽基准 ⇒ 同横向坐标系** ✓
       └─ .day-grid             ← flex:1 0 auto；高度公式复用既有常量
                                     （GRID_ITEM_STEP(22) / GRID_BAND_HEIGHT(24)，均自 monthly/use-calendar-grid 导入；
-                                     topOffset 仍为 0；.day-axis-bg inset:0 不变；track / lanes / now-line 相对不变；lane 绝对 top 另加间隔带高（r5））
+                                     topOffset 仍为 0；track 仍 inset:0；lanes / now-line / .day-axis-bg 均让出间隔带高；端点线贯穿（r5/r6））
 ```
 
 - ⚠️ **AC4「网格内独立泳道」措辞澄清**：实现为 `.day-scroll` 内、`.day-grid` **之上**的兄弟块（共用列宽基准与格线类），**不是** `.day-grid` 元素的子节点。理由：若塞进 `.day-grid`，所有 lane 的 `top` 需减去动态泳道高 ⇒ 污染 `segmentStyleInColumns` / `packLanes` 的既冻结几何（C1/C2）。语义等价（时间轴坐标系内、时间轴区顶部）。
