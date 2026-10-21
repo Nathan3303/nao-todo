@@ -174,8 +174,9 @@ describe('T512 周起始 = 分段切换控件（与日/月/周同一通用件）
         expect(toggle.getAttribute('aria-label')).toBe('周起始')
         const btns = weekButtons()
         expect(btns.length).toBe(2)
-        expect(btns[0]!.textContent?.trim()).toBe('周日')
-        expect(btns[1]!.textContent?.trim()).toBe('周一')
+        // T518-R10：用户把文案换成三字母缩写（`calendar.weekday.sun|mon`）
+        expect(btns[0]!.textContent?.trim()).toBe('日')
+        expect(btns[1]!.textContent?.trim()).toBe('一')
         // 默认 weekStart = monday ⇒ 第二格选中（滑块/字重 + aria-pressed 双重冗余）
         expect(btns[0]!.getAttribute('aria-pressed')).toBe('false')
         expect(btns[1]!.getAttribute('aria-pressed')).toBe('true')
@@ -183,7 +184,7 @@ describe('T512 周起始 = 分段切换控件（与日/月/周同一通用件）
         expect(btns[0]!.classList.contains('is-active')).toBe(false)
     })
 
-    it('点击「周日」⇒ 调用 setWeekStart(sunday)；状态语义由调用方承载', async () => {
+    it('点击「日」⇒ 调用 setWeekStart(sunday)；状态语义由调用方承载', async () => {
         const { calendarContext } = await mountAside()
         const btns = weekButtons()
         btns.item(0).click()
@@ -204,12 +205,12 @@ describe('T512 周起始 = 分段切换控件（与日/月/周同一通用件）
         expect(btns[0]!.classList.contains('is-active')).toBe(true)
     })
 
-    it('英文环境：Week starts on / Sunday / Monday', async () => {
+    it('英文环境：Week starts on / Sun / Mon（三字母缩写）', async () => {
         setLocale('en-US')
         await mountAside()
         expect(weekLabel()!.textContent?.trim()).toBe('Week starts on')
         const btns = weekButtons()
-        expect(btns[0]!.textContent?.trim()).toBe('Sunday')
-        expect(btns[1]!.textContent?.trim()).toBe('Monday')
+        expect(btns[0]!.textContent?.trim()).toBe('Sun')
+        expect(btns[1]!.textContent?.trim()).toBe('Mon')
     })
 })
