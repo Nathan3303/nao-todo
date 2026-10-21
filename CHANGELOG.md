@@ -2,6 +2,10 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## 机制变更（无版本号） - 2026-10-21
+
+**nao 机制包升级 `@nathan33/nao-skill` `0.13.0 → 0.18.4`**（`T514`）：仅升级包与版本标记，**无源码 / 测试 / 构建行为变化**。执行链路（官方口径）：`pi install -l --approve npm:@nathan33/nao-skill@0.18.4`（改 `.pi/settings.json` pin + 物化 `.pi/npm`）→ `nao-skill init .`（幂等重写转发入口，本次判定 `shim same`）→ `.agents/.nao-version` 由 `init` 写为 `0.18.4`。**实测结论**：① **shim 生成文本 0.13.0 与 0.18.4 完全一致**（`init` 报 `shim same`，无需改动）；② `AGENTS.md` **未被自动改写**（按 PM 卡 §七 手动合并规则）；③ 机制包文件数 **43 → 48**（`check: OK · roles=6 · files=48`，新增 `common/release-notes.md`、`templates/user-acceptance.md.example`、`templates/pi-subagents` 等）；④ `check` 全绿（文本契约 / 角色卡 frontmatter / 交叉引用 / PR 模板 / tmux 布局）；⑤ 5 个舰队 pi 插件（intercom / ask-me / subagents / web-access / codegraph）均已装。**新能力（本仓暂未使用，供后续参考）**：`ensure --background`（无图形会话显式后台拉起）、`cleanup -S <socket>`（隔离实验场 tmux server，强制显式 socket）、`plugins list|install`、`exec`、`close` 新增「常驻缺席而其派生在场 ⇒ 目标歧义拒绝」闸门、宿主阶梯 BR1（`NAO_TERMINAL` 支持 `tmux|foot|ghostty|ptyxis|screen`）。**顺带清理**：`T511a` 遗留的 `.agents/.nao-version` 未提交改动（`0.12.0 → 0.13.0`）随本次升级正式落地为 `0.18.4`。
+
 ## 机制变更（无版本号） - 2026-10-08
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
