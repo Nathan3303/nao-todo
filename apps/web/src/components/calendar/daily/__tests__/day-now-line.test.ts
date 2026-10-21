@@ -192,14 +192,14 @@ describe('T518-R5 AC8a 文本位置（居中于线 + 线头正上方）', () => 
         const dot = cssRule(css, '.day-now-line::before')
         const dotTop = pxOf(dot, 'top')
         const dotHeight = pxOf(dot, 'height')
-        expect(band).toBe(24)
+        expect(band).toBe(26)
         const textBottom = band - bottomOffset
         const dotTopY = band + dotTop
         expect(textBottom).toBeLessThanOrEqual(dotTopY) // 不重叠
         expect(dotTopY + dotHeight).toBeLessThanOrEqual(band) // 圆点完全在带内（R11 口径）
     })
 
-    it('文本盒完整落在带内（AC7a/AC7d 校准后：盒顶 0.4 ≥ 0、盒高 15.6 + 圆点 7 = 22.6 ≤ 24）', () => {
+    it('文本盒完整落在带内（AC7a/AC7d：盒顶 2.4 ≥ 0、盒高 15.6 + 圆点 7 = 22.6 ≤ 26）', () => {
         const css = dailyStyle()
         const band = pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')
         const label = cssRule(css, '.day-now-label')
@@ -208,13 +208,23 @@ describe('T518-R5 AC8a 文本位置（居中于线 + 线头正上方）', () => 
         )
         const fontSizeRem = Number.parseFloat(/font-size:\s*([\d.]+)rem/.exec(label)![1]!)
         const lineHeight = Number.parseFloat(/line-height:\s*([\d.]+)/.exec(label)![1]!)
-        const textHeight = fontSizeRem * 16 * lineHeight // 根字号 16px ⇒ 15.6px
+        // ⚠️ `16` 只是**默认根字号假设**（仓内没有 `html { font-size }`；`:root` 的
+        //    `--nue-primary-font-size` 是变量、与 `rem` 无关）⇒ 真实根字号是浏览器默认值且用户可改。
+        //    因此「盒顶 ≥ 0」对根字号有上限：`带高 − 8 ≥ 0.975 × root` ⇒ 26px 带高容忍 root ≤ 18.46px（+15%）。
+        //    本用例按 16 断言具体数值，另由下一条用例断言「容忍上限 ≥ 18px」这一约束本身。
+        const textHeight = fontSizeRem * 16 * lineHeight // 默认根字号 16 ⇒ 15.6px
         const dotHeight = pxOf(cssRule(css, '.day-now-line::before'), 'height')
         const textBottom = band - bottomOffset
         const textTop = textBottom - textHeight
         expect(textTop).toBeGreaterThanOrEqual(0)
         expect(textHeight + dotHeight).toBeLessThanOrEqual(band)
-        expect(textTop).toBeCloseTo(0.4, 5)
+        expect(textTop).toBeCloseTo(2.4, 5)
+
+        // T518-R5c：把「根字号可放大」这条约束本身钉死 —— 容忍上限 = (带高 − 底边偏移) / 0.975
+        // 根字号 16 时的 2.4px 余量只允许 +15%（≈18.46px）；要求 ≥18px，防止将来调小带高时静默失守。
+        const rootFontCeiling = (band - bottomOffset) / (fontSizeRem * lineHeight)
+        expect(rootFontCeiling).toBeGreaterThanOrEqual(18)
+        expect(rootFontCeiling).toBeCloseTo(18.46, 2)
     })
 })
 
@@ -330,11 +340,11 @@ describe('T518-R5 AC8d 间隔带内不画格线（端点线保留贯穿）', () 
     })
 })
 
-describe('T518-R4 AC7 间隔带（24px 单一来源 / 恒定 / lane 相对映射不变）', () => {
-    it('AC7d 带高单一来源：`--day-now-band` 定义仅 1 处（24px），只有泳道层消费该变量', () => {
+describe('T518-R4 AC7 间隔带（26px 单一来源 / 恒定 / lane 相对映射不变）', () => {
+    it('AC7d 带高单一来源：`--day-now-band` 定义仅 1 处（26px），只有泳道层消费该变量', () => {
         const css = DAILY_RAW['../index.css'] ?? ''
         expect(countOf(css, '--day-now-band:')).toBe(1)
-        expect(pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')).toBe(24)
+        expect(pxOf(cssRule(css, '.nue-calendar-daily'), '--day-now-band')).toBe(26)
         expect(countOf(css, 'var(--day-now-band)')).toBe(3) // 泳道层 / 格线层 / 线身
         expect(cssRule(css, '.day-grid .cal-lanes')).toContain('top: var(--day-now-band)')
         expect(cssRule(css, '.day-grid')).not.toMatch(/padding-top/)
