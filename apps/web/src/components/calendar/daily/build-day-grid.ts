@@ -24,6 +24,20 @@ export type DayGeometry = { columnMinutes: 30 | 15 | 5 }
 /** 时间轴列头 */
 export type DayColumn = { index: number; label: string }
 
+/**
+ * 轴端点（R1 / R6：端点语义进模型，CSS 不写端点魔数）
+ * @property key `start` = 00:00 轴起点；`end` = 24:00 轴终点
+ * @property minutes 端点分钟值（0 / 1440；终点不折回次日 00:00）
+ * @property label 端标签文本（型式随档位：×1 / ×1.5 ⇒ `00` / `24`；×2 以上 ⇒ `00:00` / `24:00`）
+ * @property labelIndex 端标签承载列（起点 = 首列；终点 = 末列，标签右对齐于轴终点）
+ */
+export type DayAxisEndpoint = {
+    key: 'start' | 'end'
+    minutes: number
+    label: string
+    labelIndex: number
+}
+
 /** 时间轴任务段（闭区间分数列；`isStart/isEnd` 为该任务真实起/止于本视图内） */
 export type DayTimedSegment = {
     task: TaskViewObject
@@ -38,14 +52,26 @@ export type DayTimedSegment = {
 export type DayGridModel = {
     anchorKey: string
     columns: DayColumn[]
+    axisEndpoints: DayAxisEndpoint[]
     timed: DayTimedSegment[]
     allDay: TaskViewObject[]
     overflow: { key: string; count: number }[]
     isToday: boolean
 }
 
+/**
+ * 轴标签文本（**单一来源**：内部列头与轴端点共用；D1.1 分档两式）
+ * @description 30min 档 ⇒ `HH`（调用方保证整点）；15/5min 档 ⇒ `HH:MM`。
+ *              `minutes = 1440` ⇒ `24` / `24:00`（轴终点，不折回次日 `00`）。
+ */
+const formatAxisLabel = (minutes: number, columnMinutes: 30 | 15 | 5): string => {
+    const hour = String(Math.floor(minutes / 60)).padStart(2, '0')
+    if (columnMinutes === 30) return hour
+    return `${hour}:${String(minutes % 60).padStart(2, '0')}`
+}
+
 // 列头标签两型（D1.1 分档两式）：30min 档仅整点 `HH`（24 个，与现状逐字节一致）；
-// 15/10min 档整点 + 半点 `HH:MM`（48 个）；其余列为空。
+// 15/5min 档整点 + 半点 `HH:MM`（48 个）；其余列为空（端点标签另由 `axisEndpoints` 承载）。
 const buildColumns = (columnMinutes: 30 | 15 | 5): DayColumn[] => {
     const columns = DAY_MINUTES / columnMinutes
     return Array.from({ length: columns }, (_, index) => {
@@ -53,15 +79,28 @@ const buildColumns = (columnMinutes: 30 | 15 | 5): DayColumn[] => {
         if (columnMinutes === 30) {
             return {
                 index,
-                label: minutes % 60 === 0 ? String(minutes / 60).padStart(2, '0') : ''
+                label: minutes % 60 === 0 ? formatAxisLabel(minutes, columnMinutes) : ''
             }
         }
         if (minutes % 30 !== 0) return { index, label: '' }
-        const hour = String(Math.floor(minutes / 60)).padStart(2, '0')
-        const minute = String(minutes % 60).padStart(2, '0')
-        return { index, label: `${hour}:${minute}` }
+        return { index, label: formatAxisLabel(minutes, columnMinutes) }
     })
 }
+
+/**
+ * 轴端点（R1 / R6）：00:00 与 24:00 是时间轴的**物理端点**，与「整点 / 半点」内部刻度是两类语义
+ * @description 端点恒存在（不依赖标签生成规则）；末端点落在**轴终点**（末列右缘），
+ *              故末标签不再是 `23:30` 之后的空白（DEF-78 现状 B）。
+ */
+const buildAxisEndpoints = (columnMinutes: 30 | 15 | 5, columns: number): DayAxisEndpoint[] => [
+    { key: 'start', minutes: 0, label: formatAxisLabel(0, columnMinutes), labelIndex: 0 },
+    {
+        key: 'end',
+        minutes: DAY_MINUTES,
+        label: formatAxisLabel(DAY_MINUTES, columnMinutes),
+        labelIndex: columns - 1
+    }
+]
 
 /**
  * 构建日视图模型
@@ -152,6 +191,7 @@ export const buildDayGrid = (
     return {
         anchorKey,
         columns: buildColumns(columnMinutes),
+        axisEndpoints: buildAxisEndpoints(columnMinutes, columns),
         timed,
         allDay,
         overflow,

@@ -6,6 +6,7 @@ import type { DayGridModel } from './build-day-grid'
  * @description 仅「带文本」刻度可点：原生 `button`（唯一新建入口必须键盘可达），
  *              payload 由宿主桥 `onCreateTaskAt(startMin)` 构造（日视图不自建 payload）；
  *              首/末带文本列挂 `.is-first-tick` / `.is-last-tick` 供边界保护（r3）。
+ *              T518：轴终点标签（R2 / D1）由模型 `axisEndpoints` 提供，**不新增点击入口**（C5 零变化）。
  */
 
 export type DayTickCreateDeps = {
@@ -25,8 +26,23 @@ export const useDayTickCreate = ({ model, onCreateTaskAt }: DayTickCreateDeps) =
     const firstLabelIndex = computed(() => labelIndices.value[0] ?? -1)
     const lastLabelIndex = computed(() => labelIndices.value[labelIndices.value.length - 1] ?? -1)
 
+    // @computed 轴终点标签（R2 / D1）：承载列 = 末列（标签右对齐于轴终点）；文本型式随档位（`24` / `24:00`）
+    const axisEndLabelIndex = computed(
+        () => model.value.axisEndpoints.find((endpoint) => endpoint.key === 'end')?.labelIndex ?? -1
+    )
+    const axisEndLabelText = computed(
+        () => model.value.axisEndpoints.find((endpoint) => endpoint.key === 'end')?.label ?? ''
+    )
+
     // @method 点击带文本刻度标签 → 经宿主桥打开创建对话框（payload 由宿主桥构造）
     const onCreateAtTick = (tickMin: number): void => onCreateTaskAt(tickMin)
 
-    return { tickTextOf, firstLabelIndex, lastLabelIndex, onCreateAtTick }
+    return {
+        tickTextOf,
+        firstLabelIndex,
+        lastLabelIndex,
+        axisEndLabelIndex,
+        axisEndLabelText,
+        onCreateAtTick
+    }
 }

@@ -73,10 +73,14 @@ const { model, segStyle, title, emptyHint, alldayReasonOf } = useDayModel({
 })
 
 // 刻度标签与刻度新建入口（C5）/ 视口（档位·锚定·pan·遮罩·当前时间线）/ 任务条手势与写回（C8·C9·C13）
-const { tickTextOf, firstLabelIndex, lastLabelIndex, onCreateAtTick } = useDayTickCreate({
-    model,
-    onCreateTaskAt
-})
+const {
+    tickTextOf,
+    firstLabelIndex,
+    lastLabelIndex,
+    axisEndLabelIndex,
+    axisEndLabelText,
+    onCreateAtTick
+} = useDayTickCreate({ model, onCreateTaskAt })
 const {
     bodyEl,
     scrollEl,
@@ -187,9 +191,14 @@ const switchFromDay = (name: CalendarViewName): void => {
                             class="day-col-head"
                             :class="{
                                 'is-first-tick': col.index === firstLabelIndex,
-                                'is-last-tick': col.index === lastLabelIndex
+                                'is-last-tick': col.index === lastLabelIndex,
+                                'is-axis-end': col.index === axisEndLabelIndex
                             }"
-                            :aria-hidden="col.label === '' ? 'true' : undefined"
+                            :aria-hidden="
+                                col.label === '' && col.index !== axisEndLabelIndex
+                                    ? 'true'
+                                    : undefined
+                            "
                         >
                             <!-- 新建入口（C5）：仅带文本刻度可点（原生 button，键盘可达） -->
                             <button
@@ -202,6 +211,13 @@ const switchFromDay = (name: CalendarViewName): void => {
                             >
                                 {{ col.label }}
                             </button>
+                            <!-- 轴终点标签（R2 / D1：用户已裁定显示）：`24:00` 右对齐于轴终点、不裁切；
+                                 文本型式随档位（×1 / ×1.5 ⇒ `24`）。非交互：不新增「24 点创建任务」歧义入口（C5 零变化） -->
+                            <span
+                                v-else-if="col.index === axisEndLabelIndex"
+                                class="day-axis-end-label"
+                                >{{ axisEndLabelText }}</span
+                            >
                         </div>
                     </div>
                     <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接）
@@ -236,6 +252,18 @@ const switchFromDay = (name: CalendarViewName): void => {
                             :class="gridLineModifier"
                             data-testid="day-axis-bg"
                         ></div>
+                        <!-- 轴端点边界线（R1 / R5）：00:00 与 24:00 各 1 条（2px，比内部小时线更重）；
+                             位置由模型端点语义给出（`.is-start` = 轴起点 / `.is-end` = 轴终点），CSS 不写端点魔数（R6）；
+                             DOM 增量恒为 2（与列数无关，NFR） -->
+                        <span
+                            v-for="endpoint in model.axisEndpoints"
+                            :key="endpoint.key"
+                            class="day-axis-endpoint"
+                            :class="`is-${endpoint.key}`"
+                            :data-testid="`day-axis-endpoint-${endpoint.key}`"
+                            :data-minutes="endpoint.minutes"
+                            aria-hidden="true"
+                        ></span>
                         <!-- 交互层（覆盖于纯视觉背景之上；day-axis-bg 仍无子节点，C6）
                              仅作几何锚（`pointer-events: none`，禁拦截任务条）；空白平移由 .day-body 承接 -->
                         <div

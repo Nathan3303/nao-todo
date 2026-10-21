@@ -13,8 +13,9 @@ import { dayScrollWidthCss } from '../day-zoom'
 /**
  * TASK-16 日视图组件 DOM 契约（PRD §5.7 冻结 / C6 / C12）
  * @description
- *  - `[data-testid="day-columns"]`：×1 时子节点 48、其中有文本者 24（整点 24 个）；
+ *  - `[data-testid="day-columns"]`：×1 时子节点 48、其中有文本者 25（整点 24 + 轴终点 1）；
  *    其余档位按 ADR §3-D1 矩阵（×2=96/48、×4=288/48，R2 起 ×4=5min）；
+ *    **T518 变更**：末列新增轴终点标签（`24` / `24:00`，R2/D1）⇒ 「有文本列」各 +1（断言仍为精确相等，未放宽）。
  *  - `[data-testid="day-axis-bg"]`：其内 `[data-col]` 数量必须为 0（禁 48×N 背景 DOM）；
  *  - `[data-testid="day-unscheduled-entry"]`：日视图自建未安排入口（C12）。
  *  - TASK-19：`.day-scroll` 承载宽高（`.day-cols-head` 与全天泳道同处其中，泳道在 `.day-grid` 之上）。
@@ -81,14 +82,14 @@ const cssRule = (css: string, selector: string): string => {
 }
 
 describe('TASK-16 日视图 DOM 契约（C6 / C12）', () => {
-    it('列头容器 48 个子节点、其中 24 个有文本（整点）', () => {
+    it('列头容器 48 个子节点、其中 25 个有文本（整点 24 + 轴终点 1）', () => {
         const wrapper = mountDaily()
         const container = wrapper.find('[data-testid="day-columns"]')
         expect(container.exists()).toBe(true)
         const children = Array.from(container.element.children)
         expect(children).toHaveLength(48)
         const withText = children.filter((el) => (el.textContent ?? '').trim().length > 0)
-        expect(withText).toHaveLength(24)
+        expect(withText).toHaveLength(25)
         wrapper.unmount()
     })
 
@@ -109,11 +110,11 @@ describe('TASK-16 日视图 DOM 契约（C6 / C12）', () => {
 
 describe('TASK-19 档位矩阵列头（D1.1 / C6 / AC2）', () => {
     const MATRIX = [
-        { zoom: 1, columns: 48, labels: 24 },
-        { zoom: 1.5, columns: 48, labels: 24 },
-        { zoom: 2, columns: 96, labels: 48 },
-        { zoom: 3, columns: 96, labels: 48 },
-        { zoom: 4, columns: 288, labels: 48 }
+        { zoom: 1, columns: 48, labels: 25 },
+        { zoom: 1.5, columns: 48, labels: 25 },
+        { zoom: 2, columns: 96, labels: 49 },
+        { zoom: 3, columns: 96, labels: 49 },
+        { zoom: 4, columns: 288, labels: 49 }
     ] as const
 
     for (const row of MATRIX) {
