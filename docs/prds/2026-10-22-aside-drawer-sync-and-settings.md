@@ -1,6 +1,6 @@
 # 2026-10-22 移动端抽屉（Float 变体）补齐同步状态与设置入口 PRD
 
-> **状态**：**已回执 R2 · PM 技术验收通过 · 待用户 390px 真机复验**（R1 Tab 过挤 ⇒ R2 复用分段件 + 尺寸轴）（PR [#223](https://github.com/Nathan3303/nao-todo/pull/223)，代码 `c71ef362` + 留痕 `e9b3861d`）。四项裁定：放置 A / 设置对话框本次一并窄屏适配 B / 验收含共存与变体切换回归 A / **窄屏形态 A（顶部横向 Tab）**。**Issue**：[#221](https://github.com/Nathan3303/nao-todo/issues/221)（仅摘要 + 指针）。
+> **状态**：**✅ 已交付并合并（`443bee97`，PR [#223](https://github.com/Nathan3303/nao-todo/pull/223)，2026-10-22）** —— 用户 390px 真机视觉验收通过（R1–R4 四轮返工，根因见 §九 R4）。（PR [#223](https://github.com/Nathan3303/nao-todo/pull/223)，代码 `c71ef362` + 留痕 `e9b3861d`）。四项裁定：放置 A / 设置对话框本次一并窄屏适配 B / 验收含共存与变体切换回归 A / **窄屏形态 A（顶部横向 Tab）**。**Issue**：[#221](https://github.com/Nathan3303/nao-todo/issues/221)（仅摘要 + 指针）。
 > **依据**：用户 2026-10-22 原话「在移动端浏览器中浏览 Web 端时，AppAsideV2 会应用 Float 变体，本次版本中的 Float 变体没有展示同步状态组件和设置按钮（以及设置对话框），把他们加上」+ PM 读码（`apps/web/src/components/app/aside-v2/`）。
 > **硬约束**：移动端红线（`packages/presentation-react` / `apps/mobile` 零改动）· 桌面 / Electron 视觉零变化 · 不新增 `nue-*` token 与新 i18n 键（复用 `nav.settings`）。
 
@@ -105,4 +105,5 @@
 
 - **放置**：A 内容区底部工具区（**采纳**：不挤压 footer、延续"同步在齿轮上方"）· B 齿轮进 header（收纳分散）· C 全塞 footer（7 个图标在 256px 内过挤）。
 - **设置对话框**：A 原样复用（右栏 ~180px 不可用）· **B 本次窄屏适配（采纳）** · C 手机上整屏（与桌面形态差异过大，且要另设一套布局）。
+- **修订**：R4 补记（2026-10-22）：`<nue-dialog :class>` 的 class **被库完全丢弃**（组件根 `Teleport` + `.nue-dialog` 的 class 由 `normalizeClass(['nue-dialog', ...theme])` 重组）⇒ R1–R3 的 `.nue-dialog--settings.is-narrow …` **全为死代码**（窄屏一直 row，主体被推出视口）；改挂自有 `.sd-body` 后生效，并加三层守卫（运行时落点 / 运行时结构 / 源级选择器前缀）+ 变异自检。
 - **修订**：2026-10-22 初稿（读码定位 + 用户三项裁定）；同日回执与 PM 技术验收留痕；同日 **R1**（用户 390px 真机走查：窄屏 Tab 过挤 ⇒ 改为复用 `segmented-switch`）；同日 **R2**（两处取舍裁定：① 接受 `settings.*` 短标签，英文允许 2 行；② **不接受**调用处 3 行高度覆盖 ⇒ 改由组件 `size` 轴承担，`DESIGN.md` §4.5 已增补该轴）。
