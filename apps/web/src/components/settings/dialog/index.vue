@@ -101,47 +101,52 @@ onUnmounted(unbindSettingsDialogHost)
 </script>
 
 <template>
-    <nue-dialog
-        v-model="open"
-        theme="large,settings"
-        :class="{ 'is-narrow': isNarrow }"
-        :title="t('nav.settings')"
-    >
-        <!-- 三区切换：窄屏（T521-R1）= 单一来源件 segmented-switch（三段等分 / 纯文字 / group+aria-pressed）；
-             桌面（>445px）= 原左栏竖排 tablist，逐字不变。同一时刻只渲染一套（不得两套语义并存）。 -->
-        <segmented-switch
-            v-if="isNarrow"
-            :items="segmentedItems"
-            :model-value="activeKey"
-            :fill="true"
-            size="md"
-            aria-label="设置分区"
-            @update:model-value="setActiveKey"
-        />
-        <div
-            v-else
-            class="sd-tabs"
-            role="tablist"
-            aria-orientation="vertical"
-            aria-label="设置分区"
-        >
-            <nue-button
-                v-for="section in sections"
-                :key="section.key"
-                class="sd-tab"
-                :class="{ 'is-active': section.key === activeKey }"
-                role="tab"
-                :aria-selected="section.key === activeKey"
-                @click="activeKey = section.key"
-                :icon="section.icon"
-                theme="ghost"
+    <nue-dialog v-model="open" theme="large,settings" :title="t('nav.settings')">
+        <!--
+          T521-R4：**窄屏标识必须挂在这层自己的 wrapper 上，不能写在 `<nue-dialog :class>`**。
+          NueDialog 内部用 `normalizeClass(['nue-dialog', ...theme])` **重新组装** class，且组件根为
+          `<Teleport>`（非元素）⇒ 外部传入的 class 会被丢弃：jsdom 实测窄屏时
+          `.nue-dialog.classList` = `nue-container nue-dialog nue-dialog--large nue-dialog--settings`
+          （无 `is-narrow`），overlay 上也没有 ⇒ R1–R3 的 `.nue-dialog--settings.is-narrow …` 全是死代码。
+          本 wrapper 同时是布局载体：桌面 row（左栏 + 面板）、窄屏 column（Tab 在上 / 面板在下）。
+        -->
+        <div class="sd-body" :class="{ 'is-narrow': isNarrow }">
+            <!-- 三区切换：窄屏（T521-R1）= 单一来源件 segmented-switch（三段等分 / 纯文字 / group+aria-pressed）；
+                 桌面（>445px）= 原左栏竖排 tablist，逐字不变。同一时刻只渲染一套（不得两套语义并存）。 -->
+            <segmented-switch
+                v-if="isNarrow"
+                :items="segmentedItems"
+                :model-value="activeKey"
+                :fill="true"
+                size="md"
+                aria-label="设置分区"
+                @update:model-value="setActiveKey"
+            />
+            <div
+                v-else
+                class="sd-tabs"
+                role="tablist"
+                aria-orientation="vertical"
+                aria-label="设置分区"
             >
-                {{ t(section.titleKey) }}
-            </nue-button>
-        </div>
-        <!-- 右栏：当前区内容（外框定尺，仅本区内部滚动） -->
-        <div class="sd-panel">
-            <component :is="activeSection.component" :key="activeKey" />
+                <nue-button
+                    v-for="section in sections"
+                    :key="section.key"
+                    class="sd-tab"
+                    :class="{ 'is-active': section.key === activeKey }"
+                    role="tab"
+                    :aria-selected="section.key === activeKey"
+                    @click="activeKey = section.key"
+                    :icon="section.icon"
+                    theme="ghost"
+                >
+                    {{ t(section.titleKey) }}
+                </nue-button>
+            </div>
+            <!-- 右侧 / 下方：当前区内容（外框定尺，仅本区内部滚动） -->
+            <div class="sd-panel">
+                <component :is="activeSection.component" :key="activeKey" />
+            </div>
         </div>
     </nue-dialog>
 </template>
@@ -173,6 +178,28 @@ onUnmounted(unbindSettingsDialogHost)
 /* 三区组件自身的页面级页头（原路由页「菜单/标题」行）在对话框内由分区条替代，隐藏之 */
 .nue-dialog--settings .nue-dialog__content .nue-header {
     display: none;
+}
+
+/* T521-R4 布局载体（窄屏标识落点）：桌面 = 与原先 `.nue-dialog__content` 同构的 row
+   （左栏 12rem + 右栏 flex:1）⇒ 计算布局等价；窄屏 = column（Tab 在上 / 面板在下）。
+   `min-width: 0` 防止面板内 min-content 撑宽（窄屏右侧不得出视口）。 */
+.sd-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+/* 窄屏：纵向堆叠 + 面板吃满剩余高度（定高容器链：dialog → main → content → sd-body → panel） */
+.sd-body.is-narrow {
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
+}
+
+.sd-body.is-narrow .sd-panel {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 /* 左栏分区条：竖排、定宽不收缩 */
@@ -215,21 +242,5 @@ onUnmounted(unbindSettingsDialogHost)
     background: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     border-color: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     color: var(--nue-primary-color-100);
-}
-
-/* —— T521-R2 形态 A（窄屏）：三区入口 = `segmented-switch`（件内自带槽底/滑块/字色/动效/尺寸轴，
-   本文件不重写任何分段视觉，也不在调用处覆盖分段件尺寸 —— 点击区达标走件内 `size="md"`）；
-   此处只负责**竖向堆叠容器**，桌面不命中（AC4）。 —— */
-.nue-dialog--settings.is-narrow .nue-dialog__content {
-    flex-direction: column;
-    gap: var(--nue-gap-xs);
-}
-
-/* T521-R3 兜底：窄屏面板按**内容**起步（`flex-basis: auto`，而非 `flex: 1` 的 0 基）⇒
-   即使将来容器高度再次退化为自动高（R3 缺陷的成因），面板也不会塌陷为 0；
-   定高容器下与 `flex: 1` 等价（内容多则收缩后滚动、少则铺满）。桌面不命中。 */
-.nue-dialog--settings.is-narrow .sd-panel {
-    flex: 1 1 auto;
-    min-height: 0;
 }
 </style>

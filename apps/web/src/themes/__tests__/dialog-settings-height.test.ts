@@ -145,6 +145,10 @@ describe('T521-R3 窄屏设置对话框定高（源级守卫）', () => {
         expect(source).toMatch(/\.sd-panel\s*\{[^}]*flex:\s*1;/)
         expect(source).toMatch(/\.sd-panel\s*\{[^}]*min-height:\s*0;/)
         expect(source).toMatch(/\.sd-panel\s*\{[^}]*overflow:\s*auto;/)
-        expect(source).toMatch(/\.is-narrow\s+\.sd-panel\s*\{[^}]*flex:\s*1\s+1\s+auto;/)
+        // R4：窄屏标识落在自有 wrapper `.sd-body` 上（不是 .nue-dialog），面板高度挂在其下；
+        // wrapper 同时承接定高容器链（flex: 1 1 auto + min-height: 0）
+        expect(source).toMatch(/\.sd-body\s*\{[^}]*flex:\s*1\s+1\s+auto;/)
+        expect(source).toMatch(/\.sd-body\s*\{[^}]*min-height:\s*0/)
+        expect(source).toMatch(/\.sd-body\.is-narrow\s+\.sd-panel\s*\{[^}]*flex:\s*1\s+1\s+auto;/)
     })
 })
