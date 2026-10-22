@@ -220,6 +220,31 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(badge()).toBe('')
     })
 
+    it('T521 变体改绑：宿主切到抽屉工具区 ⇒ 按钮只在新宿主（无重复节点）', async () => {
+        mountBar()
+        const railHost = createHost()
+        await settle()
+        expect(railHost.querySelectorAll('.sync-rail-btn').length).toBe(1)
+
+        // 变体切换：新宿主（抽屉工具区）绑定后，旧宿主离开文档
+        const drawerHost = document.createElement('div')
+        drawerHost.id = 'AppAsideDrawerBottomSlot'
+        document.body.appendChild(drawerHost)
+        bindRailBottomHost(drawerHost, 'drawer')
+        railHost.remove()
+        await settle()
+
+        expect(railHost.querySelectorAll('.sync-rail-btn').length).toBe(0)
+        expect(drawerHost.querySelectorAll('.sync-rail-btn').length).toBe(1)
+        expect(document.querySelectorAll('.sync-rail-btn').length).toBe(1)
+
+        // 迟到的旧宿主解绑不得抢走新宿主（切换瞬间不丢同步状态）
+        unbindRailBottomHost(railHost)
+        await settle()
+        expect(drawerHost.querySelectorAll('.sync-rail-btn').length).toBe(1)
+        expect(document.querySelectorAll('.sync-rail-btn').length).toBe(1)
+    })
+
     it('宿主缺失：不渲染且无 warn/error（负向闭环，C3/C5）', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const error = vi.spyOn(console, 'error').mockImplementation(() => {})

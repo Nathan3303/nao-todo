@@ -19,6 +19,20 @@
     min-width: min(24rem, 100vw);
 }
 
+/* T521 形态 A：≤445px（与 Float 抽屉同一阈值）设置对话框铺满可用宽度、高度不越过安全区。
+   覆盖 401–445px 区间「左栏 12rem 把右栏压扁」的现状缺口；≤400px 仍由下方贴底抽屉规则接管
+   （本块在前 ⇒ 后者覆盖宽度/高度）。桌面 / Electron 不命中 ⇒ 零变化。 */
+@media screen and (max-width: 445px) {
+    .nue-dialog.nue-dialog--settings {
+        width: calc(100% - 1.5rem);
+        min-width: 0;
+        max-width: calc(100% - 1.5rem);
+        height: 85%;
+        max-height: calc(100% - 1.5rem);
+        box-sizing: border-box;
+    }
+}
+
 /* 弹窗响应式（≤400px ⇒ 贴底抽屉）。
    视口 / 安全区（DEF-79）：宽高一律相对覆盖层内容区（覆盖层已按安全区内缩），
    底部留白取 `env(safe-area-inset-bottom)` 与既有间距的较大者 ⇒ 按钮不压手势条；

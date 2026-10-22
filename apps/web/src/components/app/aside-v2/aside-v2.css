@@ -27,36 +27,37 @@
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
-
-            /* SHELL-02 注入点：display:contents 自身不成为 flex 项，
-               空注入点不贡献 gap（web 端侧栏零可见变化），
-               注入内容直接作为齿轮上方的一个 flex 项参与布局 */
-            .aside-rail-bottom-slot {
-                display: contents;
-            }
-
-            .aside-gear-btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                /* 与上部 icon-link 图标同尺寸（route-icon 字号 = text-2xl） */
-                font-size: var(--nue-text-2xl);
-                line-height: 1;
-                padding: 0;
-                border: none;
-                background: transparent;
-                color: var(--nue-primary-color-600);
-                cursor: pointer;
-
-                &:hover {
-                    color: var(--nue-primary-color-900);
-                }
-            }
         }
     }
 
     #SubPageAsideTeleportSlot {
         border-left: 1px solid var(--nue-border-color);
+    }
+}
+
+/* SHELL-02 注入点（rail / 抽屉两变体共用）：display:contents 自身不成为 flex 项，
+   空注入点不贡献 gap（web 端侧栏零可见变化），注入内容直接作为相邻 flex 项参与布局。
+   T521：注入点能力对等 ⇒ 样式单一来源，两变体差异只在容器摆放。 */
+.aside-rail-bottom-slot {
+    display: contents;
+}
+
+/* 设置齿轮（rail / 抽屉两变体共用外观；摆放由各自容器决定） */
+.aside-gear-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 与上部 icon-link 图标同尺寸（route-icon 字号 = text-2xl） */
+    font-size: var(--nue-text-2xl);
+    line-height: 1;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nue-primary-color-600);
+    cursor: pointer;
+
+    &:hover {
+        color: var(--nue-primary-color-900);
     }
 }
 
@@ -72,6 +73,29 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+    }
+
+    /* T521 工具区：content 区底部「同步状态（上）+ 齿轮（下）」；底部安全区由
+       themes/safe-area.css 的覆盖层内缩承担（此处不重复 env()） */
+    .nue-div.nue-div--aside__tools {
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--nue-gap-2xs);
+        padding-top: var(--nue-gap-xs);
+        border-top: 1px solid var(--nue-border-color);
+    }
+
+    /* 抽屉内点击区 ≥40px（DESIGN §3）；桌面 rail 尺寸不变（AC4 零变化） */
+    .nue-div--aside__tools .aside-gear-btn {
+        min-width: var(--nue-box-size-md);
+        min-height: var(--nue-box-size-md);
+    }
+
+    .nue-div--aside__tools .sync-rail-btn {
+        min-width: var(--nue-box-size-md);
+        min-height: var(--nue-box-size-md);
     }
 }
 

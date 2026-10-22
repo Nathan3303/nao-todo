@@ -4,9 +4,9 @@ import { ref } from 'vue'
  * SHELL-01 设置对话框 - 单例开关状态
  * @description 打开入口有三：桌面主侧栏齿轮按钮 / 全局命令 app.settings.open（$mod+,）/
  *              组件内 Esc 关闭（NueDialog 原生 → v-model 回落此处）。
- *              hostReady 由 SettingsDialog 挂载/卸载置位：仅当宿主（桌面侧栏区）在屏时才允许打开，
- *              避免登录页/移动端（无桌面宿主）误置开关、后续登录时对话框突现。
- *              移动端抽屉设置入口另议（本任务不动）。
+ *              hostReady 由 SettingsDialog 挂载/卸载置位：仅当宿主（当前侧栏变体：桌面 rail /
+ *              移动端抽屉）在屏时才允许打开，避免登录页（无侧栏宿主）误置开关、后续登录时对话框突现。
+ *              T521：抽屉内亦挂载本组件 ⇒ 手机上设置入口可用（单一实例由变体互斥保证）。
  */
 
 /** 设置对话框是否挂载在屏（SettingsDialog onMounted/onUnmounted 置位） */
@@ -26,7 +26,7 @@ export const closeSettingsDialog = (): void => {
     open.value = false
 }
 
-/** 对话框组件挂载时调用（桌面侧栏区在屏） */
+/** 对话框组件挂载时调用（当前侧栏变体在屏） */
 export const bindSettingsDialogHost = (): void => {
     hostReady.value = true
 }

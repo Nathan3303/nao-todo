@@ -51,6 +51,14 @@ const activeSection = computed(() => sections.find((s) => s.key === activeKey.va
 const { appSubscriber, appDialogManager, isDisplayAside, isUseFloatAside, switchDisplayAside } =
     inject(INDEX_VIEW_CONTEXT_KEY)!
 
+/**
+ * @computed 窄屏形态（T521 形态 A）
+ * @description 直接复用 Float 变体判定（`useResponsiveAside(MOBILE)`，阈值 445px）⇒ 与抽屉变体
+ *              **同时切换**，不新增断点 / 魔法数。窄屏：三区入口改顶部横向 Tab、内容占满宽度；
+ *              桌面 / Electron 始终 false ⇒ 左栏纵排逐字不变（AC4）。
+ */
+const isNarrow = computed(() => isUseFloatAside.value)
+
 // @stores/@usecases
 const userStore = useUserStore()
 const userUseCase = useUserUseCase(userStore)
@@ -73,9 +81,19 @@ onUnmounted(unbindSettingsDialogHost)
 </script>
 
 <template>
-    <nue-dialog v-model="open" theme="large,settings" :title="t('nav.settings')">
-        <!-- 三区切换（左栏竖排分区条：原 settings 页面级左栏导航收敛至此） -->
-        <div class="sd-tabs" role="tablist" aria-orientation="vertical" aria-label="设置分区">
+    <nue-dialog
+        v-model="open"
+        theme="large,settings"
+        :class="{ 'is-narrow': isNarrow }"
+        :title="t('nav.settings')"
+    >
+        <!-- 三区切换（左栏竖排分区条：原 settings 页面级左栏导航收敛至此）；窄屏改顶部横向 Tab -->
+        <div
+            class="sd-tabs"
+            role="tablist"
+            :aria-orientation="isNarrow ? 'horizontal' : 'vertical'"
+            aria-label="设置分区"
+        >
             <nue-button
                 v-for="section in sections"
                 :key="section.key"
@@ -166,5 +184,41 @@ onUnmounted(unbindSettingsDialogHost)
     background: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     border-color: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     color: var(--nue-primary-color-100);
+}
+
+/* —— T521 形态 A：窄屏（Float 变体 / ≤445px）三区入口改顶部横向 Tab、内容占满宽度 ——
+   桌面 / Electron 不命中 ⇒ 左栏纵排逐字不变（AC4）。
+   激活态 = 色块 + 下缘指示条 + 文字（颜色 + 符号 + 文字三重冗余，去色/色盲下仍可辨）。 */
+.nue-dialog--settings.is-narrow .nue-dialog__content {
+    flex-direction: column;
+}
+
+.nue-dialog--settings.is-narrow .sd-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: none;
+    width: 100%;
+    padding: 0 0 var(--nue-gap-xs);
+    border-right: none;
+    border-bottom: 1px solid var(--nue-border-color);
+}
+
+.nue-dialog--settings.is-narrow .sd-tab {
+    /* min-width: max-content ⇒ 再窄也不挤掉字（放不下则换行，不裁切） */
+    flex: 1 1 auto;
+    min-width: max-content;
+    min-height: var(--nue-box-size-md);
+    justify-content: center;
+    padding: 0 var(--nue-gap-2xs);
+    font-size: var(--nue-text-xs);
+    white-space: nowrap;
+}
+
+.nue-dialog--settings.is-narrow .sd-tab.is-active {
+    box-shadow: inset 0 -2px 0 0 currentColor;
+}
+
+.nue-dialog--settings.is-narrow .sd-panel {
+    width: 100%;
 }
 </style>

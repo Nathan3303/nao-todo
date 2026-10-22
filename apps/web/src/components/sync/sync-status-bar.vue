@@ -4,8 +4,9 @@
  * @description 轨道按钮 = tooltip「同步」+ refresh 图标（管线着色）+ 数据可信度角标（伪元素圆点），
  *              点击展开 NueDropdown 面板：首行时间、②离线·有镜像 / ③尚未同步完成、
  *              待推送 N、失败 N、错误摘要（2 行截断 + title 全文）、④正在加载更多 / ⑤触顶、
- *              概览「立即同步」。宿主为 webapp 侧栏 rail-host 注册表元素，宿主缺失
- *              （抽屉分支/非 index 路由/profile 未就绪）即整体不渲染，无悬浮层回落。
+ *              概览「立即同步」。宿主为侧栏底部注入点（SHELL-02 rail / T521 抽屉工具区，
+ *              两变体共用同一注册表、同一时刻仅一个宿主），宿主缺失（非 index 路由等）
+ *              即整体不渲染，无悬浮层回落。
  *
  *              T115b/r7：②③④⑤ 全部由内容区顶部条迁入本面板（顶部零挂载）；面板根为库渲染的 `<ul>`
  *              ⇒ 每行一律 `<li>`（P8 / C12）。
@@ -512,5 +513,14 @@ watch(
     min-width: 12rem;
     max-width: 24rem;
     padding: var(--nue-padding-xs);
+}
+
+/* T521：抽屉变体（≤445px）里同步入口位于 256px 抽屉中部，面板按 top-start 锚定后
+   经库内自动翻转仍可能超出屏宽 ⇒ 限宽 15rem（2×（触发器中心 − 边距）），
+   320px 档不横向溢出（AC3）；桌面 rail（>445px）保持 24rem 不变（AC4）。 */
+@media screen and (max-width: 445px) {
+    .nue-dropdown--sync-panel {
+        max-width: 15rem;
+    }
 }
 </style>
