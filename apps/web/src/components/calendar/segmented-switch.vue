@@ -7,7 +7,9 @@ import { computed } from 'vue'
  *  - **纯展示件**：N 段等分 + 滑块指示器（整段平移），当前值 + 点击上抛由调用方注入；
  *  - 选中/hover 态、`prefers-reduced-motion` 降级均在件内定义一处；
  *  - 可访问性：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器装饰性 `aria-hidden`。
- *  两处调用（"日/月/周" 视图切换 / "周起始"）只允许两轴不同：**段数** 与 **宽度策略**（fill）。
+ *  调用方只允许三轴不同：**段数**、**宽度策略**（fill）、**尺寸**（size，仅用于点击区达标）。
+ *  `size='md'`（T521-R2）：段高 = `--nue-box-size-md`（≈40px，满足 DESIGN §3 点击区 ≥40px）；
+ *  其余视觉（槽底/滑块/字色/圆角/动效）与 `sm` 逐项一致，调用方不得在自身 CSS 覆盖尺寸。
  */
 defineOptions({ name: 'CalendarSegmentedSwitch' })
 
@@ -21,6 +23,8 @@ const props = withDefaults(
         ariaLabel?: string
         /** 宽度策略：铺满容器（100%）vs 宽度自适应（inline-flex） */
         fill?: boolean
+        /** 尺寸：`sm`（默认，现状 28px）/ `md`（点击区 ≈40px；只用于点击区达标） */
+        size?: 'sm' | 'md'
         /** 滑块指示器测试定位 id */
         thumbTestId?: string
     }>(),
@@ -44,7 +48,7 @@ const select = (value: string): void => emit('update:modelValue', value)
 <template>
     <nue-button-group
         class="segmented-toggle"
-        :class="{ 'is-fill': fill }"
+        :class="{ 'is-fill': fill, 'is-md': size === 'md' }"
         role="group"
         :aria-label="ariaLabel"
     >
@@ -127,6 +131,18 @@ const select = (value: string): void => emit('update:modelValue', value)
     color: var(--nue-secondary-text-color);
     justify-content: center;
     align-items: center;
+    /* 段高（T521-R2）：height:auto + min-height ⇒ 长标签可换行增高而不被裁字
+       （英文 `Change Password` 在 320px 档需 2 行；禁用 ellipsis / 固定高切字） */
+    height: auto;
+    min-height: var(--nue-box-size-xs);
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+}
+
+/* `size='md'`：仅段高（点击区 ≈40px）；其它视觉一律沿用上方单一来源定义 */
+.segmented-toggle.is-md > .segmented-btn {
+    min-height: var(--nue-box-size-md);
 }
 .segmented-toggle > .segmented-btn:not(.is-active):hover {
     background: color-mix(in srgb, var(--nue-primary-text-color) 6%, transparent);

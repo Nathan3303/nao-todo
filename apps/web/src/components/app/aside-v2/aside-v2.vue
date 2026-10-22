@@ -3,14 +3,11 @@ import { useAppAsideV2 } from './use-aside'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
-import {
-    AppSettingsDialog,
-    open as settingsDialogOpen,
-    openSettingsDialog
-} from '@/components/settings/dialog'
+import { AppSettingsDialog } from '@/components/settings/dialog'
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
+import { useSettingsEntry } from './use-settings-entry'
 import { t } from '@nao-todo/shared/locales'
-import { nextTick, onBeforeUnmount, watch, type ComponentPublicInstance } from 'vue'
+import { onBeforeUnmount, shallowRef, type ComponentPublicInstance } from 'vue'
 
 defineOptions({ name: 'AppAsideV2' })
 
@@ -30,21 +27,26 @@ const {
 } = useAppAsideV2()
 
 // —— SHELL-01 设置对话框（桌面端）——
-// @watch 关闭后把焦点归还齿轮按钮（Esc/关闭钮均经 NueDialog v-model 写回 state.open）
-watch(settingsDialogOpen, (visible) => {
-    if (visible) return
-    void nextTick(() => {
-        document.getElementById('AppAsideSettingsGearBtn')?.focus()
-    })
-})
+// T521：齿轮绑定 + 关窗焦点归还收敛到两变体共用的单一来源（见 use-settings-entry.ts）
+const { setGearButton, openSettings } = useSettingsEntry()
 
 // —— SHELL-02 轨道底部注入点（desktop 同步状态组件的 Teleport 宿主）——
 // 函数 ref 用稳定引用（避免每次重渲染先置空再置位引发消费侧反复卸载）；卸载兜底清空。
+const railBottomSlot = shallowRef<HTMLElement | null>(null)
 const setRailBottomSlot = (el: Element | ComponentPublicInstance | null): void => {
-    if (el instanceof HTMLElement) bindRailBottomHost(el)
-    else unbindRailBottomHost()
+    if (el instanceof HTMLElement) {
+        railBottomSlot.value = el
+        bindRailBottomHost(el, 'rail')
+        return
+    }
+    if (railBottomSlot.value) {
+        unbindRailBottomHost(railBottomSlot.value)
+        railBottomSlot.value = null
+    }
 }
-onBeforeUnmount(unbindRailBottomHost)
+onBeforeUnmount(() => {
+    if (railBottomSlot.value) unbindRailBottomHost(railBottomSlot.value)
+})
 
 // @export
 defineExpose({ switchDisplayAside })
@@ -97,11 +99,12 @@ defineExpose({ switchDisplayAside })
                 <nue-tooltip :content="t('nav.settings')" placement="right-center" size="small">
                     <button
                         id="AppAsideSettingsGearBtn"
+                        :ref="setGearButton"
                         type="button"
                         class="aside-gear-btn"
                         :aria-label="t('nav.settings')"
                         :title="t('nav.settings')"
-                        @click="openSettingsDialog()"
+                        @click="openSettings()"
                     >
                         <nue-icon name="ntd-settings" />
                     </button>

@@ -2,7 +2,11 @@
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
-import { computed } from 'vue'
+import { AppSettingsDialog } from '@/components/settings/dialog'
+import { t } from '@nao-todo/shared/locales'
+import { computed, onBeforeUnmount, shallowRef, type ComponentPublicInstance } from 'vue'
+import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
+import { useSettingsEntry } from './use-settings-entry'
 import { useAppAsideV2 } from './use-aside'
 
 defineOptions({ name: 'AppAsideV2Drawer' })
@@ -16,6 +20,29 @@ const visible = computed({
     get: () => isDisplayAside.value,
     set: (newVisible) => (isDisplayAside.value = newVisible)
 })
+
+// —— T521 工具区：同步状态宿主（SHELL-02 注入点的抽屉变体）+ 设置齿轮（SHELL-01）——
+// 与桌面 rail 共用同一份宿主注册表与齿轮状态（能力对等，单实例），差异只在摆放位置。
+
+// @ref 同步状态注入点（抽屉工具区；切回桌面时由 rail 改绑）
+const bottomSlot = shallowRef<HTMLElement | null>(null)
+const setBottomSlot = (el: Element | ComponentPublicInstance | null): void => {
+    if (el instanceof HTMLElement) {
+        bottomSlot.value = el
+        bindRailBottomHost(el, 'drawer')
+        return
+    }
+    if (bottomSlot.value) {
+        unbindRailBottomHost(bottomSlot.value)
+        bottomSlot.value = null
+    }
+}
+onBeforeUnmount(() => {
+    if (bottomSlot.value) unbindRailBottomHost(bottomSlot.value)
+})
+
+// @composable 设置齿轮（打开走 hostReady 闸门；关窗焦点归还当前变体齿轮）
+const { setGearButton, openSettings } = useSettingsEntry()
 </script>
 
 <template>
@@ -37,6 +64,31 @@ const visible = computed({
                 <nue-content style="justify-content: space-between; min-height: 0">
                     <!-- 子视图侧栏 -->
                     <div id="SubPageAsideTeleportSlot" />
+                    <!-- T521 工具区：同步状态（上，SHELL-02 语义）+ 齿轮（下，直开设置） -->
+                    <nue-div theme="aside__tools">
+                        <div
+                            id="AppAsideDrawerBottomSlot"
+                            :ref="setBottomSlot"
+                            class="aside-rail-bottom-slot"
+                        />
+                        <nue-tooltip
+                            :content="t('nav.settings')"
+                            placement="top-center"
+                            size="small"
+                        >
+                            <button
+                                id="AppAsideDrawerSettingsGearBtn"
+                                :ref="setGearButton"
+                                type="button"
+                                class="aside-gear-btn"
+                                :aria-label="t('nav.settings')"
+                                :title="t('nav.settings')"
+                                @click="openSettings()"
+                            >
+                                <nue-icon name="ntd-settings" />
+                            </button>
+                        </nue-tooltip>
+                    </nue-div>
                 </nue-content>
             </nue-main>
             <nue-footer>
@@ -60,4 +112,6 @@ const visible = computed({
             </nue-footer>
         </nue-container>
     </nue-drawer>
+    <!-- 设置对话框（SHELL-01 抽屉宿主：hostReady 闸门 + 卸载兜底关闭由组件自身负责） -->
+    <app-settings-dialog />
 </template>
