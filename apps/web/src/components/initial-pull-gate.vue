@@ -48,7 +48,7 @@ watch(
 
 <template>
     <div v-if="waiting" class="initial-pull-gate">
-        <Loading height="100vh" placeholder="正在同步数据…" />
+        <Loading height="100%" placeholder="正在同步数据…" />
     </div>
 </template>
 

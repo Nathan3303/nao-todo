@@ -9,10 +9,28 @@
     --nue-text-df: calc(var(--nue-primary-font-size) * 1);
 }
 
+/* 视口基归一（DEF-79）：html 是唯一视口基，body / #app 取 100% 相对父级。
+   动态视口优先；引擎不支持时该声明被丢弃，由主题 reset 的静态视口声明兜底，
+   页面滚动能力由下方 @supports 恢复（保证末行可滚到底，AC2 / 不变量 4）。
+   ⛔ 不以静态视口单位（vh）作高度基、不用含滚动条宽度的视口单位（dvw）作宽度基
+   （源级守卫：themes/__tests__/safe-area.test.ts）。 */
+html.nue-html {
+    height: 100dvh;
+}
+
+/* 降级：不支持动态视口时静态视口（大视口）比可视区高 ⇒ 允许页面滚动补偿，
+   否则溢出既不可见也不可滚（用户原症状「最后一行永远够不到」）。 */
+@supports not (height: 100dvh) {
+    html.nue-html {
+        overflow: auto;
+    }
+}
+
 :root {
     body {
-        width: 100dvw;
-        height: 100dvh;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
         font-optical-sizing: auto;
 
         * {

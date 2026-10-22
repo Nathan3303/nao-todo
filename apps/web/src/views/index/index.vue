@@ -19,7 +19,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <loading-comp v-if="isLoading" height="100vh" placeholder="正在加载用户信息..." />
+    <loading-comp v-if="isLoading" height="100%" placeholder="正在加载用户信息..." />
     <nue-container v-else id="AppContainer">
         <nue-main>
             <app-aside-v2-adapter />

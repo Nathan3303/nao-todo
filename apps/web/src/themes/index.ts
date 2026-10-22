@@ -3,6 +3,7 @@ import 'nue-ui-theme-shadlike/dist/index.css'
 
 import './animation.css'
 import './variables.css'
+import './safe-area.css'
 
 import './avatar.css'
 import './badge.css'
