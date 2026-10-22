@@ -1,12 +1,57 @@
+/**
+ * T523 表头职责划分（单一来源）：标题区 = 可伸缩（吃「容器宽 − 动作区宽 − 箭头宽」），
+ * 动作区 = 固定内容宽。修复前两者都是 `flex: none`（内容定宽）⇒ 总宽超过容器时整体溢出，
+ * 被祖先 `overflow-x: hidden` **硬切边**（无省略号、计数也被裁掉）。
+ *
+ * ⚠️ 库内部元素（`.nue-collapse-item__header` / `.nue-button__text`）由子组件渲染、**不带本组件
+ * scope 属性** ⇒ 必须用 `:deep()`；且 `:deep()` 规则**只能写在顶层**——写进下面
+ * `.nue-collapse-item--smart-list { ... }` 的嵌套块里会被展开成
+ * `<父选择器> [data-v-xxx] <目标>`，而带 scope 属性的正是父元素自身 ⇒ 永不匹配（实测踩过）。
+ */
+.nue-collapse-item--smart-list :deep(.nue-collapse-item__header) {
+    gap: var(--nue-gap-xs);
+}
+
+/* 库按钮的文本槽（clamped 那层）是名称与计数的父层，必须可收缩 */
+.nue-collapse-item--smart-list :deep(.nue-button > .nue-button__text) {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* T523 实测发现（PRD 范围之外的最小修正）：库已给 `.nue-link__content` 声明
+   `overflow: hidden; text-overflow: ellipsis`，但缺 `nowrap` ⇒ 长名称会**折行**，第二行被
+   40px 行高垂直硬切（无省略号，实测 sH 36 > cH 18）。补单行 + 可收缩，省略号才真正生效。 */
+.nue-collapse-item--smart-list :deep(.nue-link > .nue-link__content) {
+    min-width: 0;
+    white-space: nowrap;
+}
+
 .nue-collapse-item--smart-list {
+    /* 标题按钮（箭头 + 名称 + 计数）吃剩余宽度；`min-width: 0` 允许缩到比内容更窄 */
+    .nue-collapse-item__header > .nue-button {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+    }
+
     .nue-button {
         font-size: var(--nue-text-xs);
 
         .nue-div--title {
             font-size: var(--nue-text-xs);
             gap: var(--nue-gap-xs);
+            min-width: 0;
+
+            /* 名称：单行 + 真溢出才末尾省略；计数：不参与收缩（信息不丢） */
+            > .nue-text--name {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
 
             > .nue-text--count {
+                flex: none;
                 color: var(--nue-primary-color-700);
             }
         }
@@ -15,6 +60,8 @@
     .nue-div--actions {
         gap: var(--nue-gap-xs);
         width: fit-content;
+        /* T523：动作区不被标题挤压（宽度与点击区保持原尺寸） */
+        flex: none;
     }
 
     .nue-div--links {

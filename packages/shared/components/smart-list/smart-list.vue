@@ -14,7 +14,8 @@ const count = computed(() => props.count ?? props.links?.length)
         <template #header="{ collapse, state }">
             <nue-button :icon="state ? 'arrow-right' : 'arrow-down'" theme="pure" @click="collapse">
                 <nue-div theme="title" align="center">
-                    <nue-text>{{ name }}</nue-text>
+                    <!-- T523：名称是唯一「可伸缩」成员（单行 + 末尾省略）；全文走原生 title（零 JS 监听） -->
+                    <nue-text class="nue-text--name" :title="name">{{ name }}</nue-text>
                     <nue-text theme="count">{{ count ?? 0 }}</nue-text>
                 </nue-div>
             </nue-button>
@@ -44,6 +45,7 @@ const count = computed(() => props.count ?? props.links?.length)
                     :route="link.route"
                     :icon="link.icon"
                     theme="route"
+                    :title="link.title"
                     :draggable="draggable"
                     :data-drag-item="draggable"
                     :data-drag-id="link.id"
