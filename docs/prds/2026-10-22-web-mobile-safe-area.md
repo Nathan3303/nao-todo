@@ -1,6 +1,6 @@
 # 2026-10-22 Web 端移动浏览器视口与安全区修复 PRD
 
-> **状态**：**已开工（用户 2026-10-22 确认，D1–D4 全按推荐项裁定）** —— 派发 `rd-fe`。**Issue**：[#217](https://github.com/Nathan3303/nao-todo/issues/217)（仅摘要 + 指针）· **分支** `feat/217-web-mobile-safe-area`。
+> **状态**：**✅ 已交付并合并（`3a896eb7`，PR [#218](https://github.com/Nathan3303/nao-todo/pull/218)，2026-10-22）** —— 用户 2026-10-22 在 iPhone Safari 预览链视觉验收通过（AC1a/AC1b/AC3/AC5a/AC5b/AC4）。**Issue**：[#217](https://github.com/Nathan3303/nao-todo/issues/217)（仅摘要 + 指针）· **分支** `feat/217-web-mobile-safe-area`。
 > **依据**：用户 2026-10-22 报障原话（「用手机浏览器浏览 NaoTodo Web 端时会出现显示不全，主要体现为手机顶部刘海遮盖以及浏览器底部超越视口。我怀疑是 css 属性值的问题，比如 100vh 或 100vw，我记得有一个 css 属性值可以覆盖手机端的安全区域，看下能不能通过 theme 的形式将修改落到覆盖组件级别中」）+ PM 澄清四问（设备 = iPhone Safari 普通标签页；主症状 = **底部最后一行被浏览器地址栏盖住且无法滚到底**；范围 = **只做安全区/视口修复**；派发 = 走完整流程）+ 读码。
 > **硬约束**：**移动端零改动**（`packages/presentation-react` / `apps/mobile`）· 桌面端与 Electron **视觉零变化** · 不新增 `nue-*` token · C 端界面原则（`AGENTS.md` / `DESIGN.md`）· 不改业务逻辑与契约。
 
