@@ -4,6 +4,7 @@ import { useAuthUseCase, useUserUseCase } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import SegmentedSwitch from '@/components/calendar/segmented-switch.vue'
 import { SettingsProfileUpdater } from '../profile-updater'
 import { SettingsPasswordUpdater } from '../password-updater'
 import { SettingsAppSetter } from '../app-setter'
@@ -27,18 +28,22 @@ const sections = [
         key: 'profile' as const,
         icon: 'user',
         titleKey: 'nav.settingsProfile' as LocaleKey,
+        /** 窄屏分段标签：既有短键（4 字）⇒ 320px 档三段等分不裁字（不新增 i18n） */
+        shortTitleKey: 'settings.profile' as LocaleKey,
         component: SettingsProfileUpdater
     },
     {
         key: 'password' as const,
         icon: 'lock',
         titleKey: 'nav.settingsPassword' as LocaleKey,
+        shortTitleKey: 'settings.password' as LocaleKey,
         component: SettingsPasswordUpdater
     },
     {
         key: 'app' as const,
         icon: 'setting',
         titleKey: 'nav.settingsApp' as LocaleKey,
+        shortTitleKey: 'settings.app' as LocaleKey,
         component: SettingsAppSetter
     }
 ]
@@ -58,6 +63,21 @@ const { appSubscriber, appDialogManager, isDisplayAside, isUseFloatAside, switch
  *              桌面 / Electron 始终 false ⇒ 左栏纵排逐字不变（AC4）。
  */
 const isNarrow = computed(() => isUseFloatAside.value)
+
+/**
+ * @computed 窄屏三区入口数据（T521-R1）
+ * @description 复用单一来源件 `segmented-switch`（DESIGN §4.5）：三段等分、纯文字（无图标）。
+ *              标签用既有短键 `settings.*`（4 字）—— 320px 档三段等分下 `nav.settings*` 的
+ *              7 字标题会被裁字（无新 i18n 键，语义等价）。
+ */
+const segmentedItems = computed(() =>
+    sections.map((section) => ({ value: section.key, label: t(section.shortTitleKey) }))
+)
+
+// @method 分段切换回写当前区（件内上抛 string，收窄回区键）
+const setActiveKey = (value: string): void => {
+    activeKey.value = value as SettingsSectionKey
+}
 
 // @stores/@usecases
 const userStore = useUserStore()
@@ -87,11 +107,21 @@ onUnmounted(unbindSettingsDialogHost)
         :class="{ 'is-narrow': isNarrow }"
         :title="t('nav.settings')"
     >
-        <!-- 三区切换（左栏竖排分区条：原 settings 页面级左栏导航收敛至此）；窄屏改顶部横向 Tab -->
+        <!-- 三区切换：窄屏（T521-R1）= 单一来源件 segmented-switch（三段等分 / 纯文字 / group+aria-pressed）；
+             桌面（>445px）= 原左栏竖排 tablist，逐字不变。同一时刻只渲染一套（不得两套语义并存）。 -->
+        <segmented-switch
+            v-if="isNarrow"
+            :items="segmentedItems"
+            :model-value="activeKey"
+            :fill="true"
+            aria-label="设置分区"
+            @update:model-value="setActiveKey"
+        />
         <div
+            v-else
             class="sd-tabs"
             role="tablist"
-            :aria-orientation="isNarrow ? 'horizontal' : 'vertical'"
+            aria-orientation="vertical"
             aria-label="设置分区"
         >
             <nue-button
@@ -186,39 +216,16 @@ onUnmounted(unbindSettingsDialogHost)
     color: var(--nue-primary-color-100);
 }
 
-/* —— T521 形态 A：窄屏（Float 变体 / ≤445px）三区入口改顶部横向 Tab、内容占满宽度 ——
-   桌面 / Electron 不命中 ⇒ 左栏纵排逐字不变（AC4）。
-   激活态 = 色块 + 下缘指示条 + 文字（颜色 + 符号 + 文字三重冗余，去色/色盲下仍可辨）。 */
+/* —— T521-R1 形态 A（窄屏）：三区入口 = `segmented-switch`（件内自带槽底/滑块/字色/动效，
+   本文件不重写任何分段视觉）；此处只负责竖向堆叠容器与点击区下限，桌面不命中（AC4）。 —— */
 .nue-dialog--settings.is-narrow .nue-dialog__content {
     flex-direction: column;
+    gap: var(--nue-gap-xs);
 }
 
-.nue-dialog--settings.is-narrow .sd-tabs {
-    flex-direction: row;
-    flex-wrap: wrap;
-    flex: none;
-    width: 100%;
-    padding: 0 0 var(--nue-gap-xs);
-    border-right: none;
-    border-bottom: 1px solid var(--nue-border-color);
-}
-
-.nue-dialog--settings.is-narrow .sd-tab {
-    /* min-width: max-content ⇒ 再窄也不挤掉字（放不下则换行，不裁切） */
-    flex: 1 1 auto;
-    min-width: max-content;
-    min-height: var(--nue-box-size-md);
-    justify-content: center;
-    padding: 0 var(--nue-gap-2xs);
-    font-size: var(--nue-text-xs);
-    white-space: nowrap;
-}
-
-.nue-dialog--settings.is-narrow .sd-tab.is-active {
-    box-shadow: inset 0 -2px 0 0 currentColor;
-}
-
-.nue-dialog--settings.is-narrow .sd-panel {
-    width: 100%;
+/* 点击区 ≥40px（DESIGN §3 / PRD AC5 判据）：件内 `small` 主题为 28px，本宿主抬到 40px；
+   只改高度，不动分段视觉与滑块。 */
+.nue-dialog--settings.is-narrow .segmented-toggle > .segmented-btn {
+    height: var(--nue-box-size-md);
 }
 </style>
