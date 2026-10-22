@@ -114,6 +114,7 @@ onUnmounted(unbindSettingsDialogHost)
             :items="segmentedItems"
             :model-value="activeKey"
             :fill="true"
+            size="md"
             aria-label="设置分区"
             @update:model-value="setActiveKey"
         />
@@ -216,16 +217,11 @@ onUnmounted(unbindSettingsDialogHost)
     color: var(--nue-primary-color-100);
 }
 
-/* —— T521-R1 形态 A（窄屏）：三区入口 = `segmented-switch`（件内自带槽底/滑块/字色/动效，
-   本文件不重写任何分段视觉）；此处只负责竖向堆叠容器与点击区下限，桌面不命中（AC4）。 —— */
+/* —— T521-R2 形态 A（窄屏）：三区入口 = `segmented-switch`（件内自带槽底/滑块/字色/动效/尺寸轴，
+   本文件不重写任何分段视觉，也不在调用处覆盖分段件尺寸 —— 点击区达标走件内 `size="md"`）；
+   此处只负责**竖向堆叠容器**，桌面不命中（AC4）。 —— */
 .nue-dialog--settings.is-narrow .nue-dialog__content {
     flex-direction: column;
     gap: var(--nue-gap-xs);
-}
-
-/* 点击区 ≥40px（DESIGN §3 / PRD AC5 判据）：件内 `small` 主题为 28px，本宿主抬到 40px；
-   只改高度，不动分段视觉与滑块。 */
-.nue-dialog--settings.is-narrow .segmented-toggle > .segmented-btn {
-    height: var(--nue-box-size-md);
 }
 </style>

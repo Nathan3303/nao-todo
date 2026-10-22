@@ -27,6 +27,7 @@ const mountSeg = (props: {
     modelValue: string
     fill?: boolean
     ariaLabel?: string
+    size?: 'sm' | 'md'
 }) =>
     mount(SegmentedSwitch, {
         props: { ariaLabel: '分组', ...props },
@@ -84,6 +85,23 @@ describe('T512 CalendarSegmentedSwitch', () => {
         expect(w.emitted('update:modelValue')).toEqual([['monday']])
         await w.findAll('.segmented-btn')[0]!.trigger('click')
         expect(w.emitted('update:modelValue')).toEqual([['monday'], ['sunday']])
+    })
+
+    it('尺寸轴（T521-R2）：默认 sm 不挂 is-md；size=md 只加 is-md，不注入内联尺寸', () => {
+        const sm = mountSeg({ items: THREE, modelValue: 'month' })
+        expect(sm.get('.segmented-toggle').classes()).not.toContain('is-md')
+        expect(sm.findAll('.segmented-btn').every((b) => b.attributes('style') === undefined)).toBe(
+            true
+        )
+
+        const md = mountSeg({ items: THREE, modelValue: 'month', size: 'md' })
+        expect(md.get('.segmented-toggle').classes()).toContain('is-md')
+        // 仅尺寸轴：段数/等分/滑块/aria 契约不受影响，且无内联高度注入
+        expect(md.findAll('.segmented-btn')).toHaveLength(3)
+        expect(md.findAll('.segmented-btn').every((b) => b.attributes('style') === undefined)).toBe(
+            true
+        )
+        expect(md.get('[data-testid="segmented-thumb"]').attributes('aria-hidden')).toBe('true')
     })
 
     it('宽度策略：默认铺满（is-fill），fill=false 自适应（无 is-fill）', () => {

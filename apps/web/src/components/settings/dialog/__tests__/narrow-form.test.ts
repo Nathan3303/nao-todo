@@ -59,6 +59,17 @@ const dialogSource = (): string => {
     return values[0]!
 }
 
+/** 分段件源文本（R2：尺寸走件内 `size` 轴；长标签换行不截断的 CSS 契约） */
+const switchModules = import.meta.glob<string>(
+    '/apps/web/src/components/calendar/segmented-switch.vue',
+    { query: '?raw', import: 'default', eager: true }
+)
+const switchSource = (): string => {
+    const values = Object.values(switchModules)
+    expect(values.length).toBe(1)
+    return values[0]!
+}
+
 let wrapper: VueWrapper | null = null
 
 const mountDialog = (isUseFloatAside: Ref<boolean>): VueWrapper => {
@@ -128,8 +139,9 @@ describe('T521-R1 设置对话框窄屏形态 A（复用 segmented-switch）', (
         expect(group.exists()).toBe(true)
         expect(group.attributes('role')).toBe('group')
         expect(group.attributes('aria-label')).toBe('设置分区')
-        // fill（三段等分铺满内容宽度）
+        // fill（三段等分铺满内容宽度）+ 尺寸轴 md（点击区 ≈40px，走件内 size，不在调用处覆盖）
         expect(group.classes()).toContain('is-fill')
+        expect(group.classes()).toContain('is-md')
 
         const segments = wrapper!.findAll('.segmented-btn')
         expect(segments.length).toBe(3)
@@ -159,6 +171,23 @@ describe('T521-R1 设置对话框窄屏形态 A（复用 segmented-switch）', (
         expect(wrapper!.find('[role="tablist"]').exists()).toBe(false)
     })
 
+    it('中英分语言口径（AC3）：长标签允许换行增高、不 ellipsis / 不 nowrap；调用处不覆盖分段尺寸', () => {
+        const seg = switchSource()
+        // 件内：可换行 + 高度随内容（min-height 承载 size 轴）⇒ 英文 2 行不被裁
+        expect(seg).toContain('white-space: normal')
+        expect(seg).toContain('height: auto')
+        expect(seg).toContain('min-height: var(--nue-box-size-xs)')
+        expect(seg).toContain('min-height: var(--nue-box-size-md)')
+        expect(seg).not.toContain('text-overflow')
+        expect(seg).not.toContain('white-space: nowrap')
+
+        // 调用处：只传 size="md"，不写任何分段件选择器（R2：尺寸不得在调用处覆盖）
+        const dialog = dialogSource()
+        expect(dialog).toContain('size="md"')
+        expect(dialog).not.toContain('.segmented-btn')
+        expect(dialog).not.toContain('.segmented-toggle')
+    })
+
     it('源级：窄屏块内无自写分段样式（sd-tabs / sd-tab / max-content / nowrap / 动态 aria-orientation）', () => {
         const source = dialogSource()
         const narrowBlocks = source
@@ -173,6 +202,8 @@ describe('T521-R1 设置对话框窄屏形态 A（复用 segmented-switch）', (
         expect(narrowBlocks).not.toContain('max-content')
         expect(narrowBlocks).not.toContain('nowrap')
         expect(narrowBlocks).not.toContain('tablist')
+        // R2：窄屏块只剩容器堆叠，不再有任何分段件尺寸覆盖
+        expect(narrowBlocks).not.toContain('segmented-btn')
         // 桌面 tablist 的 aria-orientation 固定 vertical（不再随窄屏切成 horizontal）
         expect(source).not.toContain("'horizontal'")
     })
