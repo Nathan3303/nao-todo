@@ -214,3 +214,26 @@ describe('T512 周起始 = 分段切换控件（与日/月/周同一通用件）
         expect(btns[1]!.textContent?.trim()).toBe('Mon')
     })
 })
+/**
+ * T523 SmartList 表头（Issue #226）在使用方的结构回归
+ * @description jsdom 无布局 ⇒ 只断言「名称/计数节点仍在、名称带 title 全文」，
+ *              真实宽度与省略号由 RD 的 headless 实测覆盖（PRD §七 AC6 ①）。
+ */
+describe('T523 CalendarAside 内 SmartList 表头：名称与计数结构不变', () => {
+    it('清单 / 标签两个表头的名称节点带 title 全文，计数各自独立', async () => {
+        await mountAside()
+
+        const names = Array.from(
+            document.querySelectorAll<HTMLElement>('#SubPageAsideTeleportSlot .nue-text--name')
+        )
+        expect(names.map((n) => n.textContent?.trim())).toEqual(['清单', '标签'])
+        for (const name of names) {
+            expect(name.getAttribute('title')).toBe(name.textContent?.trim())
+        }
+
+        const counts = document.querySelectorAll(
+            '#SubPageAsideTeleportSlot .nue-div--title > .nue-text--count'
+        )
+        expect(counts.length).toBe(2)
+    })
+})
