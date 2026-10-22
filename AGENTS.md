@@ -79,6 +79,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 6. **状态占位统一**：内容区域的 loading / error / empty **一律用 `LoadingError`**（`packages/shared/components/loading-error`），不得自绘空态 / 错误态；详见 `DESIGN.md` §4.1。
 7. **不另创体系**：沿用既有 `nue-*` token 与组件；确需新增 token / 组件 ⇒ 先报 PM。
 8. **移动端红线不变**：`packages/presentation-react` 与 `apps/mobile` 不随桌面 / Web 需求改动。
+9. **移动浏览器视口与安全区**：视口基（单一基 / 动态优先）、安全区内缩、桌面零变化三条不变量与源级守卫见 `DESIGN.md` §9；⛔ 不以裸静态视口单位作高度基、不用含滚动条宽度的视口单位作宽度基。
 
 出处：2026-09-28 冲突面板视觉走查（T338/T339/T340/T342/T343）；实测证据与设计语言见 `DESIGN.md`。
 

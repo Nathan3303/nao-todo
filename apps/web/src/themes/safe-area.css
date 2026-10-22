@@ -1,0 +1,34 @@
+/**
+ * 安全区补丁（DEF-79 / T519）—— 四向 `env(safe-area-inset-*, 0px)`
+ * @description 前提：`apps/web/index.html` 的 viewport meta 含 `viewport-fit=cover`
+ *              （否则 iOS Safari 下 `env()` 恒为 `0`，纯 CSS 方案空转）。
+ *              桌面 / Electron：`env()` 恒为 `0` ⇒ 全部声明解析为改动前的数值
+ *              （AC4「桌面 / Electron 视觉零变化」硬闸门）。
+ *              安全区改动一律收敛在本文件，禁止散落到各组件 `<style>`（PRD §六 可维护性）。
+ * @see DESIGN.md §9「安全区与视口基线」
+ */
+
+/* 外壳：刘海 / 圆角 / 手势条区域不承载可交互内容。body 已为 border-box（variables.css）
+   ⇒ 四向 padding 不改变外壳总尺寸，只把内容区推进安全区内。 */
+html.nue-html body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+}
+
+/* 覆盖层：弹窗 / 抽屉经 Teleport 挂到 fixed 的 popup pool（0 × 0、位于视口原点），
+   **不继承 body 的 padding** ⇒ 须自身贴合可视视口并在内部四向内缩，
+   否则抽屉底部仍被地址栏 / 手势条遮住（AC3）。
+   透明覆盖层是下拉 / 提示的定位锚（`height/width:0`），不参与本规则。
+   桌面 / Electron：pool 在 (0, 0) 且页面不滚动 ⇒ fixed inset:0 与改动前几何一致。 */
+.nue-overlay:not(.nue-overlay--transparent) {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+}

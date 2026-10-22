@@ -19,22 +19,26 @@
     min-width: min(24rem, 100vw);
 }
 
-/* 弹窗响应式 */
+/* 弹窗响应式（≤400px ⇒ 贴底抽屉）。
+   视口 / 安全区（DEF-79）：宽高一律相对覆盖层内容区（覆盖层已按安全区内缩），
+   底部留白取 `env(safe-area-inset-bottom)` 与既有间距的较大者 ⇒ 按钮不压手势条；
+   桌面 / Electron `env()=0` ⇒ 数值与改动前一致。 */
 @media screen and (max-width: 400px) {
     .nue-dialog,
     .nue-dialog.nue-dialog--large {
         --nue-dialog-open-animation-name: slide-in-from-bottom;
         --nue-dialog-close-animation-name: slide-out-to-bottom;
 
-        width: 100vw;
-        min-width: 100vw;
-        max-width: 100vw;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
         height: fit-content;
         min-height: unset;
-        max-height: calc(100vh - 1.5rem);
+        max-height: calc(100% - 1.5rem);
         overflow: hidden;
         border-radius: var(--nue-primary-radius) var(--nue-primary-radius) 0 0;
         margin-top: auto;
         flex: auto;
+        padding-bottom: max(var(--nue-padding-df), env(safe-area-inset-bottom, 0px));
     }
 }

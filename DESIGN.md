@@ -172,7 +172,25 @@
 - [ ] 新增 i18n 键三处齐备；字段标签走映射（未映射有可读回退）
 - [ ] ⛔ 未新增色板 / 组件体系（如需新增 ⇒ 先报 PM）
 - [ ] 分段多选一 UX ⇒ **复用 `segmented-switch`**（§4.5 单一来源），不另写分段样式
+- [ ] 视口 / 安全区：不以裸静态视口单位作高度基、不用含滚动条宽度的视口单位作宽度基；安全区改动只落 `themes/safe-area.css`（见 §9）
 - [ ] 移动端红线：`packages/presentation-react` / `apps/mobile` 不随桌面 / Web 需求改动
+
+---
+
+## 9. 安全区与视口基线（Web / 手机浏览器）
+
+> 出处：`DEF-79` / `T519`（PRD `docs/prds/2026-10-22-web-mobile-safe-area.md`）。
+> 适用：`apps/web` 与 `apps/desktop` 共用的主题（`apps/web/src/themes`，桌面端 `@` 别名指向同一目录）。
+
+- **前提**：`apps/web/index.html` 的 viewport meta 必须含 `viewport-fit=cover` —— 否则 iOS Safari 下 `env(safe-area-inset-*)` 恒为 `0`，任何纯 CSS 安全区方案空转。
+- **单一视口基**：`html`（`.nue-html`）用动态视口 `100dvh`；`body` / `#app` 一律 `100%`（相对父级）。**不得**出现「父用静态视口、子用动态视口」的混基，也不得写裸静态视口高度或含滚动条宽度的视口单位（源级守卫：`apps/web/src/themes/__tests__/safe-area.test.ts`）。
+- **降级取向（可用性优先于观感）**：引擎不支持 `100dvh` 时该声明被丢弃，落到主题 reset 的静态视口，并由 `@supports not (height: 100dvh)` 把 `html` 恢复为可滚动 ⇒ 保证「末行可滚到底」，不回到「被裁且不可滚」。
+- **安全区内缩**：四向 `env(safe-area-inset-*, 0px)` **集中**在 `apps/web/src/themes/safe-area.css`，不得散落到组件 `<style>`：
+    - 外壳（`body`）四向 padding ⇒ 列表末行 / 空态 / 错误态不落刘海与手势条；
+    - 覆盖层（`.nue-overlay`，经 Teleport 挂到 fixed 的 popup pool，**不继承** `body` padding）自身贴合可视视口并在内部四向内缩；窄屏（≤400px）贴底抽屉的底部留白取 `max(var(--nue-padding-df), env(safe-area-inset-bottom, 0px))`。
+- **桌面 / Electron 零变化**：`env()` 恒为 `0`、动态视口高度等于静态视口高度、popup pool 位于 `(0, 0)` 且页面不滚动 ⇒ 上述声明全部解析为改动前的数值（验收硬闸门，见 PRD AC4）。
+- **加载态**：高度相对父级（`height="100%"`），不以视口高度为基线。
+- **已知边界**：iOS Safari 15.0–15.3 支持安全区但无动态视口 ⇒ 列表靠「静态视口 + 页面滚动」保证可滚到底；覆盖层不再依赖视口单位（`position: fixed` + `inset: 0`），安全区仍由 `env()` 内缩 —— 极端旧引擎的定位精度以真机为准，但不比改动前更差。
 
 ---
 
