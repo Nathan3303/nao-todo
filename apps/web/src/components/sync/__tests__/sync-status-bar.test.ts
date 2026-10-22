@@ -650,3 +650,104 @@ describe('T471 同步面板诊断条目（droppedFields 消费）', () => {
         expect(panelText()).not.toContain('诊断')
     })
 })
+
+/**
+ * T522 抽屉变体：一行工具带内的「图标 + 短文字」（PRD `docs/prds/2026-10-22-drawer-tools-row.md`）
+ * @description AC2（四态不展开即可见 + 颜色/符号/文字三通道）· AC4（rail 变体零变化）·
+ *              AC6 ①（文案单一来源：`drawerStatusText` 同时供视觉文字与 aria-label）。
+ */
+describe('SyncStatusBar - T522 抽屉变体：可见状态文字', () => {
+    /** 建抽屉变体宿主（工具带注入点，variant = drawer） */
+    const createDrawerHost = (): HTMLElement => {
+        const host = document.createElement('div')
+        host.id = 'AppAsideDrawerBottomSlot'
+        document.body.appendChild(host)
+        bindRailBottomHost(host, 'drawer')
+        return host
+    }
+
+    /** 可见状态文字（rail 变体无文字节点 ⇒ ''） */
+    const visibleText = (): string =>
+        document.querySelector('.sync-rail-btn .nue-button__text')?.textContent?.trim() ?? ''
+
+    /** 触发器图标名（三通道里的「符号」；同步中由 loading 接管） */
+    const triggerIcon = (): string =>
+        document
+            .querySelector('.sync-rail-btn .nue-button__icon')
+            ?.className.match(/icon-([a-z0-9-]+)/)?.[1] ?? ''
+
+    it('AC2 / AC6 ①：四态文字 + 图标形态 + 颜色类，且 aria-label 含同一来源文案', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        // ① 从未同步（常态：循环箭头 + 次要文字色）
+        expect(visibleText()).toBe('从未同步')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(railButton()?.className).not.toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ② 同步中（loading 接管图标 ⇒ 只断言文字 + aria 同源）
+        status().value = { ...status().value, syncing: true }
+        await nextTick()
+        expect(visibleText()).toBe('同步中…')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ③ 待推送 N（符号不变形：颜色 + 文字承担；图标仍是循环箭头）
+        status().value = { ...defaultStatus(), pendingCount: 2 }
+        await nextTick()
+        expect(visibleText()).toBe('待推送 2')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(railButton()?.className).toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ④ 失败 N：优先于待推送（符号 = 断链 + 错误色类）
+        status().value = { ...status().value, failedCount: 1 }
+        await nextTick()
+        expect(visibleText()).toBe('失败 1')
+        expect(triggerIcon()).toBe('ntd-disconnect')
+        expect(railButton()?.className).toContain('is-failed')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ⑤ 常态：上次同步 HH:MM
+        const iso = '2026-09-10T10:00:00.000Z'
+        const time = new Date(iso).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+        status().value = { ...defaultStatus(), lastSyncAt: iso }
+        await nextTick()
+        expect(visibleText()).toBe(`上次同步 ${time}`)
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(ariaLabel()).toContain(visibleText())
+    })
+
+    it('不变量 1：短文字只是视觉精简 —— aria-label 仍带完整状态与既有数据可信度短语', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...status().value, mirrorTruncated: true }
+        await nextTick()
+
+        // 视觉仍为短形态（数据短语不挤进抽屉文字）
+        expect(visibleText()).toBe('从未同步')
+        expect(ariaLabel()).toContain('同步')
+        expect(ariaLabel()).toContain(visibleText())
+        expect(ariaLabel()).toContain('任务数量超过同步上限')
+    })
+
+    it('AC4：rail 变体零变化 —— 无可见文字、图标恒 ntd-sync2、aria-label 逐字不变', async () => {
+        createHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...defaultStatus(), pendingCount: 2, failedCount: 1 }
+        await nextTick()
+
+        expect(visibleText()).toBe('')
+        expect(railButton()?.textContent?.trim()).toBe('')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(ariaLabel()).toBe('同步')
+    })
+})

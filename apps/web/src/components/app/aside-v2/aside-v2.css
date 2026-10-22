@@ -75,25 +75,40 @@
         box-sizing: border-box;
     }
 
-    /* T521 工具区：content 区底部「同步状态（上）+ 齿轮（下）」；底部安全区由
-       themes/safe-area.css 的覆盖层内缩承担（此处不重复 env()） */
+    /* T522 工具带：**横向一行** —— 左「同步状态（图标 + 短文字）」、右「齿轮」；
+       行高 40px（子项 min-height）+ 上下 8px；保留 1px 上分割线。
+       底部安全区仍由 themes/safe-area.css 的覆盖层内缩承担（此处不重复 env()） */
     .nue-div.nue-div--aside__tools {
         flex: none;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        gap: var(--nue-gap-2xs);
-        padding-top: var(--nue-gap-xs);
+        justify-content: space-between;
+        gap: var(--nue-gap-xs);
+        padding: var(--nue-gap-xs) var(--nue-padding-df);
         border-top: 1px solid var(--nue-border-color);
+    }
+
+    /* 状态触发器占满左侧剩余宽度且**可收缩** ⇒ 长文案走末尾省略，不换行、不横向溢出（AC3） */
+    .nue-div--aside__tools .nue-dropdown-wrapper {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+    }
+
+    .nue-div--aside__tools .nue-dropdown-wrapper > .nue-tooltip-wrapper {
+        width: 100%;
     }
 
     /* 抽屉内点击区 ≥40px（DESIGN §3）；桌面 rail 尺寸不变（AC4 零变化） */
     .nue-div--aside__tools .aside-gear-btn {
+        flex: none;
         min-width: var(--nue-box-size-md);
         min-height: var(--nue-box-size-md);
     }
 
     .nue-div--aside__tools .sync-rail-btn {
+        width: 100%;
         min-width: var(--nue-box-size-md);
         min-height: var(--nue-box-size-md);
     }

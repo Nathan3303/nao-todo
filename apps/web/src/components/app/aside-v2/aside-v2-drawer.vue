@@ -64,7 +64,7 @@ const { setGearButton, openSettings } = useSettingsEntry()
                 <nue-content style="justify-content: space-between; min-height: 0">
                     <!-- 子视图侧栏 -->
                     <div id="SubPageAsideTeleportSlot" />
-                    <!-- T521 工具区：同步状态（上，SHELL-02 语义）+ 齿轮（下，直开设置） -->
+                    <!-- T522 工具带（一行）：同步状态（左，SHELL-02 语义）+ 齿轮（右，直开设置） -->
                     <nue-div theme="aside__tools">
                         <div
                             id="AppAsideDrawerBottomSlot"

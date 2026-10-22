@@ -61,8 +61,29 @@ vi.mock('@/components/settings/dialog', async () => {
     }
 })
 
-/** 布局原语 stub（attrs/插槽透传 ⇒ 断言只看本组件产出的结构与顺序） */
+/**
+ * 布局原语 stub（attrs/插槽透传 ⇒ 断言只看本组件产出的结构与顺序）
+ */
 const layoutStub = { template: '<div><slot /></div>' }
+
+/**
+ * T522 抽屉工具带的**源级样式契约**（jsdom 无布局 ⇒ 只能读规则本体；真机几何由回执给实测）
+ * @see docs/prds/2026-10-22-drawer-tools-row.md（§三 范围 1/4/5）
+ */
+const cssModules = import.meta.glob('/apps/web/src/components/app/aside-v2/aside-v2.css', {
+    query: '?raw',
+    import: 'default',
+    eager: true
+}) as Record<string, string>
+const asideCss = cssModules['/apps/web/src/components/app/aside-v2/aside-v2.css'] ?? ''
+
+/** 取指定选择器（逐字匹配 `选择器 {`）的首个规则体 */
+const ruleBody = (selector: string): string => {
+    const start = asideCss.indexOf(`${selector} {`)
+    if (start < 0) return ''
+    const open = start + selector.length + 2
+    return asideCss.slice(open, asideCss.indexOf('}', open))
+}
 
 let wrapper: VueWrapper | null = null
 
@@ -242,5 +263,36 @@ describe('T521 变体切换：单一宿主 / 单实例（AC4）', () => {
         expect(document.querySelectorAll('.settings-dialog-stub').length).toBe(1)
         expect(mocks.dialogMounted).toBe(1)
         expect(gearButtons().length).toBe(1)
+    })
+})
+
+describe('T522 抽屉工具带：一行布局（AC1 / AC3 / AC6 ②）', () => {
+    it('AC1：工具区横向一行（row + space-between + 上下 8px + 保留 1px 上分割线）', () => {
+        const body = ruleBody('.nue-div.nue-div--aside__tools')
+        expect(body).not.toBe('')
+        expect(body).toContain('flex-direction: row')
+        expect(body).toContain('justify-content: space-between')
+        expect(body).toContain('align-items: center')
+        expect(body).toContain('padding: var(--nue-gap-xs) var(--nue-padding-df)')
+        expect(body).toContain('border-top: 1px solid var(--nue-border-color)')
+        // 不换行（默认 nowrap；防回归为 wrap）
+        expect(body).not.toContain('flex-wrap: wrap')
+    })
+
+    it('AC3：状态触发器可收缩（min-width: 0）⇒ 长文案末尾省略，不横向溢出', () => {
+        const wrapper = ruleBody('.nue-div--aside__tools .nue-dropdown-wrapper')
+        expect(wrapper).toContain('flex: 1 1 auto')
+        expect(wrapper).toContain('min-width: 0')
+    })
+
+    it('AC1/AC6 ②：两控件点击区均 ≥40px（--nue-box-size-md）', () => {
+        for (const selector of [
+            '.nue-div--aside__tools .sync-rail-btn',
+            '.nue-div--aside__tools .aside-gear-btn'
+        ]) {
+            const body = ruleBody(selector)
+            expect(body, selector).toContain('min-width: var(--nue-box-size-md)')
+            expect(body, selector).toContain('min-height: var(--nue-box-size-md)')
+        }
     })
 })
