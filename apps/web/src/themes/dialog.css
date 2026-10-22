@@ -20,8 +20,9 @@
 }
 
 /* T521 形态 A：≤445px（与 Float 抽屉同一阈值）设置对话框铺满可用宽度、高度不越过安全区。
-   覆盖 401–445px 区间「左栏 12rem 把右栏压扁」的现状缺口；≤400px 仍由下方贴底抽屉规则接管
-   （本块在前 ⇒ 后者覆盖宽度/高度）。桌面 / Electron 不命中 ⇒ 零变化。 */
+   覆盖 401–445px 区间「左栏 12rem 把右栏压扁」的现状缺口；
+   ≤400px 的宽度/离场动画由下方贴底抽屉规则接管，但**高度必须仍是定高**（见文件末 R3 块）。
+   桌面 / Electron 不命中 ⇒ 零变化。 */
 @media screen and (max-width: 445px) {
     .nue-dialog.nue-dialog--settings {
         width: calc(100% - 1.5rem);
@@ -54,5 +55,20 @@
         margin-top: auto;
         flex: auto;
         padding-bottom: max(var(--nue-padding-df), env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* T521-R3：设置对话框在 ≤400 档必须保持「确定高度」。
+   T519 的通用贴底规则把高度改为 `fit-content`（自动高）；而设置面板是
+   `.sd-panel { flex: 1 1 auto; min-height: 0; overflow: auto }` —— 自动高容器里没有
+   可分配的自由空间 ⇒ 面板高度塌陷为 0（iPhone 13 Pro 390px 真机：只剩 Tab、正文空白）。
+   ⚠️ 盒高塌陷是**真实布局**问题，jsdom 没有布局引擎 ⇒ 组件测试测不出（三轮全绿但真机为空）；
+   故由 `themes/__tests__/dialog-settings-height.test.ts` 做**源级守卫**：
+   ① 通用 ≤400 块仍在（T519 不删） ② 本块（在其后）为设置对话框恢复定高，且生效的最后一条
+   `height` 不是 `fit-content`。⛔ 本块只改高度来源；其它对话框的 ≤400 贴底行为一字不动。 */
+@media screen and (max-width: 400px) {
+    .nue-dialog.nue-dialog--settings {
+        height: 85%;
+        max-height: calc(100% - 1.5rem);
     }
 }

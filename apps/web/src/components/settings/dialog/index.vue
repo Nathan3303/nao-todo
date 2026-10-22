@@ -224,4 +224,12 @@ onUnmounted(unbindSettingsDialogHost)
     flex-direction: column;
     gap: var(--nue-gap-xs);
 }
+
+/* T521-R3 兜底：窄屏面板按**内容**起步（`flex-basis: auto`，而非 `flex: 1` 的 0 基）⇒
+   即使将来容器高度再次退化为自动高（R3 缺陷的成因），面板也不会塌陷为 0；
+   定高容器下与 `flex: 1` 等价（内容多则收缩后滚动、少则铺满）。桌面不命中。 */
+.nue-dialog--settings.is-narrow .sd-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+}
 </style>
