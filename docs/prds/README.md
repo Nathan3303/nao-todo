@@ -58,6 +58,8 @@
 | 2026-10-22 | Web 端移动浏览器视口与安全区修复（`DEF-79`：viewport meta 补 `viewport-fit=cover` · `html/body/#app` 视口基归一（动态视口优先 + 静态兜底）· 新增主题级安全区补丁（四向 `env(safe-area-inset-*)`）· 窄屏抽屉底部安全边 · 收敛残留 `100vh` 加载态 · 源级防回归断言 + `DESIGN.md` 基线成文；**非范围**：窄屏布局重排 / 移动端两红线目录） | PRD `docs/prds/2026-10-22-web-mobile-safe-area.md`（AC1–AC6）；Issue `#217`（已关）；PR `#218`（squash `3a896eb7`） | ✅ **通过**（PM 技术验收 + 用户 2026-10-22 iPhone Safari 视觉验收，6 项全过） |
 | 2026-10-22 | 服务端 CORS 放行「预览域 / 局域网地址」（`DEF-80`，跨仓 `nao-todo-server`：`AllowOrigins` 写死 4 条 ⇒ 预览域与局域网 Origin 预检无 ACAO，预览环境与手机真机均无法调接口；改 `AllowOriginFunc` = 精确白名单 + 本项目预览域后缀 + 局域网网段（仅 `APP_DEBUG`）· 判定收敛单一来源 + 表驱动单测） | Issue `nao-todo-server#52`；PRD `docs/prds/2026-10-22-server-cors-origins.md`（AC1–AC6） | ⏳ **待开工确认（未派发）** |
 | 2026-10-22 | 移动端抽屉（Float 变体）补齐同步状态与设置入口（`T521`：抽屉 content 区底部新增工具区（同步状态在齿轮上方）+ 抽屉内挂载设置对话框 + 设置对话框手机窄屏适配（当前左栏固定 12rem，401–445px 无适配）+ 变体间能力对等与宿主单一化（`railBottomHost` 仅桌面绑定 ⇒ 手机上同步状态整块不渲染） | Issue `#221`；PRD `docs/prds/2026-10-22-aside-drawer-sync-and-settings.md`（AC1–AC6） | ⏳ **待开工确认（未派发）** |
+| 2026-10-22 | 抽屉工具区一行化：同步状态文字 + 齿轮（`T522`：竖排两个 40px 图标按钮 → 一行「状态（图标+短文字+可选计数）+ 齿轮」；四态不展开即可见；文案复用既有 `sync.*` 键；256/320 宽不换行不溢出） | Issue `#225`；PRD `docs/prds/2026-10-22-drawer-tools-row.md`（AC1–AC6） | ⏳ **待开工（已确认，待派发）** |
+| 2026-10-22 | SmartList 标题吃满可用宽度（`T523`：表头 `space-between` + 子项均 `flex:none` ⇒ 无成员吃剩余宽度、溢出被祖先 `overflow-x:hidden` 硬裁；改为标题可伸缩 + `min-width:0` + 末尾省略 + 全文提示；动作区不被压缩、计数不丢） | Issue `#226`；PRD `docs/prds/2026-10-22-smart-list-title-width.md`（AC1–AC6） | ⏳ **待开工（已确认，待派发）** |
 
 ## 发布记录
 
