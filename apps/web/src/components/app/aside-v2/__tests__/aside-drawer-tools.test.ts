@@ -76,13 +76,15 @@ const cssModules = import.meta.glob('/apps/web/src/components/app/aside-v2/aside
     eager: true
 }) as Record<string, string>
 const asideCss = cssModules['/apps/web/src/components/app/aside-v2/aside-v2.css'] ?? ''
+/** 去注释后的 CSS：注释里出现的 `.aside-gear-btn` 之类文本会污染正则/选择器扫描 */
+const asideCssNoComments = asideCss.replace(/\/\*[\s\S]*?\*\//g, '')
 
 /** 取指定选择器（逐字匹配 `选择器 {`）的首个规则体 */
 const ruleBody = (selector: string): string => {
-    const start = asideCss.indexOf(`${selector} {`)
+    const start = asideCssNoComments.indexOf(`${selector} {`)
     if (start < 0) return ''
     const open = start + selector.length + 2
-    return asideCss.slice(open, asideCss.indexOf('}', open))
+    return asideCssNoComments.slice(open, asideCssNoComments.indexOf('}', open))
 }
 
 let wrapper: VueWrapper | null = null
@@ -114,9 +116,14 @@ const mountAdapter = (responsiveFlag: { value: number }): VueWrapper => {
                 'nue-container': layoutStub,
                 'nue-header': layoutStub,
                 'nue-main': layoutStub,
-                'nue-content': layoutStub,
-                'nue-footer': layoutStub,
-                'nue-div': layoutStub,
+                'nue-content': { template: '<div class="nue-content"><slot /></div>' },
+                // footer 带真实 class：T522-R4 断言「齿轮落在 nue-footer 内」
+                'nue-footer': { template: '<div class="nue-footer"><slot /></div>' },
+                // nue-div 按 theme 产出 `nue-div--<theme>`（与库一致）⇒ 结构断言可用真实类名
+                'nue-div': {
+                    props: { theme: { type: String, default: '' } },
+                    template: '<div :class="theme ? `nue-div--${theme}` : null"><slot /></div>'
+                },
                 'nue-text': layoutStub,
                 'nue-icon': layoutStub,
                 'nue-tooltip': layoutStub,
@@ -266,34 +273,65 @@ describe('T521 变体切换：单一宿主 / 单实例（AC4）', () => {
     })
 })
 
-describe('T522 抽屉工具带：一行布局（AC1 / AC3 / AC6 ②）', () => {
-    it('AC1：工具区横向一行（row + space-between + 上下 8px、左右 0 + 保留 1px 上分割线）', () => {
+describe('T522-R4 抽屉结构：吸底工具带 + footer 齿轮（AC1 / AC6 ②）', () => {
+    it('AC1：工具带吸底（sticky bottom:0 / 48px / 左右 16px）+ 保留 1px 上分割线', () => {
         const body = ruleBody('.nue-div.nue-div--aside__tools')
         expect(body).not.toBe('')
+        expect(body).toContain('position: sticky')
+        expect(body).toContain('bottom: 0')
+        expect(body).toContain('height: 48px')
+        // R4 用户版：用户写的是 `--nue-gap-df`（与 `--nue-padding-df` 同为 16px）；按实际断言
+        expect(body).toContain('padding: 0 var(--nue-gap-df)')
+        expect(body).toContain('border-top: 1px solid var(--nue-border-color)')
+        // 仍是一行（不换行；防回归为 wrap）
         expect(body).toContain('flex-direction: row')
         expect(body).toContain('justify-content: space-between')
-        expect(body).toContain('align-items: center')
-        // T522-R2（用户视觉裁定）：左右内边距归零 ⇒ 状态文字贴左缘、齿轮贴右缘；上下 8px 保留
-        expect(body).toContain('padding: var(--nue-gap-xs) 0')
-        expect(body).toContain('border-top: 1px solid var(--nue-border-color)')
-        // 不换行（默认 nowrap；防回归为 wrap）
         expect(body).not.toContain('flex-wrap: wrap')
     })
 
-    it('AC3：状态触发器可收缩（min-width: 0）⇒ 长文案末尾省略，不横向溢出', () => {
+    it('AC1：content 区为「内容 + 吸底条」提供空间（relative + space-between + min-height: 100%）', () => {
+        const body = ruleBody('#AppAsideContainer > .nue-main > .nue-content')
+        expect(body).toContain('flex-direction: column')
+        expect(body).toContain('position: relative')
+        expect(body).toContain('justify-content: space-between')
+        expect(body).toContain('min-height: 100%')
+    })
+
+    it('AC3：状态触发器仍可收缩（flex: 1 1 auto + min-width: 0）⇒ 长文案末尾省略', () => {
         const wrapper = ruleBody('.nue-div--aside__tools .nue-dropdown-wrapper')
         expect(wrapper).toContain('flex: 1 1 auto')
         expect(wrapper).toContain('min-width: 0')
     })
 
-    it('AC1/AC6 ②：两控件点击区均 ≥40px（--nue-box-size-md）', () => {
-        for (const selector of [
-            '.nue-div--aside__tools .sync-rail-btn',
-            '.nue-div--aside__tools .aside-gear-btn'
-        ]) {
-            const body = ruleBody(selector)
-            expect(body, selector).toContain('min-width: var(--nue-box-size-md)')
-            expect(body, selector).toContain('min-height: var(--nue-box-size-md)')
+    it('AC1：同步状态触发器点击区仍 ≥40px；齿轮按 R4 例外不再有 40px 命中盒', () => {
+        const syncBtn = ruleBody('.nue-div--aside__tools .sync-rail-btn')
+        expect(syncBtn).toContain('min-width: var(--nue-box-size-md)')
+        expect(syncBtn).toContain('min-height: var(--nue-box-size-md)')
+
+        // 齿轮已移入 footer：抽屉内任何 `.aside-gear-btn` 规则都不得再施加 40px 命中盒
+        const gearRules = Array.from(
+            asideCssNoComments.matchAll(/\.aside-gear-btn[^{]*\{([^}]*)\}/g)
+        ).map((m) => m[1])
+        expect(gearRules.length).toBeGreaterThan(0)
+        for (const rule of gearRules) {
+            expect(rule).not.toContain('min-width: var(--nue-box-size-md)')
+            expect(rule).not.toContain('min-height: var(--nue-box-size-md)')
         }
+    })
+
+    it('AC1：齿轮落在 `nue-footer` 内（与导航同排），同步宿主落在工具带内（运行时结构）', async () => {
+        mountAdapter(ref(0))
+        await settle()
+
+        const gear = document.getElementById('AppAsideDrawerSettingsGearBtn')
+        expect(gear).toBeTruthy()
+        expect(gear!.closest('.nue-footer')).toBeTruthy()
+        expect(gear!.closest('.nue-div--aside__tools')).toBeNull()
+
+        // 同步宿主仍在工具带内（吸底条），且不再与齿轮同容器
+        const host = document.getElementById('AppAsideDrawerBottomSlot')
+        expect(host).toBeTruthy()
+        expect(host!.closest('.nue-div--aside__tools')).toBeTruthy()
+        expect(host!.closest('.nue-footer')).toBeNull()
     })
 })

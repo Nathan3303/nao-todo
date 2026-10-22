@@ -73,22 +73,29 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+        position: relative;
+        justify-content: space-between;
+        min-height: 100%;
     }
 
-    /* T522 工具带：**横向一行** —— 左「同步状态（图标 + 短文字）」、右「齿轮」；
-       行高 40px（子项 min-height）+ 上下 8px；保留 1px 上分割线。
-       R2（用户视觉裁定）：**去掉左右内边距** ⇒ 状态文字贴抽屉左缘、齿轮贴右缘；
-       改动只限水平方向，垂直 8px 与 40px 点击区不变。
+    /* T522 工具带（**R4 用户版，以用户为准**）：content 区底部的**吸底**状态条 ——
+       只承载同步状态（图标 + 短文字），高 48px、左右 padding `--nue-gap-df`（=16px）；
+       `position: sticky; bottom: 0` 使其在子页面侧栏滚动时吸底常驻（sticky 仍占据流内高度
+       ⇒ 不遮挡侧栏最后一项）；齿轮已移入 `nue-footer` 与导航图标同排（见 aside-v2-drawer.vue）。
        底部安全区仍由 themes/safe-area.css 的覆盖层内缩承担（此处不重复 env()） */
     .nue-div.nue-div--aside__tools {
+        position: sticky;
+        bottom: 0;
+        left: 0;
         flex: none;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         gap: var(--nue-gap-xs);
-        padding: var(--nue-gap-xs) 0;
+        padding: 0 var(--nue-gap-df);
         border-top: 1px solid var(--nue-border-color);
+        height: 48px;
     }
 
     /* 状态触发器占满左侧剩余宽度且**可收缩** ⇒ 长文案走末尾省略，不换行、不横向溢出（AC3） */
@@ -102,13 +109,9 @@
         width: 100%;
     }
 
-    /* 抽屉内点击区 ≥40px（DESIGN §3）；桌面 rail 尺寸不变（AC4 零变化） */
-    .nue-div--aside__tools .aside-gear-btn {
-        flex: none;
-        min-width: var(--nue-box-size-md);
-        min-height: var(--nue-box-size-md);
-    }
-
+    /* 同步状态触发器：抽屉内点击区 ≥40px（DESIGN §3）—— R4 后工具带只剩它一个控件；
+       齿轮按 R4 例外走字形尺寸（DESIGN §3 已登记），样式见下方 `.aside-gear-btn` 基类。
+       桌面 rail 尺寸不变（AC4 零变化） */
     .nue-div--aside__tools .sync-rail-btn {
         width: 100%;
         min-width: var(--nue-box-size-md);

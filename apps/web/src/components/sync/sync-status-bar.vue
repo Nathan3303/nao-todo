@@ -293,7 +293,7 @@ watch(
                             dataBadgeClass,
                             isDrawerHost ? 'sync-rail-btn--drawer' : ''
                         ]"
-                        theme="pure"
+                        :theme="{ pure: true, icon: !isDrawerHost }"
                         :icon="isDrawerHost ? drawerIcon : 'ntd-sync2'"
                         :loading="syncing"
                         :aria-label="isDrawerHost ? drawerAriaLabel : statusText"
@@ -476,7 +476,7 @@ watch(
 
 /* T522 抽屉变体：一行工具带内的状态触发器（图标 + 短文字）；rail 无文字节点（桌面零变化） */
 .sync-rail-btn--drawer {
-    gap: var(--nue-gap-2xs);
+    gap: var(--nue-gap-xs);
 }
 
 /* 可见短文字：12px（DESIGN §3）；颜色随状态（文本用 90 档 ⇒ 对比度 ≥4.5:1）；单行末尾省略 */

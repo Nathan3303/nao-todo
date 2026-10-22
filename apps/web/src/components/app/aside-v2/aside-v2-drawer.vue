@@ -61,33 +61,17 @@ const { setGearButton, openSettings } = useSettingsEntry()
                 </nue-div>
             </nue-header>
             <nue-main>
-                <nue-content style="justify-content: space-between; min-height: 0">
+                <nue-content>
                     <!-- 子视图侧栏 -->
                     <div id="SubPageAsideTeleportSlot" />
-                    <!-- T522 工具带（一行）：同步状态（左，SHELL-02 语义）+ 齿轮（右，直开设置） -->
+                    <!-- T522 工具带（R4 用户版）：content 区底部**吸底**条，只承载同步状态（SHELL-02 语义）；
+                         齿轮已移入下方 footer，与导航图标同排（图标数 = 导航 5 项 + 齿轮） -->
                     <nue-div theme="aside__tools">
                         <div
                             id="AppAsideDrawerBottomSlot"
                             :ref="setBottomSlot"
                             class="aside-rail-bottom-slot"
                         />
-                        <nue-tooltip
-                            :content="t('nav.settings')"
-                            placement="top-center"
-                            size="small"
-                        >
-                            <button
-                                id="AppAsideDrawerSettingsGearBtn"
-                                :ref="setGearButton"
-                                type="button"
-                                class="aside-gear-btn"
-                                :aria-label="t('nav.settings')"
-                                :title="t('nav.settings')"
-                                @click="openSettings()"
-                            >
-                                <nue-icon name="ntd-settings" />
-                            </button>
-                        </nue-tooltip>
                     </nue-div>
                 </nue-content>
             </nue-main>
@@ -108,6 +92,20 @@ const { setGearButton, openSettings } = useSettingsEntry()
                             </nue-tooltip>
                         </template>
                     </template>
+                    <!-- R4：设置齿轮（SHELL-01）在 footer 与导航同排 —— 按 DESIGN §3 已登记例外走字形尺寸 -->
+                    <nue-tooltip :content="t('nav.settings')" placement="top-center" size="small">
+                        <button
+                            id="AppAsideDrawerSettingsGearBtn"
+                            :ref="setGearButton"
+                            type="button"
+                            class="aside-gear-btn"
+                            :aria-label="t('nav.settings')"
+                            :title="t('nav.settings')"
+                            @click="openSettings()"
+                        >
+                            <nue-icon name="ntd-settings" />
+                        </button>
+                    </nue-tooltip>
                 </nue-div>
             </nue-footer>
         </nue-container>
