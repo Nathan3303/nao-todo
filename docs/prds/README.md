@@ -55,6 +55,7 @@
 
 | 2026-10-13 | 日历侧边栏「周起始」选择改为分段滑块（T512：抽通用「分段切换」组件 `segmented-switch.vue`（N 段等分 + 滑块指示器 + `prefers-reduced-motion` 降级 + `role="group"`/`aria-pressed`，仅既有 `nue-*` token）—— 单一来源防两处样式漂移；「日/月/周」视图切换 `segmented` 态改引通用件（3 段铺满，外观/行为零变化，既有行为断言未删）· 周起始改引通用件（2 段自适应、标签在左、`weekStart` 驱动 + `setWeekStart`）· i18n `calendar.weekStart`/`sunday`/`monday` 3 键三处齐备（顺带修掉英文界面显示中文的既有缺口）） | 立项文档 PR `#192`（squash `699ee0d7`）· 代码 PR `#193`（squash `158b3839`）· 发版 PR `#194`（squash `7b4e7114`）/ **tag `v1.12.8`**（tag 对象 `db0da7b2` → peeled `7b4e7114`） | ✅ 通过（PM 验收 AC1–AC7 + 回执全量门禁数字核对 + PR CI `check` / `test` 独立复核；视觉勾选清单已交用户） |
 | 2026-10-08 | 搜索筛选栏细化（四项）（T505：① 全链移除 `includeExcluded`（兼容 = 忽略旧字段）· ② 「包含已归档」开关补可见标签 + `role`/`aria-checked`/键盘/点文字切换（规避 `NueSwitch` 忽略默认插槽）· ③ 全局 `theme="menu"` 下拉项间隙 `xs → 2xs`（7 组件 11 处）· ④ 触发器显示已选名称（≤2 全显 / ≥3 前 2 + `+N`、色点、超宽省略、「维度名：已选」+ 文字层级）；架构评审有条件可行 + 中间态否决；新增 `DEF-73`） | PR `#183`（`4df168f2`）+ `#184`（`5051f04d`）+ `#185`（`bb915327`）· 文档 PR `#182`（`9591ce75`）· 发版 PR `#186`（`30b7d0e4`）/ **tag `v1.12.7`**（tag 对象 `00dc84f4` → peeled `30b7d0e4`） | ✅ 通过（PM 验收 AC1–AC7 + 回执全量门禁数字核对 + PR CI 独立复核；**用户 2026-10-08 视觉验收通过**（含 7 组件对照 + 层级/冒号）；tag 构建 workflow success，8 项产物、三份 `latest*.yml` 均 `1.12.7`） |
+| 2026-10-22 | Web 端移动浏览器视口与安全区修复（`DEF-79`：viewport meta 补 `viewport-fit=cover` · `html/body/#app` 视口基归一（动态视口优先 + 静态兜底）· 新增主题级安全区补丁（四向 `env(safe-area-inset-*)`）· 窄屏抽屉底部安全边 · 收敛残留 `100vh` 加载态 · 源级防回归断言 + `DESIGN.md` 基线成文；**非范围**：窄屏布局重排 / 移动端两红线目录） | PRD `docs/prds/2026-10-22-web-mobile-safe-area.md`（AC1–AC6）；Issue `#217` | ⏳ **待开工确认（未派发）** |
 
 ## 发布记录
 
