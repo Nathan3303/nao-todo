@@ -1,6 +1,6 @@
 # 2026-10-22 服务端 CORS 放行「预览域 / 局域网地址」（DEF-80）PRD
 
-> **状态**：**待开工确认**（用户 2026-10-22 选定方案 A；未派发）。**Issue**：[nao-todo-server#52](https://github.com/Nathan3303/nao-todo-server/issues/52) · **缺陷**：`DEF-80` · **跨仓**：改动只在 `nao-todo-server`（本文档留在 `nao-todo` 仓作单一来源）。
+> **状态**：**已开工（用户 2026-10-22「允许开工」）** —— 已派 `rd-be`。**Issue**：[nao-todo-server#52](https://github.com/Nathan3303/nao-todo-server/issues/52) · **缺陷**：`DEF-80` · **跨仓**：改动只在 `nao-todo-server`（本文档留在 `nao-todo` 仓作单一来源）。
 > **依据**：`T519` 真机验证受阻（`DEF-79` 交付后无法在手机/预览环境验 login 态）⇒ 实测 `OPTIONS https://todobe.nathanao.space/api/ping`：`*.vercel.app` 与 `http://192.168.2.211:<port>` 的 Origin **均无 `access-control-allow-origin`**；`localhost:5173` 与 `todo.nathanao.space` 正常回显。源码：`nao-todo-server/interfaces/routers/routers.go:53-72`（写死 4 条 `AllowOrigins`，`AllowOriginFunc` 整段注释，`AllowCredentials: true`）。
 > **硬约束**：不改鉴权/业务逻辑 · 不改 `apps/web`、`apps/desktop` · **不动** `nao-todo-server/docker-compose.yml` 的用户本地改动 · 生产域名放行能力**不得减少**。
 
@@ -43,7 +43,7 @@
     - **任意 `*.vercel.app` 放行** —— 理由：任何 Vercel 用户都能拿到该域名，等于对全世界开放（`AllowCredentials: true` 下尤危险）。
     - **生产环境开放局域网来源** —— 理由：生产无此需求，且扩大暴露面；一律由 `APP_DEBUG` 把关。
     - **`vercel.app` 网络不可达问题** —— 理由：属于网络链路，不是服务端配置；本次无法解决。
-    - **改用同源网关/自建反向代理** —— 理由：方案 C（临时反代）已能绕过，但不可复用；本次按方案 A 最小改动。
+    - **改用同源网关/自建反向代理（方案 C）** —— 理由：用户 2026-10-22 明确裁定「不要反代、以后只用 Vercel 测试链」⇒ 临时反代已删除，不再作为备选。
     - **`nao-todo-server/docker-compose.yml` 的用户本地改动（`network: host`）** —— 理由：用户在工作区未提交的私有改动，任何提交不得携带/覆盖。
 
 ## 四、用户场景
@@ -87,14 +87,14 @@
 - **生产发布**：由用户部署（本仓无生产发布流水线）；**部署前必须本地实测通过**，因为生产白名单能力不能降级。
 - **回滚**：`git revert` 单个 squash 提交 + 重新部署；CORS 为纯配置，无数据迁移。
 - **监控**：沿用现有 `RequestLogger`；`APP_DEBUG` 下可打印被拒 origin（**生产不打**），便于后续排障。
-- **降级路径**：若生产部署受阻，真机验收可继续用同源反代（`T519` 临时工具）。
+- **降级路径：无**（用户 2026-10-22 裁定「以后只用 Vercel 预览链」⇒ 局域网同源反代**已停用并删除**，不列为长期兜底）⇒ 本单未部署前，真机验收**阻塞等待**，不得以反代替代。
 
 ## 九、变更治理
 
 - **流程**：`nao-todo-server` 仓 Issue **#52** → 分支 `fix/52-cors-origins` → PR（squash，**由 RD 执行**，PM 只验收授权）→ 用户部署。
 - **版本**：服务端无对外版本号机制（Go 服务），以提交号为准；不涉及 `apps/web` / `apps/desktop` 版本。
 - **跨仓留痕**：本 PRD 与 `DEF-80` 记在 `nao-todo` 仓（PM 文档单一来源），代码与 Issue 在 `nao-todo-server` 仓。
-- **用户裁定（2026-10-22）**：方案 **A**（`AllowOriginFunc` + 预览后缀 + 局域网网段），非 B（单条 IP）/ 非 C（不改）。
+- **用户裁定（2026-10-22）**：方案 **A**（`AllowOriginFunc` + 预览后缀 + 局域网网段），非 B（单条 IP）/ 非 C（不改）；并追加：**验证通路唯一化为 Vercel 预览链**（局域网反代停用并删除），故本单是 `T519` 真机验收的**前置**。
 - **纪律**：任何提交不得携带 `docker-compose.yml` 的用户本地 `network: host` 改动（路径级暂存）。
 
 ## 附录：方案对照（结论）
