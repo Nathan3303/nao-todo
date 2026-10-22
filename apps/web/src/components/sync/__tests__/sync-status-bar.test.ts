@@ -737,6 +737,49 @@ describe('SyncStatusBar - T522 抽屉变体：可见状态文字', () => {
         expect(ariaLabel()).toContain('任务数量超过同步上限')
     })
 
+    it('T522-R1：paused 但待推送为 0 ⇒ 不写「待推送 0」，落常态文案（颜色不变仍由 statusTheme 决定）', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        const iso = '2026-09-10T10:00:00.000Z'
+        const time = new Date(iso).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+
+        // paused && pendingCount === 0 ⇒ 常态文案（上次同步时间），不得出现「待推送」
+        status().value = { ...defaultStatus(), paused: true, lastSyncAt: iso }
+        await nextTick()
+        expect(visibleText()).toBe(`上次同步 ${time}`)
+        expect(visibleText()).not.toContain('待推送')
+        // 颜色仍走 rail 共用的 statusTheme（amber），此处不改（AC4）
+        expect(railButton()?.className).toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // paused && 从未同步 ⇒ 落「从未同步」（仍不得出现「待推送」）
+        status().value = { ...defaultStatus(), paused: true }
+        await nextTick()
+        expect(visibleText()).toBe('从未同步')
+        expect(visibleText()).not.toContain('待推送')
+
+        // 回归：paused && pendingCount > 0 仍显示「待推送 N」
+        status().value = { ...defaultStatus(), paused: true, pendingCount: 2 }
+        await nextTick()
+        expect(visibleText()).toBe('待推送 2')
+    })
+
+    it('T522-R1：rail 侧同一场景（paused && 0）aria-label 逐字不变', async () => {
+        createHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...defaultStatus(), paused: true }
+        await nextTick()
+        expect(ariaLabel()).toBe('同步')
+        expect(visibleText()).toBe('')
+    })
+
     it('AC4：rail 变体零变化 —— 无可见文字、图标恒 ntd-sync2、aria-label 逐字不变', async () => {
         createHost()
         mountBar()

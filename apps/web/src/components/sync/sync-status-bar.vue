@@ -165,11 +165,14 @@ const isDrawerHost = computed(() => railBottomHostVariant.value === 'drawer')
  * @description 优先级与 `statusTheme` 逐项一致（同步中 > 失败 > 待推送 > 常态时间）⇒ 颜色 / 符号 / 文字
  *              三通道同源，不出现「文字说失败、图标却是待推送」。此 computed 是抽屉变体文案的唯一来源，
  *              同时供视觉文字与 `aria-label`（AC6 ①）。
+ * @remarks 「待推送」只由 **`pendingCount > 0`** 触发：`paused` 但队列为空时写「待推送 0」语义是错的
+ *          （暂停 ≠ 有 0 条待推送）⇒ 落入常态文案。颜色由 rail 共用的 `statusTheme` 决定（不在这里改，
+ *          AC4 桌面零变化），此时允许「amber 图标 + 常态文字」，因为文字是真相通道。
  */
 const drawerStatusText = computed(() => {
     if (syncing.value) return t('sync.syncing')
     if (status.value.failedCount > 0) return t('sync.failed', { count: status.value.failedCount })
-    if (status.value.paused || status.value.pendingCount > 0)
+    if (status.value.pendingCount > 0)
         return t('sync.pending', { count: status.value.pendingCount })
     return lastSyncText.value
 })
