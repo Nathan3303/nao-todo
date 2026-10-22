@@ -1,6 +1,6 @@
 # 2026-10-22 SmartList 标题宽度溢出（可用空间未被用满）PRD
 
-> **状态**：**待开工确认** · **Issue**：[#226](https://github.com/Nathan3303/nao-todo/issues/226) · **批次**：`v1.12.14`（PATCH）
+> **状态**：**✅ 已交付并合并（`79d31286`，PR [#229](https://github.com/Nathan3303/nao-todo/pull/229)，2026-10-22）** · **Issue**：[#226](https://github.com/Nathan3303/nao-todo/issues/226) · **批次**：`v1.12.14`（PATCH）
 > **依据**：用户 2026-10-22 原话「侧边栏中的 SmartList 的标题宽度太小，在移动端的浏览器中浏览时出现溢出隐藏（其实还有很多空间）」+ 裁定 **A = 用满可用宽度，真不够才省略**（桌面同步受益）。
 > **硬约束**：不改 `NaoSmartList` 的对外 props / 事件 / 插槽 · 不改清单数据与排序 · 移动端红线目录零改动。
 
