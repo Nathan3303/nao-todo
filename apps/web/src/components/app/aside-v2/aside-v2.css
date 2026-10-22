@@ -77,6 +77,8 @@
 
     /* T522 工具带：**横向一行** —— 左「同步状态（图标 + 短文字）」、右「齿轮」；
        行高 40px（子项 min-height）+ 上下 8px；保留 1px 上分割线。
+       R2（用户视觉裁定）：**去掉左右内边距** ⇒ 状态文字贴抽屉左缘、齿轮贴右缘；
+       改动只限水平方向，垂直 8px 与 40px 点击区不变。
        底部安全区仍由 themes/safe-area.css 的覆盖层内缩承担（此处不重复 env()） */
     .nue-div.nue-div--aside__tools {
         flex: none;
@@ -85,7 +87,7 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--nue-gap-xs);
-        padding: var(--nue-gap-xs) var(--nue-padding-df);
+        padding: var(--nue-gap-xs) 0;
         border-top: 1px solid var(--nue-border-color);
     }
 

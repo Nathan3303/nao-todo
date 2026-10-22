@@ -267,13 +267,14 @@ describe('T521 变体切换：单一宿主 / 单实例（AC4）', () => {
 })
 
 describe('T522 抽屉工具带：一行布局（AC1 / AC3 / AC6 ②）', () => {
-    it('AC1：工具区横向一行（row + space-between + 上下 8px + 保留 1px 上分割线）', () => {
+    it('AC1：工具区横向一行（row + space-between + 上下 8px、左右 0 + 保留 1px 上分割线）', () => {
         const body = ruleBody('.nue-div.nue-div--aside__tools')
         expect(body).not.toBe('')
         expect(body).toContain('flex-direction: row')
         expect(body).toContain('justify-content: space-between')
         expect(body).toContain('align-items: center')
-        expect(body).toContain('padding: var(--nue-gap-xs) var(--nue-padding-df)')
+        // T522-R2（用户视觉裁定）：左右内边距归零 ⇒ 状态文字贴左缘、齿轮贴右缘；上下 8px 保留
+        expect(body).toContain('padding: var(--nue-gap-xs) 0')
         expect(body).toContain('border-top: 1px solid var(--nue-border-color)')
         // 不换行（默认 nowrap；防回归为 wrap）
         expect(body).not.toContain('flex-wrap: wrap')
