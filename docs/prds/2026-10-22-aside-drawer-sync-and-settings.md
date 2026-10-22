@@ -1,6 +1,6 @@
 # 2026-10-22 移动端抽屉（Float 变体）补齐同步状态与设置入口 PRD
 
-> **状态**：**已回执 · PM 技术验收通过 · 用户真机走查发现窄屏 Tab 过挤 ⇒ 返工 R1**（PR [#223](https://github.com/Nathan3303/nao-todo/pull/223)，代码 `c71ef362` + 留痕 `e9b3861d`）。四项裁定：放置 A / 设置对话框本次一并窄屏适配 B / 验收含共存与变体切换回归 A / **窄屏形态 A（顶部横向 Tab）**。**Issue**：[#221](https://github.com/Nathan3303/nao-todo/issues/221)（仅摘要 + 指针）。
+> **状态**：**已回执 R2 · PM 技术验收通过 · 待用户 390px 真机复验**（R1 Tab 过挤 ⇒ R2 复用分段件 + 尺寸轴）（PR [#223](https://github.com/Nathan3303/nao-todo/pull/223)，代码 `c71ef362` + 留痕 `e9b3861d`）。四项裁定：放置 A / 设置对话框本次一并窄屏适配 B / 验收含共存与变体切换回归 A / **窄屏形态 A（顶部横向 Tab）**。**Issue**：[#221](https://github.com/Nathan3303/nao-todo/issues/221)（仅摘要 + 指针）。
 > **依据**：用户 2026-10-22 原话「在移动端浏览器中浏览 Web 端时，AppAsideV2 会应用 Float 变体，本次版本中的 Float 变体没有展示同步状态组件和设置按钮（以及设置对话框），把他们加上」+ PM 读码（`apps/web/src/components/app/aside-v2/`）。
 > **硬约束**：移动端红线（`packages/presentation-react` / `apps/mobile` 零改动）· 桌面 / Electron 视觉零变化 · 不新增 `nue-*` token 与新 i18n 键（复用 `nav.settings`）。
 
