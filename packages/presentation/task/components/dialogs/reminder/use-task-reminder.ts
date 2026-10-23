@@ -1,5 +1,5 @@
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
-import { type SSEReminderEvent } from '@nao-todo/shared/types'
+import { type TaskReminderEvent } from '@nao-todo/shared/types'
 import { isArchivedReadOnlyError } from '../../../archive-gate'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
@@ -18,10 +18,10 @@ export const SNOOZE_OPTIONS = [
 ]
 
 const useTaskReminder = (props: TaskReminderDialogProps) => {
-    const { dialogManager, taskUseCase } = props
+    const { dialogManager, taskUseCase, onOpenTask } = props
     const tasksStore = useTasksStore()
 
-    const queue = ref<SSEReminderEvent[]>([])
+    const queue = ref<TaskReminderEvent[]>([])
     const processedCount = ref(0)
     const totalCount = ref(0)
 
@@ -40,7 +40,7 @@ const useTaskReminder = (props: TaskReminderDialogProps) => {
 
     const snoozing = ref(false)
 
-    const enqueue = (event: SSEReminderEvent) => {
+    const enqueue = (event: TaskReminderEvent) => {
         queue.value.push(event)
         totalCount.value++
     }
@@ -80,7 +80,8 @@ const useTaskReminder = (props: TaskReminderDialogProps) => {
     const viewDetail = () => {
         const taskId = currentEvent.value?.taskId
         if (!taskId) return
-        // showTaskDetailsDrawer(taskId)
+        // 跳转由装配层注入（AC9）：不引 router，缺失时静默
+        onOpenTask?.(taskId)
     }
 
     return {

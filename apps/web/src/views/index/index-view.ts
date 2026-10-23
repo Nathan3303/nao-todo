@@ -7,6 +7,7 @@ import {
     useScope,
     useShortcut,
     useTagUseCase,
+    useTaskUseCase,
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
@@ -18,7 +19,7 @@ import { TaskViewObject } from '@nao-todo/domain-task'
 import { useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
+import { useStoreInvalidationHub, useTasksStore } from '@nao-todo/presentation/task'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     TASK_CREATOR_DIALOG_KEY,
@@ -33,11 +34,13 @@ import {
 } from '@nao-todo/shared/hooks'
 import { sendNotification } from '@nao-todo/shared/utils/notification'
 import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
+import { getServerTimeOffset } from '@nao-todo/infrastructure/src/persistence-sync/sync-config'
+import { listReminderCandidates } from '@nao-todo/infrastructure/src/persistence-local/repos/task-reminder-candidates'
+import { createClaimLedger, createReminderEngine } from '@nao-todo/shared/reminder'
 import { t } from '@nao-todo/shared/locales'
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
-import { startReminderSse } from './reminder-sse'
 import { taskDetailsLocation } from './task-details-location'
 
 /**
@@ -140,22 +143,48 @@ const useIndexView = () => {
     }
 
     /**
-     * SSE 提醒连接
-     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）；
-     *              token 缺失/空串 ⇒ 不建连（DEF-33 下游，见 `./reminder-sse`）
+     * 任务提醒引擎（本地轮询，T527）
+     * @description 判定只读本机已同步任务 + 本机（校准后）时钟 ⇒ 离线 / 刷新 / 多标签 / 重开一致。
+     *              展示前落账（`taskId@remindAt`）跨标签互斥；展示后消费（一次性清空本机 remindAt，
+     *              daily/weekly/monthly 推进下一次），本地写走既有同步队列（不新增通道）。
+     *              见 PRD §五 R1–R9 · §六 NFR · `packages/shared/reminder`。
      */
-    const connectReminderSSE = async () => {
-        if (import.meta.env.VITE_DISABLE_SSE === 'true') return
-        await startReminderSse({
-            token: localStorage.getItem('USER_JWT'),
-            apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-            onReminder: (data) => {
-                appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
-                // 系统通知仅显示任务名称（不含描述，见需求）
-                sendNotification(t('task.reminder.title'), data.taskName)
-            }
-        })
+    const taskUseCase = useTaskUseCase(useTasksStore())
+    const nowCalibratedMs = (): number => Date.now() + getServerTimeOffset()
+
+    /** localStorage 访问：隐私模式下取属性本身可能抛错 ⇒ 交账本退化为内存账本（AC6） */
+    const getReminderStorage = (): Storage | undefined => {
+        try {
+            return typeof localStorage === 'undefined' ? undefined : localStorage
+        } catch {
+            return undefined
+        }
     }
+
+    /** 通知权限请求（仅支持且未决时发起；引擎保证整个生命周期只调一次） */
+    const requestReminderNotificationPermission = (): void | Promise<unknown> => {
+        if (typeof window === 'undefined' || !('Notification' in window)) return undefined
+        if (Notification.permission !== 'default') return undefined
+        return Notification.requestPermission()
+    }
+
+    const reminderEngine = createReminderEngine({
+        listCandidates: () => listReminderCandidates(nowCalibratedMs()),
+        now: nowCalibratedMs,
+        ledger: createClaimLedger({ storage: getReminderStorage() }),
+        notify: (event) => {
+            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, event)
+            // 系统通知：标题 = 动作语义、正文 = 任务名；点击 = 聚焦 + 打开该任务详情（AC9）
+            sendNotification(t('task.reminder.title'), event.taskName, {
+                onClick: () => void showTaskDetails(event.taskId)
+            })
+        },
+        consume: async (taskId, nextRemindAt) => {
+            await taskUseCase.update(taskId, { remindAt: nextRemindAt })
+        },
+        requestNotificationPermission: requestReminderNotificationPermission
+    })
+    onUnmounted(() => reminderEngine.stop())
 
     /**
      * 首页视图加载状态
@@ -168,12 +197,10 @@ const useIndexView = () => {
     const IndexViewInitialize = async () => {
         // 初始化用户配置、主题模式、项目列表、标签列表、任务列表
         loadUserThemeModeFromConfig()
-        await Promise.all([
-            userUseCase.loadUserProfile(),
-            userUseCase.loadUserConfig(),
-            connectReminderSSE()
-        ])
+        await Promise.all([userUseCase.loadUserProfile(), userUseCase.loadUserConfig()])
             .then(() => {
+                // 提醒引擎在认证/本地数据就绪后启动：首轮扫描 = 冷启动补弹（AC4）
+                reminderEngine.start()
                 if (route.name !== 'index') return
                 const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
                 // C-35：收敛裸导航（深链校验 + 回退 + 失效键清理）

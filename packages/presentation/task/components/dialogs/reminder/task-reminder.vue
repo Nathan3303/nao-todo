@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { TASK_REMINDER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
-import { type SSEReminderEvent } from '@nao-todo/shared/types'
+import { type TaskReminderEvent } from '@nao-todo/shared/types'
 import {
     useDialogWrapper,
     type DialogInstanceType
@@ -50,7 +50,7 @@ const handleSnoozeExecute = (executeId: string) => {
 
 onMounted(() => {
     dialogManager.register(TASK_REMINDER_DIALOG_KEY, {
-        open: <T = SSEReminderEvent>(payload?: T) => {
+        open: <T = TaskReminderEvent>(payload?: T) => {
             if (!payload) return
             const wasEmpty = totalCount.value === 0
             enqueue(payload)
