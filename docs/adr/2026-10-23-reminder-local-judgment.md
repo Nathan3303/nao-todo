@@ -1,9 +1,9 @@
 # ADR：任务提醒本地化（判定权下移本机 + `remind_at` 单写者）
 
-- 状态：提议
+- 状态：已接受（待落地）
 - 更新：2026-10-23
 - Owner：arch-designer
-- 指针：`docs/reports/T526-arch-review.md`（影响面 / NFR / Q1–Q7 裁示）· `docs/tasks-state.md`（T524/T525/T526）· `docs/adr/2026-09-21-reminder-scan-and-recovery.md`（扫描口径 D1/D2）
+- 指针：PRD `docs/prds/2026-10-23-reminder-local-polling.md`（Issue #232 · PR #233）· `docs/reports/T526-arch-review.md`（影响面 / NFR / Q1–Q7 裁示）· `docs/tasks-state.md`（T524/T525/T526）· `docs/adr/2026-09-21-reminder-scan-and-recovery.md`（扫描口径 D1/D2）
 
 ## 背景
 
@@ -13,7 +13,7 @@
 
 ## 决策
 
-1. 判定权归客户端本机（只读本机已同步数据、不依赖网络）；`remind_at` 只保留**一个写者 = 展示提醒的那一端**：展示即消费（一次性 → 清空；daily/weekly → 推进下一次），服务端 reminder cron 本批停用（跨仓开关，不删已上线字段）。
+1. 判定权归客户端本机（只读本机已同步数据、不依赖网络）；`remind_at` 只保留**一个写者 = 展示提醒的那一端**：展示即消费（一次性 → 清空；daily/weekly/monthly → 推进下一次，next 越过 `endAt` 则清空并停止重复；月度仅对历史数据生效）。消费产生的本地写走**既有同步队列**（不新增通道）；服务端 reminder cron 本批停用（跨仓开关，不删已上线字段）。
 2. 共用引擎落 `packages/shared/reminder/`（纯核心 `collectDueReminders` + `nextOccurrence` + claim 账本 + 引擎工厂，依赖一律端口注入），装配点 = `apps/web/src/views/index/index-view.ts`（桌面经 `@nao-todo/webapp` 复用同一壳），桌面自有扫描器下线。
 3. 单次性 = **展示前**写持久 claim 账本（键 `taskId@remindAt`，localStorage）+ Web Locks 跨标签互斥（不可用则 CAS 降级）；应用内弹窗与系统通知点击统一走「聚焦 + 路由到该任务详情」。
 
@@ -45,6 +45,7 @@
 ## 相关指针
 
 - 影响面清单 / 数据可用性 / Q1–Q7 裁示 / NFR 翻译 / 待拍板：`docs/reports/T526-arch-review.md`
+- 跨仓回滚耦合：服务端开关与客户端必须**同批回退**（禁只恢复服务端开关而保留新客户端）→ PRD `docs/prds/2026-10-23-reminder-local-polling.md` §八
 - 扫描口径来源：`docs/adr/2026-09-21-reminder-scan-and-recovery.md`（D1 排除 done / 归档 / 放弃；D2 不清 `remind_at` 实现暂停恢复）
 
 ## 参考来源
