@@ -3,6 +3,7 @@ import {
     createClaimLedger,
     createReminderEngine,
     REMINDER_SCAN_INTERVAL_MS,
+    type ReminderLedger,
     type ReminderTask,
     type TaskReminderEvent
 } from '@nao-todo/shared/reminder'
@@ -46,7 +47,7 @@ const setup = (options: SetupOptions) => {
         consume,
         requestNotificationPermission: options.requestNotificationPermission
     })
-    return { engine, notify, consume, ledger, storage }
+    return { engine, notify, consume, ledger: ledger as ReminderLedger, storage }
 }
 
 beforeEach(() => {

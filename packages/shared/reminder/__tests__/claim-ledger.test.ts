@@ -51,7 +51,8 @@ describe('createClaimLedger · 存储不可用降级（AC6 / §六可用性）',
         storage.failAll = true
         const ledger = createClaimLedger({ storage })
 
-        expect(() => ledger.claim(KEY)).not.toThrow()
+        // 冒烟键独立：不得占用 KEY，否则紧随的「首次 claim ⇒ true」恒为 false
+        expect(() => ledger.claim('smoke@1')).not.toThrow()
         expect(ledger.claim(KEY)).toBe(true)
         expect(ledger.claim(KEY)).toBe(false)
         expect(ledger.has(KEY)).toBe(true)
@@ -62,7 +63,8 @@ describe('createClaimLedger · 存储不可用降级（AC6 / §六可用性）',
         storage.failOnSet = true
         const ledger = createClaimLedger({ storage })
 
-        expect(() => ledger.claim(KEY)).not.toThrow()
+        // 冒烟键独立：不得占用 KEY，否则紧随的「首次 claim ⇒ true」恒为 false
+        expect(() => ledger.claim('smoke@1')).not.toThrow()
         expect(ledger.claim(KEY)).toBe(true)
         expect(ledger.claim(KEY)).toBe(false)
     })

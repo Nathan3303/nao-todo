@@ -96,7 +96,7 @@ describe('createReminderEngine · 可见性（AC4 / NFR §六）', () => {
     })
 
     it('补扫幂等：再隐藏 → 再回前台，同一条不再补弹（AC4 + AC3）', async () => {
-        let due: ReminderTask[] = [makeTask({ id: 't1', remindAt: iso(-1000) })]
+        const due: ReminderTask[] = [makeTask({ id: 't1', remindAt: iso(-1000) })]
         const { engine, notify } = setup(() => due)
 
         engine.start()
