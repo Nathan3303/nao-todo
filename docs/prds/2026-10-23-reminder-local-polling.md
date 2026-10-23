@@ -1,6 +1,6 @@
 # 2026-10-23 任务提醒改本地轮询（Web + 桌面统一）PRD
 
-> **状态**：**已开工**（用户 2026-10-23 确认）· PRD **v1.1**（arch 有条件终签已回填）· **Issue**：[#232](https://github.com/Nathan3303/nao-todo/issues/232) · **批次**：`v1.12.15`（PATCH）+ 跨仓 `nao-todo-server` 一处开关
+> **状态**：**✅ 已交付并发布 `v1.12.15`（2026-10-23）** —— 功能 PR [#234](https://github.com/Nathan3303/nao-todo/pull/234)（squash `2b478e0e`）· 发版 PR [#235](https://github.com/Nathan3303/nao-todo/pull/235)（squash `0d24daf3`）· 注解 tag `v1.12.15` · 跨仓 `nao-todo-server#55`（`a4d8850`，已部署）· PRD **v1.1**（arch 有条件终签已回填）· **Issue**：[#232](https://github.com/Nathan3303/nao-todo/issues/232) · **批次**：`v1.12.15`（PATCH）+ 跨仓 `nao-todo-server` 一处开关
 > **来源（成熟度）**：grill 两轮结论（2026-10-23）+ 架构回执 `docs/reports/T526-arch-review.md` + 接缝经 QA 确认（`T525`）⇒ 走 pm-to-spec 综合路径，不重复盘问。
 > **指针**：ADR 提议 `docs/adr/2026-10-23-reminder-local-judgment.md`（arch 出，待 PRD 落定后终签）。
 > **硬约束**：移动端红线目录零改动 · 不新增弹窗动作 · 单一判定实现（禁双源双提醒）。
