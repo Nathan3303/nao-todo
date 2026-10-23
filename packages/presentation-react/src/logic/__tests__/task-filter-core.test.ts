@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import {
     BUILTIN_LIST_IDS,
@@ -52,6 +52,25 @@ const inTomorrow = (): string => {
     return d.toISOString()
 }
 
+/**
+ * 固定基准时刻（DEF-81）
+ * @description 本文件的相对日期用例（today / tomorrow / week / overdue / 无作用域回退）依赖
+ *              被测实现的 `new Date()`（`task-filter-core.ts` 按本机日期算 today/week）。
+ *              这里用假定时器把“现在”钉在**本地时区 2026-10-21（周三）12:00**：
+ *              - 与运行日期无关：周六时“明天”= 周日 = 下周起点，week 真心不含明天（原用例必红）；
+ *                定在周三则“今天/明天”必同属本周，结果恒定。
+ *              - 与机器时区无关：按**本地时间**构造 ⇒ 任何时区下当地日期都是 10-21；12:00 远离日界。
+ */
+const FIXED_NOW = new Date(2026, 9, 21, 12, 0, 0, 0)
+
+beforeEach(() => {
+    vi.useFakeTimers({ now: FIXED_NOW })
+})
+
+afterEach(() => {
+    vi.useRealTimers()
+})
+
 describe('taskFilterCore - 清单查询选项（对齐 Web 默认偏好）', () => {
     it('内建清单覆盖 Web defaultBuiltInProjectPreferences 的查询选项', () => {
         expect(BUILTIN_LIST_IDS).toEqual([
@@ -102,6 +121,11 @@ describe('taskFilterCore - 清单查询选项（对齐 Web 默认偏好）', () 
 })
 
 describe('taskFilterCore - 前端兜底过滤（幂等双保险）', () => {
+    it('相对日期用例的基准时刻已固定（防日期依赖回归，DEF-81）', () => {
+        expect(Date.now()).toBe(FIXED_NOW.getTime())
+        expect(new Date().getDay()).toBe(3) // 3 = 周三
+    })
+
     it('today：结束日期在今天及之后（对齐 Web matchRelativeDate）', () => {
         const tasks = [
             makeTask({ id: 'a', endAt: inToday() }),
@@ -120,7 +144,8 @@ describe('taskFilterCore - 前端兜底过滤（幂等双保险）', () => {
             makeTask({ id: 'b', endAt: inTomorrow() })
         ]
         expect(filterTasksByView(tasks, { builtinId: 'tomorrow' }).map((t) => t.id)).toEqual(['b'])
-        // week：今日任务也落在本周
+        // week：周起点为周日（`task-filter-core.ts` 区间 `[weekStart, +7d)`）——
+        // 基准日为**周三** ⇒ 今天（三）与明天（四）必同属本周，与运行日期/时区无关（DEF-81）。
         expect(filterTasksByView(tasks, { builtinId: 'week' }).map((t) => t.id)).toEqual(['a', 'b'])
     })
 
