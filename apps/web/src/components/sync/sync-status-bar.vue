@@ -22,7 +22,7 @@ import {
     resolveFreshness,
     useReadOnlyState
 } from '@nao-todo/presentation/offline'
-import { railBottomHost } from '@/components/app/aside-v2/rail-host'
+import { railBottomHost, railBottomHostVariant } from '@/components/app/aside-v2/rail-host'
 import { open as settingsDialogOpen } from '@/components/settings/dialog/state'
 import { useManualSync, useMirrorLoadedCount, useSyncStatus } from '@/hooks'
 import ConflictDialog from './conflict-dialog.vue'
@@ -157,6 +157,47 @@ const statusText = computed(() =>
     dataStatusText.value ? `${t('sync.title')} · ${dataStatusText.value}` : t('sync.title')
 )
 
+/** @computed 宿主是否为抽屉变体（T522：抽屉工具带「图标 + 短文字」，rail 逐字不变） */
+const isDrawerHost = computed(() => railBottomHostVariant.value === 'drawer')
+
+/**
+ * @computed 抽屉变体的可见短文字（T522；**只复用既有 `sync.*` 键**，不新增键）
+ * @description 优先级与 `statusTheme` 逐项一致（同步中 > 失败 > 待推送 > 常态时间）⇒ 颜色 / 符号 / 文字
+ *              三通道同源，不出现「文字说失败、图标却是待推送」。此 computed 是抽屉变体文案的唯一来源，
+ *              同时供视觉文字与 `aria-label`（AC6 ①）。
+ * @remarks 「待推送」只由 **`pendingCount > 0`** 触发：`paused` 但队列为空时写「待推送 0」语义是错的
+ *          （暂停 ≠ 有 0 条待推送）⇒ 落入常态文案。颜色由 rail 共用的 `statusTheme` 决定（不在这里改，
+ *          AC4 桌面零变化），此时允许「amber 图标 + 常态文字」，因为文字是真相通道。
+ */
+const drawerStatusText = computed(() => {
+    if (syncing.value) return t('sync.syncing')
+    if (status.value.failedCount > 0) return t('sync.failed', { count: status.value.failedCount })
+    if (status.value.pendingCount > 0)
+        return t('sync.pending', { count: status.value.pendingCount })
+    return lastSyncText.value
+})
+
+/**
+ * @computed 抽屉变体图标（三通道里的「符号」，与 `drawerStatusText` 同一优先级）
+ * @description 只用既有图标：失败 = 断链（`ntd-disconnect`，轮廓明显不同于循环箭头），
+ *              其余 = 循环箭头（`ntd-sync2`；同步中由 loading 旋转 ⇒ 运动形态即符号）。
+ *              rail 恒为 `ntd-sync2`（AC4 桌面零变化）。
+ */
+const drawerIcon = computed(() =>
+    !syncing.value && status.value.failedCount > 0 ? 'ntd-disconnect' : 'ntd-sync2'
+)
+
+/**
+ * @computed 抽屉变体可访问名 = `sync.title` + 短文字 + 数据可信度短语
+ * @description 不变量 1（信息不减）：视觉上的短文字只是精简，完整语义仍在 aria-label 与面板内；
+ *              短文字本身来自 `drawerStatusText`（单一来源）。
+ */
+const drawerAriaLabel = computed(() =>
+    dataStatusText.value
+        ? `${t('sync.title')} · ${drawerStatusText.value} · ${dataStatusText.value}`
+        : `${t('sync.title')} · ${drawerStatusText.value}`
+)
+
 // @computed 首行文案：从未同步 / 同步中… / 上次同步 HH:mm（时间与计数均为 i18n 命名插值）
 const lastSyncText = computed(() => {
     if (syncing.value) return t('sync.syncing')
@@ -235,20 +276,28 @@ watch(
             @open="handleOpen"
             @close="handleClose"
         >
-            <!-- 轨道按钮：可访问名走 aria-label（C13），异常态由既有键拼接（通道④）；展开态走 trigger slot 的 visible -->
+            <!--
+              轨道按钮：可访问名走 aria-label（C13），异常态由既有键拼接（通道④）；展开态走 trigger slot 的 visible。
+              T522：抽屉变体（吸底工具带）额外渲染可见短文字（图标形态随状态），rail 变体不渲染文字。
+              R5：去掉外层 tooltip（用户裁定，rail 一并失去悬浮提示），可访问名仍由 aria-label 承载。
+            -->
             <template #trigger="{ trigger, visible }">
-                <nue-tooltip :content="statusText" placement="right-center" size="small">
-                    <nue-button
-                        class="sync-rail-btn"
-                        :class="[statusTheme, dataBadgeClass]"
-                        theme="pure"
-                        icon="ntd-sync2"
-                        :loading="syncing"
-                        :aria-label="statusText"
-                        :aria-expanded="visible"
-                        @click="trigger"
-                    />
-                </nue-tooltip>
+                <nue-button
+                    class="sync-rail-btn"
+                    :class="[
+                        statusTheme,
+                        dataBadgeClass,
+                        isDrawerHost ? 'sync-rail-btn--drawer' : ''
+                    ]"
+                    :theme="{ pure: true, icon: !isDrawerHost }"
+                    :icon="isDrawerHost ? drawerIcon : 'ntd-sync2'"
+                    :loading="syncing"
+                    :aria-label="isDrawerHost ? drawerAriaLabel : statusText"
+                    :aria-expanded="visible"
+                    @click="trigger"
+                >
+                    <template v-if="isDrawerHost">{{ drawerStatusText }}</template>
+                </nue-button>
             </template>
             <!--
               面板内容行：@open 渲染 / @close 移除（C9）；面板根是库内 <ul>，故每行均为 <li>（P8/C12）。
@@ -420,6 +469,26 @@ watch(
     --nue-button-color: var(--nue-error-color-60);
 }
 
+/* T522 抽屉变体：一行工具带内的状态触发器（图标 + 短文字）；rail 无文字节点（桌面零变化） */
+.sync-rail-btn--drawer {
+    gap: var(--nue-gap-xs);
+}
+
+/* 可见短文字：12px（DESIGN §3）；颜色随状态（文本用 90 档 ⇒ 对比度 ≥4.5:1）；单行末尾省略 */
+.sync-rail-btn--drawer :deep(.nue-button__text) {
+    min-width: 0;
+    font-size: var(--nue-text-xs);
+    color: var(--nue-secondary-text-color);
+}
+
+.sync-rail-btn--drawer.is-pending :deep(.nue-button__text) {
+    color: var(--nue-warning-color-90);
+}
+
+.sync-rail-btn--drawer.is-failed :deep(.nue-button__text) {
+    color: var(--nue-error-color-90);
+}
+
 /* 通道③ 数据可信度角标（ADR D-4）：伪元素 ⇒ 不新增节点、不破 24×24 盒；置于盒内规避侧栏裁切 */
 .sync-rail-btn::after {
     content: '';
@@ -440,6 +509,14 @@ watch(
 .sync-rail-btn.is-data-warn::after {
     display: block;
     background-color: var(--nue-warning-color-60);
+}
+
+/* 抽屉变体：数据可信度角标贴到**图标**右上角（rail 仍贴触发器右上角，逐字不变）；
+   图标盒边长 = 触发器字号（--nue-text-2xl）⇒ 位置随图标自身尺寸，不写死像素 */
+.sync-rail-btn--drawer::after {
+    right: auto;
+    left: calc(var(--nue-text-2xl) - 0.375rem);
+    top: calc((var(--nue-box-size-md) - var(--nue-text-2xl)) / 2 - 0.125rem);
 }
 
 /* 面板分区（每分区一个 <li>，由本组件渲染 ⇒ scoped 生效）：分区标题 + 分区内容；分区之间 1px 分隔 */

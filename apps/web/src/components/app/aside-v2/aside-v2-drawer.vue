@@ -61,33 +61,17 @@ const { setGearButton, openSettings } = useSettingsEntry()
                 </nue-div>
             </nue-header>
             <nue-main>
-                <nue-content style="justify-content: space-between; min-height: 0">
+                <nue-content>
                     <!-- 子视图侧栏 -->
                     <div id="SubPageAsideTeleportSlot" />
-                    <!-- T521 工具区：同步状态（上，SHELL-02 语义）+ 齿轮（下，直开设置） -->
+                    <!-- T522 工具带（R4 用户版）：content 区底部**吸底**条，只承载同步状态（SHELL-02 语义）；
+                         齿轮已移入下方 footer，与导航图标同排；R5 后 footer 全部项均无 tooltip 包裹 -->
                     <nue-div theme="aside__tools">
                         <div
                             id="AppAsideDrawerBottomSlot"
                             :ref="setBottomSlot"
                             class="aside-rail-bottom-slot"
                         />
-                        <nue-tooltip
-                            :content="t('nav.settings')"
-                            placement="top-center"
-                            size="small"
-                        >
-                            <button
-                                id="AppAsideDrawerSettingsGearBtn"
-                                :ref="setGearButton"
-                                type="button"
-                                class="aside-gear-btn"
-                                :aria-label="t('nav.settings')"
-                                :title="t('nav.settings')"
-                                @click="openSettings()"
-                            >
-                                <nue-icon name="ntd-settings" />
-                            </button>
-                        </nue-tooltip>
                     </nue-div>
                 </nue-content>
             </nue-main>
@@ -98,16 +82,29 @@ const { setGearButton, openSettings } = useSettingsEntry()
                             <pomodoro-indicator :route="rl.route" tooltip-placement="top-center" />
                         </template>
                         <template v-else>
-                            <nue-tooltip
+                            <!-- R5（用户裁定）：去掉 tooltip 包裹；可访问名走 aria-label -->
+                            <nao-router-link
                                 :key="idx"
-                                :content="rl.name"
-                                placement="top-center"
-                                size="small"
-                            >
-                                <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
-                            </nue-tooltip>
+                                :icon="rl.icon"
+                                :route="rl.route"
+                                :aria-label="rl.name"
+                                icon-link
+                            />
                         </template>
                     </template>
+                    <!-- R4：设置齿轮（SHELL-01）在 footer 与导航同排 —— 按 DESIGN §3 已登记例外走字形尺寸
+                         R5（用户裁定）：去掉 tooltip 包裹，可访问名与原生提示走 aria-label + title -->
+                    <button
+                        id="AppAsideDrawerSettingsGearBtn"
+                        :ref="setGearButton"
+                        type="button"
+                        class="aside-gear-btn"
+                        :aria-label="t('nav.settings')"
+                        :title="t('nav.settings')"
+                        @click="openSettings()"
+                    >
+                        <nue-icon name="ntd-settings" />
+                    </button>
                 </nue-div>
             </nue-footer>
         </nue-container>

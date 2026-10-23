@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDialog, NueDiv, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDiv, NueDropdown, NueText } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { setLocale } from '@nao-todo/shared/locales'
@@ -130,8 +130,7 @@ const mountBar = (props: Record<string, unknown> = {}): VueWrapper => {
                 'nue-dialog': NueDialog,
                 'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
-                'nue-text': NueText,
-                'nue-tooltip': NueTooltip
+                'nue-text': NueText
             }
         }
     })
@@ -286,6 +285,16 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(overlay).toBeTruthy()
         overlay?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
         await settle()
+
+        // R5（去 tooltip 包裹后点击目标变化）：再开一次 ⇒ 点「外部」（overlay）仍能关闭
+        openPanel()
+        await settle()
+        expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('true')
+        document
+            .querySelector<HTMLElement>('.nue-dropdown-overlay')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('false')
 
         // 关闭态口径：库常驻挂载 + data-visible 控制可见性；断言面板关闭且结构仍完整
         expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('false')
@@ -648,5 +657,149 @@ describe('T471 同步面板诊断条目（droppedFields 消费）', () => {
     it('无字段漂移 ⇒ 不渲染诊断条目', async () => {
         await openWithPanel()
         expect(panelText()).not.toContain('诊断')
+    })
+})
+
+/**
+ * T522 抽屉变体：一行工具带内的「图标 + 短文字」（PRD `docs/prds/2026-10-22-drawer-tools-row.md`）
+ * @description AC2（四态不展开即可见 + 颜色/符号/文字三通道）· AC4（rail 变体零变化）·
+ *              AC6 ①（文案单一来源：`drawerStatusText` 同时供视觉文字与 aria-label）。
+ */
+describe('SyncStatusBar - T522 抽屉变体：可见状态文字', () => {
+    /** 建抽屉变体宿主（工具带注入点，variant = drawer） */
+    const createDrawerHost = (): HTMLElement => {
+        const host = document.createElement('div')
+        host.id = 'AppAsideDrawerBottomSlot'
+        document.body.appendChild(host)
+        bindRailBottomHost(host, 'drawer')
+        return host
+    }
+
+    /** 可见状态文字（rail 变体无文字节点 ⇒ ''） */
+    const visibleText = (): string =>
+        document.querySelector('.sync-rail-btn .nue-button__text')?.textContent?.trim() ?? ''
+
+    /** 触发器图标名（三通道里的「符号」；同步中由 loading 接管） */
+    const triggerIcon = (): string =>
+        document
+            .querySelector('.sync-rail-btn .nue-button__icon')
+            ?.className.match(/icon-([a-z0-9-]+)/)?.[1] ?? ''
+
+    it('AC2 / AC6 ①：四态文字 + 图标形态 + 颜色类，且 aria-label 含同一来源文案', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        // ① 从未同步（常态：循环箭头 + 次要文字色）
+        expect(visibleText()).toBe('从未同步')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(railButton()?.className).not.toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ② 同步中（loading 接管图标 ⇒ 只断言文字 + aria 同源）
+        status().value = { ...status().value, syncing: true }
+        await nextTick()
+        expect(visibleText()).toBe('同步中…')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ③ 待推送 N（符号不变形：颜色 + 文字承担；图标仍是循环箭头）
+        status().value = { ...defaultStatus(), pendingCount: 2 }
+        await nextTick()
+        expect(visibleText()).toBe('待推送 2')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(railButton()?.className).toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ④ 失败 N：优先于待推送（符号 = 断链 + 错误色类）
+        status().value = { ...status().value, failedCount: 1 }
+        await nextTick()
+        expect(visibleText()).toBe('失败 1')
+        expect(triggerIcon()).toBe('ntd-disconnect')
+        expect(railButton()?.className).toContain('is-failed')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // ⑤ 常态：上次同步 HH:MM
+        const iso = '2026-09-10T10:00:00.000Z'
+        const time = new Date(iso).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+        status().value = { ...defaultStatus(), lastSyncAt: iso }
+        await nextTick()
+        expect(visibleText()).toBe(`上次同步 ${time}`)
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(ariaLabel()).toContain(visibleText())
+    })
+
+    it('不变量 1：短文字只是视觉精简 —— aria-label 仍带完整状态与既有数据可信度短语', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...status().value, mirrorTruncated: true }
+        await nextTick()
+
+        // 视觉仍为短形态（数据短语不挤进抽屉文字）
+        expect(visibleText()).toBe('从未同步')
+        expect(ariaLabel()).toContain('同步')
+        expect(ariaLabel()).toContain(visibleText())
+        expect(ariaLabel()).toContain('任务数量超过同步上限')
+    })
+
+    it('T522-R1：paused 但待推送为 0 ⇒ 不写「待推送 0」，落常态文案（颜色不变仍由 statusTheme 决定）', async () => {
+        createDrawerHost()
+        mountBar()
+        await settle()
+
+        const iso = '2026-09-10T10:00:00.000Z'
+        const time = new Date(iso).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+
+        // paused && pendingCount === 0 ⇒ 常态文案（上次同步时间），不得出现「待推送」
+        status().value = { ...defaultStatus(), paused: true, lastSyncAt: iso }
+        await nextTick()
+        expect(visibleText()).toBe(`上次同步 ${time}`)
+        expect(visibleText()).not.toContain('待推送')
+        // 颜色仍走 rail 共用的 statusTheme（amber），此处不改（AC4）
+        expect(railButton()?.className).toContain('is-pending')
+        expect(ariaLabel()).toContain(visibleText())
+
+        // paused && 从未同步 ⇒ 落「从未同步」（仍不得出现「待推送」）
+        status().value = { ...defaultStatus(), paused: true }
+        await nextTick()
+        expect(visibleText()).toBe('从未同步')
+        expect(visibleText()).not.toContain('待推送')
+
+        // 回归：paused && pendingCount > 0 仍显示「待推送 N」
+        status().value = { ...defaultStatus(), paused: true, pendingCount: 2 }
+        await nextTick()
+        expect(visibleText()).toBe('待推送 2')
+    })
+
+    it('T522-R1：rail 侧同一场景（paused && 0）aria-label 逐字不变', async () => {
+        createHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...defaultStatus(), paused: true }
+        await nextTick()
+        expect(ariaLabel()).toBe('同步')
+        expect(visibleText()).toBe('')
+    })
+
+    it('AC4：rail 变体零变化 —— 无可见文字、图标恒 ntd-sync2、aria-label 逐字不变', async () => {
+        createHost()
+        mountBar()
+        await settle()
+
+        status().value = { ...defaultStatus(), pendingCount: 2, failedCount: 1 }
+        await nextTick()
+
+        expect(visibleText()).toBe('')
+        expect(railButton()?.textContent?.trim()).toBe('')
+        expect(triggerIcon()).toBe('ntd-sync2')
+        expect(ariaLabel()).toBe('同步')
     })
 })
