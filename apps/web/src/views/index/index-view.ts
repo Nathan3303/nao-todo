@@ -38,7 +38,7 @@ import { getServerTimeOffset } from '@nao-todo/infrastructure/src/persistence-sy
 import { listReminderCandidates } from '@nao-todo/infrastructure/src/persistence-local/repos/task-reminder-candidates'
 import { createClaimLedger, createReminderEngine } from '@nao-todo/shared/reminder'
 import { t } from '@nao-todo/shared/locales'
-import { inject, onUnmounted, provide, ref } from 'vue'
+import { inject, nextTick, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
 import { taskDetailsLocation } from './task-details-location'
@@ -184,7 +184,12 @@ const useIndexView = () => {
         },
         requestNotificationPermission: requestReminderNotificationPermission
     })
-    onUnmounted(() => reminderEngine.stop())
+    /** 延迟启动守卫：视图若在加载态期间卸载 ⇒ 已 stop，不得再拉起轮询（F1） */
+    let isViewUnmounted = false
+    onUnmounted(() => {
+        isViewUnmounted = true
+        reminderEngine.stop()
+    })
 
     /**
      * 首页视图加载状态
@@ -199,8 +204,6 @@ const useIndexView = () => {
         loadUserThemeModeFromConfig()
         await Promise.all([userUseCase.loadUserProfile(), userUseCase.loadUserConfig()])
             .then(() => {
-                // 提醒引擎在认证/本地数据就绪后启动：首轮扫描 = 冷启动补弹（AC4）
-                reminderEngine.start()
                 if (route.name !== 'index') return
                 const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
                 // C-35：收敛裸导航（深链校验 + 回退 + 失效键清理）
@@ -212,8 +215,15 @@ const useIndexView = () => {
                     localStorage
                 )
             })
-            .finally(() => {
+            .finally(async () => {
                 isLoading.value = false
+                // F1（T527）：提醒引擎必须在**加载态结束之后**启动。
+                // `isLoading=false` 才挂载 `<app-dialog-adapter>`（`TASK_REMINDER_DIALOG_KEY` 在其中注册），
+                // 而未注册时 `DialogManager.open` 是 warn + 丢弃 ⇒ 若在加载期扫描，冷启动补弹会
+                // 「已落账 + 已消费但弹窗被丢」⇒ 该条永久不再出现。等一帧让挂载完成后再启动首轮扫描。
+                await nextTick()
+                if (isViewUnmounted) return
+                reminderEngine.start()
             })
     }
 
