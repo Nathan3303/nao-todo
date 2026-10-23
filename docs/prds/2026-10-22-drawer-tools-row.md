@@ -2,7 +2,7 @@
 
 - **R4（2026-10-22 用户手动改版，以用户为准）**：用户在分支工作区直接改动并确认「以我的为准」⇒ 最终形态 = **同步状态工具带吸底（`position: sticky; bottom: 0; height: 48px; padding: 0 var(--nue-gap-df)`）+ 齿轮移入 `nue-footer` 与导航同排**；齿轮 `min-width/min-height: 40px` 被移除（点击区降到字形 ≈24px）。本单 AC 与不变量据此改写，40px 底线在该处**登记为例外**（`DESIGN.md` §3 同步登记）。
 
-> **状态**：**已回执 R4 · PM 技术验收通过 · 待用户真机一眼后授权合并**（PR [#228](https://github.com/Nathan3303/nao-todo/pull/228)，`e24969f5`） · **Issue**：[#225](https://github.com/Nathan3303/nao-todo/issues/225) · **批次**：`v1.12.14`（PATCH）
+> **状态**：**✅ 已交付并合并（`a8e86173`，PR [#228](https://github.com/Nathan3303/nao-todo/pull/228)，2026-10-22）** —— 用户视觉验收通过；R4 用户手改版为准、R5 去 tooltip 后一并合入。 · **Issue**：[#225](https://github.com/Nathan3303/nao-todo/issues/225) · **批次**：`v1.12.14`（PATCH）
 > **依据**：用户 2026-10-22 原话「优化同步状态组件和设置按钮的 UI 展示（使用 frontend-design SKILL）」+ 裁定 **A = 横向一行「状态文字 + 齿轮」**。
 > **硬约束**：不新增 `nue-*` token · 不新增 i18n 键（复用既有 `sync.*`）· 桌面 / Electron 视觉零变化 · 移动端红线目录零改动。
 
