@@ -1,7 +1,7 @@
 # T524 用户验收清单（任务提醒改本地轮询：Web + 桌面统一）
 
-- 状态：**待用户勾选** · 更新：2026-10-23 · Owner：qa（`T525`）· 需求/PM：`T524` · 实现：`T527`
-- 指针：PRD `docs/prds/2026-10-23-reminder-local-polling.md`（AC1–AC11）· Issue #232 · PR #234（Draft）· 实现分支 `feat/232-reminder-local-polling`（`84830fb7`）
+- 状态：**✅ 用户口头确认「功能视觉测试通过」（2026-10-23）· 批次验收已出结论，待合并** · 更新：2026-10-23 · Owner：qa（`T525`）· 需求/PM：`T524` · 实现：`T527`
+- 指针：PRD `docs/prds/2026-10-23-reminder-local-polling.md`（AC1–AC11）· Issue #232 · PR #234（Draft）· 实现分支 `feat/232-reminder-local-polling`（`fbcdb324`）
 - **预览链**：<https://naotodo-git-feat-232-reminder-local-854aca-nathan3303s-projects.vercel.app>
 - **设备**：桌面浏览器（Chrome/Edge）必做；手机浏览器与**打包后的桌面端**建议各走一轮 A + D 两项
 
@@ -74,18 +74,21 @@
 
 ## 回填
 
-- [ ] 第 1 项 AC1 到点弹提醒　结果：
-- [ ] 第 2 项 AC1 多条队列　结果：
-- [ ] 第 3 项 AC2 断网仍弹　结果：
-- [ ] 第 4 项 AC4 重开补弹一次　结果：
-- [ ] 第 5 项 AC3 两标签只弹一次　结果：
-- [ ] 第 6 项 AC7 完成/归档不弹、子任务弹　结果：
-- [ ] 第 7 项 AC8 稍后到点再弹　结果：
-- [ ] 第 8 项 AC8 每天重复推进　结果：
-- [ ] 第 9 项 AC9 通知/任务名打开详情　结果：
-- [ ] 第 10 项 AC5 可见时 ≤10s　结果：
-- [ ] 第 11 项 AC10 桌面端一致　结果：
-- [ ] 第 12 项 AC6 拒权限仍弹（可选）　结果：
+> **用户 2026-10-23 口头确认「功能视觉测试通过」**（未逐项回填；下列 12 项按 qa 批次验收结论（门禁 + 读码 + 用例）标 `[x]`）。
+> AC11（跨仓服务端）不在本清单用户勾选范围，单独标注「上线后由 QA 复核」，见文末。
+
+- [x] 第 1 项 AC1 到点弹提醒　结果：**通过**（用户口头确认；引擎/弹窗/通知链路由用例与读码双证）
+- [x] 第 2 项 AC1 多条队列　结果：**通过**（逐条弹 + `n/total`，沿用既有组件未改）
+- [x] 第 3 项 AC2 断网仍弹　结果：**通过**（判定路径 0 网络/0 EventSource 有运行期断言）
+- [x] 第 4 项 AC4 重开补弹一次　结果：**通过**（含 F1 修复：启动改到加载态结束 + `nextTick` 之后）
+- [x] 第 5 项 AC3 两标签只弹一次　结果：**通过**（持久账本 + Web Locks 互斥；真机双标签冒烟归用户）
+- [x] 第 6 项 AC7 完成/归档不弹、子任务弹　结果：**通过**（活跃过滤在纯核心单一口径）
+- [x] 第 7 项 AC8 稍后到点再弹　结果：**通过**（Snooze 改写 `remindAt` ⇒ 键变 ⇒ 新条目）
+- [x] 第 8 项 AC8 每天重复推进　结果：**通过**（`nextOccurrence` 镜像服务端，越过 `endAt` 终止）
+- [x] 第 9 项 AC9 通知/任务名打开详情　结果：**通过**（通知 `onClick` 与弹窗 `onOpenTask` 均接通）
+- [x] 第 10 项 AC5 可见时 ≤10s　结果：**通过**（10s 单一常量 + 精确定时 ≤1s，假定时器断言）
+- [x] 第 11 项 AC10 桌面端一致　结果：**通过**（桌面自有扫描器下线，经 webapp 复用同一引擎）
+- [x] 第 12 项 AC6 拒权限仍弹（可选）　结果：**通过**（denied / 无 Notification 均不抛、仅应用内弹窗）
 
 **全部通过 ⇒** PM 授权 `rd-fe` squash 合并 → 随 `v1.12.15` 发版（服务端同批部署）。
 **不通过 ⇒** 请写「第几项 + 你看到什么 + 期望什么」，PM 派定向补丁（不重开范围）。
@@ -98,12 +101,36 @@
 - 应用**完全关闭**期间不做系统级推送（没有推送服务）；是"重开后补弹"，不是"关机也会响"。
 - 提醒内容只在本地展示，判定不发网络请求（第 3 项可顺带看一眼 Network）。
 
-## 不在本次用户验收范围（服务端，部署后由我们核对）
+## 不在本次用户验收范围（服务端，**上线后由 QA 复核**）
 
-**AC11（跨仓）**：服务端 `nao-todo-server#55`（`a4d8850`）已合并但**尚未部署生产** ⇒ 标记为「待部署验证」。部署后的核对方法：
+**AC11（跨仓）**：服务端 `nao-todo-server#55`（`a4d8850`）已合并并已部署（用户 2026-10-23 部署新版本）；开关 `reminder.cronFieldWriteBack` 默认 `false`。
 
-1. 确认开关 `reminder.cronFieldWriteBack=false` 已生效（启动配置/日志）。
-2. 造一条**已到期的一次性提醒**，客户端**不要打开**，等 **≥2 个 cron 周期**（服务端 cron 约 1 分钟一次 ⇒ 至少 2–3 分钟）。
-3. 查库：`remind_at` / `remind_repeat` / `updated_at` 与造数时**完全一致**（没被置空、没被推进）；服务端日志无该任务的提醒字段写入。
-4. 反向证据（可回滚性，在测试环境做）：把开关改回 `true`，同样的观察应看到字段被改写 ⇒ 证明开关有效。
-5. `/sse/reminders` 保留但**无客户端连接**（客户端已下线 SSE 通道）。
+**已取得的证据（代码 + 路由层）**
+
+- 代码语义（`a4d8850` worktree 跑服务端单测）：`TestReminderJob_WriteBackSwitch` **PASS** —— 停用时 `ProcessReminders` 调用 **0 次**（不改写字段），启用时 **1 次**（可回滚）。实现见 `infrastructure/cron/reminder.go`（`Enabled=false ⇒ Run()` 直接 return）、`conf/config.yaml`（`cronFieldWriteBack: false`）。
+- 路由保留探测：`curl -s https://todobe.nathanao.space/api/sse/reminders`（无 token）⇒ **HTTP 200** + `content-type: application/json` + `{"code":10041,"用户凭证验证失败"}`（51B）。⇒ 路由**仍保留**、未开 `text/event-stream` 流；注意服务端业务错误也走 HTTP 200，故判据应是「非 200 **或** 非 SSE 内容类型」，只看状态码会误判。
+- **未取得运行期数据证据**（`remind_at` 未被改写的直接观测）：缺生产 DB 访问 / 无「临时账号硬删」通道（服务端只有 `DELETE /api/user/` 软删），故未在生产建探针账号，避免留下不可清理的残留。
+
+**5 分钟手工复核步骤（上线后由 QA 执行）**
+
+1. 用测试账号在**客户端不打开**的情况下，经 API 造一条 `remindAt` 已到期的一次性提醒（并记下 `remindAt` / `remindRepeat` / `updatedAt`）。
+2. 等 **≥2 个 cron 周期（≥2–3 分钟）**。
+3. 再读该任务：`remindAt` / `remindRepeat` **未被置空/推进** ⇒ AC11 通过；若被改写 ⇒ 开关未生效（回查部署配置）。
+4. 反向证据（测试环境）：开关改回 `true`，同样观察应看到字段被改写 ⇒ 证明开关有效、可回滚。
+5. `/sse/reminders` 保留且无客户端连接（客户端已下线 SSE 通道）。
+
+## 批次验收结论
+
+- **验收对象**：分支 `feat/232-reminder-local-polling` · PR #234 · HEAD `fbcdb324` · 2026-10-23。
+- **门禁（本机 Node v26 带 `NODE_OPTIONS=--no-experimental-webstorage`）**：
+    - `pnpm exec vp check` = **0 error**（1595 文件格式正确 · 1323 文件无 lint/类型错误）。
+    - 全仓 `pnpm exec vp test --run` = **250 文件 / 2025 例 / 1 红**。**唯一红为既有时间依赖用例**：`packages/presentation-react/src/logic/__tests__/task-filter-core.test.ts > tomorrow / week（endAt 判定）` —— 该用例假设「明天仍在同一周」，而 `task-filter-core.ts` 的 week 以**周日**为周起点 ⇒ **本地时间为周六时必红、周日恢复**；用 `TZ=UTC`（当地为周五）同文件 **16/16 绿**证实时区/日期依赖。该包属**移动端红线**、本 PR 零改动（`git diff --stat origin/main...HEAD -- packages/presentation-react apps/mobile` = 0）⇒ 判为**与本需求无关的既有测试缺陷**，建议 PM 登记缺陷池、由移动端后续单独修（测试侧修法：固定基准日或按「明日是否跨周」分支断言）。
+    - Guard：`guard:ddd` · `guard:barrel-imports` · `guard:mobile-imports` · `guard:test-location` · `guard:gate-pathspec` 均 **exit 0**。
+    - 构建：`webapp build` **0** · `desktop:build` **0**。
+    - 移动端红线：`git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**。
+- **AC 结论**：AC1–AC10 **通过**（证据：引擎/账本/候选直读/接线/弹窗注入五处源码 + 55 例引擎侧用例 + 结构断言）；**AC11 = 上线后由 QA 复核**（本文上一节已给代码证据、路由探测结果与 5 分钟复核步骤）。
+- **F1 已修（P2 · 冷启动补弹弹窗可能被丢弃）**：修法（含防回归）——
+    1. `f75caf5e` / `3f834d7b`：引擎启动移到 `.finally()` 的 `isLoading=false` 之后 + `await nextTick()`，并加 `isViewUnmounted` 守卫（加载期卸载不再拉起轮询）；
+    2. `f75caf5e`：`packages/presentation/task/components/dialogs/reminder/index.ts` 改**静态导出**（原 `defineAsyncComponent` ⇒ 注册可能晚于 `notify` ⇒ `DialogManager.open` warn + 丢弃，而该条已落账 + 已消费 ⇒ 永久不再出现）；体积代价：task chunk +2,880 B（gzip +924 B），异步 chunk 3,428 B 消失、全量 JS −514 B、请求 −1。
+    3. `fbcdb324`（qa）：新增结构断言 `AC10/F1 提醒弹窗必须静态导出（注册须与 adapter 同一次 flush）` 防回归。
+- **已知边界**：① 隐藏/后台标签**不承诺准时**（浏览器节流），回前台补扫且同一条只补一次；② **多设备各自提醒**（承诺是「同浏览器一次」）；③ **桌面解锁前不提醒**（解锁后才挂载并启动引擎）；④ 去重账本存储不可用（隐私模式/配额满）⇒ **唯一性降级为同标签内**（跨刷新/跨标签不保证，登记为已知限制）；⑤ **旧版客户端提醒退化**：服务端 `cronFieldWriteBack=false` 时 `Run()` 直接跳过扫描 ⇒ 仍连 SSE 的旧版客户端**收不到服务端推送的提醒**（新客户端不受影响；发版说明需写明「请升级到本版」）。
