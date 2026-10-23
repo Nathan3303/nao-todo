@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import App from '@/App.vue'
 import { reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
 import InitialSyncGate from './components/initial-sync-gate.vue'
 import SyncStatusBar from '@/components/sync/sync-status-bar.vue'
-import { useLocalReminder } from './hooks/use-local-reminder'
-import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { bootstrapLocalData, withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
 import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
+import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
-import { useDialogManager } from '@nao-todo/shared/hooks/use-dialog-manager'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
     localSession,
@@ -59,22 +56,10 @@ const unlocked = ref(false)
 // （SHELL-03 D-3：语义是“门已通过”，非“同步成功”，故更名 gatePassed 避免误导后人）
 const gatePassed = ref(false)
 
-// 任务提醒对话框（desktop 独立 dialogManager 实例，与 webapp 内部互不干扰）
-const reminderDialogManager = useDialogManager()
-const reminderTaskUseCase = useTaskReminder()
-
-// 本地提醒扫描器：解锁后启动，卸载时停止（精确调度 + Web 同款提醒 UI）
-const {
-    start: startReminder,
-    stop: stopReminder,
-    rescan: rescanReminder
-} = useLocalReminder(reminderDialogManager)
-
 // 变更后防抖推送接线（仓储写 → markDirty → 2s 合并推送，见 data-sync-plan.md §4.2）
-// 同时触发提醒重扫：Snooze/改 remindAt 后立即重算精确调度（无需等兜底轮询）
+// 任务提醒由 webapp 壳内的共享引擎统一负责（T527：桌面自有扫描器已下线，避免双弹）
 syncTracker.setDirtyListener(() => {
     syncService.schedulePush()
-    rescanReminder()
 })
 
 // 应用级失效中心接线（DEF-STORE-06 方向 1：落库后经 hub 派发 RefreshData；幂等注册，见 store-invalidation.ts）
@@ -163,13 +148,7 @@ const backfillTarget = {
 }
 const unregisterBackfillTriggers = registerBackfillTriggers(withBootstrapRetry(backfillTarget))
 
-watch(unlocked, (value) => {
-    if (value) {
-        startReminder()
-    }
-})
 onUnmounted(() => {
-    stopReminder()
     unregisterBackfillTriggers()
 })
 </script>
@@ -185,8 +164,4 @@ onUnmounted(() => {
     />
     <App v-else />
     <SyncStatusBar v-if="unlocked && gatePassed" />
-    <TaskReminderDialog
-        :dialog-manager="reminderDialogManager"
-        :task-use-case="reminderTaskUseCase"
-    />
 </template>

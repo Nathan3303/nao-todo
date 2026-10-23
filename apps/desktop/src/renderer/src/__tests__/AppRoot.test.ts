@@ -37,16 +37,7 @@ vi.mock('@/App.vue', () => ({
     default: defineComponent({ name: 'App', template: '<div id="app-stub" />' })
 }))
 
-vi.mock('../hooks/use-local-reminder', () => ({
-    useLocalReminder: () => ({ start: vi.fn(), stop: vi.fn(), rescan: vi.fn() })
-}))
-
-vi.mock('../hooks/usecases/use-task-reminder', () => ({
-    useTaskReminder: () => ({})
-}))
-
 vi.mock('@nao-todo/presentation/task', () => ({
-    TaskReminderDialog: defineComponent({ name: 'TaskReminderDialog', render: () => null }),
     useStoreInvalidationHub: vi.fn()
 }))
 
@@ -154,8 +145,7 @@ const mountRoot = (): VueWrapper => {
             stubs: {
                 'unlock-gate': UnlockGateStub,
                 'initial-sync-gate': InitialSyncGateStub,
-                'sync-status-bar': true,
-                'task-reminder-dialog': true
+                'sync-status-bar': true
             }
         }
     })

@@ -7,8 +7,8 @@ export type * from './pagination'
 // Golang like error handling type support
 export type * from './golang'
 
-// SSE 事件类型
-export type * from './sse'
+// 任务提醒事件类型（原 SSE 事件，T527 迁移）
+export type * from './reminder'
 
 // 可空字符串 可空日期字符串
 export type NullableString = string | null

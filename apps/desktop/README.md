@@ -24,7 +24,7 @@ apps/desktop/
 └── out/                      # 构建产物（main / preload / renderer）
 ```
 
-**UI 复用方式**：`@nao-todo/webapp` 即共享包。渲染层构建时通过 alias 把 `@` 指向 `apps/web/src`（views/components/themes/router/commands 全部复用），`@/hooks` 重定向到桌面自有装配层。webapp 源码零复制，仅一处 2 行小改（SSE 提醒加 `VITE_DISABLE_SSE` 开关）。
+**UI 复用方式**：`@nao-todo/webapp` 即共享包。渲染层构建时通过 alias 把 `@` 指向 `apps/web/src`（views/components/themes/router/commands 全部复用），`@/hooks` 重定向到桌面自有装配层。webapp 源码零复制，提醒等应用能力由共享壳统一提供，桌面端不再单独接线。
 
 ## 数据与加密
 
@@ -45,7 +45,7 @@ pnpm desktopapp dist:dir  # 构建 + 仅出 unpacked 目录（免安装运行）
 
 ## 已知行为与限制
 
-- 任务提醒为**本地定时扫描**（每 30s 查本地 `remindAt`）+ 系统通知；远程 SSE 提醒已禁用（`VITE_DISABLE_SSE=true`）
+- 任务提醒为**本地轮询**（与 Web 共用 `packages/shared/reminder` 引擎：可见态每 10s + 到期精确定时）+ 系统通知；判定只读本机数据，离线照常提醒
 - 修改密码/注销账号/头像上传请前往 Web 端（桌面版返回不支持）；若在 Web 端改过密码，需在桌面版用新密码登录解锁
 - 通知图标在 `file://` 下回退默认图标（webapp `icon: '/favicon.ico'` 绝对路径不生效）
 - 本地数据与 Web 端互不迁移（两套独立存储）
