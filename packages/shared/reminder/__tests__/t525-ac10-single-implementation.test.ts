@@ -1,3 +1,6 @@
+/// <reference types="node" />
+// ↑ 结构性断言用 `node:fs` / `process`：显式与 node 类型关联，
+//   否则 `vp check <单文件>`（pre-commit 钩子的 scoped 模式）会把本文件当无 node 类型的项目校验。
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vite-plus/test'
@@ -78,5 +81,24 @@ describe('T525 · AC10 单一判定实现', () => {
             'packages/presentation/task/components/dialogs/reminder/task-reminder.vue'
         )
         expect(dialog).toContain('TASK_REMINDER_DIALOG_KEY')
+    })
+
+    it('AC10/F1 提醒弹窗必须**静态导出**（注册须与 adapter 同一次 flush）', () => {
+        // F1（T527）：引擎启动已挪到「加载态结束 + nextTick」之后；此处再加一道结构闸门——
+        // 若弹窗回落成 `defineAsyncComponent`，其 onMounted 可能落到后续 tick ⇒ 引擎
+        // claim→notify 时 TASK_REMINDER_DIALOG_KEY 未注册，DialogManager.open 为「warn + 丢弃」；
+        // 而该条已落账 + 已消费 ⇒ 冷启动补弹永久不再出现（AC4 失效）。
+        // 若确需改回异步，须先同时给 DialogManager 加「未注册排队重放」，并回 qa 复测本用例。
+        const reminderIndex = readRequired(
+            'packages/presentation/task/components/dialogs/reminder/index.ts'
+        )
+        expect(reminderIndex).not.toContain('defineAsyncComponent')
+        expect(reminderIndex).toContain("export { default } from './task-reminder.vue'")
+
+        // 装配面同样必须是静态 import（不得改成 `import()` 动态加载后再渲染）
+        const adapter = readRequired('apps/web/src/components/app/dialog-adapter.vue')
+        expect(adapter).toMatch(
+            /import\s*\{[\s\S]*?TaskReminderDialog[\s\S]*?\}\s*from\s*'@nao-todo\/presentation\/task'/
+        )
     })
 })
