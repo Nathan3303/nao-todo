@@ -70,6 +70,7 @@
 - 字号：`--nue-text-2xs` 10px · `--nue-text-xs` 12px（默认正文/字段） · `--nue-text-sm` 14px（组头/重点） · `--nue-text-md` 18px（详情标题）。
 - 行高：正文约 `1.5`；长文本 `1.6`（`overflow-wrap: anywhere` + `white-space: pre-wrap`）。
 - **点击区 ≥40px**：列表 / 组头等可点区域 `min-height: 40px`（当前实现使用 `--nue-box-size-sm` = 32px 的处所，若为**主操作行**应提升至 40px）。
+    - **已登记例外**（2026-10-22，用户裁定）：移动抽屉 `nue-footer` 内的**设置齿轮**按字形尺寸（≈24px）呈现、不加 40px 命中盒 —— 理由：齿轮与 5 个导航图标同排，256px 抽屉内加 40px 盒会挤压导航；导航图标本身已 ≥40px，齿轮为其补充入口。新例外须在此登记并写明理由，禁止静默破线。
 - 密度：字段行间距 8px（改前 4px）；卡片内边距 8–12px。
 - 圆角：`--nue-primary-radius`（= 6px）；卡片可用 `--nue-radius-lg`（8px）。
 
@@ -134,6 +135,8 @@
 **复用红线**：新增同类「分段多选一」UX ⇒ **一律复用本组件**，不得另写分段样式或另起同类组件。
 
 ### 4.6 侧栏变体能力对等（`rail` / 抽屉）
+
+> 结构约定（2026-10-22，用户裁定）：抽屉内**同步状态**为 content 区底部**吸底工具带**（`position: sticky; bottom: 0`，高 48px，左右 padding `--nue-gap-df`）；**设置齿轮在 `nue-footer`**，与导航图标同排。rail 侧仍为「同步状态注入点 + 齿轮」竖排，两者互不影响。
 
 > 出处：`T521`（PRD `docs/prds/2026-10-22-aside-drawer-sync-and-settings.md`）。
 
