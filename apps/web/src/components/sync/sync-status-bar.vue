@@ -278,31 +278,26 @@ watch(
         >
             <!--
               轨道按钮：可访问名走 aria-label（C13），异常态由既有键拼接（通道④）；展开态走 trigger slot 的 visible。
-              T522：抽屉变体（一行工具带）额外渲染可见短文字（图标形态随状态），rail 变体不渲染文字 ⇒ 桌面零变化。
+              T522：抽屉变体（吸底工具带）额外渲染可见短文字（图标形态随状态），rail 变体不渲染文字。
+              R5：去掉外层 tooltip（用户裁定，rail 一并失去悬浮提示），可访问名仍由 aria-label 承载。
             -->
             <template #trigger="{ trigger, visible }">
-                <nue-tooltip
-                    :content="isDrawerHost ? drawerAriaLabel : statusText"
-                    :placement="isDrawerHost ? 'top-center' : 'right-center'"
-                    size="small"
+                <nue-button
+                    class="sync-rail-btn"
+                    :class="[
+                        statusTheme,
+                        dataBadgeClass,
+                        isDrawerHost ? 'sync-rail-btn--drawer' : ''
+                    ]"
+                    :theme="{ pure: true, icon: !isDrawerHost }"
+                    :icon="isDrawerHost ? drawerIcon : 'ntd-sync2'"
+                    :loading="syncing"
+                    :aria-label="isDrawerHost ? drawerAriaLabel : statusText"
+                    :aria-expanded="visible"
+                    @click="trigger"
                 >
-                    <nue-button
-                        class="sync-rail-btn"
-                        :class="[
-                            statusTheme,
-                            dataBadgeClass,
-                            isDrawerHost ? 'sync-rail-btn--drawer' : ''
-                        ]"
-                        :theme="{ pure: true, icon: !isDrawerHost }"
-                        :icon="isDrawerHost ? drawerIcon : 'ntd-sync2'"
-                        :loading="syncing"
-                        :aria-label="isDrawerHost ? drawerAriaLabel : statusText"
-                        :aria-expanded="visible"
-                        @click="trigger"
-                    >
-                        <template v-if="isDrawerHost">{{ drawerStatusText }}</template>
-                    </nue-button>
-                </nue-tooltip>
+                    <template v-if="isDrawerHost">{{ drawerStatusText }}</template>
+                </nue-button>
             </template>
             <!--
               面板内容行：@open 渲染 / @close 移除（C9）；面板根是库内 <ul>，故每行均为 <li>（P8/C12）。

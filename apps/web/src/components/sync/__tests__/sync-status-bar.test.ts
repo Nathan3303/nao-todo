@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, type Ref } from 'vue'
-import { NueButton, NueDialog, NueDiv, NueDropdown, NueText, NueTooltip } from 'nue-ui'
+import { NueButton, NueDialog, NueDiv, NueDropdown, NueText } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
 import { setLocale } from '@nao-todo/shared/locales'
@@ -130,8 +130,7 @@ const mountBar = (props: Record<string, unknown> = {}): VueWrapper => {
                 'nue-dialog': NueDialog,
                 'nue-div': NueDiv,
                 'nue-dropdown': NueDropdown,
-                'nue-text': NueText,
-                'nue-tooltip': NueTooltip
+                'nue-text': NueText
             }
         }
     })
@@ -286,6 +285,16 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(overlay).toBeTruthy()
         overlay?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
         await settle()
+
+        // R5（去 tooltip 包裹后点击目标变化）：再开一次 ⇒ 点「外部」（overlay）仍能关闭
+        openPanel()
+        await settle()
+        expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('true')
+        document
+            .querySelector<HTMLElement>('.nue-dropdown-overlay')
+            ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('false')
 
         // 关闭态口径：库常驻挂载 + data-visible 控制可见性；断言面板关闭且结构仍完整
         expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('false')
