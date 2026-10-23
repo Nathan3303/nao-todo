@@ -16,7 +16,7 @@
  *   头像裁剪用 `blob:`、占位/图标用 `data:`。
  * - `font-src 'self' data:`：本地字体（`/fonts/**`）与可能的 `data:` 内嵌字体。
  * - `connect-src 'self' https://todobe.nathanao.space`：仅应用 API 生产源（XHR/fetch）；
- *   桌面端禁用远程 SSE（`VITE_DISABLE_SSE=true`）⇒ 无需 `EventSource` 特例。
+ *   提醒判定已本地化（无推送长连接）⇒ 无需长连接特例。
  * - `object-src 'none'`：无 `<object>/<embed>` 需求，直接封死。
  * - `base-uri 'none'`：禁止注入 `<base>` 劫持相对路径。
  * - `form-action 'self'`：SPA 表单均 `preventDefault`，无跨源提交需求。
