@@ -1,6 +1,6 @@
 # ADR：任务提醒本地化（判定权下移本机 + `remind_at` 单写者）
 
-- 状态：已接受（待落地）
+- 状态：已接受（已落地 v1.12.15，2026-10-23）
 - 更新：2026-10-23
 - Owner：arch-designer
 - 指针：PRD `docs/prds/2026-10-23-reminder-local-polling.md`（Issue #232 · PR #233）· `docs/reports/T526-arch-review.md`（影响面 / NFR / Q1–Q7 裁示）· `docs/tasks-state.md`（T524/T525/T526）· `docs/adr/2026-09-21-reminder-scan-and-recovery.md`（扫描口径 D1/D2）
