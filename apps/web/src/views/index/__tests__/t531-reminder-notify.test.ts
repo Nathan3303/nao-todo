@@ -58,7 +58,8 @@ type SetupOptions = {
 
 const setup = (options: SetupOptions = {}) => {
     const openDialog = vi.fn()
-    const send = vi.fn(() => {
+    // 类型修正（RD 闭合红窗口 · 断言未改）：标注入参，否则 `mock.calls` 被推断为空元组
+    const send = vi.fn((..._args: unknown[]) => {
         if (options.sendThrows) throw new TypeError('Illegal constructor')
         return options.sendResult ?? true
     })
@@ -165,7 +166,7 @@ describe('T531 · AC8 通知正文（任务名 · 清单名）', () => {
     })
 
     it('AC8 未注入 resolveProjectName ⇒ 只用任务名（装配缺失时防御）', () => {
-        const send = vi.fn(() => true)
+        const send = vi.fn((..._args: unknown[]) => true)
         const notify = createReminderNotify({
             openDialog: () => undefined,
             send,
@@ -188,7 +189,7 @@ describe('T531 · AC8 通知正文（任务名 · 清单名）', () => {
     })
 
     it('AC8 未注入 onOpenTask ⇒ 点击不抛错', () => {
-        const send = vi.fn(() => true)
+        const send = vi.fn((..._args: unknown[]) => true)
         const notify = createReminderNotify({
             openDialog: () => undefined,
             send,
