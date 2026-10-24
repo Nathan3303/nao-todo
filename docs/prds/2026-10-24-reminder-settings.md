@@ -1,6 +1,6 @@
 # 2026-10-24 提醒功能补齐（设置区 / 免打扰 / 完成动作 / 信息与引导）PRD
 
-> **状态**：**已开工**（用户 2026-10-24 确认）· PRD **v1.1**（arch 有条件终签 C1–C7 已回填）· **Issue**：[#238](https://github.com/Nathan3303/nao-todo/issues/238) · **批次**：`v1.12.16`（PATCH）· **前置**：`v1.12.15`（提醒判定已下移本机）
+> **状态**：**✅ 已交付并发布 `v1.12.16`（2026-10-24）** —— 代码 PR [#240](https://github.com/Nathan3303/nao-todo/pull/240)（squash `fa7cd0ae`）· 发版 PR [#241](https://github.com/Nathan3303/nao-todo/pull/241)（squash `4f98310c`）· 注解 tag `v1.12.16` · 用户手动测试验收通过 · PRD **v1.1**（arch 有条件终签 C1–C7 已回填）· **Issue**：[#238](https://github.com/Nathan3303/nao-todo/issues/238) · **批次**：`v1.12.16`（PATCH）· **前置**：`v1.12.15`（提醒判定已下移本机）
 > **来源（成熟度）**：grill 两轮结论（2026-10-24）+ 架构回执 `docs/reports/T530-arch-review.md`（ADR `docs/adr/2026-10-24-reminder-settings-quiet-hours.md`，提议）+ 接缝经 QA 确认（`T531`）。
 > **指针**：上一批 PRD `docs/prds/2026-10-23-reminder-local-polling.md`（其「免打扰 / 提示音」非范围**由本单接管**）。
 > **硬约束**：移动端红线零改动 · 单一引擎实现（禁双端各写一套）· 不开 PWA/Web Push · 不做多设备「只提醒一次」· 不做桌面托盘常驻。

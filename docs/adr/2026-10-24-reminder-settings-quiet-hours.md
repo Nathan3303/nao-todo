@@ -1,6 +1,6 @@
 # ADR：提醒设置（通知 / 声音 / 免打扰）与弹窗「完成」
 
-- 状态：已接受（待落地）
+- 状态：已接受（已落地 v1.12.16，2026-10-24）
 - 更新：2026-10-24
 - Owner：arch-designer
 - 指针：PRD `docs/prds/2026-10-24-reminder-settings.md` · 报告 `docs/reports/T530-arch-review.md` · 前序 ADR `2026-10-23-reminder-local-judgment.md` · 偏好 ADR `2026-09-23-local-preference-sync.md`
