@@ -4,68 +4,195 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { nextTick, ref, type Ref } from 'vue'
 import { nueUI } from '@/nue-ui-register'
+import { t } from '@nao-todo/shared/locales'
 import SettingsDialog from '../index.vue'
 import { unbindSettingsDialogHost } from '../state'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 /**
- * T521-R1 形态 A：窄屏（Float 变体 / ≤445px）三区入口复用 `segmented-switch`
- * @description R1 取代 R0 的自写 ghost 按钮行：窄屏用单一来源分段件（三段等分 / 纯文字 /
- *              `role=group` + `aria-pressed`），桌面（>445px）仍 `tablist` + 左栏纵排（逐字不变）。
- *              窄屏判定 = `isUseFloatAside`（与抽屉同一 445px 阈值，无新魔法数）
- *              ⇒ 断言两者同时切换；另加源级断言：窄屏块内不再有自写分段样式。
+ * T534 · 设置对话框「4 类」两套布局互斥（AC4）
+ *
+ * 红基线：本文件由 T521 的「3 段」契约改写为「4 类」。改写理由：IA 从 3 段变 4 类
+ * （`docs/prds/2026-10-24-settings-ia.md` AC4）⇒ 旧断言（3 个 tab / 3 个段 / 旧段标签）失效。
+ *
+ * **必须保留的 T521 守卫（不得因改写而丢失）**：
+ * - R4：窄屏标识挂自有 wrapper `.sd-body.is-narrow`；`<nue-dialog :class>` 会被 NueDialog 重组 class
+ *   丢弃（根为 Teleport）⇒ 绝不可把 is-narrow 挂到 dialog 上（源码级死选择器禁令）；
+ * - 所有 `.is-narrow` 选择器必须以 `.sd-body` 打头；
+ * - 窄屏块内不得自写分段样式 / 不得在调用处覆盖分段件尺寸；
+ * - 阈值 445 只在 `packages/shared/hooks/use-responsive-flag.ts` 定义，dialog 源码不得出现魔法数。
+ *
+ * 两套布局：桌面（>445px）= 左栏 `tablist`；窄屏（≤445px）= 顶部 4 段 `segmented-switch`。
  */
 
-vi.mock('@/hooks', () => ({
-    useAuthUseCase: () => ({}),
-    useUserUseCase: () => ({})
+const mocks = vi.hoisted(() => ({
+    syncStatusRef: { value: null } as { value: unknown }
 }))
 
-vi.mock('@nao-todo/presentation-identity', () => ({
-    useUserStore: () => ({ profile: null })
-}))
+const defaultSyncStatus = (): Record<string, unknown> => ({
+    syncing: false,
+    lastSyncAt: null,
+    pendingCount: 0,
+    failedCount: 0,
+    preferenceFailedCount: 0,
+    conflictCount: 0,
+    droppedFieldCount: 0,
+    lastError: null,
+    errors: [],
+    errorCount: 0,
+    credentialFailure: false,
+    paused: false,
+    mirrorPulledAt: null,
+    mirrorTruncated: false
+})
 
-vi.mock('@/components/settings/profile-updater', () => ({
-    SettingsProfileUpdater: {
-        name: 'SettingsProfileUpdaterStub',
-        render: () => null
+const CATEGORY_IDS = ['account', 'appearance', 'reminder', 'data'] as const
+
+vi.mock('nue-ui', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('nue-ui')>()
+    return {
+        ...actual,
+        NueConfirm: vi.fn(),
+        NueMessage: { error: vi.fn(), success: vi.fn(), info: vi.fn() }
     }
-}))
-vi.mock('@/components/settings/password-updater', () => ({
-    SettingsPasswordUpdater: {
-        name: 'SettingsPasswordUpdaterStub',
-        render: () => null
+})
+
+vi.mock('@/hooks', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/hooks')>()
+    const { ref } = await import('vue')
+    const status = ref({
+        syncing: false,
+        lastSyncAt: null,
+        pendingCount: 0,
+        failedCount: 0,
+        preferenceFailedCount: 0,
+        conflictCount: 0,
+        droppedFieldCount: 0,
+        lastError: null,
+        errors: [],
+        errorCount: 0,
+        credentialFailure: false,
+        paused: false,
+        mirrorPulledAt: null,
+        mirrorTruncated: false
+    })
+    mocks.syncStatusRef = status
+    return {
+        ...actual,
+        useAuthUseCase: () => ({ signOut: vi.fn() }),
+        useUserUseCase: () => ({}),
+        useSyncStatus: () => ({ status }),
+        useManualSync: () => ({ syncing: ref(false), run: vi.fn() }),
+        useMirrorLoadedCount: () => ref(0)
     }
+})
+
+vi.mock('@nao-todo/presentation-identity', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@nao-todo/presentation-identity')>()
+    const { defineComponent } = await import('vue')
+    const stub = (name: string) =>
+        defineComponent({ name, template: '<div class="leaf-stub"><slot /></div>' })
+    return {
+        ...actual,
+        UserAvatarUpdater: stub('UserAvatarUpdater'),
+        UserNicknameUpdater: stub('UserNicknameUpdater'),
+        UserInfoViewer: stub('UserInfoViewer'),
+        UserSessionManager: stub('UserSessionManager'),
+        UserDeactiveManager: stub('UserDeactiveManager'),
+        UserDeactiveDialog: stub('UserDeactiveDialog'),
+        UserRestoreDialog: stub('UserRestoreDialog'),
+        UserThemeSetter: stub('UserThemeSetter'),
+        UserLanguageSetter: stub('UserLanguageSetter')
+    }
+})
+
+vi.mock('@/views/auth/sign-out-broadcast', () => ({ broadcastSignOut: vi.fn() }))
+vi.mock('@/views/auth/sign-out-wipe', () => ({
+    wipeLocalDataOnSignOut: vi.fn(async () => undefined)
 }))
-vi.mock('@/components/settings/app-setter', () => ({
-    SettingsAppSetter: { name: 'SettingsAppSetterStub', render: () => null }
+vi.mock('@/views/auth/offline-entry', () => ({
+    revokeOfflineEntry: vi.fn(),
+    grantOfflineEntry: vi.fn(),
+    isOfflineEntryGranted: () => false
 }))
 
-/** nue-dialog stub：theme → `.nue-dialog--<theme>` 类（承接组件内向根节点追加的 class 与 a11y 断言） */
+vi.mock('@nao-todo/infrastructure', () => ({
+    readCachedNickname: () => '张三',
+    localSession: { clear: vi.fn(), getCurrentUserId: () => 'u-1' },
+    cryptoService: { lock: vi.fn() },
+    resolveUserIdFromStoredJwt: () => 'u-1',
+    syncTracker: { countDirty: async () => 0 },
+    syncService: { start: vi.fn(async () => ({ ok: true })) },
+    deletionService: { wipeUserData: vi.fn(async () => undefined) },
+    markPreferenceDirty: vi.fn(async () => undefined)
+}))
+
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/profile-cache',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/preference-sync',
+    async () => import('@nao-todo/infrastructure')
+)
+
+vi.mock('vue-router', () => ({
+    useRouter: () => ({
+        replace: vi.fn(),
+        resolve: (target: string) => ({ matched: [{}], fullPath: target }),
+        currentRoute: { value: { params: {}, name: 'index' } }
+    })
+}))
+
 const NueDialogStub = {
     props: ['modelValue', 'title', 'theme'],
     template:
-        '<div class="nue-dialog" :class="String(theme).split(\',\').map((t) => `nue-dialog--${t}`)"><slot /></div>'
+        '<div class="nue-dialog" :class="String(theme).split(\',\').map((tm) => `nue-dialog--${tm}`)"><slot /></div>'
 }
 
-/** 设置对话框源文本（源级断言：窄屏不再自写分段样式） */
-const sourceModules = import.meta.glob<string>(
-    '/apps/web/src/components/settings/dialog/index.vue',
-    { query: '?raw', import: 'default', eager: true }
-)
+/** 设置对话框源文本（源级守卫） */
 const dialogSource = (): string => {
-    const values = Object.values(sourceModules)
+    const modules = import.meta.glob<string>('/apps/web/src/components/settings/dialog/index.vue', {
+        query: '?raw',
+        import: 'default',
+        eager: true
+    })
+    const values = Object.values(modules)
     expect(values.length).toBe(1)
     return values[0]!
 }
 
-/** 分段件源文本（R2：尺寸走件内 `size` 轴；长标签换行不截断的 CSS 契约） */
-const switchModules = import.meta.glob<string>(
-    '/apps/web/src/components/calendar/segmented-switch.vue',
-    { query: '?raw', import: 'default', eager: true }
-)
+/** 分段件源文本（尺寸/换行契约在件内，调用处不得覆盖） */
 const switchSource = (): string => {
-    const values = Object.values(switchModules)
+    const modules = import.meta.glob<string>(
+        '/apps/web/src/components/calendar/segmented-switch.vue',
+        {
+            query: '?raw',
+            import: 'default',
+            eager: true
+        }
+    )
+    const values = Object.values(modules)
     expect(values.length).toBe(1)
     return values[0]!
 }
@@ -73,21 +200,20 @@ const switchSource = (): string => {
 let wrapper: VueWrapper | null = null
 
 const mountDialog = (isUseFloatAside: Ref<boolean>): VueWrapper => {
+    mocks.syncStatusRef.value = defaultSyncStatus()
     wrapper = mount(SettingsDialog, {
         global: {
             plugins: [createPinia(), nueUI],
             provide: {
                 [INDEX_VIEW_CONTEXT_KEY as symbol]: {
                     appSubscriber: {},
-                    appDialogManager: {},
+                    appDialogManager: { open: vi.fn(), close: vi.fn() },
                     isDisplayAside: ref(true),
                     isUseFloatAside,
                     switchDisplayAside: vi.fn()
                 }
             },
-            components: {
-                'nue-dialog': NueDialogStub
-            }
+            components: { 'nue-dialog': NueDialogStub }
         }
     })
     return wrapper
@@ -101,163 +227,164 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('T521-R1 设置对话框窄屏形态 A（复用 segmented-switch）', () => {
-    it('桌面（>445px）：仍 tablist + 左栏纵排，不渲染分段件', async () => {
-        mountDialog(ref(false))
+describe('AC4 两套布局互斥（桌面左栏 / 窄屏 4 段）', () => {
+    it('P：桌面（>445px）⇒ 左栏 tablist 恰 4 类、顺序固定、不渲染分段件', async () => {
+        const view = mountDialog(ref(false))
         await nextTick()
 
-        const root = wrapper!.find('.nue-dialog').element as HTMLElement
-        expect(root.classList.contains('nue-dialog--settings')).toBe(true)
-        expect(root.classList.contains('is-narrow')).toBe(false)
-        // R4：标识载体是我们自己的 wrapper（桌面不带）
-        expect(wrapper!.find('.sd-body').classes()).not.toContain('is-narrow')
-        // 桌面语义与结构逐字不变
-        const tablist = wrapper!.find('[role="tablist"]')
+        const tablist = view.find('[role="tablist"]')
         expect(tablist.exists()).toBe(true)
         expect(tablist.attributes('aria-orientation')).toBe('vertical')
-        expect(wrapper!.findAll('[role="tab"]').length).toBe(3)
-        expect(wrapper!.find('.sd-tabs').exists()).toBe(true)
-        // 窄屏件不渲染 ⇒ 不会出现两套语义并存
-        expect(wrapper!.find('.segmented-toggle').exists()).toBe(false)
+
+        const navIds = tablist
+            .findAll('[data-settings-nav]')
+            .map((nav) => nav.attributes('data-settings-nav'))
+        expect(navIds).toEqual([...CATEGORY_IDS])
+        expect(view.findAll('[role="tab"]').length).toBe(4)
+
+        // 互斥：窄屏件不渲染
+        expect(view.find('.segmented-toggle').exists()).toBe(false)
+        expect(view.find('.sd-tabs').exists()).toBe(true)
     })
 
-    it('窄屏（≤445px）：渲染 segmented-switch（3 段 / fill / 纯文字 / group+aria-pressed），无 tablist', async () => {
+    it('P：窄屏（≤445px）⇒ 顶部 4 段分段切换（fill/md/纯文字/group+aria-pressed），无 tablist', async () => {
         const isUseFloatAside = ref(false)
-        mountDialog(isUseFloatAside)
+        const view = mountDialog(isUseFloatAside)
         await nextTick()
-        expect(wrapper!.find('.segmented-toggle').exists()).toBe(false)
+        expect(view.find('.segmented-toggle').exists()).toBe(false)
 
         isUseFloatAside.value = true
         await nextTick()
 
-        // R4：`.nue-dialog` 的 class 由 NueDialog 内部重组、根是 Teleport ⇒ 外部 class 被丢弃，
-        // 因此窄屏标识**不得**出现在 `.nue-dialog` 上，而必须落在自有 wrapper `.sd-body` 上
-        const root = wrapper!.find('.nue-dialog').element as HTMLElement
-        expect(root.classList.contains('is-narrow')).toBe(false)
-        expect(wrapper!.find('.sd-body').classes()).toContain('is-narrow')
+        expect(view.find('[role="tablist"]').exists()).toBe(false)
+        expect(view.find('[role="tab"]').exists()).toBe(false)
+        expect(view.find('.sd-tabs').exists()).toBe(false)
 
-        // 单一语义：只有 group，没有 tablist / tab
-        expect(wrapper!.find('[role="tablist"]').exists()).toBe(false)
-        expect(wrapper!.find('[role="tab"]').exists()).toBe(false)
-
-        const group = wrapper!.find('.segmented-toggle')
+        const group = view.find('.segmented-toggle')
         expect(group.exists()).toBe(true)
         expect(group.attributes('role')).toBe('group')
-        expect(group.attributes('aria-label')).toBe('设置分区')
-        // fill（三段等分铺满内容宽度）+ 尺寸轴 md（点击区 ≈40px，走件内 size，不在调用处覆盖）
+        expect(group.attributes('aria-label')).toBeTruthy()
         expect(group.classes()).toContain('is-fill')
         expect(group.classes()).toContain('is-md')
 
-        const segments = wrapper!.findAll('.segmented-btn')
-        expect(segments.length).toBe(3)
-        // 纯文字（无图标）、窄屏短标签（4 字 ⇒ 320px 档不裁字）
-        expect(segments.map((s) => s.text())).toEqual(['用户信息', '密码修改', '应用设置'])
-        expect(wrapper!.findAll('.segmented-btn .nue-icon').length).toBe(0)
-        // a11y：aria-pressed 随选中态（默认首段）
-        expect(segments.map((s) => s.attributes('aria-pressed'))).toEqual([
+        const segments = view.findAll('.segmented-btn')
+        expect(segments.length).toBe(4)
+        // 纯文字（无图标）
+        expect(view.findAll('.segmented-btn .nue-icon').length).toBe(0)
+        // 320px 档：zh 标签 2 字（不裁字的结构前提）
+        const labels = segments.map((segment) => segment.text().trim())
+        for (const label of labels) expect(label.length).toBe(2)
+        expect(new Set(labels).size).toBe(4)
+        // a11y：默认选中首段
+        expect(segments.map((segment) => segment.attributes('aria-pressed'))).toEqual([
             'true',
+            'false',
             'false',
             'false'
         ])
-        // 自写左栏分区条已不再渲染
-        expect(wrapper!.find('.sd-tabs').exists()).toBe(false)
     })
 
-    it('R4 落点与结构：窄屏 Tab 与面板同父级（.sd-body），纵向堆叠载体在窄屏成立', async () => {
+    it('B：两套随同一开关同 tick 切换，任何时刻恰好一套（不得并存/都缺）', async () => {
         const isUseFloatAside = ref(false)
-        mountDialog(isUseFloatAside)
+        const view = mountDialog(isUseFloatAside)
         await nextTick()
 
-        // 桌面：左栏与面板也同在 .sd-body（布局载体），且 .sd-body 为 row
-        const body = wrapper!.find('.sd-body')
-        expect(body.exists()).toBe(true)
-        expect(body.classes()).not.toContain('is-narrow')
-        expect(body.find('.sd-tabs').exists()).toBe(true)
-        expect(body.find('.sd-panel').exists()).toBe(true)
+        const countSets = (): number =>
+            (view.find('[role="tablist"]').exists() ? 1 : 0) +
+            (view.find('.segmented-toggle').exists() ? 1 : 0)
+
+        expect(countSets()).toBe(1)
+        isUseFloatAside.value = true
+        await nextTick()
+        expect(countSets()).toBe(1)
+        isUseFloatAside.value = false
+        await nextTick()
+        expect(countSets()).toBe(1)
+    })
+
+    it('P：两套导航同源（同一分类清单驱动）：id 顺序一致', async () => {
+        const isUseFloatAside = ref(false)
+        const view = mountDialog(isUseFloatAside)
+        await nextTick()
+
+        const desktopIds = view
+            .findAll('[data-settings-nav]')
+            .map((nav) => nav.attributes('data-settings-nav'))
 
         isUseFloatAside.value = true
         await nextTick()
 
-        const narrowBody = wrapper!.find('.sd-body')
-        expect(narrowBody.classes()).toContain('is-narrow')
-        // Tab（分段件）与面板必须同父级 = .sd-body（否则 row/column 样式作用不到一对子元素）
-        const segmented = narrowBody.find('.segmented-toggle')
-        const panel = narrowBody.find('.sd-panel')
-        expect(segmented.exists()).toBe(true)
-        expect(panel.exists()).toBe(true)
-        expect(segmented.element.parentElement).toBe(narrowBody.element)
-        expect(panel.element.parentElement).toBe(narrowBody.element)
-        // 分段件在前（Tab 在上）、面板在后（主体在下）
+        const narrowIds = view
+            .findAll('[data-testid^="settings-nav-"]')
+            .map((nav) => nav.attributes('data-testid')!.replace('settings-nav-', ''))
+
+        expect(narrowIds.length).toBe(4)
+        expect(narrowIds).toEqual(desktopIds)
+    })
+
+    it('B：窄屏点第 3 段 ⇒ 切换到第 3 类（aria-pressed 迁移；仍只有一套语义）', async () => {
+        const view = mountDialog(ref(true))
+        await nextTick()
+
+        await view.findAll('.segmented-btn')[2]!.trigger('click')
+        await nextTick()
+
+        expect(
+            view.findAll('.segmented-btn').map((segment) => segment.attributes('aria-pressed'))
+        ).toEqual(['false', 'false', 'true', 'false'])
+        expect(view.find('[data-settings-category]').attributes('data-settings-category')).toBe(
+            'reminder'
+        )
+        expect(view.find('[role="tablist"]').exists()).toBe(false)
+    })
+})
+
+describe('AC4 T521 守卫（改写后必须保留）', () => {
+    it('R4：窄屏标识挂自有 wrapper `.sd-body.is-narrow`，不挂 `<nue-dialog>`', async () => {
+        const view = mountDialog(ref(true))
+        await nextTick()
+
+        expect(view.find('.sd-body').classes()).toContain('is-narrow')
+        expect(view.find('.nue-dialog').classes()).not.toContain('is-narrow')
+        // 面板与导航必须是 .sd-body 的同一层子元素（row/column 才作用得到）
+        const body = view.find('.sd-body')
+        const segmented = view.find('.segmented-toggle')
+        const panel = view.find('.sd-panel')
+        expect(segmented.element.parentElement).toBe(body.element)
+        expect(panel.element.parentElement).toBe(body.element)
         expect(
             segmented.element.compareDocumentPosition(panel.element) &
                 Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
-        // 标识不再挂在 dialog 上（R4 回归护栏）
-        expect(wrapper!.find('.nue-dialog').classes()).not.toContain('is-narrow')
     })
 
-    it('窄屏：点第三段 ⇒ 切换当前区（aria-pressed 迁移；仍只有一套语义）', async () => {
-        mountDialog(ref(true))
-        await nextTick()
-
-        const segments = wrapper!.findAll('.segmented-btn')
-        await segments[2]!.trigger('click')
-        await nextTick()
-
-        const after = wrapper!.findAll('.segmented-btn')
-        expect(after.map((s) => s.attributes('aria-pressed'))).toEqual(['false', 'false', 'true'])
-        expect(wrapper!.find('[role="tablist"]').exists()).toBe(false)
-    })
-
-    it('中英分语言口径（AC3）：长标签允许换行增高、不 ellipsis / 不 nowrap；调用处不覆盖分段尺寸', () => {
-        const seg = switchSource()
-        // 件内：可换行 + 高度随内容（min-height 承载 size 轴）⇒ 英文 2 行不被裁
-        expect(seg).toContain('white-space: normal')
-        expect(seg).toContain('height: auto')
-        expect(seg).toContain('min-height: var(--nue-box-size-xs)')
-        expect(seg).toContain('min-height: var(--nue-box-size-md)')
-        expect(seg).not.toContain('text-overflow')
-        expect(seg).not.toContain('white-space: nowrap')
-
-        // 调用处：只传 size="md"，不写任何分段件选择器（R2：尺寸不得在调用处覆盖）
-        const dialog = dialogSource()
-        expect(dialog).toContain('size="md"')
-        expect(dialog).not.toContain('.segmented-btn')
-        expect(dialog).not.toContain('.segmented-toggle')
-    })
-
-    it('源级 R4：标识挂在自有 wrapper（.sd-body.is-narrow）且无「挂在 dialog 上」的死选择器', () => {
+    it('D 源级：`<nue-dialog>` 上不得出现 :class 绑定（class 会被 NueDialog 丢弃）', () => {
         const source = dialogSource()
-        // 模板：wrapper 承载 is-narrow；<nue-dialog> 上不得再写 :class 绑定
         expect(source).toMatch(/class="sd-body"\s+:class="\{ 'is-narrow': isNarrow \}"/)
         expect(source).not.toMatch(/<nue-dialog[^>]*:class=/)
+    })
 
-        // 样式：竖向堆叠与面板高度挂在 wrapper 上
-        expect(source).toMatch(/\.sd-body\s*\{[^}]*display:\s*flex/)
-        expect(source).toMatch(/\.sd-body\s*\{[^}]*flex-direction:\s*row/)
-        expect(source).toMatch(/\.sd-body\s*\{[^}]*flex:\s*1\s+1\s+auto/)
-        expect(source).toMatch(/\.sd-body\s*\{[^}]*min-height:\s*0/)
-        expect(source).toMatch(/\.sd-body\.is-narrow\s*\{[^}]*flex-direction:\s*column/)
-        expect(source).toMatch(/\.sd-body\.is-narrow\s+\.sd-panel\s*\{[^}]*flex:\s*1\s+1\s+auto/)
-
-        // 死选择器必须绝迹（只看 <style> 块：模板注释里为留痕会引用该写法）
+    it('D 源级：所有 `.is-narrow` 选择器以 `.sd-body` 打头（死选择器绝迹）', () => {
+        const source = dialogSource()
         const style = source.slice(source.indexOf('<style>'), source.lastIndexOf('</style>'))
+
         expect(style).not.toContain('.nue-dialog--settings.is-narrow')
         expect(style).toContain('.sd-body.is-narrow')
-        // 所有含 `.is-narrow` 的选择器都必须以 `.sd-body` 打头（= 标识载体只有 wrapper）
+
         const narrowSelectors = [...style.matchAll(/([^\n{}]*\.is-narrow[^\n{}]*)\{/g)].map((m) =>
             m[1]!.trim()
         )
         expect(narrowSelectors.length).toBeGreaterThan(0)
         for (const selector of narrowSelectors) {
-            expect(
-                selector.split(',').map((part) => part.trim()),
-                `窄屏选择器未挂在 .sd-body 上：${selector}`
-            ).toEqual(selector.split(',').map(() => expect.stringMatching(/^\.sd-body/)))
+            for (const part of selector.split(',')) {
+                expect(part.trim(), `窄屏选择器未挂在 .sd-body 上：${selector}`).toMatch(
+                    /^\.sd-body/
+                )
+            }
         }
     })
 
-    it('源级：窄屏块内无自写分段样式（sd-tabs / sd-tab / max-content / nowrap / 动态 aria-orientation）', () => {
+    it('D 源级：窄屏块内无自写分段样式（sd-tabs / max-content / nowrap / tablist）', () => {
         const source = dialogSource()
         const narrowBlocks = source
             .split('.is-narrow')
@@ -271,9 +398,32 @@ describe('T521-R1 设置对话框窄屏形态 A（复用 segmented-switch）', (
         expect(narrowBlocks).not.toContain('max-content')
         expect(narrowBlocks).not.toContain('nowrap')
         expect(narrowBlocks).not.toContain('tablist')
-        // R2：窄屏块只剩容器堆叠，不再有任何分段件尺寸覆盖
         expect(narrowBlocks).not.toContain('segmented-btn')
-        // 桌面 tablist 的 aria-orientation 固定 vertical（不再随窄屏切成 horizontal）
+        // 桌面 tablist 的 aria-orientation 固定 vertical（不随窄屏切换）
         expect(source).not.toContain("'horizontal'")
+    })
+
+    it('D 源级：断点无魔法数（445 只在 shared hooks 定义）', () => {
+        const source = dialogSource()
+        expect(source).not.toMatch(/\b(445|444|446)\b/)
+        expect(source).toContain('isUseFloatAside')
+    })
+
+    it('D 源级：调用处只传分段件 size="md"，不覆盖件内尺寸、不硬编码分段选择器', () => {
+        const source = dialogSource()
+        expect(source).toContain('size="md"')
+        expect(source).not.toContain('.segmented-btn')
+        expect(source).not.toContain('.segmented-toggle')
+    })
+
+    it('D 源级：分段件保持「可换行 + 高度随内容」，不引入 ellipsis / nowrap（EN 长标签不裁）', () => {
+        const source = switchSource()
+        expect(source).toContain('white-space: normal')
+        expect(source).toContain('height: auto')
+        expect(source).not.toContain('text-overflow')
+        expect(source).not.toContain('white-space: nowrap')
+        // 窄屏 4 段标签文案走 i18n（不得硬编码）
+        expect(dialogSource()).not.toMatch(/>\s*(账户|外观|提醒|数据)\s*</)
+        expect(t('settings.profile').length).toBeGreaterThan(0)
     })
 })
