@@ -61,7 +61,7 @@ afterEach(() => {
 })
 
 describe('createReminderEngine · 主路径（AC1）', () => {
-    it('AC1 start 首轮扫描到期活跃任务 ⇒ 派发 1 次，载荷 taskId/taskName/description', async () => {
+    it('AC1 start 首轮扫描到期活跃任务 ⇒ 派发 1 次，载荷 taskId/taskName/description（T531：含 projectId/remindAt）', async () => {
         const task = makeTask({
             id: 't1',
             name: '买菜',
@@ -77,7 +77,9 @@ describe('createReminderEngine · 主路径（AC1）', () => {
         expect(notify.mock.calls[0]?.[0]).toEqual({
             taskId: 't1',
             taskName: '买菜',
-            description: '别忘了买鸡蛋'
+            description: '别忘了买鸡蛋',
+            projectId: 'p-t1',
+            remindAt: iso(-1000)
         })
     })
 

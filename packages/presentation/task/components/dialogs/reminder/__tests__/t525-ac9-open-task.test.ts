@@ -22,8 +22,9 @@ const makeApi = (onOpenTask?: (taskId: string) => void) => {
         taskUseCase: {} as never,
         onOpenTask
     } as ReminderProps)
-    api.enqueue({ taskId: 't1', taskName: '买菜' })
-    api.enqueue({ taskId: 't2', taskName: '洗车' })
+    // T531：事件扩 projectId / remindAt（清单名与原定时间）
+    api.enqueue({ taskId: 't1', taskName: '买菜', projectId: 'p1', remindAt: '' })
+    api.enqueue({ taskId: 't2', taskName: '洗车', projectId: 'p1', remindAt: '' })
     return api
 }
 
