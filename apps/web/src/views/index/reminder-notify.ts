@@ -8,7 +8,9 @@
  *              - 点击通知 ⇒ `onOpenTask(taskId)`（聚焦由 `sendNotification` 自身负责）；
  *              - **永不抛**：设置读取 / 通知发送 / 清单名解析任一失败都降级 —— 否则引擎
  *                `claim` 已落、`consume` 未执行 ⇒ 该条永久不再提醒（AC10 / T530 终签 C2）。
- * @see docs/prds/2026-10-24-reminder-settings.md（§五 R5/R6 · §七 AC2/AC3/AC8/AC10）
+ *              - **C3（T531 终签）**：权限 `granted` 但发送返回「未送达」（Android Chrome 页面通知）
+ *                ⇒ 回灌**设备级**降级标记，让设置区显示「不支持」而非假的「已开启」。
+ * @see docs/prds/2026-10-24-reminder-settings.md（§五 R5/R6 · §七 AC2/AC3/AC8/AC9/AC10）
  */
 import {
     DEFAULT_REMINDER_SETTINGS,
@@ -33,6 +35,16 @@ export type ReminderNotifyDeps = {
     resolveProjectName?(projectId: string): string | null | undefined
     /** 点击系统通知后的跳转（装配层注入；缺失 ⇒ 静默） */
     onOpenTask?(taskId: string): void
+    /**
+     * 通知权限来源（默认读全局 `Notification.permission`）
+     * @description 仅 `granted` 才可能是「以为能用但实际发不出」⇒ 才写降级标记。
+     */
+    getNotificationPermission?(): string | null
+    /**
+     * 记录「权限已授予但发不出」的设备级降级标记（装配层注入；已幂等）
+     * @description 供设置区把状态显示为「不支持」（声音置灰），刷新 / 登出后仍在。
+     */
+    markNotifyUnsupported?(): void
 }
 
 /** 清单名（失败 / 空串 ⇒ null，避免拼出悬空分隔符） */
@@ -49,9 +61,19 @@ const resolveProjectName = (
     }
 }
 
+/** 当前通知权限（注入优先；全局不可用 / 抛错 ⇒ null） */
+const currentPermission = (deps: ReminderNotifyDeps): string | null => {
+    try {
+        if (deps.getNotificationPermission) return deps.getNotificationPermission()
+        return typeof Notification === 'undefined' ? null : Notification.permission
+    } catch {
+        return null
+    }
+}
+
 /**
  * 创建提醒派发函数（引擎 `notify` 端口）
- * @param deps 派发依赖（弹窗 / 通知 / 设置 / 清单名 / 跳转）
+ * @param deps 派发依赖（弹窗 / 通知 / 设置 / 清单名 / 跳转 / 能力降级）
  */
 export const createReminderNotify = (deps: ReminderNotifyDeps) => {
     const readSettings = (): ReminderSettings => {
@@ -77,10 +99,19 @@ export const createReminderNotify = (deps: ReminderNotifyDeps) => {
         const projectName = resolveProjectName(deps, event.projectId)
         const body = projectName ? `${event.taskName} · ${projectName}` : event.taskName
         try {
-            deps.send(t('task.reminder.title'), body, {
+            const delivered = deps.send(t('task.reminder.title'), body, {
                 silent: !settings.sound,
                 onClick: () => deps.onOpenTask?.(event.taskId)
             })
+            // C3：权限已授予却发不出（Android Chrome 页面通知被禁用）⇒ 记设备级降级标记
+            // （幂等由 `markNotifyUnsupported` 实现保证；标记写失败不得影响派发）
+            if (delivered === false && currentPermission(deps) === 'granted') {
+                try {
+                    deps.markNotifyUnsupported?.()
+                } catch {
+                    /* 降级标记写入失败：本会话设置区仍能经内存态感知 */
+                }
+            }
         } catch {
             // 通知适配层理应用值返回；此处再兜一层，保证「通知失败 ≠ 提醒丢失」
         }

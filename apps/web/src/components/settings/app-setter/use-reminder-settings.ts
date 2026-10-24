@@ -17,7 +17,9 @@ import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sy
 import { REMINDER_NOTICE_ACK_KEY } from '@nao-todo/shared/constants/storage-keys'
 import type { LocaleKey } from '@nao-todo/shared/locales'
 import {
+    hasNotifyUnsupported,
     isWithinQuietHours,
+    markNotifyUnsupported,
     readReminderSettings,
     writeReminderSettings,
     type QuietHoursRange,
@@ -99,7 +101,7 @@ export const useReminderSettings = (options: UseReminderSettingsOptions = {}) =>
     const settings = ref<ReminderSettings>(readReminderSettings(storage))
 
     /** 真实发送失败降级（`granted` 但页面通知被禁用的平台） */
-    const forcedUnsupported = ref(false)
+    const forcedUnsupported = ref(hasNotifyUnsupported(storage))
 
     const notificationApi = win.Notification
     const supported = typeof notificationApi?.permission === 'string'
@@ -181,9 +183,14 @@ export const useReminderSettings = (options: UseReminderSettingsOptions = {}) =>
         }
     }
 
-    /** 真实发送失败 ⇒ 降级为 `unsupported`（Android Chrome 页面通知） */
+    /**
+     * 真实发送失败 ⇒ 降级为 `unsupported`（Android Chrome 页面通知）
+     * @description 同时写**设备级**标记（T531 / C3）：刷新、登出后仍显示「不支持」，
+     *              避免出现「显示已开启、实际收不到」的假开关。写入幂等。
+     */
     const markUnsupported = (): void => {
         forcedUnsupported.value = true
+        markNotifyUnsupported(storage)
     }
 
     const ackNotice = (): void => {

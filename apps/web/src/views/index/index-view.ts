@@ -40,6 +40,7 @@ import {
     createClaimLedger,
     createReminderEngine,
     isWithinQuietHours,
+    markNotifyUnsupported,
     readReminderSettings
 } from '@nao-todo/shared/reminder'
 import { createReminderNotify } from './reminder-notify'
@@ -185,7 +186,9 @@ const useIndexView = () => {
         send: sendNotification,
         readSettings: () => readReminderSettings(getReminderStorage()),
         resolveProjectName: (projectId) => getProjectName(projectId),
-        onOpenTask: (taskId) => void showTaskDetails(taskId)
+        onOpenTask: (taskId) => void showTaskDetails(taskId),
+        // C3（AC9）：权限已授予但「未送达」⇒ 设备级降级标记（设置区显示「不支持」）
+        markNotifyUnsupported: () => markNotifyUnsupported(getReminderStorage())
     })
 
     const reminderEngine = createReminderEngine({

@@ -17,3 +17,11 @@ export const PLAINTEXT_NOTICE_ACK_KEY = 'nao.plaintextNoticeAck'
  *              （单一字面量真源，Web 设置区与清库白名单共用）。
  */
 export const REMINDER_NOTICE_ACK_KEY = 'REMINDER_NOTICE_ACK'
+
+/**
+ * 系统通知「以为能用但发不出」的设备级降级标记（T531 / AC9 · C3）
+ * @description 权限已 `granted`，但真实发送返回「未送达」（Android Chrome 页面通知被禁用）⇒
+ *              记一次**设备级**标记：设置区改显示「不支持」（声音置灰 + 说明），**刷新/登出后仍在**
+ *              （能力属本浏览器，不是账号属性）。幂等：已有标记不重复写。
+ */
+export const REMINDER_NOTIFY_UNSUPPORTED_KEY = 'REMINDER_NOTIFY_UNSUPPORTED'

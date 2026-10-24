@@ -6,7 +6,8 @@ import {
 } from '@nao-todo/domain-identity'
 import {
     PLAINTEXT_NOTICE_ACK_KEY,
-    REMINDER_NOTICE_ACK_KEY
+    REMINDER_NOTICE_ACK_KEY,
+    REMINDER_NOTIFY_UNSUPPORTED_KEY
 } from '@nao-todo/shared/constants/storage-keys'
 import { REMINDER_SETTINGS_STORAGE_KEY } from '@nao-todo/shared/reminder'
 import {
@@ -43,7 +44,9 @@ export const DEVICE_LEVEL_STORAGE_KEYS: readonly string[] = [
     // 明文姿态「首次进入」告知已读标记（设备级；单一真源见 @nao-todo/shared 的 PLAINTEXT_NOTICE_ACK_KEY）
     PLAINTEXT_NOTICE_ACK_KEY,
     // 提醒权限一次性说明的已提示状态（T531 / AC9：权限是本设备属性 ⇒ 登出不清、不重复打扰）
-    REMINDER_NOTICE_ACK_KEY
+    REMINDER_NOTICE_ACK_KEY,
+    // 系统通知「以为能用但发不出」的降级标记（T531 / C3：能力属本浏览器 ⇒ 登出不清、刷新仍在）
+    REMINDER_NOTIFY_UNSUPPORTED_KEY
 ]
 
 /** 身份/会话级 localStorage 键（**必清**，精确键） */
