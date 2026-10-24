@@ -1,7 +1,7 @@
 # T529 用户真机验收清单（提醒设置 / 免打扰 / 完成动作 / 清单名与原定时间 / 权限引导）
 
-- 状态：**⏳ 待用户勾选**（qa 批次验收已完成：全范围门禁全绿）· 更新：2026-10-24 · Owner：qa（`T531`）· 需求/PM：`T529` · 实现：`T532`
-- 指针：PRD `docs/prds/2026-10-24-reminder-settings.md`（AC1–AC13）· 架构 `docs/reports/T530-arch-review.md`（终签 C1–C5）· Issue **#238** · PR **#240**（Ready）· 分支 `feat/238-reminder-settings`（HEAD **`5294c9e2`**）
+- 状态：**⏳ 待用户勾选（代码已就绪：PR #240 head `6d6639fb`）**（qa 批次验收已完成：全范围门禁全绿）· 更新：2026-10-24 · Owner：qa（`T531`）· 需求/PM：`T529` · 实现：`T532`
+- 指针：PRD `docs/prds/2026-10-24-reminder-settings.md`（AC1–AC13）· 架构 `docs/reports/T530-arch-review.md`（终签 C1–C5）· Issue **#238** · PR **#240**（Ready）· 分支 `feat/238-reminder-settings`（HEAD **`6d6639fb`**）
 - **预览链**：<https://naotodo-git-feat-238-reminder-settings-nathan3303s-projects.vercel.app>
 - **设备**：桌面浏览器（Chrome / Edge）为**必做**；**iPhone Safari 普通标签页**必做 E 组（本次的「不支持系统通知」主场景）；**本批打包的桌面端**建议走 F 组
 - 分组：A 设置区 · B 免打扰 · C 弹窗动作与信息 · D 通知与声音 · E 权限 · F 同步与两端 · G 回归
@@ -139,7 +139,7 @@
 
 - **手机浏览器（iPhone Safari 普通标签页）发不了系统通知** —— 本批只做"应用内提醒 + 引导"，PWA / 网页推送另立项；发版说明会写明"手机端以应用内提醒为准"。
 - **旧版客户端可能覆盖云端设置** —— 设置是整包快照上传，未升级的旧客户端不带"提醒"字段；请**两端同批更新**后再判断同步是否正常（旧端改任一项设置可能把提醒设置回退）。
-- **Android Chrome 的"页面通知"**（有通知对象但构造被禁用）：本批设计上要求降级成"仅应用内 + 提示"，但**降级标记目前没有从派发层回灌到设置区**（见"批次验收结论 · 发现的问题"）⇒ 该机型可能显示「系统通知已开启」却收不到系统通知。**iPhone Safari 与桌面 Chrome / Edge 不受影响**。
+- **Android Chrome 的"页面通知"**（有通知对象但构造被禁用）：✅ 本批已处理（`6d6639fb`）——首次"以为发出、实则未送达"后，设置区会改显示「当前浏览器不支持系统通知」并把声音置灰（**刷新 / 登出后仍在**，属本浏览器能力）。**iPhone Safari 与桌面 Chrome / Edge 不受影响**；若你只想验这一机型，请先在 `chrome://settings/content/notifications` 侧确认该站点权限为「允许」，再设一次提醒。
 - **切后台 / 最小化不承诺准时**（浏览器节流）；回前台会补弹，同一条只补一次（沿用上一版口径）。
 - **免打扰按设备本地时钟**判定：出差换时区时，时段窗口跟随当地墙钟移动（符合直觉）；同一设置在不同时区设备上生效的绝对时刻不同。
 - **多设备各自提醒一次**：本批承诺的仍是"同一浏览器一次"，手机 + 电脑各自提醒属正常。
@@ -147,16 +147,16 @@
 
 ## 批次验收结论（qa · 2026-10-24）
 
-- **验收对象**：分支 `feat/238-reminder-settings` · PR **#240**（Ready）· HEAD **`5294c9e2`**。
+- **验收对象**：分支 `feat/238-reminder-settings` · PR **#240**（Ready）· HEAD **`6d6639fb`**（合并前最后一次全范围门禁）。
 - **全范围门禁（本机 Node v26；测试带 `NODE_OPTIONS=--no-experimental-webstorage`）**：
-    - `pnpm exec vp check` = **exit 0**（1615 文件格式正确 · 1339 文件 0 lint / 0 type error）。
-    - 全仓 `pnpm exec vp test --run` = **exit 0**，**261 文件 / 2164 例 / 0 红**（157s）。
+    - `pnpm exec vp check` = **exit 0**（1618 文件格式正确 · 1341 文件 0 lint / 0 type error）。
+    - 全仓 `pnpm exec vp test --run` = **exit 0**，**262 文件 / 2173 例 / 0 红**（156s）。
     - Guard：`guard:ddd` · `guard:barrel-imports` · `guard:mobile-imports` · `guard:test-location` · `guard:gate-pathspec` 均 **exit 0**。
     - 构建：`vp run webapp build` **exit 0** · `pnpm run desktop:build` **exit 0**。
     - 移动端红线：`git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**。
-- **自动化面**：本批新增 11 个用例文件 / 138 例（0 红）：免打扰区间 21 · 抑制门 11 · 事件字段 5 · 设置模型 14 · 通知永不抛 9 · 快照同步 16 · 存储作用域 4 · 文案键 4 · 弹窗完成与信息 15 · 派发适配层 17（含与引擎串联的 C2）· 设置区状态 22。
-- **发现的问题（不阻塞用户勾选，但需 PM 决定是否本批修）**：
-    1. **C3 降级未接线**（P2）：`useReminderSettings().markUnsupported()` 只有用例在调，**派发层没有把"系统通知未送达"回灌到设置区**；且降级标记是内存态（重开即恢复"已开启"）。表现 = Android Chrome 页面通知被禁用时，设置区仍显示「系统通知已开启」、声音开关可用，而实际收不到系统通知。修法建议：派发层在 `sendNotification` 返回 `false` 且 `Notification.permission === 'granted'` 时写一个**设备级**降级标记（与 `REMINDER_NOTICE_ACK` 同法），设置区读取它 ⇒ `status=unsupported`。
+- **自动化面**：本批新增 12 个用例文件 / 147 例（0 红）：免打扰区间 21 · 抑制门 11 · 事件字段 5 · 设置模型 14 · 通知永不抛 9 · 快照同步 16 · 存储作用域 4 · 文案键 4 · 弹窗完成与信息 15 · 派发适配层 17（含与引擎串联的 C2）· 设置区状态 22 · **C3 降级接线 9**。
+- **发现的问题**：
+    1. **C3 降级未接线**（P2）—— **✅ 本批已修（`6d6639fb`）**：新增设备级标记 `REMINDER_NOTIFY_UNSUPPORTED` + `notify-support.ts`（先查再写、幂等、永不抛），派发层在「`send` 返回未送达 且 权限 = granted」时写标记，设置区**初始化即读**该标记 ⇒ 刷新 / 登出后仍显示「不支持」且声音置灰；标记已入 `DEVICE_LEVEL_STORAGE_KEYS`（登出不清）。证据：读码三处接线 + 新增 9 例（含幂等、设备级白名单、重开仍 unsupported）；qa 在 `6d6639fb` 复跑全仓 **0 红**。
     2. **v1.12.15 F1 同类风险已复核**：冷启动补弹仍走"加载态结束 + `nextTick` 后启动"，未被本批破坏（既有用例 `t527-f1-start-after-loading` 绿）。
 - **AC 结论**：AC1–AC13 自动化侧全部通过；**依赖真机判断的 = AC1 可见性/窄屏、AC3 是否出声（听感）、AC9 iPhone Safari 不支持态与引导呈现、AC5 补弹观感与「原定」文案、AC11 跨浏览器同步**（即本清单 A/B/E/F 组）。
 
@@ -164,7 +164,7 @@
 
 - 免打扰区间判定（半开区间 / 跨天 / 非法 fail-open）、时段内 0 落账、结束补弹恰好一次、重启不重复 → `packages/shared/reminder/__tests__/t531-{quiet-hours,suppression-gate}.test.ts`。
 - 抑制门必须早于落账（调用顺序 + 两种反证形态）→ `t531-suppression-gate.test.ts`。
-- 通知层永不抛 / `silent` 透传 / 未送达返回值 → `packages/shared/utils/__tests__/t531-notification-safe.test.ts`；派发层与引擎串联（C2）→ `apps/web/src/views/index/__tests__/t531-reminder-notify.test.ts`。
+- 通知层永不抛 / `silent` 透传 / 未送达返回值 → `packages/shared/utils/__tests__/t531-notification-safe.test.ts`；派发层与引擎串联（C2）+ **C3 降级接线（未送达回灌设置区 / 设备级 / 幂等）** → `apps/web/src/views/index/__tests__/t531-reminder-notify.test.ts` 与 `t532-c3-notify-unsupported.test.ts`。
 - 偏好快照三处适配（只改提醒也推送 / 显式清空可传播 / 缺字段不覆盖本地 / 版本保持 1）→ `packages/infrastructure/src/persistence-sync/__tests__/t531-reminder-snapshot.test.ts`。
 - 存储作用域（设置身份级 / 一次性提示设备级）→ `packages/infrastructure/src/persistence-local/deletion/__tests__/t531-reminder-storage-scope.test.ts`。
 - 弹窗「完成」三类结果 + 幂等（AC13）→ `packages/presentation/task/components/dialogs/reminder/__tests__/t531-complete-and-info.test.ts`。
