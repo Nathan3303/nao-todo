@@ -9,5 +9,7 @@
 export * from './collect-due-reminders'
 export * from './next-occurrence'
 export * from './claim-ledger'
+export * from './quiet-hours'
+export * from './reminder-settings'
 export * from './create-reminder-engine'
 export type * from './types'
