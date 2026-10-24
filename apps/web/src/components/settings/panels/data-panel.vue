@@ -67,7 +67,7 @@ const openReleases = (): void => {
                     :aria-expanded="localDataOpen"
                     @click="localDataOpen = !localDataOpen"
                 >
-                    <nue-icon name="lock" size="1rem" />
+                    <nue-icon name="help" size="1rem" />
                     <span class="sd-row__label">{{ t('settings.localData.title') }}</span>
                     <nue-icon
                         class="sd-row__chevron"

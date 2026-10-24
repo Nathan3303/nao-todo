@@ -255,8 +255,9 @@ onUnmounted(unbindSettingsDialogHost)
     gap: var(--nue-gap-xs);
     box-sizing: border-box;
     width: 100%;
-    min-height: 2.5rem;
-    padding: 0 var(--nue-padding-sm);
+    /* 点击区 ≥44px；名称允许两行时随之增高（英文长分类名不截断） */
+    min-height: 2.75rem;
+    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
     border: 1px solid transparent;
     border-radius: var(--nue-primary-radius);
     background: transparent;
@@ -285,11 +286,18 @@ onUnmounted(unbindSettingsDialogHost)
     font-weight: var(--nue-font-weight-medium);
 }
 
+/* 分类名：允许换行（单行省略会让英文长名「Appearance & Language」在 13rem 下被切且无 title）；
+   中文 4 项仍在单行内（最长 5 字 ≈ 70px < 可用 ≈ 148px）。按词断行，超长单词才硬断。 */
 .sd-tab__name {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+/* 图标不参与压缩：名称换行时图标保持 1rem 同轴线 */
+.sd-tab .nue-icon {
+    flex: none;
 }
 
 .sd-tabs__desc {
