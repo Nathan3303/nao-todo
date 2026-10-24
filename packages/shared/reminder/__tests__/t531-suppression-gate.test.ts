@@ -191,9 +191,16 @@ describe('T531 · AC4 免打扰时段内零副作用', () => {
         expect(notify).toHaveBeenCalledTimes(1)
     })
 
-    it('AC4 反证（错误形态：门放进 notify）⇒ 账本已落 + 未消费 + 未提醒（永久丢）', async () => {
-        // 锁定用例集的判别力：本需求要避免的形态是「账本已落 + 未 remind + 未 consume」。
-        // 任何实现都不得让这三态共存；本用例用「错误实现」证明该三态可被检出。
+    it('AC4 反证（错误形态：门放进 notify）⇒ 账本已落 + 未提醒 + 已被消费 ⇒ 该条永久丢', async () => {
+        // 锁定用例集的判别力：本需求要避免的形态是「claim 已落 + 用户从未看到」。
+        //
+        // ⚠️ 为何断言 **consume 被调用 1 次**（而不是「未 consume」）：
+        // 按 C2 口径，通知适配层**永不抛**（不可用/构造失败都在层内降级为「未送达」标记），
+        // 因此「门放进 notify」的真实形态 = notify 静默返回 ⇒ 引擎照常 consume。
+        // 真实危害 = 「用户从未看到，却已被当作已交付处理」（重复提醒被静默推进 / 一次性被静默清空），
+        // 且键已落账 ⇒ 再扫也不会补 ⇒ 永久丢。
+        // （「notify 真的抛错 ⇒ 引擎不 consume」是另一条分支，由既有
+        //  `create-reminder-engine.test.ts` 的 notify 抛错用例锁定，不在本反证内。）
         const task = makeTask({ id: 't1', remindAt: isoAt(QUIET_START + 30 * 60_000) })
         const storage = new FakeStorage()
         const ledger = createClaimLedger({ storage })
@@ -213,9 +220,18 @@ describe('T531 · AC4 免打扰时段内零副作用', () => {
         engine.start()
         await flushMicrotasks()
 
+        expect(notify).not.toHaveBeenCalled() // 用户从未看到
+        expect(ledger.has(`${task.id}@${task.remindAt}`)).toBe(true) // 键已落账
+        expect(consume).toHaveBeenCalledTimes(1) // 却已被当作已交付处理
+
+        // 永久丢的反证：再扫一轮（即使已过免打扰时段）也不会再提醒
+        currentNow = QUIET_END + 60_000
+        vi.setSystemTime(currentNow)
+        await engine.rescan()
+        await flushMicrotasks()
+
         expect(notify).not.toHaveBeenCalled()
-        expect(ledger.has(`${task.id}@${task.remindAt}`)).toBe(true)
-        expect(consume).not.toHaveBeenCalled()
+        expect(consume).toHaveBeenCalledTimes(1)
     })
 })
 
@@ -224,7 +240,7 @@ describe('T531 · AC5 时段结束后补弹（每条恰好 1 次）', () => {
         const tasks: ReminderTask[] = [
             makeTask({ id: 'late', remindAt: isoAt(QUIET_START + 50 * 60_000) }), // 22:50
             makeTask({ id: 'early', remindAt: isoAt(QUIET_START + 10 * 60_000) }), // 22:10
-            makeTask({ id: 'mid', remindAt: isoAt(QUIET_END - 30 * 60_000) }) // 07:30
+            makeTask({ id: 'mid', remindAt: isoAt(QUIET_END - 30 * 60_000) }) // 次日 07:30
         ]
         const { engine, claim, notify, consume, state } = createHarness({
             tasks,
@@ -241,8 +257,10 @@ describe('T531 · AC5 时段结束后补弹（每条恰好 1 次）', () => {
         jumpTo(QUIET_END + 1_000)
         await advance(REMINDER_SCAN_INTERVAL_MS)
 
+        // 升序按**绝对触发时刻**：22:10 → 22:50 → **次日 07:30**
+        // （跨天项必须排在后面：若按「一天内的时分」比较，07:30 会被错排到最前）
         const notifiedIds = notify.mock.calls.map((call) => (call[0] as TaskReminderEvent).taskId)
-        expect(notifiedIds).toEqual(['early', 'mid', 'late'])
+        expect(notifiedIds).toEqual(['early', 'late', 'mid'])
         expect(claim).toHaveBeenCalledTimes(3)
         expect(consume).toHaveBeenCalledTimes(3)
     })
