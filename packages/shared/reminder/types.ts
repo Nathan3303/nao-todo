@@ -16,6 +16,8 @@ export type ReminderTask = {
     id: string
     name: string
     description?: string | null
+    /** 清单标识（T531/AC8：弹窗按它经装配层解析清单名） */
+    projectId: string
     remindAt: string | null
     remindRepeat?: string | null
     remindTime?: string | null
@@ -68,6 +70,13 @@ export type ReminderEngineDeps = {
     consume?(taskId: string, nextRemindAt: string | null): void | Promise<void>
     /** `start` 时**仅调一次**（AC6：通知权限被拒不重复索权） */
     requestNotificationPermission?(): void | Promise<unknown>
+    /**
+     * 免打扰抑制门（T531/AC4 · R2）
+     * @description 每轮扫描在 `collectDueReminders` / `claim` **之前**调用一次；返回 true ⇒
+     *              本轮零副作用（不落账、不通知、不消费），提醒留待下次扫描补弹。
+     *              抛错 ⇒ **fail-open**（视为不抑制，提醒照常）；未注入 ⇒ 与旧行为完全一致。
+     */
+    isSuppressed?(nowMs: number): boolean
 }
 
 /** 引擎句柄 */

@@ -281,6 +281,19 @@ export interface LocaleMessages {
     'settings.appearanceDark': string
     'settings.appearanceSystem': string
     'settings.appearanceSyncFailed': string
+    'settings.reminder.title': string
+    'settings.reminder.notify': string
+    'settings.reminder.sound': string
+    'settings.reminder.quietHours': string
+    'settings.reminder.quietHoursStart': string
+    'settings.reminder.quietHoursEnd': string
+    'settings.reminder.quietNow': string
+    'settings.reminder.permission.granted': string
+    'settings.reminder.permission.denied': string
+    'settings.reminder.permission.unsupported': string
+    'settings.reminder.permission.hint': string
+    'settings.reminder.permission.enable': string
+    'settings.reminder.soundUnavailable': string
     'settings.nickname': string
     'settings.nicknameDesc': string
     'settings.nicknamePlaceholder': string
@@ -802,6 +815,9 @@ export interface LocaleMessages {
     'dialog.projectDelete': string
     'dialog.tagUpdate': string
     'dialog.taskReminder.confirm': string
+    'dialog.taskReminder.complete': string
+    'dialog.taskReminder.projectFallback': string
+    'dialog.taskReminder.original': string
 
     // Shared component
     'component.empty': string

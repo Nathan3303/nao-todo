@@ -99,6 +99,19 @@ export const createReminderEngine = (deps: ReminderEngineDeps): ReminderEngine =
         )
     }
 
+    /**
+     * 本轮是否被抑制（免打扰）
+     * @description 端口可选；抛错 ⇒ **fail-open**（视为不抑制）——设置读取失败绝不吞掉提醒。
+     */
+    const isSuppressed = (nowMs: number): boolean => {
+        if (!deps.isSuppressed) return false
+        try {
+            return deps.isSuppressed(nowMs) === true
+        } catch {
+            return false
+        }
+    }
+
     /** 一轮扫描本体：失败静默（不落账、不派发），下轮恢复即可补（AC6） */
     const performScan = async (): Promise<void> => {
         let tasks: readonly ReminderTask[]
@@ -108,6 +121,13 @@ export const createReminderEngine = (deps: ReminderEngineDeps): ReminderEngine =
             return
         }
         const now = deps.now()
+        // 免打扰抑制门（T531/AC4 · R2）：必须在 collect / claim **之前** ⇒ 静默期零副作用
+        // （不落账、不通知、不消费；`remindAt` 不推进 ⇒ 时段结束后由既有轮询逐条补弹）。
+        // 门抛错 ⇒ fail-open（设置读取失败不得吞掉提醒）。精确定时照旧排。
+        if (isSuppressed(now)) {
+            schedulePrecise(tasks)
+            return
+        }
         const due = collectDueReminders(tasks, now, (key) => deps.ledger.has?.(key) === true)
 
         for (const item of due) {
@@ -116,7 +136,9 @@ export const createReminderEngine = (deps: ReminderEngineDeps): ReminderEngine =
             const event: TaskReminderEvent = {
                 taskId: item.task.id,
                 taskName: item.task.name,
-                description: item.task.description ?? undefined
+                description: item.task.description ?? undefined,
+                projectId: item.task.projectId,
+                remindAt: item.task.remindAt ?? ''
             }
             try {
                 await deps.notify(event)

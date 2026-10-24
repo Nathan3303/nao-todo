@@ -298,6 +298,21 @@ const enUS: LocaleMessages = {
     'settings.appearanceDark': 'Dark',
     'settings.appearanceSystem': 'System',
     'settings.appearanceSyncFailed': 'Theme applied locally, but failed to sync to the server',
+    'settings.reminder.title': 'Reminders',
+    'settings.reminder.notify': 'System notifications',
+    'settings.reminder.sound': 'Notification sound',
+    'settings.reminder.quietHours': 'Quiet hours',
+    'settings.reminder.quietHoursStart': 'Start',
+    'settings.reminder.quietHoursEnd': 'End',
+    'settings.reminder.quietNow': 'Quiet hours are on now — reminders will appear once they end',
+    'settings.reminder.permission.granted': 'System notifications are on',
+    'settings.reminder.permission.denied': 'System notifications are off',
+    'settings.reminder.permission.unsupported': 'This browser cannot show system notifications',
+    'settings.reminder.permission.hint':
+        'Reminders still appear in the app. To also get system notifications, allow notifications in your browser site settings.',
+    'settings.reminder.permission.enable': 'Turn on notifications',
+    'settings.reminder.soundUnavailable':
+        'System notifications are unavailable, so the sound setting has no effect',
     'settings.nickname': 'Edit Nickname',
     'settings.nicknameDesc':
         'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
@@ -843,6 +858,9 @@ const enUS: LocaleMessages = {
     'dialog.projectDelete': 'Delete project',
     'dialog.tagUpdate': 'Edit tag',
     'dialog.taskReminder.confirm': 'I know',
+    'dialog.taskReminder.complete': 'Complete',
+    'dialog.taskReminder.projectFallback': 'List',
+    'dialog.taskReminder.original': 'Originally',
 
     // Shared component
     'component.empty': 'No Data',

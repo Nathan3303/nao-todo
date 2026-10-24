@@ -11,6 +11,12 @@
  * @see docs/adr/2026-09-23-local-preference-sync.md（§D-1b / §D-4 / PS-1 / PS-8 / PS-10）
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
+import {
+    normalizeQuietHours,
+    normalizeReminderSettings,
+    REMINDER_SETTINGS_STORAGE_KEY,
+    type ReminderSettings
+} from '@nao-todo/shared/reminder'
 import { defaultBuiltInProjects } from '../built-in/project/default'
 import {
     projectPreferenceEntityToRecord,
@@ -78,6 +84,12 @@ export interface UserConfigPreferencesSnapshot {
         pomodoroBadge: string | null
         dayZoom: string | null
     }
+    /**
+     * 提醒设置（T531 / AC11）
+     * @description **可选字段**：本地从未设置 ⇒ 快照不带该键（不得抹远端）；
+     *              `null` = 显式清空标记（清除要传播）；`version` 保持 1（服务端哑存储不解析）。
+     */
+    reminder?: ReminderSettings | null
 }
 
 /** 内建清单 id 列表（客户端概念，单一真源 = `defaultBuiltInProjects`） */
@@ -144,6 +156,45 @@ const readBuiltInProjectPreferences = (
 }
 
 /**
+ * 读本地提醒设置快照值（三态）
+ * @returns `undefined` = 本地从未设置（快照**不带**字段）；`null` = 显式清空；否则为归一化设置
+ * @description 坏 JSON 视为从未设置（不得抹远端）；显式清空标记（JSON `null`）保留为 `null`。
+ */
+const readReminderSnapshotValue = (
+    storage: PreferenceStorage
+): ReminderSettings | null | undefined => {
+    const raw = readStorage(storage, REMINDER_SETTINGS_STORAGE_KEY)
+    if (raw === null) return undefined
+    try {
+        const parsed: unknown = JSON.parse(raw)
+        if (parsed === null) return null
+        return normalizeReminderSettings(parsed)
+    } catch {
+        return undefined
+    }
+}
+
+/**
+ * 校验远端提醒设置（AC11③：非法值 ⇒ 不动本地）
+ * @returns `undefined` = 非法/不可识别（不写）；`null` = 显式清空；否则为归一化设置
+ */
+const parseRemoteReminderValue = (raw: unknown): ReminderSettings | null | undefined => {
+    if (raw === null) return null
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+    const source = raw as Record<string, unknown>
+    if (!('notify' in source) && !('sound' in source) && !('quietHours' in source)) return undefined
+    if ('notify' in source && typeof source.notify !== 'boolean') return undefined
+    if ('sound' in source && typeof source.sound !== 'boolean') return undefined
+    if (
+        'quietHours' in source &&
+        source.quietHours !== null &&
+        normalizeQuietHours(source.quietHours) === null
+    )
+        return undefined
+    return normalizeReminderSettings(source)
+}
+
+/**
  * 装配设置面全量快照（**推送时**从本地存储读取，非增量）
  * @param storage 存储面（默认 `localStorage`）
  * @param email 内建偏好键前缀（`${email}/${builtInId}`；null ⇒ 扫描兜底）
@@ -151,24 +202,37 @@ const readBuiltInProjectPreferences = (
 export const buildUserConfigSnapshot = (
     storage: PreferenceStorage = localStorage,
     email: string | null = null
-): UserConfigPreferencesSnapshot => ({
-    version: USER_CONFIG_PREFERENCES_VERSION,
-    builtInProjectPreferences: readBuiltInProjectPreferences(storage, email),
-    asideWidth: readStorage(storage, ASIDE_WIDTH_KEY),
-    calendar: {
-        weekStart: readStorage(storage, CALENDAR_WEEKSTART_KEY),
-        pomodoroBadge: readStorage(storage, CALENDAR_POMODORO_BADGE_KEY),
-        dayZoom: readStorage(storage, CALENDAR_DAY_ZOOM_KEY)
+): UserConfigPreferencesSnapshot => {
+    const reminder = readReminderSnapshotValue(storage)
+    return {
+        version: USER_CONFIG_PREFERENCES_VERSION,
+        builtInProjectPreferences: readBuiltInProjectPreferences(storage, email),
+        asideWidth: readStorage(storage, ASIDE_WIDTH_KEY),
+        calendar: {
+            weekStart: readStorage(storage, CALENDAR_WEEKSTART_KEY),
+            pomodoroBadge: readStorage(storage, CALENDAR_POMODORO_BADGE_KEY),
+            dayZoom: readStorage(storage, CALENDAR_DAY_ZOOM_KEY)
+        },
+        // 从未设置 ⇒ 省略字段（C4③：不得因「看起来空」抹掉远端 / 也不得凭空推送）
+        ...(reminder === undefined ? {} : { reminder })
     }
-})
+}
 
-/** 快照是否有可回传内容（空快照不产生无意义推送） */
-export const isSnapshotEmpty = (snapshot: UserConfigPreferencesSnapshot): boolean =>
-    Object.keys(snapshot.builtInProjectPreferences).length === 0 &&
-    snapshot.asideWidth === null &&
-    snapshot.calendar.weekStart === null &&
-    snapshot.calendar.pomodoroBadge === null &&
-    snapshot.calendar.dayZoom === null
+/**
+ * 快照是否有可回传内容（空快照不产生无意义推送）
+ * @description 提醒字段**存在**即视为有内容（含 `null` 清除标记）⇒ C4①/②：
+ *              只改提醒设置也必须入队推送，清空也必须传播。
+ */
+export const isSnapshotEmpty = (snapshot: UserConfigPreferencesSnapshot): boolean => {
+    if ('reminder' in snapshot) return false
+    return (
+        Object.keys(snapshot.builtInProjectPreferences).length === 0 &&
+        snapshot.asideWidth === null &&
+        snapshot.calendar.weekStart === null &&
+        snapshot.calendar.pomodoroBadge === null &&
+        snapshot.calendar.dayZoom === null
+    )
+}
 
 /** 应用服务端快照到本地存储（远端胜分支；仅覆盖快照中出现的字段） */
 export const applyUserConfigSnapshot = (
@@ -190,6 +254,13 @@ export const applyUserConfigSnapshot = (
         writeStorage(storage, CALENDAR_WEEKSTART_KEY, snapshot.calendar.weekStart ?? null)
         writeStorage(storage, CALENDAR_POMODORO_BADGE_KEY, snapshot.calendar.pomodoroBadge ?? null)
         writeStorage(storage, CALENDAR_DAY_ZOOM_KEY, snapshot.calendar.dayZoom ?? null)
+    }
+    // T531 / AC11③：**字段存在性驱动** —— 有值 ⇒ 写；`null` ⇒ 清；不存在 ⇒ 本地一个字不动
+    if ('reminder' in snapshot) {
+        const reminder = parseRemoteReminderValue(snapshot.reminder)
+        if (reminder === null) writeStorage(storage, REMINDER_SETTINGS_STORAGE_KEY, null)
+        else if (reminder !== undefined)
+            writeStorage(storage, REMINDER_SETTINGS_STORAGE_KEY, JSON.stringify(reminder))
     }
 }
 

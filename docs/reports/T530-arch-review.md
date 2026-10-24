@@ -1,7 +1,8 @@
 # T530 提醒功能补齐（一档）：影响面 / 口径评估
 
 - 状态：评审完成（**纯设计，未改代码**）· 更新：2026-10-24 · Owner：arch-designer
-- 指针：ADR `docs/adr/2026-10-24-reminder-settings-quiet-hours.md` · 前序 ADR `docs/adr/2026-10-23-reminder-local-judgment.md` · PRD `docs/prds/2026-10-23-reminder-local-polling.md` · 偏好 ADR `docs/adr/2026-09-23-local-preference-sync.md`
+- **r2 注记（2026-10-24 终签回填，以 PRD v1.1 / ADR r2 为准）**：① 免打扰区间更正为 **`start > end` = 合法跨天**（原文「倒序 = 非法」作废）；② 「跳过本次」**废弃**，改为弹窗「完成」——成功 / 可重试失败保留队列 / 只读静默出队，并新增幂等 AC13（本报告 §0 Q3 / §4 / §8 R6 / §11 DP-4 的 skip 口径已过期）；③ 权限补「`granted` 但构造失败（Android Chrome）」+ 声音开关置灰（AC9）；④ 通知异常**由适配层内部捕获**、禁止 consume-on-throw（AC10）；⑤ 设置同步补「仅改提醒也推送 / 置空也传播 / 远端缺字段不覆盖本地」（AC11）。
+- 指针：ADR `docs/adr/2026-10-24-reminder-settings-quiet-hours.md` · 前序 ADR `docs/adr/2026-10-23-reminder-local-judgment.md` · PRD 本单 `docs/prds/2026-10-24-reminder-settings.md` · 上一批 PRD `docs/prds/2026-10-23-reminder-local-polling.md` · 偏好 ADR `docs/adr/2026-09-23-local-preference-sync.md`
 - 口径：`rg`/`grep` 穷尽清点 + `read --offset/--limit` 行段读码；`pi-codegraph` 已卸载 ⇒ 影响面为 grep 口径（可能漏 `import.meta.glob` 类动态加载，本需求不涉）；服务端仅只读核对（`nao-todo-server`），**未改任何仓库代码**。
 
 ## 0. 结论摘要

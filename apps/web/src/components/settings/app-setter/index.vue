@@ -4,6 +4,7 @@ import { inject } from 'vue'
 import { t } from '@nao-todo/shared/locales'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import { SettingsLocalDataNotice } from '../local-data-notice'
+import SettingsAppReminder from './reminder.vue'
 
 defineOptions({ name: 'SettingsApp' })
 
@@ -31,6 +32,9 @@ const appVersion = import.meta.env.VITE_APP_VERSION || ''
                     <user-language-setter />
                     <nue-divider />
                     <user-theme-setter :user-use-case="userUseCase" />
+                    <nue-divider />
+                    <!-- 提醒（T531）：并入「应用设置」区块，不新增 Tab -->
+                    <settings-app-reminder />
                     <nue-divider />
                     <!-- 明文姿态用户可见声明（ADR §4.5 / AC17）：两端复用 -->
                     <settings-local-data-notice />

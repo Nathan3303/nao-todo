@@ -50,8 +50,11 @@
  *    · 顺序硬约束：**先 `ledger.claim` → 再 `notify` → 再 `consume`**（AC3/AC4/R6）
  *    · `listCandidates` 失败 ⇒ 静默（不落账、不 notify、不抛未处理拒绝），下轮恢复即可补
  *
- * 事件类型：`TaskReminderEvent = { taskId: string; taskName: string; description?: string }`
- * （原 `shared/types/sse.ts` 的 `SSEReminderEvent` 迁移而来，AC10）
+ * 事件类型：`TaskReminderEvent = {
+ *     taskId: string; taskName: string; description?: string;
+ *     projectId: string;   // T531/AC8：清单名由装配层按 projectId 注入解析
+ *     remindAt: string;    // T531/AC8：**本次触发时刻**（非推进后的值）
+ * }`（原 `shared/types/sse.ts` 的 `SSEReminderEvent` 迁移而来，AC10；T531 扩两字段）
  *
  * 注：本文件不是测试文件（无 `.test.` 后缀），仅供用例共享；**禁止**在本目录引入
  * `persistence-local` / `persistence-sync`（移动端红线 + DDD 守卫）。
@@ -61,6 +64,7 @@ import type { ReminderTask } from '@nao-todo/shared/reminder'
 /** 任务壳：用例只填关心的字段，其余给「活跃 + 无提醒」默认值 */
 export const makeTask = (patch: Partial<ReminderTask> & { id: string }): ReminderTask => ({
     name: `任务-${patch.id}`,
+    projectId: `p-${patch.id}`,
     description: undefined,
     remindAt: null,
     remindRepeat: 'none',

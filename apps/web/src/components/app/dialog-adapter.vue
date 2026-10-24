@@ -28,7 +28,8 @@ import { inject } from 'vue'
 defineOptions({ name: 'AppDialogAdapter' })
 
 // 从上下文注入依赖（仅 UI 服务/总线；业务用例本地组装）
-const { appDialogManager, appSubscriber, showTaskDetails } = inject(INDEX_VIEW_CONTEXT_KEY)!
+const { appDialogManager, appSubscriber, showTaskDetails, getProjectName } =
+    inject(INDEX_VIEW_CONTEXT_KEY)!
 
 // @stores
 const projectsStore = useProjectsStore()
@@ -72,6 +73,7 @@ const countArchivedTasks = async (projectId: string): Promise<number> => {
         :task-use-case="taskUseCase"
         :dialog-manager="appDialogManager"
         :on-open-task="showTaskDetails"
+        :get-project-name="getProjectName"
     />
     <project-creator-dialog :project-use-case="projectUseCase" :dialog-manager="appDialogManager" />
     <project-manager-dialog

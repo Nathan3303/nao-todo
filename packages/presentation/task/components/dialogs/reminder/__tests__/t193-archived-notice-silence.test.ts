@@ -26,7 +26,8 @@ const makeApi = (snoozeResult: unknown) => {
         dialogManager: {} as never,
         taskUseCase: { snooze: vi.fn(async () => snoozeResult) } as never
     })
-    api.enqueue({ taskId: 't1', taskName: '已归档任务' })
+    // T531：事件扩 projectId / remindAt（清单名与原定时间）
+    api.enqueue({ taskId: 't1', taskName: '已归档任务', projectId: 'p1', remindAt: '' })
     return api
 }
 
