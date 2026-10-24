@@ -4,7 +4,11 @@ import {
     USER_JWT_LOCALSTORAGE_KEY,
     USER_PROFILE_CACHE_KEY
 } from '@nao-todo/domain-identity'
-import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared/constants/storage-keys'
+import {
+    PLAINTEXT_NOTICE_ACK_KEY,
+    REMINDER_NOTICE_ACK_KEY
+} from '@nao-todo/shared/constants/storage-keys'
+import { REMINDER_SETTINGS_STORAGE_KEY } from '@nao-todo/shared/reminder'
 import {
     SERVER_TIME_OFFSET_KEY,
     SNOWFLAKE_EPOCH_KEY,
@@ -37,7 +41,9 @@ export const DEVICE_LEVEL_STORAGE_KEYS: readonly string[] = [
     // 服务器时间偏移（设备级时间基准校准）
     SERVER_TIME_OFFSET_KEY,
     // 明文姿态「首次进入」告知已读标记（设备级；单一真源见 @nao-todo/shared 的 PLAINTEXT_NOTICE_ACK_KEY）
-    PLAINTEXT_NOTICE_ACK_KEY
+    PLAINTEXT_NOTICE_ACK_KEY,
+    // 提醒权限一次性说明的已提示状态（T531 / AC9：权限是本设备属性 ⇒ 登出不清、不重复打扰）
+    REMINDER_NOTICE_ACK_KEY
 ]
 
 /** 身份/会话级 localStorage 键（**必清**，精确键） */
@@ -56,6 +62,8 @@ export const USER_SCOPED_STORAGE_KEYS: readonly string[] = [
     'POMODORO_SETTINGS',
     // 侧边栏宽度（`useAsideWidth` 默认 storageKey）
     'ASIDE_WIDTH',
+    // 提醒设置（T531 / AC11：随账号同步 ⇒ 身份级；设备级会把他账号的设置带进本账号）
+    REMINDER_SETTINGS_STORAGE_KEY,
     // 日历周起始（TASK-26 / PS-6：设备级 → 用户级；登出即清，切换账号不串号）
     'CALENDAR_WEEKSTART',
     // 上次访问路由（按用户）

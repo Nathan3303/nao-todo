@@ -36,8 +36,13 @@ import { sendNotification } from '@nao-todo/shared/utils/notification'
 import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 import { getServerTimeOffset } from '@nao-todo/infrastructure/src/persistence-sync/sync-config'
 import { listReminderCandidates } from '@nao-todo/infrastructure/src/persistence-local/repos/task-reminder-candidates'
-import { createClaimLedger, createReminderEngine } from '@nao-todo/shared/reminder'
-import { t } from '@nao-todo/shared/locales'
+import {
+    createClaimLedger,
+    createReminderEngine,
+    isWithinQuietHours,
+    readReminderSettings
+} from '@nao-todo/shared/reminder'
+import { createReminderNotify } from './reminder-notify'
 import { inject, nextTick, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
@@ -161,28 +166,37 @@ const useIndexView = () => {
         }
     }
 
-    /** 通知权限请求（仅支持且未决时发起；引擎保证整个生命周期只调一次） */
-    const requestReminderNotificationPermission = (): void | Promise<unknown> => {
-        if (typeof window === 'undefined' || !('Notification' in window)) return undefined
-        if (Notification.permission !== 'default') return undefined
-        return Notification.requestPermission()
-    }
+    /**
+     * 免打扰抑制门（T531/AC4 · R2）
+     * @description 引擎在 collect / claim **之前**调用；每轮重读设置（本地键 O(1)，跨标签天然一致）
+     *              ⇒ 设置改动 ≤1 轮（10s）即生效。读取失败由引擎 fail-open 兜底。
+     */
+    const isReminderSuppressed = (nowMs: number): boolean =>
+        isWithinQuietHours(nowMs, readReminderSettings(getReminderStorage()).quietHours)
+
+    /**
+     * 提醒派发适配层（T531/AC2 · AC3 · AC8 · AC10）
+     * @description 应用内弹窗恒开 + 系统通知（受通知开关/声音控制）；内部永不抛
+     *              ⇒ 通知不可用不得导致「已落账未消费」的永久丢失。
+     *              索权只在设置区用户手势（启动不再自动索权）。
+     */
+    const notifyReminder = createReminderNotify({
+        openDialog: (event) => appDialogManager.open(TASK_REMINDER_DIALOG_KEY, event),
+        send: sendNotification,
+        readSettings: () => readReminderSettings(getReminderStorage()),
+        resolveProjectName: (projectId) => getProjectName(projectId),
+        onOpenTask: (taskId) => void showTaskDetails(taskId)
+    })
 
     const reminderEngine = createReminderEngine({
         listCandidates: () => listReminderCandidates(nowCalibratedMs()),
         now: nowCalibratedMs,
         ledger: createClaimLedger({ storage: getReminderStorage() }),
-        notify: (event) => {
-            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, event)
-            // 系统通知：标题 = 动作语义、正文 = 任务名；点击 = 聚焦 + 打开该任务详情（AC9）
-            sendNotification(t('task.reminder.title'), event.taskName, {
-                onClick: () => void showTaskDetails(event.taskId)
-            })
-        },
+        notify: notifyReminder,
+        isSuppressed: isReminderSuppressed,
         consume: async (taskId, nextRemindAt) => {
             await taskUseCase.update(taskId, { remindAt: nextRemindAt })
-        },
-        requestNotificationPermission: requestReminderNotificationPermission
+        }
     })
     /** 延迟启动守卫：视图若在加载态期间卸载 ⇒ 已 stop，不得再拉起轮询（F1） */
     let isViewUnmounted = false

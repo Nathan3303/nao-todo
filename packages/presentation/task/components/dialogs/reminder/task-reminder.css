@@ -56,6 +56,24 @@
                 color: var(--nue-primary-color-500);
                 word-break: break-all;
             }
+
+            /* T531/AC8：清单名 + 原定时刻（次要信息行） */
+            .nue-div--reminder__meta {
+                gap: var(--nue-gap-xs);
+                align-items: center;
+                font-size: var(--nue-text-sm);
+                color: var(--nue-primary-color-500);
+
+                .nue-text--reminder__remind-at {
+                    color: var(--nue-primary-color-500);
+
+                    &::before {
+                        content: '·';
+                        margin-right: var(--nue-gap-xs);
+                        color: var(--nue-primary-color-300);
+                    }
+                }
+            }
         }
 
         .nue-div--reminder__actions {

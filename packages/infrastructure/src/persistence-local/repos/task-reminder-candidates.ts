@@ -38,6 +38,8 @@ export const listReminderCandidates = async (
         candidates.push({
             id: record.id,
             name: decryptable ? await cryptoService.decrypt(record.name) : '',
+            // T531/AC8：清单名由装配层按 projectId 注入解析（引擎只透传）
+            projectId: record.projectId,
             description: decryptable ? await cryptoService.decrypt(record.description) : undefined,
             remindAt: record.remindAt,
             remindRepeat: record.remindRepeat,

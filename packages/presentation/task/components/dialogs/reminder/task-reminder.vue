@@ -17,14 +17,18 @@ const dialogRef = ref<DialogInstanceType>()
 const { visible, close } = useDialogWrapper(dialogRef)
 const {
     currentEvent,
+    currentProjectName,
+    remindAtLabel,
     totalCount,
     progressPercent,
     progressText,
     snoozing,
+    completing,
     dialogManager,
     enqueue,
     resetQueue,
     snooze,
+    complete,
     confirm,
     viewDetail
 } = useTaskReminder(props)
@@ -41,6 +45,12 @@ const handleSnooze = async (minutes: number) => {
 
 const handleConfirm = () => {
     confirm()
+    if (!currentEvent.value) handleClose()
+}
+
+/** 「完成」：成功 / 只读出队后若队列清空则关弹窗；失败保留队列（弹窗不关） */
+const handleComplete = async () => {
+    await complete()
     if (!currentEvent.value) handleClose()
 }
 
@@ -75,12 +85,28 @@ onMounted(() => {
                 <nue-text theme="reminder__task-name" @click="viewDetail">
                     {{ currentEvent.taskName }}
                 </nue-text>
+                <!-- T531/AC8：清单名 + 原定提醒时刻（补弹标「原定 …」），不露内部键名 -->
+                <nue-div theme="reminder__meta">
+                    <nue-text theme="reminder__project-name">{{ currentProjectName }}</nue-text>
+                    <nue-text v-if="remindAtLabel" theme="reminder__remind-at">
+                        {{ remindAtLabel }}
+                    </nue-text>
+                </nue-div>
                 <nue-text v-if="currentEvent.description" theme="reminder__task-desc">
                     {{ currentEvent.description }}
                 </nue-text>
             </nue-div>
             <nue-div theme="reminder__actions">
-                <nue-button size="small" theme="primary" @click="handleConfirm">
+                <nue-button
+                    size="small"
+                    theme="primary"
+                    :loading="completing"
+                    :disabled="completing"
+                    @click="handleComplete"
+                >
+                    {{ t('dialog.taskReminder.complete') }}
+                </nue-button>
+                <nue-button size="small" theme="text" @click="handleConfirm">
                     {{ t('dialog.taskReminder.confirm') }}
                 </nue-button>
                 <nue-dropdown size="small" @execute="handleSnoozeExecute" close-when-executed>
