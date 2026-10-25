@@ -5,7 +5,7 @@ import { createPinia } from 'pinia'
 import { nextTick, ref, type Ref } from 'vue'
 import { nueUI } from '@/nue-ui-register'
 import { formatMirrorPulledAt } from '@nao-todo/presentation/offline'
-import { t } from '@nao-todo/shared/locales'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import zhCN from '@nao-todo/shared/locales/zh-CN'
 import enUS from '@nao-todo/shared/locales/en-US'
 import SettingsDialog from '../index.vue'
@@ -19,7 +19,8 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
  *
  * 钩子契约（唯一事实来源 = 本文件；RD 必须按名实现）：
  * - `data-settings-nav="<categoryId>"`：左栏 tab / 窄屏段落的可点入口（两套布局同一 id）
- * - `data-settings-desc`：左栏每个分类的一行说明
+ * - `data-settings-desc`：**右侧面板组头**的一句说明（R2 用户裁定：左栏只留「图标 + 名称」，说明移到右栏组头）；
+ *   左栏内**不得**出现该钩子（信息只迁移、不丢失）
  * - `data-settings-category="<categoryId>"`：当前面板容器（同一时刻只有一个）
  * - `data-setting-id="<itemId>"`：每个设置**行外壳**（钩子挂在分类面板的行上，不挂叶子组件）
  * - `data-settings-zone="danger"`：账户类危险区分组容器
@@ -310,11 +311,12 @@ describe('AC1 四类导航（P/B/N）', () => {
         expect(navIds).toEqual([...CATEGORY_IDS])
     })
 
-    it('P：每类带图标 + 名称 + 一行说明（说明非空且走 i18n）', async () => {
+    it('P：左栏每项 = 图标 + 名称（名称恰为 locale 值，不含说明拼接）', async () => {
         const view = mountDialog()
         await nextTick()
 
         const localeValues = new Set(Object.values(zhCN))
+        const names = new Set<string>()
         for (const category of CATEGORY_IDS) {
             const nav = findNav(view, category)
             expect(nav.exists()).toBe(true)
@@ -324,15 +326,56 @@ describe('AC1 四类导航（P/B/N）', () => {
                 `分类 ${category} 缺图标`
             ).toBe(true)
             // 名称：走 i18n（文案必须是 locale 里存在的值，禁硬编码散文）
-            expect(localeValues.has(nav.text().trim()), `分类 ${category} 名称未走 i18n`).toBe(true)
+            const navText = nav.text().trim()
+            expect(localeValues.has(navText), `分类 ${category} 名称未走 i18n`).toBe(true)
+            names.add(navText)
+            // R2：左栏每项只有名称一行（不得再把说明拼进来）
+            expect(
+                nav.findAll('[data-settings-desc]').length,
+                `分类 ${category} 左栏仍有副文本`
+            ).toBe(0)
         }
+        // 4 个名称互不相同（没有把说明当名称、也没有重复）
+        expect(names.size).toBe(4)
+    })
 
-        const descs = view.findAll('[data-settings-desc]')
-        expect(descs.length).toBe(4)
-        for (const desc of descs) {
-            expect(desc.text().trim().length).toBeGreaterThan(0)
-            expect(localeValues.has(desc.text().trim()), '分类说明未走 i18n').toBe(true)
+    it('N：左栏不承载说明（`data-settings-desc` 绝迹于左栏，防说明又飘回来）', async () => {
+        const view = mountDialog()
+        await nextTick()
+
+        const tabs = view.find('.sd-tabs')
+        expect(tabs.exists()).toBe(true)
+        expect(tabs.findAll('[data-settings-desc]').length).toBe(0)
+        // 逐项复查（桌面左栏每项外层容器）
+        for (const category of CATEGORY_IDS) {
+            expect(findNav(view, category).findAll('[data-settings-desc]').length).toBe(0)
         }
+    })
+
+    it('P：信息未丢 —— 右侧面板组头说明仍在（每类至少 1 条、走 i18n）', async () => {
+        const view = mountDialog()
+        await nextTick()
+
+        const localeValues = new Set(Object.values(zhCN))
+        const seen = new Set<string>()
+        for (const category of CATEGORY_IDS) {
+            await goToCategory(view, category)
+            const panel = view.find('[data-settings-category]')
+            expect(panel.exists()).toBe(true)
+
+            const descs = panel.findAll('[data-settings-desc]')
+            expect(descs.length, `分类 ${category} 右栏缺组头说明`).toBeGreaterThan(0)
+            for (const desc of descs) {
+                const text = desc.text().trim()
+                expect(text.length).toBeGreaterThan(0)
+                expect(localeValues.has(text), `分类 ${category} 组头说明未走 i18n`).toBe(true)
+                seen.add(text)
+            }
+            // 该类自身的说明确实出现在右栏（不只是别的组的说明）
+            expect(panel.text()).toContain(t(`settings.ia.${category}.desc` as LocaleKey))
+        }
+        // 四类说明合计 4 条（一条也未被删掉）
+        expect(seen.size).toBeGreaterThanOrEqual(4)
     })
 
     it('P：点任一类 ⇒ 右侧切到该类内容（4 类逐一切换）', async () => {
