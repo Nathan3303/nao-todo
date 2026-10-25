@@ -589,6 +589,38 @@ onUnmounted(unbindSettingsDialogHost)
     background: var(--nue-primary-color-100);
 }
 
+/* ===== 桌面常驻：状态行三重可辨（颜色 + 符号 + 文字；去色后仍靠符号与文字区分） ===== */
+.sd-desktop-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--nue-gap-2xs);
+    min-width: 0;
+    font-size: var(--nue-text-sm);
+    line-height: 1.5;
+}
+
+.sd-desktop-status__symbol {
+    flex: none;
+    font-weight: 700;
+}
+
+.sd-desktop-status.is-ok {
+    color: var(--nue-success-color-100);
+}
+
+.sd-desktop-status.is-warn {
+    color: var(--nue-warning-color-90);
+}
+
+.sd-desktop-status.is-error {
+    color: var(--nue-error-color-90);
+}
+
+/* 行内仅右对齐一个动作（如「退出 NaoTodo」） */
+.sd-row--end {
+    justify-content: flex-end;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sd-cat {
         animation: none;

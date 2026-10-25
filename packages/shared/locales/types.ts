@@ -148,6 +148,8 @@ export interface LocaleMessages {
     'identity.offlineName': string
     'gate.enterOffline': string
     'gate.signInAgain': string
+    'session.expired.title': string
+    'session.expired.body': string
     'gate.offlineUnavailable': string
 
     // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
@@ -311,6 +313,16 @@ export interface LocaleMessages {
     'settings.reminder.permission.hint': string
     'settings.reminder.permission.enable': string
     'settings.reminder.soundUnavailable': string
+    'settings.reminder.desktop.title': string
+    'settings.reminder.desktop.autostart': string
+    'settings.reminder.desktop.status.available': string
+    'settings.reminder.desktop.status.unconfirmed': string
+    'settings.reminder.desktop.status.needsApproval': string
+    'settings.reminder.desktop.status.notEffective': string
+    'settings.reminder.desktop.status.unsupported': string
+    'settings.reminder.desktop.retry': string
+    'settings.reminder.desktop.quit': string
+    'settings.reminder.desktop.hint': string
     'settings.nickname': string
     'settings.nicknameDesc': string
     'settings.nicknamePlaceholder': string

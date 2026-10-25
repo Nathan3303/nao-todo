@@ -20,12 +20,15 @@
 export interface SingleInstanceAppLike {
     requestSingleInstanceLock(): boolean
     quit(): void
-    on(event: 'second-instance', listener: () => void): unknown
+    on(event: 'second-instance', listener: (...args: unknown[]) => void): unknown
 }
 
 export interface SingleInstanceOptions {
-    /** 第二实例启动时聚焦首实例窗口（可注入 mock） */
-    focusMainWindow?: () => void
+    /**
+     * 第二实例启动时把首实例窗口带到前台（可注入 mock）
+     * @param cmdLine 第二实例的命令行参数（`--autostart` 那次不打扰用户，见 lifecycle）
+     */
+    focusMainWindow?: (cmdLine?: readonly string[]) => void
 }
 
 /**
@@ -40,7 +43,11 @@ export const enforceSingleInstance = (
         app.quit()
         return false
     }
-    // 第二实例启动：聚焦首实例（首实例无窗口时为 no-op）
-    app.on('second-instance', () => options.focusMainWindow?.())
+    // 第二实例启动：把首实例带到前台（首实例无窗口时为 no-op）
+    // 注意：隐藏窗口 `focus()` 无效 ⇒ 实际展示由 `lifecycle.handleSecondInstance` 做 show+restore+focus；
+    // `--autostart` 那次不打扰用户（自启与手动启动并发，AC5）
+    app.on('second-instance', (_event: unknown, cmdLine: unknown) =>
+        options.focusMainWindow?.(Array.isArray(cmdLine) ? (cmdLine as string[]) : [])
+    )
     return true
 }

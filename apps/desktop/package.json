@@ -17,6 +17,12 @@
     },
     "build": {
         "appId": "space.nathanao.todo",
+        "extraResources": [
+            {
+                "from": "build/tray",
+                "to": "tray"
+            }
+        ],
         "productName": "nao-todo",
         "files": [
             "out/renderer/**/*",

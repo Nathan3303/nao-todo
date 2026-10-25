@@ -3,6 +3,7 @@ import { isSettingsDialogOpen } from '@/components/settings/dialog/state'
 import { APP_CONTEXT_KEY } from '@/context'
 import {
     useAppHandlers,
+    useDesktopShell,
     useProjectUseCase,
     useScope,
     useShortcut,
@@ -142,6 +143,17 @@ const useIndexView = () => {
     }
 
     /**
+     * 提醒通知点击：先把主窗口带到前台，再打开任务详情（AC3）
+     * @description 窗口收进托盘（隐藏）时，仅路由跳转用户看不见 ⇒ 桌面端需 `show + focus`；
+     *              Web 端 `useDesktopShell` 是 no-op 桩，行为零变化。
+     */
+    const desktopShell = useDesktopShell()
+    const openTaskFromNotification = (taskId: TaskViewObject['id']): void => {
+        desktopShell.showMainWindow()
+        void showTaskDetails(taskId)
+    }
+
+    /**
      * 从用户配置加载主题模式并应用到主题存储
      */
     const loadUserThemeModeFromConfig = () => {
@@ -186,7 +198,7 @@ const useIndexView = () => {
         send: sendNotification,
         readSettings: () => readReminderSettings(getReminderStorage()),
         resolveProjectName: (projectId) => getProjectName(projectId),
-        onOpenTask: (taskId) => void showTaskDetails(taskId),
+        onOpenTask: openTaskFromNotification,
         // C3（AC9）：权限已授予但「未送达」⇒ 设备级降级标记（设置区显示「不支持」）
         markNotifyUnsupported: () => markNotifyUnsupported(getReminderStorage())
     })

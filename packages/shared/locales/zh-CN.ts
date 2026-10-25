@@ -151,6 +151,8 @@ const zhCN: LocaleMessages = {
     'identity.offlineName': '{name}（离线）',
     'gate.enterOffline': '离线进入',
     'gate.signInAgain': '重新登录',
+    'session.expired.title': '登录已过期',
+    'session.expired.body': '请重新登录，登录后提醒会继续照常弹出。',
     'gate.offlineUnavailable': '无法离线进入，请重试或重新登录',
 
     // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
@@ -324,6 +326,18 @@ const zhCN: LocaleMessages = {
         '提醒仍会照常弹出。想在系统通知里看到提醒，请在浏览器的站点设置中允许通知。',
     'settings.reminder.permission.enable': '开启系统通知',
     'settings.reminder.soundUnavailable': '系统通知不可用，声音设置暂时无效',
+    // 桌面常驻（D1：提醒分类下的子块；四态文案互不相同，且不裸露内部术语）
+    'settings.reminder.desktop.title': '桌面常驻',
+    'settings.reminder.desktop.autostart': '开机时自动启动',
+    'settings.reminder.desktop.status.available': '已开启，关掉窗口后仍会照常提醒',
+    'settings.reminder.desktop.status.unconfirmed': '已开启，但可能不显示托盘图标',
+    'settings.reminder.desktop.status.needsApproval': '需要你在系统设置中批准后才能生效',
+    'settings.reminder.desktop.status.notEffective': '开机自启没有生效，可能被系统策略阻止了',
+    'settings.reminder.desktop.status.unsupported': '当前环境不支持关掉窗口后继续运行',
+    'settings.reminder.desktop.retry': '重新尝试',
+    'settings.reminder.desktop.quit': '退出 NaoTodo',
+    'settings.reminder.desktop.hint':
+        '关掉窗口后 NaoTodo 仍在后台运行，提醒照常弹出。需要完全停止时，请用「退出 NaoTodo」。',
     'settings.nickname': '修改用户昵称',
     'settings.nicknameDesc': '昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。',
     'settings.nicknamePlaceholder': '请输入昵称',
