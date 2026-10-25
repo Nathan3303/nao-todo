@@ -829,3 +829,111 @@ describe('AC10 设计一致性（D 静态守卫）', () => {
         }
     })
 })
+
+/**
+ * AC7（T539 红基线）左栏 `tab` ↔ `tabpanel` 语义 + 键盘切换
+ * @description 现状：`role=tablist` + `role=tab` + `aria-selected` 已有，但**无 `aria-controls`**、
+ *              面板无 `role=tabpanel` / `aria-labelledby`，方向键 / `Home` / `End` 不切分类
+ *              （PRD `docs/prds/2026-10-25-correctness-batch.md` R5 / AC7）。
+ *              钩子契约（RD 按名实现，不得反向改断言）：
+ *              - 每个 `[role="tab"]` 必有非空 `id` 与非空 `aria-controls`，且该 id 的元素**存在**、
+ *                `role="tabpanel"`、`aria-labelledby` **回指**该 tab 的 id（4 个 tab 全部，不只当前项）；
+ *              - `ArrowDown` / `ArrowUp` 前后切分类，`Home` / `End` 跳首/末；切换后 `aria-selected`
+ *                与**焦点**同步落到新 tab（禁只换内容不换焦点）。
+ */
+describe('AC7 a11y：左栏 tab ↔ tabpanel 关联 + 键盘切换', () => {
+    /** 本组需真实 DOM（`document.getElementById` / `document.activeElement`）⇒ 挂到 body */
+    const mountAttached = (): VueWrapper => {
+        mocks.syncStatusRef.value = defaultSyncStatus()
+        wrapper = mount(SettingsDialog, {
+            attachTo: document.body,
+            global: {
+                plugins: [createPinia(), nueUI],
+                provide: {
+                    [INDEX_VIEW_CONTEXT_KEY as symbol]: {
+                        appSubscriber: {},
+                        appDialogManager: { open: vi.fn(), close: vi.fn() },
+                        isDisplayAside: ref(true),
+                        isUseFloatAside: ref(false),
+                        switchDisplayAside: vi.fn()
+                    }
+                },
+                components: { 'nue-dialog': NueDialogStub }
+            }
+        })
+        return wrapper
+    }
+
+    const tabsOf = (view: VueWrapper) => view.findAll('[role="tab"]')
+    const tabElement = (view: VueWrapper, index: number): HTMLElement =>
+        tabsOf(view)[index]!.element as HTMLElement
+
+    it('4 个 tab 均有 aria-controls，目标存在且为 tabpanel（aria-labelledby 回指）', async () => {
+        const view = mountAttached()
+        await nextTick()
+
+        const tabs = tabsOf(view)
+        expect(tabs).toHaveLength(CATEGORY_IDS.length)
+
+        const selected = tabs.filter((tab) => tab.attributes('aria-selected') === 'true')
+        expect(selected, '恰有一个 tab 处于选中态').toHaveLength(1)
+
+        for (const [index, tab] of tabs.entries()) {
+            const el = tab.element as HTMLElement
+            const label = `${CATEGORY_IDS[index]} tab`
+            expect(
+                el.id.trim().length,
+                `${label} 缺 id（aria-labelledby 回指需要）`
+            ).toBeGreaterThan(0)
+
+            const controls = el.getAttribute('aria-controls')
+            expect(controls?.trim().length ?? 0, `${label} 缺 aria-controls`).toBeGreaterThan(0)
+
+            const panel = document.getElementById(controls!)
+            expect(panel, `${label} 的 aria-controls="${controls}" 目标不存在`).not.toBeNull()
+            expect(panel!.getAttribute('role'), `${controls} 缺 role=tabpanel`).toBe('tabpanel')
+            expect(panel!.getAttribute('aria-labelledby'), `${controls} 未回指 ${el.id}`).toBe(
+                el.id
+            )
+        }
+    })
+
+    it('ArrowDown / ArrowUp 切分类并同步 aria-selected 与焦点', async () => {
+        const view = mountAttached()
+        await nextTick()
+
+        tabElement(view, 0).focus()
+        await tabsOf(view)[0]!.trigger('keydown', { key: 'ArrowDown' })
+        await nextTick()
+
+        expect(activeCategory(view)).toBe('appearance')
+        expect(tabElement(view, 1).getAttribute('aria-selected')).toBe('true')
+        expect(tabElement(view, 0).getAttribute('aria-selected')).toBe('false')
+        expect(document.activeElement).toBe(tabElement(view, 1))
+
+        await tabsOf(view)[1]!.trigger('keydown', { key: 'ArrowUp' })
+        await nextTick()
+
+        expect(activeCategory(view)).toBe('account')
+        expect(tabElement(view, 0).getAttribute('aria-selected')).toBe('true')
+        expect(document.activeElement).toBe(tabElement(view, 0))
+    })
+
+    it('Home / End 跳首/末并同步 aria-selected 与焦点', async () => {
+        const view = mountAttached()
+        await nextTick()
+
+        tabElement(view, 1).focus()
+        await tabsOf(view)[1]!.trigger('keydown', { key: 'End' })
+        await nextTick()
+        expect(activeCategory(view)).toBe('data')
+        expect(tabElement(view, 3).getAttribute('aria-selected')).toBe('true')
+        expect(document.activeElement).toBe(tabElement(view, 3))
+
+        await tabsOf(view)[3]!.trigger('keydown', { key: 'Home' })
+        await nextTick()
+        expect(activeCategory(view)).toBe('account')
+        expect(tabElement(view, 0).getAttribute('aria-selected')).toBe('true')
+        expect(document.activeElement).toBe(tabElement(view, 0))
+    })
+})

@@ -355,6 +355,53 @@ describe('LocalTaskRepoImpl', () => {
         expect(result!.taskEntities.map((t) => t.name)).toEqual(['banana', 'apple'])
     })
 
+    /**
+     * DEF-11（T539 红基线）`priority` 排序语义
+     * @description 通用比较器对字符串走 `localeCompare` ⇒ 现为**字母序**（high/low/medium）。
+     *              口径（PRD `docs/prds/2026-10-25-correctness-batch.md` AC1 + 服务端实测一致）：
+     *              降序 = 高 → 中 → 低 → 无值；升序 = 无值 → 低 → 中 → 高。
+     *              实现提示：语义序须**单一来源**（domain 既有 `prioritySNMap`），禁字符串比较。
+     */
+    it('DEF-11/AC1：priority 降序为 高→中→低→无值，升序反向（语义序，非字母序）', async () => {
+        const repo = new LocalTaskRepoImpl()
+        // 创建顺序刻意打乱，证明结果来自排序而非插入序
+        await repo.create(makeTaskVO({ name: '低', priority: 'low' }))
+        await repo.create(makeTaskVO({ name: '无值', priority: '' }))
+        await repo.create(makeTaskVO({ name: '高', priority: 'high' }))
+        await repo.create(makeTaskVO({ name: '中', priority: 'medium' }))
+
+        const [desc, descError] = await repo.list('isDeleted=false&sort=priority:desc')
+        expect(descError).toBeNull()
+        expect(desc!.taskEntities.map((t) => t.name)).toEqual(['高', '中', '低', '无值'])
+
+        const [asc, ascError] = await repo.list('isDeleted=false&sort=priority:asc')
+        expect(ascError).toBeNull()
+        expect(asc!.taskEntities.map((t) => t.name)).toEqual(['无值', '低', '中', '高'])
+    })
+
+    it('DEF-11/AC2：同优先级保持既有次序（稳定不抖动），全部无值时保持原序', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: '高A', priority: 'high' }))
+        await repo.create(makeTaskVO({ name: '高B', priority: 'high' }))
+        await repo.create(makeTaskVO({ name: '高C', priority: 'high' }))
+
+        const [first] = await repo.list('isDeleted=false&sort=priority:desc')
+        const [second] = await repo.list('isDeleted=false&sort=priority:desc')
+        expect(first!.taskEntities.map((t) => t.name)).toEqual(['高A', '高B', '高C'])
+        // 两次查询结果一致（无抖动）
+        expect(second!.taskEntities.map((t) => t.id)).toEqual(first!.taskEntities.map((t) => t.id))
+
+        const noPriorityRepo = new LocalTaskRepoImpl()
+        await localDatabase.tasks.clear()
+        await noPriorityRepo.create(makeTaskVO({ name: '无A', priority: '' }))
+        await noPriorityRepo.create(makeTaskVO({ name: '无B', priority: '' }))
+        await noPriorityRepo.create(makeTaskVO({ name: '无C', priority: '' }))
+        const [allEmptyDesc] = await noPriorityRepo.list('isDeleted=false&sort=priority:desc')
+        const [allEmptyAsc] = await noPriorityRepo.list('isDeleted=false&sort=priority:asc')
+        expect(allEmptyDesc!.taskEntities.map((t) => t.name)).toEqual(['无A', '无B', '无C'])
+        expect(allEmptyAsc!.taskEntities.map((t) => t.name)).toEqual(['无A', '无B', '无C'])
+    })
+
     it('父子数据成环（历史脏数据）时级联删除不死循环', async () => {
         const repo = new LocalTaskRepoImpl()
         const [a] = await repo.create(makeTaskVO({ name: '任务A' }))
