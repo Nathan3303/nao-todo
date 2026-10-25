@@ -186,13 +186,16 @@ before-quit / query-session-end / session-end(Windows)：isQuitting=true（防�
     ```sql
     SELECT COUNT(*) AS total FROM user_sessions;
     SELECT COUNT(*) AS active FROM user_sessions WHERE expired_at > NOW() AND deleted_at IS NULL;
-    SELECT COUNT(*) AS reclaim_expired FROM user_sessions WHERE expired_at < NOW() - INTERVAL 7 DAY;
+    -- ⚠️ PM 更正（2026-10-25，`T546` 实测证据）：必须加 `AND deleted_at IS NULL`，否则与 `removed_expired` 不可对账
+    SELECT COUNT(*) AS reclaim_expired FROM user_sessions WHERE expired_at < NOW() - INTERVAL 7 DAY AND deleted_at IS NULL;
     SELECT COUNT(*) AS reclaim_revoked FROM user_sessions WHERE deleted_at IS NOT NULL AND deleted_at < NOW() - INTERVAL 1 DAY;
     ```
 3. 临时 `SESSION_CLEANUP_RUN_ON_START=true` 重启 → 日志应出现一行 `session_cleanup removed_expired=<reclaim_expired> removed_revoked=<reclaim_revoked>`（无 token）。
 4. 复跑第 2 步：`total` 减少量 = 两者之和、**`active` 数值不变**；随后把 `runOnStart` 改回 `false` 重启。
 5. 定时确认：把 `cron` 临时改 `*/5 * * * *` 观察一次，再改回 `10 3 * * *`；或次日看日志。
 6. 客户端侧（AC7 另一半）：同设备登录两次 ⇒ 该用户行数不变；抓包/日志确认 `X-Device-Id` 非空；登出后本地 `nao.deviceId` 仍在（既有 K10 用例覆盖）。
+
+**PM 更正（2026-10-25，`T546` 实现回执证据）**：① 上述第 2/4 步 `reclaim_expired` **必须加 `AND deleted_at IS NULL`**（已就地改），否则会与 `removed_expired` 不可对账 —— `T546` 在 dev 库只读实测：原 SQL 得 50 行，其中 **31 行是已登出会话**（与 `reclaim_revoked` 重叠），实际 `removed_expired = 19`、`removed_revoked = 31`，故「减少量 = 两数之和」在原 SQL 下永不成立；② 两条谓词因此**互斥**（也保住了「两条独立宽限期」的原意：过期 8 天但今天才登出的行，不会被过期条件绕过 24h 登出宽限期）；③ 积压 > `maxBatches × batchSize`（默认 20×500）时单次删不完，需次日再对账。
 
 **最小验证方法（qa 自动化口径）**：仓储层单测（种子数据 + 断言）为主；部署后 SQL 对账由 PM/用户按上表执行（可复制）。
 
