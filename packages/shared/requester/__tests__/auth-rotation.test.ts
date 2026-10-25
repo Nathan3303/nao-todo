@@ -106,34 +106,35 @@ describe('轮换宽限（纯逻辑，R2）', () => {
     })
 })
 
-describe('轮换宽限 · 请求器接线（R2 / AC6）', () => {
-    /** axios 假实例：只为捕获响应拦截器（不发起真实网络） */
-    const captured = vi.hoisted(() => ({
-        successHandlers: [] as Array<(response: unknown) => unknown>,
-        errorHandlers: [] as Array<(error: unknown) => Promise<unknown>>
-    }))
+/** axios 假实例：只为捕获响应拦截器（不发起真实网络） */
+const captured = vi.hoisted(() => ({
+    successHandlers: [] as Array<(response: unknown) => unknown>,
+    errorHandlers: [] as Array<(error: unknown) => Promise<unknown>>
+}))
 
-    vi.mock('axios', () => {
-        const instance = {
-            interceptors: {
-                request: { use: () => undefined },
-                response: {
-                    use: (
-                        onSuccess: (response: unknown) => unknown,
-                        onError: (error: unknown) => Promise<unknown>
-                    ) => {
-                        captured.successHandlers.push(onSuccess)
-                        captured.errorHandlers.push(onError)
-                    }
+// ⚠️ `vi.mock` / `vi.hoisted` 必须在模块顶层（vitest 会提升，写在 describe 内会告警并将在未来版本报错）
+vi.mock('axios', () => {
+    const instance = {
+        interceptors: {
+            request: { use: () => undefined },
+            response: {
+                use: (
+                    onSuccess: (response: unknown) => unknown,
+                    onError: (error: unknown) => Promise<unknown>
+                ) => {
+                    captured.successHandlers.push(onSuccess)
+                    captured.errorHandlers.push(onError)
                 }
             }
         }
-        return {
-            default: { create: () => instance },
-            AxiosError: class AxiosError extends Error {}
-        }
-    })
+    }
+    return {
+        default: { create: () => instance },
+        AxiosError: class AxiosError extends Error {}
+    }
+})
 
+describe('轮换宽限 · 请求器接线（R2 / AC6）', () => {
     const createRequester = async (onAuthExpired: () => void) => {
         const { default: useAxiosRequester } = await import('../axios')
         useAxiosRequester('http://localhost:3302', false, onAuthExpired)

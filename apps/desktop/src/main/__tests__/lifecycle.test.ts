@@ -125,7 +125,9 @@ const createHarness = async (options: {
     const notifyTrayHint = vi.fn()
     const markTrayHintShown = vi.fn()
     let hintShown = options.hintShown ?? false
-    const currentWindow = options.window ?? createFakeWindow().window
+    // ⚠️ 不能用 `options.window ?? ...`：`??` 会把**显式传入的 null**（首实例无窗口的合法状态）
+    //    兜成假窗口，使「无窗口」用例与「窗口已隐藏」用例处在同一可观测状态（T547 夹具缺陷）。
+    const currentWindow = 'window' in options ? (options.window ?? null) : createFakeWindow().window
     const lifecycle = mod.createAppLifecycle({
         platform: options.platform ?? 'linux',
         trayStatus: options.trayStatus ?? 'available',
