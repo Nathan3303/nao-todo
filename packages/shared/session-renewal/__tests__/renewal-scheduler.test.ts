@@ -13,10 +13,14 @@ import { describe, expect, it, vi } from 'vite-plus/test'
  *       → `{ start(), stop(), trigger(reason), lastSuccessAt(), nextAttemptAt(), isRunning() }`
  *       常量：`RENEWAL_PERIOD_MS` / `RENEWAL_MIN_GAP_MS` / `RENEWAL_BACKOFF_MS`
  *
- * 口径提示（本文件按 T3 字面实现，见回执「PRD 歧义」）：`resume` / `online` 属**补集触发**
- * ——距上次成功不足 12h 也会续期，只受 ≥5min 去抖约束。
+ * 口径提示（PM 2026-10-25 裁定，见报告 §八）：
+ *  - **Q1 = 是**：`resume` / `online` 属**补集触发** —— 距上次成功不足 12h 也会续期，只受 ≥5min 去抖约束；
+ *  - **Q2**：**启动后 60s 内 checkin 总请求数必须恰好 1 次**（不得双发，也不得为 0）。为此调度器读
+ *    只读端口 `lastCheckInAt()`（应用层记录的「最近一次 checkin 发起时刻」，含页面冷启动那次）：
+ *    < 60s ⇒ 复用冷启动结果、不再请求；否则自己补一次。
  * @see docs/prds/2026-10-25-desktop-tray-autostart.md（AC6 / AC8 / AC11）
  * @see docs/reports/T543-arch-review.md（§三 T3 / §五 5.3 续期时序与失败分流）
+ * @see docs/qa/2026-10-25-t544-baseline.md（§八 PM 裁定 Q1/Q2）
  */
 
 type CheckInResult = 'success' | 'network-error' | 'credential-error'
@@ -24,6 +28,8 @@ type CheckInResult = 'success' | 'network-error' | 'credential-error'
 interface RenewalSchedulerDeps {
     checkIn(): Promise<CheckInResult>
     now(): number
+    /** 应用层记录的最近一次 checkin **发起**时刻（含页面冷启动那次）；无记录 ⇒ null */
+    lastCheckInAt(): number | null
     timers: {
         set(callback: () => void, delayMs: number): unknown
         clear(handle: unknown): void
@@ -79,11 +85,18 @@ const flush = async (): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
+/** 启动续期窗口（Q2：启动后 60s 内合计恰好 1 次 checkin） */
+const RENEWAL_START_WINDOW_MS = 60_000
+
 const createEnv = async (options: {
     ac: string
     results?: CheckInResult[]
     idle?: boolean
     random?: () => number
+    /** 冷启动时应用层已发起的 checkin 次数（只用于「合计恰好 1 次」口径的记账） */
+    coldStartCheckIns?: number
+    /** 最近一次 checkin 的相对时刻（相对 BASE，毫秒）；缺省 = 无记录 */
+    lastCheckInAtOffset?: number
 }) => {
     const mod = await load(options.ac)
     const BASE = new Date('2026-10-25T00:00:00.000Z').getTime()
@@ -95,10 +108,13 @@ const createEnv = async (options: {
     const timers = new Map<number, { at: number; callback: () => void }>()
     const checkIn = vi.fn(async (): Promise<CheckInResult> => results.shift() ?? 'success')
     const onCredentialExpired = vi.fn()
+    const lastCheckInAt =
+        options.lastCheckInAtOffset === undefined ? null : BASE + options.lastCheckInAtOffset
 
     const deps: RenewalSchedulerDeps = {
         checkIn,
         now: () => now,
+        lastCheckInAt: () => lastCheckInAt,
         timers: {
             set: (callback, delayMs) => {
                 delays.push(delayMs)
@@ -144,6 +160,8 @@ const createEnv = async (options: {
         scheduler,
         checkIn,
         onCredentialExpired,
+        /** 页面冷启动已发生的 checkin 次数（与调度器请求数相加 ⇒ 启动 60s 内总数） */
+        coldStartCheckIns: options.coldStartCheckIns ?? 0,
         delays,
         timers,
         now: () => now,
@@ -194,12 +212,55 @@ describe('续期常量与周期（T3）', () => {
 })
 
 describe('触发补集（T3 / AC6）', () => {
-    it('启动即续期一次（启动触发）', async () => {
+    it('启动后 60s 内 checkin 请求**恰好 1 次**（无冷启动记录 ⇒ 调度器补 1 次，且不重复发）（Q2）', async () => {
         const env = await createEnv({ ac: 'AC6' })
 
         await env.scheduler.start()
+        await env.advance(RENEWAL_START_WINDOW_MS)
 
         expect(env.checkIn).toHaveBeenCalledTimes(1)
+        expect(env.coldStartCheckIns + env.checkIn.mock.calls.length).toBe(1)
+    })
+
+    it('不得为 0：冷启动记录已过窗（>60s）⇒ 启动仍必须续期（Q2 负向）', async () => {
+        const env = await createEnv({
+            ac: 'AC6',
+            coldStartCheckIns: 1,
+            lastCheckInAtOffset: -61_000
+        })
+
+        await env.scheduler.start()
+        await env.advance(RENEWAL_START_WINDOW_MS)
+
+        expect(env.checkIn.mock.calls.length).toBeGreaterThanOrEqual(1)
+        expect(env.coldStartCheckIns + env.checkIn.mock.calls.length).toBe(2)
+    })
+
+    it('冷启动已完成续期（记录 <60s）⇒ 调度器不再发，合计仍恰好 1 次（不双发）（Q2）', async () => {
+        const env = await createEnv({
+            ac: 'AC6',
+            coldStartCheckIns: 1,
+            lastCheckInAtOffset: 0
+        })
+
+        await env.scheduler.start()
+        await env.advance(RENEWAL_START_WINDOW_MS)
+
+        expect(env.checkIn).not.toHaveBeenCalled()
+        expect(env.coldStartCheckIns + env.checkIn.mock.calls.length).toBe(1)
+    })
+
+    it('复用冷启动结果时仍照常排下一次（12h ±10%），不得因跳过首次而不排期（Q2）', async () => {
+        const env = await createEnv({
+            ac: 'AC6',
+            coldStartCheckIns: 1,
+            lastCheckInAtOffset: 0,
+            random: () => 0.5
+        })
+
+        await env.scheduler.start()
+
+        expect(env.scheduler.nextAttemptAt()).toBe(env.now() + 12 * HOUR)
     })
 
     it('定时到期 ⇒ 12h 后自动续期（距上次成功 ≥12h）', async () => {
