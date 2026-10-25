@@ -48,7 +48,7 @@ const openReleases = (): void => {
         <section class="sd-group">
             <header class="sd-group__head">
                 <h2 class="sd-group__title">{{ t('settings.ia.data.name') }}</h2>
-                <p class="sd-group__desc">{{ t('settings.ia.data.desc') }}</p>
+                <p class="sd-group__desc" data-settings-desc>{{ t('settings.ia.data.desc') }}</p>
             </header>
 
             <!-- 同步状态（只读一行：无按钮、无链接、无开关） -->

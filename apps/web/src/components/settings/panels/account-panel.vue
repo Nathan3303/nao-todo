@@ -71,7 +71,7 @@ const handleDeactivated = async (): Promise<void> => {
         <section class="sd-group">
             <header class="sd-group__head">
                 <h2 class="sd-group__title">{{ t('settings.ia.account.name') }}</h2>
-                <p class="sd-group__desc">{{ t('settings.ia.account.desc') }}</p>
+                <p class="sd-group__desc" data-settings-desc>{{ t('settings.ia.account.desc') }}</p>
             </header>
 
             <div class="sd-row sd-row--block" data-setting-id="profile">
@@ -105,7 +105,7 @@ const handleDeactivated = async (): Promise<void> => {
         <section class="sd-group sd-group--danger" data-settings-zone="danger">
             <header class="sd-group__head">
                 <h3 class="sd-group__title">{{ t('settings.dangerZone') }}</h3>
-                <p class="sd-group__desc">{{ t('settings.ia.danger.desc') }}</p>
+                <p class="sd-group__desc" data-settings-desc>{{ t('settings.ia.danger.desc') }}</p>
             </header>
 
             <button

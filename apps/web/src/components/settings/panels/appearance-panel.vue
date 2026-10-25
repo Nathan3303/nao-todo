@@ -20,7 +20,9 @@ const { userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
         <section class="sd-group">
             <header class="sd-group__head">
                 <h2 class="sd-group__title">{{ t('settings.ia.appearance.name') }}</h2>
-                <p class="sd-group__desc">{{ t('settings.ia.appearance.desc') }}</p>
+                <p class="sd-group__desc" data-settings-desc>
+                    {{ t('settings.ia.appearance.desc') }}
+                </p>
             </header>
             <div class="sd-row sd-row--block" data-setting-id="theme">
                 <user-theme-setter :user-use-case="userUseCase" />

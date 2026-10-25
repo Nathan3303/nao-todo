@@ -72,7 +72,9 @@ const commitQuietHours = (): void => {
         <section class="sd-group">
             <header class="sd-group__head">
                 <h2 class="sd-group__title">{{ t('settings.ia.reminder.name') }}</h2>
-                <p class="sd-group__desc">{{ t('settings.ia.reminder.desc') }}</p>
+                <p class="sd-group__desc" data-settings-desc>
+                    {{ t('settings.ia.reminder.desc') }}
+                </p>
             </header>
 
             <!-- 系统通知 -->

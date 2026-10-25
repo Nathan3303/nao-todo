@@ -2,7 +2,8 @@
 /**
  * SHELL-01 设置对话框（桌面端 + T521 抽屉窄屏）
  * @description **T535：内容重排为 4 类信息架构**（账户 / 外观与语言 / 提醒 / 数据与关于）。
- *              桌面（>445px）= 左栏分类导航（图标 + 名称 + 一行说明） + 右侧分类面板；
+ *              桌面（>445px）= 左栏分类导航（R2：只留图标 + 名称） + 右侧分类面板
+ *              （每类的一句说明由右侧组头承载，信息只迁移、不丢失）；
  *              窄屏（≤445px）= 顶部 4 段分段切换（`segmented-switch`，2 字标签） + 单列面板。
  *              两套布局**同源**（同一 `categories`、同一 `activeCategoryId`）且**互斥**渲染。
  *
@@ -35,7 +36,6 @@ const categories = [
         icon: 'account',
         nameKey: 'settings.ia.account.name',
         shortKey: 'settings.ia.account.name',
-        descKey: 'settings.ia.account.desc',
         component: AccountPanel
     },
     {
@@ -43,7 +43,6 @@ const categories = [
         icon: 'theme',
         nameKey: 'settings.ia.appearance.name',
         shortKey: 'settings.ia.appearance.short',
-        descKey: 'settings.ia.appearance.desc',
         component: AppearancePanel
     },
     {
@@ -51,7 +50,6 @@ const categories = [
         icon: 'ring',
         nameKey: 'settings.ia.reminder.name',
         shortKey: 'settings.ia.reminder.name',
-        descKey: 'settings.ia.reminder.desc',
         component: ReminderPanel
     },
     {
@@ -59,7 +57,6 @@ const categories = [
         icon: 'drive',
         nameKey: 'settings.ia.data.name',
         shortKey: 'settings.ia.data.short',
-        descKey: 'settings.ia.data.desc',
         component: DataPanel
     }
 ] as const
@@ -153,21 +150,20 @@ onUnmounted(unbindSettingsDialogHost)
                 aria-orientation="vertical"
                 :aria-label="t('settings.ia.navLabel')"
             >
-                <div v-for="category in categories" :key="category.id" class="sd-tabs__item">
-                    <button
-                        type="button"
-                        class="sd-tab"
-                        :class="{ 'is-active': category.id === activeCategoryId }"
-                        role="tab"
-                        :aria-selected="category.id === activeCategoryId"
-                        :data-settings-nav="category.id"
-                        @click="selectCategory(category.id)"
-                    >
-                        <nue-icon :name="category.icon" size="1rem" />
-                        <span class="sd-tab__name">{{ t(category.nameKey) }}</span>
-                    </button>
-                    <span class="sd-tabs__desc" data-settings-desc>{{ t(category.descKey) }}</span>
-                </div>
+                <button
+                    v-for="category in categories"
+                    :key="category.id"
+                    type="button"
+                    class="sd-tab"
+                    :class="{ 'is-active': category.id === activeCategoryId }"
+                    role="tab"
+                    :aria-selected="category.id === activeCategoryId"
+                    :data-settings-nav="category.id"
+                    @click="selectCategory(category.id)"
+                >
+                    <nue-icon :name="category.icon" size="1rem" />
+                    <span class="sd-tab__name">{{ t(category.nameKey) }}</span>
+                </button>
             </div>
             <!-- 右侧 / 下方：当前分类面板（外框定尺，仅本区内部滚动） -->
             <div class="sd-panel">
@@ -235,21 +231,16 @@ onUnmounted(unbindSettingsDialogHost)
     padding: 0 var(--nue-padding-2xs);
 }
 
-/* ===== 左栏分类导航：竖排、定宽不收缩（不用竖分隔线，靠右侧留白与内容分开） ===== */
+/* ===== 左栏分类导航：竖排、定宽不收缩；每项 = 图标 + 名称（R2：副文本说明移到右侧组头） ===== */
 .sd-tabs {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-sm);
+    /* 只剩「图标 + 名称」一行 ⇒ 项间距从 0.75rem 收到 0.5rem（保持紧凑工具轨、又不黏成一块） */
+    gap: var(--nue-gap-xs);
     flex: none;
     width: 13rem;
     padding: 0 1.25rem 0 0;
     overflow: auto;
-}
-
-.sd-tabs__item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
 }
 
 .sd-tab {
@@ -301,13 +292,6 @@ onUnmounted(unbindSettingsDialogHost)
 /* 图标不参与压缩：名称换行时图标保持 1rem 同轴线 */
 .sd-tab .nue-icon {
     flex: none;
-}
-
-.sd-tabs__desc {
-    padding: 0 var(--nue-padding-sm);
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-xs);
-    line-height: 1.4;
 }
 
 /* ===== 右侧面板：平铺（无卡片、无边框），仅本区滚动；四周留白不在页面边缘贴边 ===== */
