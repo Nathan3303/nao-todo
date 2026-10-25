@@ -1,6 +1,6 @@
 # 2026-10-24 设置对话框内容重分类与布局优化 PRD
 
-> **状态**：**已开工**（用户 2026-10-24 确认）· PRD **v1.1**（QA 接缝/口径回执已回填）· **Issue**：[#243](https://github.com/Nathan3303/nao-todo/issues/243) · **批次**：`v1.12.17`（PATCH）
+> **状态**：**✅ 已交付并发布 `v1.12.17`（2026-10-25）** —— 代码 PR [#245](https://github.com/Nathan3303/nao-todo/pull/245)（squash `e8829dc4`）· 发版 PR [#246](https://github.com/Nathan3303/nao-todo/pull/246)（squash `1f0db8ba`）· 注解 tag `v1.12.17` · 用户 2026-10-25 视觉验收通过 · PRD **v1.1**· **Issue**：[#243](https://github.com/Nathan3303/nao-todo/issues/243) · **批次**：`v1.12.17`（PATCH）
 > **来源（成熟度）**：grill 一轮结论（2026-10-24，4 项全选推荐项）+ 落点读码（`apps/web/src/components/settings/**`）+ QA 接缝确认（`T534`，2026-10-24）。
 > **指针**：界面原则 `AGENTS.md`「产品定位与界面原则」· 视觉与 token `DESIGN.md` · 设计方法 `frontend-design` skill（本单指定使用）。
 > **硬约束**：移动端红线目录零改动 · 不改任何业务逻辑（提醒/同步/主题行为不变）· 不新增 `nue-*` token（确需新增先报 PM）· 视觉 C 端（禁管理台气质）。
