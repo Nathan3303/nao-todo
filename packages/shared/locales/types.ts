@@ -399,6 +399,8 @@ export interface LocaleMessages {
     'settings.sessionDeviceWeChat': string
     'settings.sessionDeviceAlipay': string
     'settings.sessionDeviceUnknown': string
+    'settings.sessionJustNow': string
+    'settings.sessionYesterday': string
 
     // User
     'user.deactiveWarningTitle': string

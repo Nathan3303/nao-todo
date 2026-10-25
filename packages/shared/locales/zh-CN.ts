@@ -416,6 +416,8 @@ const zhCN: LocaleMessages = {
     'settings.sessionDeviceWeChat': '微信内置浏览器',
     'settings.sessionDeviceAlipay': '支付宝内置浏览器',
     'settings.sessionDeviceUnknown': '未知设备',
+    'settings.sessionJustNow': '刚刚',
+    'settings.sessionYesterday': '昨天',
 
     'user.deactiveWarningTitle': '注销账户',
     'user.deactiveWarningContent':

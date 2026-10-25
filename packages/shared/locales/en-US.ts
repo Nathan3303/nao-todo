@@ -428,6 +428,8 @@ const enUS: LocaleMessages = {
     'settings.sessionDeviceWeChat': 'WeChat Built-in Browser',
     'settings.sessionDeviceAlipay': 'Alipay Built-in Browser',
     'settings.sessionDeviceUnknown': 'Unknown Device',
+    'settings.sessionJustNow': 'Just now',
+    'settings.sessionYesterday': 'Yesterday',
 
     'user.deactiveWarningTitle': 'Deactivate Account',
     'user.deactiveWarningContent':
