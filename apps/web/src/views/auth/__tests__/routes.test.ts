@@ -161,3 +161,69 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         await expect(beforeEnter()).resolves.toBe(true)
     })
 })
+
+/**
+ * DEF-59（T539 红基线）深链意图不得在 auth 中转时丢失
+ * @description 现场：冷加载 `#/tasks/all/kanban/t1` 时 `userStore` 尚未认证 ⇒ 守卫抛回 `/auth/checkin`，
+ *              **URL 目标未被带走**；checkin 成功后 auth 页按 `LAST_VISITED_ROUTE` 跳 ⇒ 深链被「上次访问」顶掉
+ *              （PRD `docs/prds/2026-10-25-correctness-batch.md` R3 / AC4）。
+ *              契约（用例先行，RD 按名实现）：中转位置携带 `query.redirect = to.fullPath`；
+ *              无目标（`/`）**不得**捕获（回落语义仍归 `LAST_VISITED_ROUTE`）；auth 页自身不捕获。
+ *              `LAST_VISITED_ROUTE` 键名不变（18 处引用不动，只改「谁优先」）。
+ */
+const makeTo = (fullPath: string, name: string) =>
+    ({
+        fullPath,
+        path: fullPath,
+        name,
+        params: {},
+        query: {},
+        hash: '',
+        matched: [],
+        meta: {},
+        redirectedFrom: undefined
+    }) as never
+
+/** @description 生产实现当前签名无 `to` 参数 ⇒ 以函数类型断言调用（避免红基线引入 tsc 噪声） */
+const beforeEnterWithTo = beforeEnter as unknown as (to: unknown) => Promise<unknown>
+
+describe('DEF-59 深链优先：auth 中转保留显式目标（R3 / AC4）', () => {
+    beforeEach(() => {
+        localStorage.clear()
+        revokeOfflineEntry()
+        setActivePinia(createPinia())
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.getCurrentUserId.mockReturnValue('u-1')
+        mocks.hasLocalMirror = true
+    })
+
+    it('有 JWT 未认证（冷加载常态）⇒ 抛回 checkin 且携带目标 fullPath', async () => {
+        setSessionJwt('jwt')
+        const result = await beforeEnterWithTo(
+            makeTo('/tasks/all/kanban/t1', 'tasks-built-in-project-main')
+        )
+        expect(result).toMatchObject({
+            name: 'auth-checkin',
+            query: { redirect: '/tasks/all/kanban/t1' }
+        })
+    })
+
+    it('无 JWT ⇒ 抛回 signin 且携带目标 fullPath', async () => {
+        setSessionJwt(null)
+        const result = await beforeEnterWithTo(makeTo('/calendar/monthly/t1', 'calendar-monthly'))
+        expect(result).toMatchObject({
+            name: 'auth-signin',
+            query: { redirect: '/calendar/monthly/t1' }
+        })
+    })
+
+    it('无目标（`/`）⇒ 不捕获（仍回落 LAST_VISITED_ROUTE 语义）', async () => {
+        setSessionJwt('jwt')
+        const result = (await beforeEnterWithTo(makeTo('/', 'index'))) as {
+            name?: string
+            query?: Record<string, unknown>
+        }
+        expect(result.name).toBe('auth-checkin')
+        expect(result.query?.redirect).toBeUndefined()
+    })
+})

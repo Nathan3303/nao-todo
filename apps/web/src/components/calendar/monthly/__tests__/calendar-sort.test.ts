@@ -91,6 +91,40 @@ describe('sortCalendarTasks - 默认名称升序（未选字段）', () => {
 })
 
 describe('sortCalendarTasks - 优先级', () => {
+    /**
+     * DEF-11 / R1（T539 红基线）优先级 rank **单一来源**（PM 2026-10-25 裁定：日历那份纳入本批统一）
+     * @description 现状：`calendar-sort.ts` 自建 `PRIORITY_RANK = { low: 0, medium: 1, high: 2 }`
+     *              ⇒ 与列表排序（本地仓储比较器）**两份映射**，违反 R1「序由一处映射定义」。
+     *              断言口径（源级，不钉实现名）：
+     *              ① 本文件**不得**再出现 priority→rank 的对象字面量（`low: n, medium: n, high: n`）；
+     *              ② rank 必须来自**共享包**（`@nao-todo/*`）的 import ⇒ 列表与日历才能共用同一口径。
+     *              行为等价不另做跨包断言：两处各自用**同一期望序**锁定（本文件下方用例 +
+     *              `packages/infrastructure/.../local-task-repos.test.ts` 的 DEF-11/AC1）。
+     */
+    it('DEF-11/R1：优先级 rank 不得自建第二份映射（必须来自共享来源）', () => {
+        const source = Object.values(
+            import.meta.glob<string>('/apps/web/src/components/calendar/monthly/calendar-sort.ts', {
+                query: '?raw',
+                import: 'default',
+                eager: true
+            })
+        ).join('\n')
+        expect(source, 'calendar-sort.ts 读取失败').not.toBe('')
+
+        // ① 禁自建 rank 字面量（当前 `{ low: 0, medium: 1, high: 2 }` 会命中 ⇒ 红）
+        expect(source).not.toMatch(/\{\s*low\s*:\s*\d+[^}]*medium\s*:/i)
+
+        // ② 必须从共享包导入 rank（列表侧同在 packages/ 内，才能单一来源）
+        const rankImport = source
+            .split('\n')
+            .filter((line) => line.trim().startsWith('import'))
+            .find((line) => /priority|rank/i.test(line) && /@nao-todo\//.test(line))
+        expect(
+            rankImport,
+            '优先级 rank 未来自 @nao-todo/* 共享来源（不得在日历内另写一份映射）'
+        ).toBeTruthy()
+    })
+
     it('升序：低 → 中 → 高', () => {
         const tasks = [
             makeTask({ id: 'high', priority: 'high' }),
@@ -127,6 +161,28 @@ describe('sortCalendarTasks - 优先级', () => {
             'a',
             'z',
             'h'
+        ])
+    })
+
+    it('空值与 urgent 与 low **同档**（与列表排序共用「可见值归一」口径，PM 2026-10-25 裁定）', () => {
+        const tasks = [
+            makeTask({ id: 'h', priority: 'high', name: 'h' }),
+            makeTask({ id: 'low', priority: 'low', name: 'low' }),
+            makeTask({ id: 'blank', priority: '', name: 'blank' }),
+            makeTask({ id: 'urgent', priority: 'urgent', name: 'urgent' })
+        ]
+        // 同档 ⇒ 组内回落名称升序（blank < low < urgent）
+        expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'asc' }))).toEqual([
+            'blank',
+            'low',
+            'urgent',
+            'h'
+        ])
+        expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'desc' }))).toEqual([
+            'h',
+            'blank',
+            'low',
+            'urgent'
         ])
     })
 })

@@ -35,8 +35,26 @@ const routes: RouteRecordRaw = {
     ]
 }
 
+/**
+ * 中转目标查询串（DEF-59 / PRD R3）
+ * @description 只有**显式目标**才携带 `redirect`；`/` = 默认入口 ⇒ **不捕获**（回落语义仍归
+ *              `LAST_VISITED_ROUTE`）。⛔ 本函数**不写** `LAST_VISITED_ROUTE`：写回由 `router.ts`
+ *              的 `afterEach` 在**最终路由**上完成（否则中转地址会自我强化、顶掉深链）。
+ */
+const redirectQueryOf = (to?: { fullPath?: string }): { redirect: string } | undefined => {
+    const fullPath = to?.fullPath
+    if (!fullPath || fullPath === '/') return undefined
+    return { redirect: fullPath }
+}
+
+/** 携带（可选的）深链目标返回 auth 中转路由 */
+const redirectTo = (name: 'auth-checkin' | 'auth-signin', to?: { fullPath?: string }) => {
+    const query = redirectQueryOf(to)
+    return query ? { name, query } : { name }
+}
+
 // @typedef AuthViewRoutesBeforeEnter 身份验证视图路由守卫
-const beforeEnter = async () => {
+const beforeEnter = async (to?: { fullPath?: string }) => {
     // SHELL-03 附录 B-2 / C-62：离线进入放行（**全为本地事实**；任一不满足 ⇒ 落回下方既有三分支）
     // ① 用户本会话显式授予（会话级内存 flag，不落盘）
     // ② JWT 存在且可解析出 userId  ③ 内存会话与 JWT 同一用户
@@ -65,9 +83,9 @@ const beforeEnter = async () => {
     const jwt = localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
     // 若有 JWT 令牌且未登录，跳转到检入页
     const userStore = useUserStore()
-    if (jwt !== null && !userStore.getIsAuthenticated()) return { name: 'auth-checkin' }
+    if (jwt !== null && !userStore.getIsAuthenticated()) return redirectTo('auth-checkin', to)
     // 若没有 JWT 令牌且未登录，跳转到登录页
-    else if (jwt === null && !userStore.getIsAuthenticated()) return { name: 'auth-signin' }
+    else if (jwt === null && !userStore.getIsAuthenticated()) return redirectTo('auth-signin', to)
     // 若有 JWT 令牌且已登录，放行
     else if (jwt !== null && userStore.getIsAuthenticated()) {
         // C-61②：web 无 AppRoot ⇒ 门 B 通过、挂载 App 前的等价收敛点
@@ -77,7 +95,7 @@ const beforeEnter = async () => {
         return true
     }
     // 若没有 JWT 令牌且已登录，则跳转到检入页
-    else return { name: 'auth-checkin' }
+    else return redirectTo('auth-checkin', to)
 }
 
 export default routes

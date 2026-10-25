@@ -13,6 +13,7 @@
  */
 
 import { computed, inject, onMounted, onUnmounted, provide, ref } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import { useAuthUseCase, useUserUseCase } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useUserStore } from '@nao-todo/presentation-identity'
@@ -63,9 +64,6 @@ const categories = [
 
 // @state 当前分类（默认第一类：账户；切换即卸载重建，面板内状态随分类复位）
 const activeCategoryId = ref<SettingsCategoryId>('account')
-const activeCategory = computed(
-    () => categories.find((category) => category.id === activeCategoryId.value) ?? categories[0]
-)
 
 // @contexts（仅 UI/服务；业务依赖下方本地组装——与原 settings-view 同构）
 const { appSubscriber, appDialogManager, isDisplayAside, isUseFloatAside, switchDisplayAside } =
@@ -99,6 +97,34 @@ const setActiveCategory = (value: string): void => {
 // @method 左栏 tab 点击
 const selectCategory = (id: SettingsCategoryId): void => {
     activeCategoryId.value = id
+}
+
+/** tab / tabpanel 的 DOM id（`aria-controls` 与 `aria-labelledby` 互指，AC7） */
+const tabIdOf = (id: SettingsCategoryId): string => `settings-tab-${id}`
+const panelIdOf = (id: SettingsCategoryId): string => `settings-panel-${id}`
+
+// @refs 左栏 tab 元素（键盘切换后焦点跟跟随；`v-for` 函数 ref）
+const tabEls: HTMLElement[] = []
+const setTabRef = (el: Element | ComponentPublicInstance | null, index: number): void => {
+    if (el instanceof HTMLElement) tabEls[index] = el
+}
+
+/**
+ * 左栏 tab 键盘切换（PRD R5 / AC7）
+ * @description `↑/↓` 前后切分类（循环），`Home/End` 跳首/末；切换后 `aria-selected` 与新 tab 的
+ *              **焦点同步**（禁只换内容不换焦点）。窄屏走 `segmented-switch` 自己的键盘语义，不受影响。
+ */
+const onTabKeydown = (event: KeyboardEvent, index: number): void => {
+    const last = categories.length - 1
+    let next: number
+    if (event.key === 'ArrowDown') next = index === last ? 0 : index + 1
+    else if (event.key === 'ArrowUp') next = index === 0 ? last : index - 1
+    else if (event.key === 'Home') next = 0
+    else if (event.key === 'End') next = last
+    else return
+    event.preventDefault()
+    activeCategoryId.value = categories[next]!.id
+    tabEls[next]?.focus()
 }
 
 // @stores/@usecases
@@ -151,23 +177,42 @@ onUnmounted(unbindSettingsDialogHost)
                 :aria-label="t('settings.ia.navLabel')"
             >
                 <button
-                    v-for="category in categories"
+                    v-for="(category, index) in categories"
+                    :id="tabIdOf(category.id)"
                     :key="category.id"
                     type="button"
                     class="sd-tab"
                     :class="{ 'is-active': category.id === activeCategoryId }"
                     role="tab"
                     :aria-selected="category.id === activeCategoryId"
+                    :aria-controls="panelIdOf(category.id)"
                     :data-settings-nav="category.id"
+                    :ref="(el) => setTabRef(el, index)"
                     @click="selectCategory(category.id)"
+                    @keydown="onTabKeydown($event, index)"
                 >
                     <nue-icon :name="category.icon" size="1rem" />
                     <span class="sd-tab__name">{{ t(category.nameKey) }}</span>
                 </button>
             </div>
-            <!-- 右侧 / 下方：当前分类面板（外框定尺，仅本区内部滚动） -->
+            <!-- 右侧 / 下方：当前分类面板（外框定尺，仅本区内部滚动）。
+                 4 个面板壳恒在（`role=tabpanel` + `aria-labelledby` 回指 tab，非当前项 `hidden`），
+                 但**只有当前项渲染内容**（其它类的设置行不得同时存在，AC1/AC7）。 -->
             <div class="sd-panel">
-                <component :is="activeCategory.component" :key="activeCategoryId" />
+                <div
+                    v-for="category in categories"
+                    :id="panelIdOf(category.id)"
+                    :key="category.id"
+                    role="tabpanel"
+                    :aria-labelledby="tabIdOf(category.id)"
+                    :hidden="category.id !== activeCategoryId"
+                >
+                    <component
+                        :is="category.component"
+                        v-if="category.id === activeCategoryId"
+                        :key="activeCategoryId"
+                    />
+                </div>
             </div>
         </div>
     </nue-dialog>
