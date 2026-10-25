@@ -268,6 +268,23 @@ export interface LocaleMessages {
     'settings.localData.boundary': string
     'settings.localData.eviction': string
     'settings.localData.endDifference': string
+    // Settings · 4 类信息架构（T535）
+    'settings.ia.navLabel': string
+    'settings.ia.account.name': string
+    'settings.ia.account.desc': string
+    'settings.ia.appearance.name': string
+    'settings.ia.appearance.short': string
+    'settings.ia.appearance.desc': string
+    'settings.ia.reminder.name': string
+    'settings.ia.reminder.desc': string
+    'settings.ia.data.name': string
+    'settings.ia.data.short': string
+    'settings.ia.data.desc': string
+    'settings.ia.danger.desc': string
+    'settings.ia.sync.title': string
+    'settings.ia.permission.title': string
+    'settings.ia.version.check': string
+    'settings.ia.version.hint': string
     'settings.userInfo': string
     'settings.passwordChange': string
     'settings.appSettings': string
@@ -382,6 +399,8 @@ export interface LocaleMessages {
     'settings.sessionDeviceWeChat': string
     'settings.sessionDeviceAlipay': string
     'settings.sessionDeviceUnknown': string
+    'settings.sessionJustNow': string
+    'settings.sessionYesterday': string
 
     // User
     'user.deactiveWarningTitle': string

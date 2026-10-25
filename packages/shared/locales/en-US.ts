@@ -285,6 +285,24 @@ const enUS: LocaleMessages = {
         'The browser may evict: web local data is best-effort storage and may be cleared after long periods without interaction (e.g. Safari’s 7-day policy); you will then need to reconnect to sync again.',
     'settings.localData.endDifference':
         'Platform difference: web local data may be cleared automatically by the browser; desktop data does not expire automatically. Both clear local data when you sign out, after which you need to sign in again online.',
+    // Settings · four-category IA (T535)
+    'settings.ia.navLabel': 'Settings sections',
+    'settings.ia.account.name': 'Account',
+    'settings.ia.account.desc': 'Profile, password and signed-in devices',
+    'settings.ia.appearance.name': 'Appearance & Language',
+    'settings.ia.appearance.short': 'Appearance',
+    'settings.ia.appearance.desc': 'Theme and interface language',
+    'settings.ia.reminder.name': 'Reminders',
+    'settings.ia.reminder.desc': 'Notifications, sound and quiet hours',
+    'settings.ia.data.name': 'Data & About',
+    'settings.ia.data.short': 'Data',
+    'settings.ia.data.desc': 'Sync status, local data and version',
+    'settings.ia.danger.desc':
+        'These actions change your account or erase data. Please confirm first.',
+    'settings.ia.sync.title': 'Sync status',
+    'settings.ia.permission.title': 'Notification permission',
+    'settings.ia.version.check': 'View releases',
+    'settings.ia.version.hint': 'See release notes for new versions on the project page.',
     'settings.userInfo': 'User Profile',
     'settings.passwordChange': 'Change Password',
     'settings.appSettings': 'App Settings',
@@ -410,6 +428,8 @@ const enUS: LocaleMessages = {
     'settings.sessionDeviceWeChat': 'WeChat Built-in Browser',
     'settings.sessionDeviceAlipay': 'Alipay Built-in Browser',
     'settings.sessionDeviceUnknown': 'Unknown Device',
+    'settings.sessionJustNow': 'Just now',
+    'settings.sessionYesterday': 'Yesterday',
 
     'user.deactiveWarningTitle': 'Deactivate Account',
     'user.deactiveWarningContent':
