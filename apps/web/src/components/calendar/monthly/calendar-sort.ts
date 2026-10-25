@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { TaskViewObject } from '@nao-todo/domain-task'
+import { prioritySNMap, type TaskViewObject } from '@nao-todo/domain-task'
 
 /**
  * 日历排序（TASK-08）
@@ -37,8 +37,13 @@ const CALENDAR_SORT_FIELDS: readonly CalendarSortField[] = [
     'createdAt'
 ]
 
-/** 优先级权重：low < medium < high（升序=低→高；降序=高→低） */
-const PRIORITY_RANK: Record<string, number> = { low: 0, medium: 1, high: 2 }
+/**
+ * 优先级权重（DEF-11 / PRD R1：序的**单一来源** = domain `prioritySNMap`，与列表排序共用）
+ * @description 非白名单值（`''` / `urgent` / 其它）与 `low` 同档（与视图转换层兜底口径一致）。
+ *              ⛔ 不得在日历内另写一份 priority → rank 映射（否则两处口径会漂移）。
+ */
+const priorityRank = (priority: string): number =>
+    (prioritySNMap as Record<string, number>)[priority] ?? prioritySNMap.low
 
 /** 解析存储：显式传入（含 null=不可用）；未传则取全局 localStorage */
 const resolveStorage = (storage?: CalendarSortStorage | null): CalendarSortStorage | null => {
@@ -102,7 +107,7 @@ const compareByName = (a: TaskViewObject, b: TaskViewObject): number =>
 
 /** 字段取值归一：时间字段缺失/无效 → null（排序居末尾）；优先级 → 权重 */
 const fieldValueOf = (task: TaskViewObject, field: CalendarSortField): number | null => {
-    if (field === 'priority') return PRIORITY_RANK[task.priority] ?? 0
+    if (field === 'priority') return priorityRank(task.priority)
     const raw = task[field]
     if (!raw) return null
     const time = dayjs(raw)

@@ -346,6 +346,7 @@ const enUS: LocaleMessages = {
     'settings.passwordOldPlaceholder': 'Enter current password',
     'settings.passwordNew': 'New Password',
     'settings.passwordNewPlaceholder': 'Enter new password',
+    'settings.passwordConfirm': 'Confirm Password',
     'settings.passwordConfirmPlaceholder': 'Confirm new password',
     'settings.passwordSubmit': 'Submit',
     'settings.passwordChangeFailed': 'Password change failed',

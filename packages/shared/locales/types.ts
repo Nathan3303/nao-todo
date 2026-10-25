@@ -324,6 +324,7 @@ export interface LocaleMessages {
     'settings.passwordOldPlaceholder': string
     'settings.passwordNew': string
     'settings.passwordNewPlaceholder': string
+    'settings.passwordConfirm': string
     'settings.passwordConfirmPlaceholder': string
     'settings.passwordSubmit': string
     'settings.passwordChangeFailed': string

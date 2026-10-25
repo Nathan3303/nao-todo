@@ -40,6 +40,14 @@ onMounted(() => {
     oldPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'current-password')
     newPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'new-password')
     confirmPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'new-password')
+    // DEF-82：持久可访问名（`nue-input` 不透传 attrs ⇒ 同 autocomplete 手法设到内层 input）。
+    // 三个名字非空且互不相同；确认框用独立键（不得与 placeholder 同串）。
+    oldPasswordInput.value?.innerInputRef?.setAttribute('aria-label', t('settings.passwordOld'))
+    newPasswordInput.value?.innerInputRef?.setAttribute('aria-label', t('settings.passwordNew'))
+    confirmPasswordInput.value?.innerInputRef?.setAttribute(
+        'aria-label',
+        t('settings.passwordConfirm')
+    )
 })
 
 const submit = async () => {

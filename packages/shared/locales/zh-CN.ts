@@ -338,6 +338,7 @@ const zhCN: LocaleMessages = {
     'settings.passwordOldPlaceholder': '请输入旧密码',
     'settings.passwordNew': '新密码',
     'settings.passwordNewPlaceholder': '请输入新密码',
+    'settings.passwordConfirm': '确认新密码',
     'settings.passwordConfirmPlaceholder': '请确认新密码',
     'settings.passwordSubmit': '提交修改',
     'settings.passwordChangeFailed': '密码修改失败',
