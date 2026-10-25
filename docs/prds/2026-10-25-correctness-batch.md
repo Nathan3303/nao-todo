@@ -1,6 +1,6 @@
 # 2026-10-25 正确性与体验小批（排序语义 / 深链优先 / a11y 收尾）PRD
 
-> **状态**：待开工确认（v1.0，2026-10-25）· **Issue**：[#249](https://github.com/Nathan3303/nao-todo/issues/249) · **批次**：`v1.12.18`（PATCH）
+> **状态**：**✅ 已交付并发布 `v1.12.18`（2026-10-25）** —— 代码 PR [#251](https://github.com/Nathan3303/nao-todo/pull/251)（squash `c829b9c2`）· 发版 PR [#252](https://github.com/Nathan3303/nao-todo/pull/252)（squash `9206a241`）· 注解 tag `v1.12.18` · 用户 2026-10-25 视觉验收通过 · PRD v1.0（含裁定回填）· **Issue**：[#249](https://github.com/Nathan3303/nao-todo/issues/249) · **批次**：`v1.12.18`（PATCH）
 > **来源（成熟度）**：缺陷池既有登记（`DEF-11` / `DEF-59` / `DEF-82` + 设置 `tablist` 延后项）+ 用户 2026-10-25 选定本批。
 > **指针**：缺陷详情 `docs/reports/defect-pool.md`（逐条根因与证据）；上一批设置 PRD `docs/prds/2026-10-24-settings-ia.md`。
 > **硬约束**：移动端红线零改动 · 不改提醒/同步/番茄语义 · 不新增 `nue-*` token。
