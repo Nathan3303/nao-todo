@@ -216,30 +216,33 @@ onUnmounted(unbindSettingsDialogHost)
     gap: var(--nue-gap-xs);
 }
 
+/* 窄屏：单列平铺，块间距与首尾留白同步加大（与桌面同一视觉节奏，只是纵向） */
+.sd-body.is-narrow .sd-cat {
+    gap: 2rem;
+}
+
 .sd-body.is-narrow .sd-panel {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 0;
+    padding: var(--nue-padding-xs) 0 2rem;
 }
 
 .sd-body.is-narrow .sd-row {
-    padding: var(--nue-padding-xs);
+    padding: var(--nue-padding-xs) var(--nue-padding-2xs);
 }
 
-/* 叶子自带内边距的行（用户信息）在窄屏也不叠加行内边距：同类名数下靠后者覆盖 */
-.sd-body.is-narrow .sd-row--flush {
-    padding: 0;
+.sd-body.is-narrow .sd-group__head {
+    padding: 0 var(--nue-padding-2xs);
 }
 
-/* ===== 左栏分类导航：竖排、定宽不收缩 ===== */
+/* ===== 左栏分类导航：竖排、定宽不收缩（不用竖分隔线，靠右侧留白与内容分开） ===== */
 .sd-tabs {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-sm);
     flex: none;
     width: 13rem;
-    padding: 0 var(--nue-padding-sm) 0 0;
-    border-right: 1px solid var(--nue-border-color);
+    padding: 0 1.25rem 0 0;
     overflow: auto;
 }
 
@@ -283,11 +286,11 @@ onUnmounted(unbindSettingsDialogHost)
     background: var(--nue-primary-color-100);
     box-shadow: inset 2px 0 0 var(--nue-primary-color-600);
     color: var(--nue-primary-color-900);
-    font-weight: var(--nue-font-weight-medium);
+    font-weight: 600;
 }
 
 /* 分类名：允许换行（单行省略会让英文长名「Appearance & Language」在 13rem 下被切且无 title）；
-   中文 4 项仍在单行内（最长 5 字 ≈ 70px < 可用 ≈ 148px）。按词断行，超长单词才硬断。 */
+   中文 4 项仍在单行内（最长 5 字 ≈ 70px < 可用 ≈ 140px）。按词断行，超长单词才硬断。 */
 .sd-tab__name {
     min-width: 0;
     line-height: 1.3;
@@ -307,19 +310,20 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.4;
 }
 
-/* ===== 右侧面板：占满剩余宽度，溢出时仅本区滚动 ===== */
+/* ===== 右侧面板：平铺（无卡片、无边框），仅本区滚动；四周留白不在页面边缘贴边 ===== */
 .sd-panel {
     flex: 1;
     min-height: 0;
-    padding: 0 var(--nue-padding-xs) var(--nue-padding-sm) var(--nue-padding-sm);
+    /* 左 = 与左栏的间距（与左栏 1.25rem 右留白合计 2.5rem）；上/下留白保证首末块不贴边 */
+    padding: var(--nue-padding-sm) 1.5rem 2.5rem 1.25rem;
     overflow: auto;
 }
 
-/* 分类面板：切分类时仅一次淡入（响应式动效，无入场序列；尊重 reduced-motion） */
+/* 分类面板：块与块之间只用留白分隔（2.75rem ≈ 44px）；切分类仅一次淡入（尊重 reduced-motion） */
 .sd-cat {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-sm);
+    gap: 2.75rem;
     animation: sd-fade var(--nue-animation-duration-short) ease-out;
 }
 
@@ -333,27 +337,27 @@ onUnmounted(unbindSettingsDialogHost)
     }
 }
 
-/* ===== 分组卡片：1px 边框 + 表面色（无阴影堆叠、无渐变；层级由结构承担） ===== */
+/* ===== 分组：完全平铺（无边框 / 无底色 / 无圆角 / 无内边距盒） ===== */
 .sd-group {
-    border: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius);
-    background: var(--nue-primary-color-0);
-    overflow: hidden;
+    display: block;
 }
 
+/* 组头：大字号标题 + 一行说明；与首行之间 1rem 留白（不用分隔线） */
 .sd-group__head {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: var(--nue-padding-sm);
-    border-bottom: 1px solid var(--nue-border-color);
+    gap: 0.375rem;
+    margin-bottom: 1rem;
+    padding: 0 var(--nue-padding-sm);
 }
 
 .sd-group__title {
     margin: 0;
     color: var(--nue-primary-color-900);
-    font-size: var(--nue-text-sm);
-    font-weight: var(--nue-font-weight-medium);
+    /* 20px（行标签 14px）⇒ 标题与行的层级一眼可辨 */
+    font-size: var(--nue-text-lg);
+    font-weight: 600;
+    line-height: 1.3;
 }
 
 .sd-group__desc {
@@ -363,7 +367,7 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.5;
 }
 
-/* ===== 设置行：点击区 ≥44px；行间 1px 细分隔（不画表格网格） ===== */
+/* ===== 设置行：不画分隔线，靠行高 + 垂直留白区分（相邻行内容间距 = 8+8 px ≈ 1rem） ===== */
 .sd-row {
     display: flex;
     align-items: center;
@@ -374,22 +378,14 @@ onUnmounted(unbindSettingsDialogHost)
     padding: var(--nue-padding-xs) var(--nue-padding-sm);
 }
 
-.sd-row + .sd-row {
-    border-top: 1px solid var(--nue-border-color);
-}
-
 .sd-row--stack {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--nue-gap-2xs);
+    gap: var(--nue-gap-xs);
 }
 
 .sd-row--block {
     display: block;
-}
-
-.sd-row--flush {
-    padding: 0;
 }
 
 .sd-row__line {
@@ -419,7 +415,7 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.5;
 }
 
-/* 行内折叠开关：原生 button（键盘可达，Enter/Space 由浏览器承担） */
+/* 行内折叠开关：原生 button（键盘可达）；hover/focus 用轻微底色，不画线 */
 .sd-row__toggle {
     display: flex;
     align-items: center;
@@ -427,13 +423,19 @@ onUnmounted(unbindSettingsDialogHost)
     box-sizing: border-box;
     width: 100%;
     min-height: 2.5rem;
-    padding: 0;
+    margin-left: calc(var(--nue-padding-2xs) * -1);
+    padding: 0 var(--nue-padding-2xs);
     border: 0;
+    border-radius: var(--nue-primary-radius);
     background: transparent;
     color: var(--nue-primary-color-900);
     font: inherit;
     text-align: left;
     cursor: pointer;
+}
+
+.sd-row__toggle:hover {
+    background: var(--nue-primary-color-100);
 }
 
 .sd-row__toggle:focus-visible {
@@ -446,23 +448,23 @@ onUnmounted(unbindSettingsDialogHost)
     color: var(--nue-secondary-text-color);
 }
 
-/* 行内动作（次级按钮：外链入口） */
+/* 行内动作（次级按钮：外链入口）——用底色区分，不用描边 */
 .sd-row__action {
     flex: none;
     box-sizing: border-box;
     min-height: 2.5rem;
     padding: 0 var(--nue-padding-sm);
-    border: 1px solid var(--nue-border-color);
+    border: 0;
     border-radius: var(--nue-primary-radius);
-    background: transparent;
-    color: var(--nue-primary-color-700);
+    background: var(--nue-primary-color-100);
+    color: var(--nue-primary-color-800);
     font: inherit;
     font-size: var(--nue-text-xs);
     cursor: pointer;
 }
 
 .sd-row__action:hover {
-    background: var(--nue-primary-color-100);
+    background: var(--nue-primary-color-200);
     color: var(--nue-primary-color-900);
 }
 
@@ -471,10 +473,10 @@ onUnmounted(unbindSettingsDialogHost)
     outline-offset: 1px;
 }
 
-/* ===== 危险区：独立容器 + 与常规区留白 + 危险色；每行 = 图标 + 文本 + 危险色（三重冗余） ===== */
+/* ===== 危险区：无边框容器 ⇒ 更大的上方留白 + 区块标题 + 行内图标/文本 + 错误色（四重可辨） ===== */
 .sd-group--danger {
-    margin-top: var(--nue-gap-md);
-    border-color: var(--nue-error-color-40);
+    /* 与上方常规块之间再加 1.5rem（合计 4.25rem ≈ 68px），位置本身即是警示通道 */
+    margin-top: var(--nue-gap-lg);
 }
 
 .sd-group--danger .sd-group__title {
@@ -490,16 +492,13 @@ onUnmounted(unbindSettingsDialogHost)
     min-height: 2.75rem;
     padding: var(--nue-padding-xs) var(--nue-padding-sm);
     border: 0;
+    border-radius: var(--nue-primary-radius);
     background: transparent;
     color: var(--nue-error-color-90);
     font: inherit;
     font-size: var(--nue-text-sm);
     text-align: left;
     cursor: pointer;
-}
-
-.sd-danger-row + .sd-danger-row {
-    border-top: 1px solid var(--nue-border-color);
 }
 
 .sd-danger-row:hover {
@@ -550,7 +549,7 @@ onUnmounted(unbindSettingsDialogHost)
     outline-offset: 1px;
 }
 
-/* ===== 提醒权限一次性说明（可关闭的引导块） ===== */
+/* ===== 提醒权限一次性说明（可关闭的引导块；底色区分，不用描边） ===== */
 .sd-permission-notice {
     display: flex;
     flex-direction: column;

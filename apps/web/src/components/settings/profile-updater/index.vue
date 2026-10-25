@@ -63,14 +63,10 @@ const displayNickname = computed(() => profile.value?.nickname || offlineNicknam
             </div>
         </user-avatar-updater>
 
-        <nue-divider />
-
         <div class="settings-profile__field">
             <nue-text>{{ t('settings.nickname') }}</nue-text>
             <user-nickname-updater :user-use-case="userUseCase" />
         </div>
-
-        <nue-divider />
 
         <div class="settings-profile__field">
             <nue-text>{{ t('settings.moreInfo') }}</nue-text>
@@ -80,11 +76,11 @@ const displayNickname = computed(() => profile.value?.nickname || offlineNicknam
 </template>
 
 <style scoped>
+/* 平铺版式：无内边距盒、无分隔线（块与块靠留白分开），内容与其它行同一左轴线 */
 .settings-profile {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-2xs);
-    padding: var(--nue-padding-df);
+    gap: var(--nue-gap-df);
 }
 
 .settings-profile__identity {

@@ -74,7 +74,7 @@ const handleDeactivated = async (): Promise<void> => {
                 <p class="sd-group__desc">{{ t('settings.ia.account.desc') }}</p>
             </header>
 
-            <div class="sd-row sd-row--flush" data-setting-id="profile">
+            <div class="sd-row sd-row--block" data-setting-id="profile">
                 <settings-profile-updater :show-sign-out="false" />
             </div>
 
