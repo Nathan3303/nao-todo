@@ -206,100 +206,163 @@ const declarationOf = (
     return null
 }
 
+type NoteSpecMeasured = {
+    fontSize: { target: string; value: string; px: number | null } | null
+    lineHeight: { target: string; value: string; px: number | null } | null
+    whiteSpace: { target: string; value: string } | null
+    overflowWrap: { target: string; value: string } | null
+    wordBreak: { target: string; value: string } | null
+    horizontalCauses: string[]
+}
+
+/** 笔记正文规格测量（②③ 共用同一份测量，避免口径漂移） */
+const measureNoteSpec = (
+    rules: ReturnType<typeof parseCssRules>,
+    width: number
+): NoteSpecMeasured => ({
+    fontSize: declarationOf(rules, 'font-size', width),
+    lineHeight: declarationOf(rules, 'line-height', width),
+    whiteSpace: declarationOf(rules, 'white-space', width),
+    overflowWrap: declarationOf(rules, 'overflow-wrap', width),
+    wordBreak: declarationOf(rules, 'word-break', width),
+    horizontalCauses: effectiveRules(rules, width)
+        .filter((rule) =>
+            rule.selectors.some((selector) => /pomodoro-records-detail__note/.test(selector))
+        )
+        .flatMap((rule) =>
+            rule.decls
+                .filter(
+                    (decl) =>
+                        (decl.prop === 'min-width' && (resolvePx(decl.value) ?? 0) >= 320) ||
+                        (decl.prop === 'overflow-x' && decl.value === 'hidden')
+                )
+                .map((decl) => `${rule.selectors.join(', ')} { ${decl.prop}: ${decl.value} }`)
+        )
+})
+
+/** 笔记正文规格断言（单一事实来源：②「正文规格」与 ③「去装饰后正文仍达标」共用） */
+const assertNoteSpec = (
+    rules: ReturnType<typeof parseCssRules>,
+    width: number,
+    tag: string
+): NoteSpecMeasured => {
+    const measured = measureNoteSpec(rules, width)
+    const where = `${width}${tag}`
+
+    // ① font-size 必须显式 = 14px（16px = 原继承值，等于没改）
+    expect(
+        measured.fontSize,
+        `${where}：笔记正文未显式声明 font-size —— 请显式声明 font-size: var(--nue-text-sm)（与其它字段值一致）；继承不可证明，且上层变动会静默回退`
+    ).not.toBeNull()
+    expect(
+        measured.fontSize!.px,
+        `${where}：笔记字号为 ${measured.fontSize!.value}（${measured.fontSize!.px}px），应显式声明 font-size: var(--nue-text-sm)（=14px，与其它字段值一致）`
+    ).toBe(14)
+
+    // ② line-height：无单位 ≥1.6；px/rem ≥ 1.6×14 = 22.4
+    expect(measured.lineHeight, `${where}：笔记正文未声明 line-height`).not.toBeNull()
+    const lineHeight = parseLineHeight(measured.lineHeight!.value)
+    expect(
+        lineHeight,
+        `${where}：line-height=${measured.lineHeight!.value} 无法解析`
+    ).not.toBeNull()
+    if (lineHeight!.kind === 'ratio') {
+        expect(
+            lineHeight!.ratio,
+            `${where}：line-height=${measured.lineHeight!.value} < 1.6`
+        ).toBeGreaterThanOrEqual(1.6)
+    } else {
+        expect(
+            lineHeight!.px,
+            `${where}：line-height=${measured.lineHeight!.value} < 22.4px（1.6×14）`
+        ).toBeGreaterThanOrEqual(22.4)
+    }
+
+    // ③ white-space 保留换行
+    expect(
+        ['pre-wrap', 'pre-line', 'break-spaces'],
+        `${where}：笔记正文 white-space=${measured.whiteSpace?.value ?? '(未声明)'}，需 pre-wrap 等以保留用户换行`
+    ).toContain(measured.whiteSpace?.value)
+
+    // ④ 长无空格串（URL / 英文 token）必须可断
+    expect(
+        measured.overflowWrap !== null || measured.wordBreak !== null,
+        `${where}：笔记正文既无 overflow-wrap 也无 word-break ⇒ 长无空格串会撑破抽屉（R14③）`
+    ).toBe(true)
+
+    // ⑤ 无横向溢出成因
+    expect(measured.horizontalCauses, `${where}：笔记元素出现横向溢出成因`).toEqual([])
+
+    return measured
+}
+
 describe('T549 AC11 ② 笔记正文规格：14px / 行高 ≥1.6 / pre-wrap / 可断长串 / 不溢出', () => {
     it('AC11 ② 360 与 1280：font-size=14px（--nue-text-sm）、行高 ≥1.6、white-space 与 overflow-wrap 齐备', () => {
+        const rules = detailPanelRules()
+        const measured: Record<string, NoteSpecMeasured> = {}
+        for (const width of [MOBILE, DESKTOP]) {
+            measured[`${width}px`] = assertNoteSpec(rules, width, '')
+        }
+        console.log('[AC11-②] 笔记正文规格实测（360 / 1280）：', JSON.stringify(measured, null, 1))
+    })
+})
+
+describe('T549 AC11 ③ 笔记去装饰容器（与其它字段同样式，双档 360 / 1280）', () => {
+    /** 容器（`.pomodoro-records-detail__note`）禁止出现的装饰性声明 */
+    const DECORATION_PROP =
+        /^(padding|padding-[a-z-]+|background|background-color|background-[a-z-]+|border-radius|border-(top|bottom|left|right)-(left|right)-radius)$/
+
+    it('AC11 ③ 360 与 1280：容器无 padding/背景/圆角；正文仍达标且左对齐（不得 right/end）', () => {
         const rules = detailPanelRules()
         const measured: Record<string, unknown> = {}
 
         for (const width of [MOBILE, DESKTOP]) {
-            const fontSize = declarationOf(rules, 'font-size', width)
-            const lineHeight = declarationOf(rules, 'line-height', width)
-            const whiteSpace = declarationOf(rules, 'white-space', width)
-            const overflowWrap = declarationOf(rules, 'overflow-wrap', width)
-            const wordBreak = declarationOf(rules, 'word-break', width)
-            const horizontalCauses = effectiveRules(rules, width)
-                .filter((rule) =>
-                    rule.selectors.some((selector) =>
-                        /pomodoro-records-detail__note/.test(selector)
-                    )
+            const containerRules = effectiveRules(rules, width).filter((rule) =>
+                rule.selectors.some((selector) =>
+                    selector.endsWith('.pomodoro-records-detail__note')
                 )
-                .flatMap((rule) =>
-                    rule.decls
-                        .filter(
-                            (decl) =>
-                                (decl.prop === 'min-width' &&
-                                    (resolvePx(decl.value) ?? 0) >= 320) ||
-                                (decl.prop === 'overflow-x' && decl.value === 'hidden')
-                        )
-                        .map(
-                            (decl) => `${rule.selectors.join(', ')} { ${decl.prop}: ${decl.value} }`
-                        )
-                )
+            )
+            const decorations = containerRules.flatMap((rule) =>
+                rule.decls
+                    .filter((decl) => DECORATION_PROP.test(decl.prop))
+                    .map((decl) => `${rule.selectors.join(', ')} { ${decl.prop}: ${decl.value} }`)
+            )
+            const containerDecls = containerRules.flatMap((rule) =>
+                rule.decls.map((decl) => `${decl.prop}: ${decl.value}`)
+            )
+
+            // 正文仍须达标（与 ② 同一份断言函数）
+            const spec = assertNoteSpec(rules, width, '（去装饰后）')
+
+            // 正文左对齐：不得 right / end；未声明 ⇒ 继承默认（左），通过并打印
+            const textAlign = declarationOf(rules, 'text-align', width)
+            const alignValue = textAlign?.value.replace('!important', '').trim()
+            console.log(`[AC11-③] ${width}px 实测：`, {
+                containerRuleCount: containerRules.length,
+                containerDecls,
+                decorations,
+                textAlign: textAlign ?? '(未声明 ⇒ 继承默认左对齐)',
+                spec
+            })
+
+            expect(
+                decorations,
+                `${width}：笔记容器仍带装饰（padding/背景/圆角）⇒ 应与其它字段同样式（R14⑤）`
+            ).toEqual([])
+            if (alignValue !== undefined) {
+                expect(
+                    ['right', 'end'],
+                    `${width}：笔记正文 text-align=${alignValue} ⇒ 长笔记右对齐难读（须左对齐或继承默认）`
+                ).not.toContain(alignValue)
+            }
+
             measured[`${width}px`] = {
-                fontSize,
-                lineHeight,
-                whiteSpace,
-                overflowWrap,
-                wordBreak,
-                horizontalCauses
+                containerRuleCount: containerRules.length,
+                decorations,
+                textAlign: alignValue ?? '(未声明)'
             }
         }
 
-        console.log('[AC11-②] 笔记正文规格实测（360 / 1280）：', JSON.stringify(measured, null, 1))
-
-        for (const [width, value] of Object.entries(measured)) {
-            const item = value as {
-                fontSize: { target: string; value: string; px: number | null } | null
-                lineHeight: { target: string; value: string; px: number | null } | null
-                whiteSpace: { target: string; value: string } | null
-                overflowWrap: unknown
-                wordBreak: unknown
-                horizontalCauses: string[]
-            }
-
-            // ① font-size 必须显式 = 14px（16px = 继承值，等于没改）
-            expect(
-                item.fontSize,
-                `${width}：笔记正文未显式声明 font-size —— 请显式声明 font-size: var(--nue-text-sm)（与其它字段值一致）；继承不可证明，且上层变动会静默回退`
-            ).not.toBeNull()
-            expect(
-                item.fontSize!.px,
-                `${width}：笔记字号为 ${item.fontSize!.value}（${item.fontSize!.px}px），应显式声明 font-size: var(--nue-text-sm)（=14px，与其它字段值一致）`
-            ).toBe(14)
-
-            // ② line-height：无单位 ≥1.6；px/rem ≥ 1.6×14 = 22.4
-            expect(item.lineHeight, `${width}：笔记正文未声明 line-height`).not.toBeNull()
-            const lineHeight = parseLineHeight(item.lineHeight!.value)
-            expect(
-                lineHeight,
-                `${width}：line-height=${item.lineHeight!.value} 无法解析`
-            ).not.toBeNull()
-            if (lineHeight!.kind === 'ratio') {
-                expect(
-                    lineHeight!.ratio,
-                    `${width}：line-height=${item.lineHeight!.value} < 1.6`
-                ).toBeGreaterThanOrEqual(1.6)
-            } else {
-                expect(
-                    lineHeight!.px,
-                    `${width}：line-height=${item.lineHeight!.value} < 22.4px（1.6×14）`
-                ).toBeGreaterThanOrEqual(22.4)
-            }
-
-            // ③ white-space 保留换行
-            expect(
-                ['pre-wrap', 'pre-line', 'break-spaces'],
-                `${width}：笔记正文 white-space=${item.whiteSpace?.value ?? '(未声明)'}，需 pre-wrap 等以保留用户换行`
-            ).toContain(item.whiteSpace?.value)
-
-            // ④ 长无空格串（URL / 英文 token）必须可断 —— overflow-wrap 或 word-break 至少一个
-            expect(
-                item.overflowWrap !== null || item.wordBreak !== null,
-                `${width}：笔记正文既无 overflow-wrap 也无 word-break ⇒ 长无空格串会撑破抽屉（R14③）`
-            ).toBe(true)
-
-            // ⑤ 无横向溢出成因
-            expect(item.horizontalCauses, `${width}：笔记元素出现横向溢出成因`).toEqual([])
-        }
+        console.log('[AC11-③] 去装饰 / 对齐实测汇总：', JSON.stringify(measured, null, 1))
     })
 })
