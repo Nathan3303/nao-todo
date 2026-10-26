@@ -104,7 +104,8 @@ vi.mock(
 )
 
 const { useCaseBinding } = await import('../binding')
-const { getLastCheckInAttemptAt } = await import('@nao-todo/shared/session-renewal')
+const { getLastCheckInAttemptAt, resetCheckInAttempt } =
+    await import('@nao-todo/shared/session-renewal')
 const { consumeRotationGrace, resetTokenRotation } =
     await import('@nao-todo/shared/requester/auth-rotation')
 
@@ -128,6 +129,7 @@ describe('desktop binding - 登录路径明文迁移（AC2）', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         resetTokenRotation()
+        resetCheckInAttempt()
         mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
         mocks.ensureUnlocked.mockResolvedValue(undefined)
         mocks.runPlaintextMigration.mockResolvedValue({
@@ -176,6 +178,7 @@ describe('desktop binding - 续期接线（T545 / AC6 / R2）', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         resetTokenRotation()
+        resetCheckInAttempt()
     })
 
     it('checkIn 成功 ⇒ 记录发起时刻（Q2 启动 60s 内合计恰好 1 次）并武装轮换宽限（R2）', async () => {
@@ -185,10 +188,13 @@ describe('desktop binding - 续期接线（T545 / AC6 / R2）', () => {
 
         expect(err).toBeNull()
         expect(getLastCheckInAttemptAt()).not.toBeNull()
-        // 成功后 10s 内的 10041 被宽限（只护一次）
+        // 成功后 10s 内的 10041 被宽限（#260 修复②：窗口内全员生效，不再单次消费）
         expect(consumeRotationGrace()).toBe(true)
-        expect(consumeRotationGrace()).toBe(false)
+        expect(consumeRotationGrace()).toBe(true)
     })
+
+    // （Issue #260 修复① 归位：checkin 发起记录已上移至域层 AuthUseCase.signIn 成功分支、
+    //   setUserToken 之前 —— 断言在 domain-identity auth-service 用例，不在本文件）
 
     it('checkIn 失败 ⇒ 不武装轮换宽限（只有换发新 token 才需要宽限）', async () => {
         const useCase = decorate()

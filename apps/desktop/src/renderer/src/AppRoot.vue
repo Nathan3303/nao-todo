@@ -87,6 +87,7 @@ syncService.setSessionExpiredListener(handleSessionExpired)
 // 常驻会话续期（AC6/AC11）：桌面端专属（Web 无 preload 桥 ⇒ 零行为变化）
 const authUseCase = useAuthUseCase(userStore)
 useDesktopSessionRenewal({
+    isAuthenticated: () => userStore.getIsAuthenticated(),
     authToken: () => userStore.userToken,
     checkIn: (token) => authUseCase.checkIn(token),
     onCredentialExpired: () => {

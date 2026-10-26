@@ -193,6 +193,7 @@ export interface LocaleMessages {
     'common.edit': string
     'common.save': string
     'common.retry': string
+    'common.navigationFailed': string
     'common.all': string
     'common.normal': string
     'common.deleted': string

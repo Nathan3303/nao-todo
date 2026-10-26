@@ -51,14 +51,16 @@ describe('轮换宽限（纯逻辑，R2）', () => {
         expect(rotation.TOKEN_ROTATION_GRACE_MS).toBe(GRACE_MS)
     })
 
-    it('未经轮换（Web 端现状）⇒ 不消费任何宽限（零行为变化）', async () => {
+    it('未经轮换（Web 端现状）⇒ 反复 10041 也永不宽限（零行为变化护栏）', async () => {
         const rotation = await load('R2')
         rotation.resetTokenRotation()
 
         expect(rotation.consumeRotationGrace(1000)).toBe(false)
+        expect(rotation.consumeRotationGrace(2000)).toBe(false)
+        expect(rotation.consumeRotationGrace(3000)).toBe(false)
     })
 
-    it('轮换后 10s 内 ⇒ 消费成功一次（在途旧 token 的 10041 被宽限）', async () => {
+    it('轮换后 10s 内 ⇒ 消费成功（在途旧 token 的 10041 被宽限）', async () => {
         const rotation = await load('R2')
         rotation.resetTokenRotation()
         rotation.markTokenRotated(10_000)
@@ -66,13 +68,14 @@ describe('轮换宽限（纯逻辑，R2）', () => {
         expect(rotation.consumeRotationGrace(10_500)).toBe(true)
     })
 
-    it('宽限只护**一次**：同一轮换窗口内第二个 10041 不再宽限', async () => {
+    it('宽限窗口内**全员生效**：同一轮换的多个在途 10041 均被宽限（#260：单次消费会漏掉第二个）', async () => {
         const rotation = await load('R2')
         rotation.resetTokenRotation()
         rotation.markTokenRotated(10_000)
 
         expect(rotation.consumeRotationGrace(10_100)).toBe(true)
-        expect(rotation.consumeRotationGrace(10_200)).toBe(false)
+        expect(rotation.consumeRotationGrace(10_200)).toBe(true)
+        expect(rotation.consumeRotationGrace(19_000)).toBe(true)
     })
 
     it('窗口边界内侧（9.999s）仍宽限；明显越过（10.001s）不再宽限', async () => {
@@ -194,7 +197,7 @@ describe('轮换宽限 · 请求器接线（R2 / AC6）', () => {
         expect(onAuthExpired).toHaveBeenCalledTimes(1)
     })
 
-    it('宽限被消费后，下一次 10041 仍登出（不置 authExpiredFired 的语义保持：只回调一次）', async () => {
+    it('宽限内多个 10041 均不登出且响应如实返回（#260 回归：登录后立即轮换 + 多个在途旧 token）', async () => {
         const onAuthExpired = vi.fn()
         const handler = await createRequester(onAuthExpired)
         const rotation = await load('R2')
@@ -202,8 +205,60 @@ describe('轮换宽限 · 请求器接线（R2 / AC6）', () => {
         vi.setSystemTime(new Date('2026-10-25T00:00:00.000Z'))
         rotation.markTokenRotated()
 
-        await emit10041(handler)
+        // 序列化在途请求：同一轮换窗口内登录导航 / pull / Epoch 三个旧 token 请求先后返回 10041
+        vi.setSystemTime(new Date('2026-10-25T00:00:01.000Z'))
+        const first = await emit10041(handler)
+        vi.setSystemTime(new Date('2026-10-25T00:00:02.000Z'))
+        const second = await emit10041(handler)
+        vi.setSystemTime(new Date('2026-10-25T00:00:09.500Z'))
+        const third = await emit10041(handler)
+
         expect(onAuthExpired).not.toHaveBeenCalled()
+        for (const { response, result } of [first, second, third]) {
+            expect(result).toBe(response)
+            expect((result as { data: { code: number } }).data.code).toBe(10041)
+        }
+    })
+
+    it('窗口外的真实失效 ⇒ 仍正常登出（不放过真下线）', async () => {
+        const onAuthExpired = vi.fn()
+        const handler = await createRequester(onAuthExpired)
+        const rotation = await load('R2')
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2026-10-25T00:00:00.000Z'))
+        rotation.markTokenRotated()
+
+        vi.setSystemTime(new Date('2026-10-25T00:00:11.000Z'))
+        await emit10041(handler)
+
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+    })
+
+    it('登出闸只回调一次（authExpiredFired 闩语义保持）；#260 修复③：登录成功复位后可再次回调', async () => {
+        const onAuthExpired = vi.fn()
+        const handler = await createRequester(onAuthExpired)
+        const rotation = await load('R2')
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2026-10-25T00:00:00.000Z'))
+        rotation.markTokenRotated()
+
+        // 窗口外连续三个 10041 ⇒ 只登出一次（闩）
+        vi.setSystemTime(new Date('2026-10-25T00:00:11.000Z'))
+        await emit10041(handler)
+        await emit10041(handler)
+        await emit10041(handler)
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+
+        // 登录成功（sign-in-page / check-in-page 调用）⇒ 复位闩 ⇒ 下一次真实失效可再次登出
+        const { resetAuthExpiredLatch } = await import('../axios')
+        resetAuthExpiredLatch()
+        await emit10041(handler)
+        expect(onAuthExpired).toHaveBeenCalledTimes(2)
+    })
+
+    it('未 mark（Web 端）+ 无闩复位 ⇒ 10041 立即登出一次后不再重复（行为零变化）', async () => {
+        const onAuthExpired = vi.fn()
+        const handler = await createRequester(onAuthExpired)
 
         await emit10041(handler)
         await emit10041(handler)

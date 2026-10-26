@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vite-plus/test'
+import { NavigationFailureType } from 'vue-router'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { SHELL_ERROR_LOG_PREFIX } from '../error-observability'
 import {
     pickSafeNavigationTarget,
@@ -10,6 +11,15 @@ import {
     type NavigationStorage,
     type SafeNavigationRouter
 } from '../safe-navigation'
+
+// Issue #260 修复④：safeReplace 失败要弹 NueMessage；mock 掉避免依赖真实弹层环境
+const nueMessageMock = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
+vi.mock('nue-ui', () => ({ NueMessage: nueMessageMock }))
+
+beforeEach(() => {
+    nueMessageMock.error.mockClear()
+    nueMessageMock.success.mockClear()
+})
 
 /**
  * SHELL-05 T4 / C-28 / C-30：安全导航纯层
@@ -167,10 +177,40 @@ describe('safeReplace / safeReplaceDeepLink - C-35 统一导航', () => {
         )
     })
 
-    it('replace reject → 记录且不抛错（不卡死）', async () => {
+    it('replace reject → 记录 + 用户可见提示 + 一次自动重试（不抛错、不卡死、不循环）', async () => {
         const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-        const router = makeNavigableRouter(() => Promise.reject(new Error('nav failed')))
-        await expect(safeReplace(router, '/tasks', 'src:test')).resolves.toBeUndefined()
+        const replace = vi.fn(() => Promise.reject(new Error('nav failed')))
+        await expect(
+            safeReplace(makeNavigableRouter(replace), '/tasks', 'src:test')
+        ).resolves.toBeUndefined()
+        expect(replace).toHaveBeenCalledTimes(2)
+        expect(nueMessageMock.error).toHaveBeenCalledTimes(2)
+        expect(spy).toHaveBeenCalledWith(
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'src:test' })
+        )
+    })
+
+    it('守卫中止（NavigationFailure.aborted）→ 记录 + 提示 + 一次自动重试（#260：登录后界面不动的主表症）', async () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const failure = { type: NavigationFailureType.aborted, from: {}, to: {} }
+        const replace = vi.fn(() => Promise.resolve(failure))
+        await safeReplace(makeNavigableRouter(replace), '/tasks', 'src:test')
+        expect(replace).toHaveBeenCalledTimes(2)
+        expect(nueMessageMock.error).toHaveBeenCalledTimes(2)
+        expect(spy).toHaveBeenCalledWith(
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'src:test' })
+        )
+    })
+
+    it('duplicated（目标即当前路由）→ 仅记录，不提示不重试（重复 replace(/auth/signin) 是常态 no-op）', async () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const failure = { type: NavigationFailureType.duplicated, from: {}, to: {} }
+        const replace = vi.fn(() => Promise.resolve(failure))
+        await safeReplace(makeNavigableRouter(replace), '/tasks', 'src:test')
+        expect(replace).toHaveBeenCalledTimes(1)
+        expect(nueMessageMock.error).not.toHaveBeenCalled()
         expect(spy).toHaveBeenCalledWith(
             expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
             expect.objectContaining({ source: 'src:test' })

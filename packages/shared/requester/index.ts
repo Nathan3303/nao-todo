@@ -77,3 +77,4 @@ export const replayFailedOperations = async () => {
 
 export type { Requester } from './types'
 export type { OperationLog, OperationLogStatus, HttpMethod } from './types'
+export { resetAuthExpiredLatch } from './axios'

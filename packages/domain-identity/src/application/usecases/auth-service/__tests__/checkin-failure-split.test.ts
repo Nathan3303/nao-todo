@@ -3,6 +3,7 @@ import type { AuthService } from '../../../../domain'
 import type { AuthStore } from '../../../viewobjects'
 import { isCredentialError } from '../error-classification'
 import { AuthUseCase } from '../usecase'
+import { getLastCheckInAttemptAt, resetCheckInAttempt } from '@nao-todo/shared/session-renewal'
 
 /**
  * DEF-5 / AC7：checkIn 失败分流
@@ -183,5 +184,45 @@ describe('C-67：checkin 分类 = 网络白名单 + code 优先（DEF-33）', ()
         // 空值防御：显式 false
         expect(isCredentialError(null)).toBe(false)
         expect(isCredentialError('')).toBe(false)
+    })
+})
+/**
+ * Issue #260 修复①回归：登录成功即记录 checkin 发起时刻，且必须在 `setUserToken` **之前**
+ * @description 顺序硬要求（arch §四）：store watch 微任务先于用例续体执行 —— 晚于 setUserToken
+ *              才记录 ⇒ 桌面续期调度器 `start()` 同步段读到 null ⇒ 立即用旧 token 补发 checkin
+ *              ⇒ 服务端轮换 ⇒ 在途请求 10041 ⇒ 被登出 ⇒ 「登录成功但卡在登录页」。
+ */
+describe('AuthUseCase.signIn - #260 修复①：发起时刻先于 setUserToken 记录', () => {
+    it('signIn 成功 ⇒ 记录发起时刻且先于 setUserToken（晚记 = 调度器已读 null）', async () => {
+        resetCheckInAttempt()
+        const { store, setUserToken } = createStore()
+        // 在 setUserToken 执行的瞬间采样发起记录：非 null ⇒ 记录确实先于 setUserToken
+        let attemptAtWhenTokenSet: number | null | 'unset' = 'unset'
+        setUserToken.mockImplementation(() => {
+            attemptAtWhenTokenSet = getLastCheckInAttemptAt()
+        })
+        const authService = {
+            signIn: async () => [{ jwt: 'jwt-new', isPending: false, deadline: null }, null]
+        } as unknown as AuthService
+        const useCase = new AuthUseCase(authService, store)
+
+        const err = await useCase.signIn({ email: 'a@b.c', password: 'pw' } as never)
+
+        expect(err).toBeNull()
+        expect(attemptAtWhenTokenSet).not.toBe('unset')
+        expect(attemptAtWhenTokenSet).not.toBeNull()
+    })
+
+    it('signIn 失败 ⇒ 不记录发起时刻（未换发新 token，调度器不应被误安抚）', async () => {
+        resetCheckInAttempt()
+        const { store } = createStore()
+        const authService = {
+            signIn: async () => [null, '账号或密码错误']
+        } as unknown as AuthService
+        const useCase = new AuthUseCase(authService, store)
+
+        await useCase.signIn({ email: 'a@b.c', password: 'bad' } as never)
+
+        expect(getLastCheckInAttemptAt()).toBeNull()
     })
 })

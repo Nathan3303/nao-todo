@@ -6,6 +6,24 @@ import { getDeviceId } from '../utils/device-id'
 import { consumeRotationGrace } from './auth-rotation'
 
 /**
+ * 最近一次创建的请求器闭包的登出闸复位器（Issue #260 修复③）
+ * @description `authExpiredFired` 闩（同一次会话只登出一次）在**重新登录后必须复位**，
+ *              否则上一次会话触过的 10041 残留闩会让这次登录后的真实失效**永久静默**。
+ *              闭包局部变量无法从外部触及 ⇒ 创建请求器时注册复位器，供登录成功路径调用
+ *              （`sign-in-page` / `check-in-page` 两端共用，见 `resetAuthExpiredLatch`）。
+ */
+type AuthExpiredLatchReset = () => void
+let latestLatchReset: AuthExpiredLatchReset | null = null
+
+/**
+ * 复位凭证失效登出闸（登录成功后调用；两端共用）
+ * @description 无请求器（未 init / Lynx 无闩）时静默 no-op；多次调用安全。
+ */
+export const resetAuthExpiredLatch = (): void => {
+    latestLatchReset?.()
+}
+
+/**
  * 创建 Axios 请求器
  * @param baseURL 基础 URL
  * @param enableRetry 是否开启幂等请求自动重试（默认开启）
@@ -38,7 +56,7 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
      * 添加响应拦截器
      * @description 对幂等请求的网络错误自动重试；重试耗尽或关闭时归一化错误响应；
      *              检测凭证失效（code 10041，被下线/被顶号）并触发应用层回调（成功/错误分支同检，仅触发一次）。
-     *              **轮换宽限（R2）**：续期刚换发 token 时旧 token 的在途请求会拿到 10041 ⇒
+     *              **轮换宽限（R2 / Issue #260）**：续期刚换发 token 时旧 token 的在途请求会拿到 10041 ⇒
      *              `consumeRotationGrace()` 命中则**不触发登出**（不置 `authExpiredFired`），响应如实返回。
      *              Web 端从不 `mark` ⇒ 该分支恒不命中，行为零变化。
      */
@@ -48,7 +66,11 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
         authExpiredFired = true
         onAuthExpired?.()
     }
-    /** 10041 处置：轮换宽限内放行（只护一次），否则按真实失效登出 */
+    // 登录成功路径可复位本闩（#260 修复③；见顶部说明）
+    latestLatchReset = () => {
+        authExpiredFired = false
+    }
+    /** 10041 处置：轮换宽限内放行（窗口内全员生效，#260），否则按真实失效登出 */
     const handleCredentialExpired = () => {
         if (consumeRotationGrace()) return
         notifyAuthExpired()
