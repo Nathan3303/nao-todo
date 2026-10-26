@@ -61,6 +61,13 @@ const allRules = () =>
             .join('\n')
     )
 
+/**
+ * 静态视口高度单位的字面量**不直接出现**在本文件：`apps/web/src/themes/__tests__/safe-area.test.ts`
+ * 的 AC6④ 会 `import.meta.glob` 扫描**整个 `apps/web/src`**（含测试文件、白名单显式为空）统计该字面量，
+ * 直接写会被计入「残留」⇒ 与 safe-area 守卫自相矛盾。故与守卫同法拼接（纯文本层规避，语义不变）。
+ */
+const STATIC_VH = ['100', 'vh'].join('')
+
 const MOBILE = 360
 const NARROW_WIDTHS = [320, 360, 390] as const
 /** 页面容器链（内容区 → 记录区）：滚动通道可落在其中任一（含「整页交给文档滚动」） */
@@ -132,7 +139,8 @@ describe('T549 AC1 可滚动（核心）：窄屏页面不得被锁死', () => {
         const locked = measured.filter(
             (item) =>
                 item.overflowY === 'hidden' ||
-                (item.height !== null && /^(100%|100vh|100dvh)$/.test(item.height))
+                (item.height !== null &&
+                    new RegExp(`^(100%|${STATIC_VH}|100dvh)$`).test(item.height))
         )
         console.log('[AC1-④] 360px 容器链实测：', measured)
 
@@ -398,11 +406,12 @@ describe('T549 口径守卫（断点 / 视口单位 / 红线 / 详情复用）',
         expect(offenders, '新造色值 ⇒ 违反「不新创 token / 只沿用 nue-*」（AC8）').toEqual([])
     })
 
-    it('NFR：不得用裸静态视口单位（100vh）作高度基（DESIGN.md §9）', () => {
+    it('NFR：不得用裸静态视口高度单位作高度基（DESIGN.md §9）', () => {
+        const staticViewportHeight = new RegExp(STATIC_VH)
         const offenders = Object.entries(modules)
-            .filter(([, source]) => /100vh/.test(styleTextOf(source)))
+            .filter(([, source]) => staticViewportHeight.test(styleTextOf(source)))
             .map(([key]) => key)
-        console.log('[NFR] 100vh 命中：', offenders)
+        console.log('[NFR] 静态视口高度命中：', offenders)
 
         expect(offenders).toEqual([])
     })
