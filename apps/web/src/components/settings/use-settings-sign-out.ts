@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/shared/locales'
 import { useUserStore } from '@nao-todo/presentation-identity'
+import { isNetworkError } from '@nao-todo/domain-identity'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
     localSession,
@@ -50,13 +51,23 @@ export const useSettingsSignOut = () => {
         cryptoService.lock()
         // AC16b：本标签登出已完成（清库已过 C-54 护栏 + 清认证）⇒ 通知其它标签清 store + 跳登录页
         if (userId) broadcastSignOut(userId)
-        // 远程登出尽力而为：离线/网络失败不阻断、不弹错误封锁（与 password-updater 语义对齐）
+        // 远程登出（撤销服务端会话）：本地登出已完成 ⇒ 传输层失败不阻断、不弹错误封锁；
+        // 但**服务端业务失败**（如 10031 参数错误 / 会话未撤销）必须可见反馈（T560）
+        let remoteFailure: string | Error | null = null
         try {
-            await authUseCase.signOut(token)
+            remoteFailure = await authUseCase.signOut(token)
         } catch {
-            /* 远程登出失败：本地登出已完成 */
+            /* 传输层异常：本地登出已完成，静默 */
         }
-        NueMessage.success(t('settings.signOutSuccess'))
+        if (
+            remoteFailure !== null &&
+            remoteFailure !== undefined &&
+            !isNetworkError(remoteFailure)
+        ) {
+            NueMessage.error(t('settings.signOutFailed'))
+        } else {
+            NueMessage.success(t('settings.signOutSuccess'))
+        }
         await safeReplace(router, '/auth/signin', 'settings:sign-out-navigation')
     }
 

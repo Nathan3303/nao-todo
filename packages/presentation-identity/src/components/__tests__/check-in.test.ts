@@ -111,6 +111,38 @@ describe('AuthCheckIn - SHELL-03 失败分支', () => {
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 
+    it('T558 R1 检入冲突（10022）⇒ 显式可重试终态（重试 + 重新登录），不跳 signin、不弹凭证错误', async () => {
+        mocks.routeName = 'auth-checkin'
+        mocks.replace.mockClear()
+        mocks.messageError.mockClear()
+        const conflictError = Object.assign(new Error('检入失败'), {
+            code: 10022,
+            businessCode: 10022
+        })
+        mountCheckIn(async () => conflictError)
+        await flushPromises()
+
+        // 终态可辨：不是永久 loading，而是可重试失败态
+        expect(document.body.textContent).toContain('验证未完成，请重试')
+        expect(buttonsText()).toContain('重试')
+        expect(buttonsText()).toContain('重新登录')
+        expect(mocks.replace).not.toHaveBeenCalled()
+        expect(mocks.messageError).not.toHaveBeenCalled()
+    })
+
+    it('T558 R1 检入冲突可重试：点「重试」再次发起检入', async () => {
+        mocks.routeName = 'auth-checkin'
+        const checkIn = vi.fn(async () =>
+            Object.assign(new Error('检入失败'), { code: 10022, businessCode: 10022 })
+        )
+        mountCheckIn(checkIn)
+        await flushPromises()
+        expect(checkIn).toHaveBeenCalledTimes(1)
+        clickButton('重试')
+        await flushPromises()
+        expect(checkIn).toHaveBeenCalledTimes(2)
+    })
+
     it('B-3① 路由判据：已离开检入页 ⇒ 失败静默 return（不弹错、不跳转、无失败 UI）', async () => {
         mocks.routeName = 'index' // 用户已「离线进入」离开检入页
         mocks.replace.mockClear()

@@ -70,8 +70,11 @@ const createService = (checkIn: (token: string) => Promise<[unknown, unknown]>):
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-afterEach(() => {
+afterEach(async () => {
     vi.restoreAllMocks()
+    // 检入在途窗口是模块级全局态 ⇒ 用例间复位（异常路径也不污染后续用例）
+    const window = await import('@nao-todo/shared/requester/checkin-window')
+    window.resetCheckInWindow()
 })
 
 describe('AuthUseCase.checkIn - 检入单飞（同一 token 合并为一个在途请求）', () => {
@@ -193,7 +196,7 @@ describe('AuthUseCase.checkIn - 10022 冲突-可重试（降级，不清认证�
         expect(handle.clearAuthData).not.toHaveBeenCalled()
     })
 
-    it('10022 两次 ⇒ 静默 null + 保持认证 + 结构化记录（code 10022，token 只记前缀）', async () => {
+    it('10022 两次且**已建立会话** ⇒ 静默 null（正常进入应用）+ 结构化记录（code 10022，token 只记前缀）', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
         const secret = 'jwt-super-secret-token'
         const checkIn = vi.fn(async () => [null, conflict()] as [unknown, unknown])
@@ -243,6 +246,65 @@ describe('AuthUseCase.checkIn - 10022 冲突-可重试（降级，不清认证�
         expect(err).not.toBeNull()
         expect(checkIn).toHaveBeenCalledTimes(1)
         expect(clearAuthData).toHaveBeenCalledTimes(1)
+    })
+
+    it('10022 两次且**未建立会话**（冷启动）⇒ 返回 10022 错误（显式可重试出口），仍不清凭证', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const secret = 'jwt-cold-start'
+        // 冷启动：store 里有 token 但 isAuthenticated 仍为 false（检入尚未成功）
+        let authenticated = false
+        let current = secret
+        const clearAuthData = vi.fn(() => {
+            current = ''
+            authenticated = false
+        })
+        const store = {
+            clearAuthData,
+            setIsAuthenticated: vi.fn((next: boolean) => {
+                authenticated = next
+            }),
+            setUserToken: vi.fn((token: string) => {
+                current = token
+            }),
+            setUserDeletion: vi.fn(),
+            getIsAuthenticated: () => authenticated,
+            getUserToken: () => current
+        } as unknown as AuthStore
+        const checkIn = vi.fn(async () => [null, conflict()] as [unknown, unknown])
+        const useCase = new AuthUseCase(createService(checkIn), store)
+
+        const err = await useCase.checkIn(secret)
+
+        // 终态必须是「可重试错误」（不是静默 null ⇒ 界面不会永久停在验证中）
+        expect(err).not.toBeNull()
+        expect(isRetryableCheckInConflict(err)).toBe(true)
+        expect(checkIn).toHaveBeenCalledTimes(2)
+        expect(clearAuthData).not.toHaveBeenCalled()
+        expect(authenticated).toBe(false)
+        expect(warn).toHaveBeenCalled()
+    })
+
+    it('冲突事件经上报器外发（phase/code/token 前缀），且不含完整 token', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const secret = 'jwt-super-secret-token'
+        const events: Array<Record<string, unknown>> = []
+        const checkIn = vi.fn(async () => [null, conflict()] as [unknown, unknown])
+        const { store } = createStore(secret)
+        const useCase = new AuthUseCase(createService(checkIn), store, (event) => {
+            events.push(event as unknown as Record<string, unknown>)
+        })
+
+        await useCase.checkIn(secret)
+
+        expect(events).toHaveLength(1)
+        expect(events[0]).toMatchObject({
+            code: CONFLICT_CODE,
+            phase: 'retry-conflict',
+            outcome: 'established'
+        })
+        expect(String(events[0]!.snapshot)).toBe('jwt-supe…')
+        expect(JSON.stringify(events)).not.toContain(secret)
+        expect(JSON.stringify(warn.mock.calls)).not.toContain(secret)
     })
 
     it('判定器契约未变：isCredentialError(10022) 仍为 true，新谓词只在检入处置点先判', () => {

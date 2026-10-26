@@ -62,6 +62,8 @@ const emit10041 = async (
 afterEach(async () => {
     const rotation = await import('../auth-rotation')
     rotation.resetTokenRotation()
+    const window = await import('../checkin-window')
+    window.resetCheckInWindow()
 })
 
 describe('axios 10041 · token 一致性（T558）', () => {
@@ -135,6 +137,28 @@ describe('axios 10041 · token 一致性（T558）', () => {
         await emit10041(handler, 'Bearer jwt-current')
 
         expect(onAuthExpired).not.toHaveBeenCalled()
+    })
+
+    it('T558 R1 检入在途 ⇒ 快照一致也**不登出**（由检入结果裁决），窗口关闭后恢复登出', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const window = await import('../checkin-window')
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        window.beginCheckIn()
+        // 冷启动并发 pull 的 10041：快照 === 当前 token，但检入正在换发 ⇒ 延后处置
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        expect(JSON.stringify(warn.mock.calls)).toContain('auth.credential.deferred-checkin')
+
+        // 窗口关闭（检入已落定）⇒ 真实失效照旧登出（不是永久免死金牌）
+        window.endCheckIn()
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+        warn.mockRestore()
     })
 
     it('未注入 token 读取器 ⇒ 保持旧口径（收到 10041 即登出，两端行为零变化）', async () => {

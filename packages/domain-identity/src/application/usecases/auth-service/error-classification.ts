@@ -70,6 +70,22 @@ export const isCredentialError = (err: GoError): boolean => {
 }
 
 /**
+ * 是否**网络类**失败（与 `isCredentialError` 同一白名单，方向相反）
+ * @description 供「失败是否需要用户可见反馈」这类**非鉴权**分支复用同一判据
+ *              （例：远程登出失败时，只有服务端业务失败才提示；断网/超时不吓用户）。
+ *              ⛔ 不要用它替代 `isCredentialError` 做认证处置（方向与语义不同）。
+ * @param err 错误（Go 风格，字符串或 Error）
+ * @returns 是否为网络类失败
+ */
+export const isNetworkError = (err: GoError): boolean => {
+    if (err === null || err === undefined || err === '') return false
+    const codes = extractErrorCodes(err)
+    if (codes.length > 0) return codes.some((code) => NETWORK_ERROR_CODES.includes(code))
+    const message = unwrapError(err)
+    return NETWORK_ERROR_MESSAGES.some((marker) => message.includes(marker))
+}
+
+/**
  * 检入冲突业务码（T558 / Issue #260 残余）
  * @description 服务端 CAS 语义：同一 token 的并发检入**只许一次换发**，败者返回本码
  *              ⇒ 「我的旧 token 已被别的请求换掉，请重试」，**不是**会话失效。

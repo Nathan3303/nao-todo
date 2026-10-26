@@ -13,22 +13,23 @@ import {
 } from './converters'
 
 /**
- * checkin 失败错误（结构化 code 载体，C-67 / r11，DEF-33）
+ * 业务失败错误（结构化 code 载体，C-67 / r11，DEF-33；checkin / signout 共用）
  * @description 仓储边界**必须**透传两类 code（**不改** `GoError` 联合类型）：
  *              - `code`：顶层归一化 code（`requester` 产出的字符串，如 `ERR_NETWORK`）优先；
  *                无顶层 code 时回落为**业务 code**（服务端 `result.code`）。
- *              - `businessCode`：服务端业务 code（如 `10022` / `10051`）。
+ *              - `businessCode`：服务端业务 code（如 `10022` / `10031` / `10051`）。
  *              `message` 与既有用户可见文案逐字一致 ⇒ 分类器以 code 为准、文案仅兜底
  *              （闭合 DEF-25：不再依赖服务端文案）。
  */
-type CheckInFailureError = Error & { code?: string | number; businessCode?: number }
+type BusinessFailureError = Error & { code?: string | number; businessCode?: number }
 
-/** 构造 checkin 失败错误（透传顶层归一化 code + 业务 code，C-67） */
-const createCheckInFailureError = (
+/** 构造业务失败错误（透传顶层归一化 code + 业务 code，C-67） */
+const createBusinessFailureError = (
     response: unknown,
-    result: ResponseData | null
-): CheckInFailureError => {
-    const error = new Error(result?.message ?? '请求失败') as CheckInFailureError
+    result: ResponseData | null,
+    fallbackMessage = '请求失败'
+): BusinessFailureError => {
+    const error = new Error(result?.message ?? fallbackMessage) as BusinessFailureError
     const normalizedCode = (response as { code?: unknown } | null | undefined)?.code
     const businessCode = typeof result?.code === 'number' ? result.code : undefined
     if (typeof normalizedCode === 'string' || typeof normalizedCode === 'number') {
@@ -90,7 +91,7 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
         // 判断是否成功
         if (result === null || result.code !== 10020) {
             // C-67：失败以 Error 携带结构化 code 返回（用户可见文案不变）
-            return [null, createCheckInFailureError(response, result)]
+            return [null, createBusinessFailureError(response, result)]
         }
         // 返回
         const data = result.data as CheckInRes
@@ -98,18 +99,22 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
     }
 
     /**
-     * 登出
+     * 登出（撤销服务端会话）
      * @param jwt 登录凭证
      * @returns 错误信息
+     * @description **服务端契约（T560 / 双侧实测）**：请求体字段名 = `jwt`（不是 `token`）；
+     *              成功码 = `10030`；`10031` = **参数错误**（旧实现把它当成功 ⇒ 会话从未撤销）。
+     *              注意：delete 的请求体需放在 config.data 中（`Requester.delete(url, config)` 契约），
+     *              否则 axios（config.data）与 lynx（config.data）两端都不会携带 body。
      */
     const signOut = async (jwt: string): GoAsync<void> => {
         // 调用接口
-        // 注意：delete 的请求体需放在 config.data 中（Requester.delete(url, config) 契约），
-        //       否则 axios（config.data）与 lynx（config.data）两端都不会携带 body
-        const response = await requester.delete('/auth/signout', { data: { token: jwt } })
+        const response = await requester.delete('/auth/signout', { data: { jwt } })
         const result = response.data as ResponseData | null
-        // 判断是否成功
-        if (result === null || result.code !== 10031) return result?.message ?? '请求失败'
+        // 判断是否成功：仅 10030 算成功；其余（含 10031 参数错误）一律失败（结构化 code 透传）
+        if (result === null || result.code !== 10030) {
+            return createBusinessFailureError(response, result, '退出登录失败，请稍后再试')
+        }
         // 返回
         return null
     }

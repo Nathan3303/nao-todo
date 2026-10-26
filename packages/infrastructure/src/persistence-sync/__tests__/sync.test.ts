@@ -5,6 +5,11 @@ import { setJWTTokenProvider } from '../../persistence-go/utils'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
 import { localSession } from '../../persistence-local/session/local-session'
+import {
+    beginCheckIn,
+    endCheckIn,
+    resetCheckInWindow
+} from '@nao-todo/shared/requester/checkin-window'
 import { syncTracker } from '../sync-tracker'
 import { syncStatus } from '../sync-status'
 import { SyncService } from '../sync-service'
@@ -98,6 +103,8 @@ afterEach(() => {
     globalThis.setTimeout = realSetTimeout
     // T558：用例可能临时改过 token 提供器（陈旧 / Bearer null）⇒ 每个用例后复位
     setJWTTokenProvider(() => CURRENT_JWT)
+    // T558 R1：检入在途窗口是模块级全局态 ⇒ 每个用例后复位
+    resetCheckInWindow()
 })
 
 describe('SyncTracker', () => {
@@ -526,6 +533,28 @@ describe('SyncService', () => {
             expiredCalled = true
         })
         await service.pullAll()
+        expect(expiredCalled).toBe(false)
+        expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
+    })
+
+    it('T558 R1 拉取 10041 且**检入在途**（换发竞争）⇒ 不清凭证、不触发会话失效', async () => {
+        const service = new SyncService(
+            mockRequester(() => ({
+                code: 10041,
+                message: '用户凭证验证失败',
+                data: null
+            }))
+        )
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        beginCheckIn()
+        try {
+            await service.pullAll()
+        } finally {
+            endCheckIn()
+        }
         expect(expiredCalled).toBe(false)
         expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
     })

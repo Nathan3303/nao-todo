@@ -4,6 +4,7 @@ import { createLog, markFailed, removeLog } from './operation-log'
 import { MAX_RETRY, delay, getBackoffDelay, isIdempotentMethod, isRetriableError } from './retry'
 import { getDeviceId } from '../utils/device-id'
 import { consumeRotationGrace, extractBearerToken, isStaleTokenSnapshot } from './auth-rotation'
+import { isCheckInInFlight } from './checkin-window'
 
 /**
  * 最近一次创建的请求器闭包的登出闸复位器（Issue #260 修复③）
@@ -68,6 +69,8 @@ export default (
      *              Web 端从不 `mark` ⇒ 该分支恒不命中，行为零变化。
      *              **token 一致性（T558）**：优先级更高 —— 请求发出时的 token 快照 ≠ 当前 token
      *              （含 `Bearer null`）⇒ 陈旧响应，只记录、不登出。未注入 `getAuthToken` ⇒ 旧口径。
+     *              **检入在途（T558 R1）**：检入会换发 token，且在途 pull/profile 与检入并发 ⇒
+     *              检入期间的 `10041` 可能是「换发前的在途请求」，由检入结果裁决 ⇒ 只记录、不登出。
      */
     let authExpiredFired = false
     const notifyAuthExpired = () => {
@@ -131,6 +134,14 @@ export default (
         if (isStaleCredentialResponse(headers)) {
             console.warn('[requester] 忽略陈旧凭证响应（10041 来自旧 token / Bearer null）', {
                 event: 'auth.credential.stale',
+                snapshot: requestTokenOf(headers)?.slice(0, 8) ?? null
+            })
+            return
+        }
+        // T558 R1：检入在途 ⇒ 延后处置（检入会换发 token，在途请求的 10041 由检入结果裁决）
+        if (isCheckInInFlight()) {
+            console.warn('[requester] 检入在途，延后处置 10041（由检入结果裁决）', {
+                event: 'auth.credential.deferred-checkin',
                 snapshot: requestTokenOf(headers)?.slice(0, 8) ?? null
             })
             return
@@ -245,6 +256,8 @@ export default (
             try {
                 const response = await fn(...args)
                 await logIdPromise.then((logId) => {
+                    // `null` = 凭据红线跳过（认证接口 / 含凭据请求体）⇒ 无日志可结算
+                    if (logId === null) return undefined
                     if (isNormalizedError(response)) {
                         return markFailed(logId, {
                             errorCode: response.code,
@@ -261,7 +274,8 @@ export default (
                     config?: { _retryCount?: number }
                 }
                 await logIdPromise.then((logId) => {
-                    markFailed(logId, {
+                    if (logId === null) return undefined
+                    return markFailed(logId, {
                         errorCode: axiosError?.code,
                         errorMessage: axiosError?.message,
                         retryCount: axiosError?.config?._retryCount ?? 0

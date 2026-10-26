@@ -1,7 +1,27 @@
 import { AuthService, AuthStore, AuthUseCase } from '@nao-todo/domain-identity'
 import { useAuthRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/auth-repo-impl'
 import { getRequesterImpl } from '@nao-todo/shared/requester'
+import { recordShellError } from '@/error-observability'
 import { useCaseBinding } from '@/hooks/usecases/binding'
+
+/**
+ * 检入冲突事件 → 结构化可观测（SHELL-05 同一通道 / `__NAO_ERROR_LOG__`）
+ * @description 域层只出事件、不依赖端侧实现（可选上报器端口）：web/桌面在此接入。
+ *              payload 只含 `code` / `phase` / `reason` / `outcome` / token **前缀**（⛔ 无完整 token）。
+ */
+const reportCheckInConflict = (event: {
+    code: number
+    phase: string
+    snapshot: string
+    reason?: string
+    outcome?: string
+}): void => {
+    const fields = [`code=${event.code}`, `phase=${event.phase}`]
+    if (event.reason) fields.push(`reason=${event.reason}`)
+    if (event.outcome) fields.push(`outcome=${event.outcome}`)
+    fields.push(`snapshot=${event.snapshot}`)
+    recordShellError('auth:checkin-conflict', fields.join(' '))
+}
 
 /**
  * 认证用例
@@ -14,6 +34,6 @@ export const useAuthUseCase = (store: AuthStore) => {
     const requester = getRequesterImpl()
     const authRepo = useAuthRepository(requester)
     const authDomain = new AuthService(authRepo)
-    const useCase = new AuthUseCase(authDomain, store)
+    const useCase = new AuthUseCase(authDomain, store, reportCheckInConflict)
     return useCaseBinding.decorateAuthUseCase?.(useCase) ?? useCase
 }

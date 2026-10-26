@@ -17,6 +17,7 @@ import { NueMessage } from 'nue-ui'
 import {
     AuthUseCase,
     isCredentialError,
+    isRetryableCheckInConflict,
     USER_JWT_LOCALSTORAGE_KEY
 } from '@nao-todo/domain-identity'
 
@@ -46,6 +47,13 @@ const checkIn = async (): Promise<void> => {
         return
     }
     loading.value = false
+    // T558 R1：检入冲突（`10022`）是「可重试」而非「会话失效」⇒ 显式可重试出口
+    // （锦上添花：不清凭证、不回登录页；失败态自带「重试」+「重新登录」两个可前进动作）
+    if (isRetryableCheckInConflict(err)) {
+        failed.value = true
+        errorMessage.value = t('auth.checkIn.conflict')
+        return
+    }
     const message = unwrapError(err)
     if (isCredentialError(err)) {
         NueMessage.error(message)

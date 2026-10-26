@@ -11,6 +11,7 @@ import {
     extractBearerToken,
     isStaleTokenSnapshot
 } from '@nao-todo/shared/requester/auth-rotation'
+import { isCheckInInFlight } from '@nao-todo/shared/requester/checkin-window'
 import type { Table } from 'dexie'
 import { pickUnexpectedDroppedFields } from './dropped-fields'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
@@ -472,11 +473,12 @@ export class SyncService {
 
     /**
      * 处置 sync 的 10041：陈旧快照 / 轮换宽限内 ⇒ 仅结构化记录（T558）
-     * @description 优先级：① 陈旧响应 → ② 轮换宽限（Web 端从不 `markTokenRotated` ⇒ 恒不命中，行为零变化）。
+     * @description 优先级：① 陈旧响应 → ② 轮换宽限（Web 端从不 `markTokenRotated` ⇒ 恒不命中，行为零变化）
+     *              → ③ **检入在途**（T558 R1：检入换发期间的在途请求必然拿 10041，由检入结果裁决）。
      * @param headers 该请求发出时的鉴权头（token 快照）
      * @param phase 'pull' | 'push'
      * @param userId 当前用户
-     * @returns `true` = 已按「陈旧/宽限」处置（调用方**直接 return**，不做后续失效动作）
+     * @returns `true` = 已按「陈旧/宽限/检入在途」处置（调用方**直接 return**，不做后续失效动作）
      */
     private skipStaleCredentialFailure(
         headers: Record<string, string>,
@@ -484,7 +486,8 @@ export class SyncService {
         userId: string
     ): boolean {
         const stale = this.isStaleCredentialResponse(headers)
-        if (!stale && !consumeRotationGrace()) return false
+        const checkInInFlight = isCheckInInFlight()
+        if (!stale && !checkInInFlight && !consumeRotationGrace()) return false
         const requestToken = extractBearerToken(headers.Authorization)
         logStructured(
             'warn',
@@ -494,7 +497,11 @@ export class SyncService {
             {
                 userId,
                 phase,
-                kind: stale ? 'stale-credential' : 'rotation-grace',
+                kind: stale
+                    ? 'stale-credential'
+                    : checkInInFlight
+                      ? 'checkin-in-flight'
+                      : 'rotation-grace',
                 snapshot: requestToken ? `${requestToken.slice(0, 8)}…` : null
             }
         )

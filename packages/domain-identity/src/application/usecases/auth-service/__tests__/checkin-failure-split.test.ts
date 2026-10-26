@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
 import type { AuthService } from '../../../../domain'
 import type { AuthStore } from '../../../viewobjects'
-import { isCredentialError } from '../error-classification'
+import { isCredentialError, isNetworkError } from '../error-classification'
 import { AuthUseCase } from '../usecase'
 import { getLastCheckInAttemptAt, resetCheckInAttempt } from '@nao-todo/shared/session-renewal'
 
@@ -49,6 +49,25 @@ describe('isCredentialError - 凭证类判定', () => {
         expect(isCredentialError(TIMEOUT_ERROR)).toBe(false)
         expect(isCredentialError(RATE_LIMIT_ERROR)).toBe(false)
         expect(isCredentialError(null)).toBe(false)
+    })
+})
+
+describe('isNetworkError - 网络类判定（与凭证类同一白名单、方向相反）', () => {
+    it('断网/超时/限流/结构化网络码 ⇒ true', () => {
+        expect(isNetworkError(NETWORK_ERROR)).toBe(true)
+        expect(isNetworkError(TIMEOUT_ERROR)).toBe(true)
+        expect(isNetworkError(RATE_LIMIT_ERROR)).toBe(true)
+        expect(isNetworkError(Object.assign(new Error('x'), { code: 'ERR_NETWORK' }))).toBe(true)
+        expect(isNetworkError(Object.assign(new Error('x'), { businessCode: 10051 }))).toBe(true)
+    })
+
+    it('业务失败（10031 参数错误 / 10041 凭证）/ 空值 ⇒ false', () => {
+        expect(isNetworkError(Object.assign(new Error('参数错误'), { businessCode: 10031 }))).toBe(
+            false
+        )
+        expect(isNetworkError(SESSION_EXPIRED)).toBe(false)
+        expect(isNetworkError(null)).toBe(false)
+        expect(isNetworkError('')).toBe(false)
     })
 })
 
