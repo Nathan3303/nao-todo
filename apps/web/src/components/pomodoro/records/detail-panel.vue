@@ -168,14 +168,8 @@ const handleClose = () => {
     gap: var(--nue-gap-md);
 }
 
-.pomodoro-records-detail__note {
-    padding: var(--nue-padding-sm);
-    background-color: var(--nue-primary-color-50);
-    border-radius: var(--nue-radius-sm);
-    line-height: 1.6;
-}
-
-/* R14/AC11：笔记正文明示 14px（--nue-text-sm，与其它字段值同号），保留原文换行且不撑破抽屉（无横向溢出） */
+/* R14⑤：笔记去装饰容器（padding/背景/圆角全除，与其它字段同样式）；容器 div 仅留作布局包裹（无任何视觉声明）。
+   R14/AC11：笔记正文明示 14px（--nue-text-sm，与其它字段值同号），保留原文换行且不撑破抽屉（无横向溢出） */
 .pomodoro-records-detail__note-text {
     font-size: var(--nue-text-sm);
     line-height: 1.6;
