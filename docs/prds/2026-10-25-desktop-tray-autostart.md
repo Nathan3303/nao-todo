@@ -1,6 +1,6 @@
 # 2026-10-25 桌面端托盘常驻 + 开机自启 + 会话续期 PRD
 
-> **状态**：**v1.1（`T543` 评审裁定已回填，2026-10-25）** —— 用户 4 项决策（§五 D0）+ D1–D5 已确认；`T543` arch 评审回执 `done(full)` **验收通过**；`P1–P4` 已裁定、`RV1–RV11` 已并入本版（见 §九 R7）。**下一步：qa 用例先行（`T544`）→ 实现（`T545` ‖ `T546`）**。Issue [#254](https://github.com/Nathan3303/nao-todo/issues/254)。
+> **状态**：**✅ 已交付并发布 `v1.13.0`（2026-10-26）** —— 代码 PR [#255](https://github.com/Nathan3303/nao-todo/pull/255)（squash `1b37c3e0`）· 发版 PR [#256](https://github.com/Nathan3303/nao-todo/pull/256)（squash `68a40564`）· 注解 tag `v1.13.0`（peeled `68a40564`）· Release 已发布（非 draft / 非 prerelease · 8 项产物 · 正文与落盘逐字一致 2258/2258）· 跨仓 `nao-todo-server#57`（squash `504b917`，已部署生产）· **PRD v1.1（`T543` 评审裁定已回填，2026-10-25）** —— 用户 4 项决策（§五 D0）+ D1–D5 已确认；`T543` arch 评审回执 `done(full)` **验收通过**；`P1–P4` 已裁定、`RV1–RV11` 已并入本版（见 §九 R7）。**下一步：qa 用例先行（`T544`）→ 实现（`T545` ‖ `T546`）**。Issue [#254](https://github.com/Nathan3303/nao-todo/issues/254)。
 > **任务号**：`T542` 本需求（PM）· `T543` arch 评审 · `T544` qa（用例先行）· `T545` rd-fe（桌面端）· `T546` rd-be（服务端会话清理，跨仓 `nao-todo-server`）。
 > **评审产出**：ADR `docs/adr/2026-10-25-desktop-tray-autostart.md`（59 行）· 影响面 + 技术指标 `docs/reports/T543-arch-review.md` · 外部依据 `docs/research/2026-10-25-desktop-tray-autostart.md`。
 > **来源（成熟度）**：用户 2026-10-25 选定「下一批 = 方向 A」（上一任 PM 交接的候选之一，用户按 PM 建议顺序选定）；配套缺陷 `DEF-14` / `DEF-15`（缺陷池既有登记）。
