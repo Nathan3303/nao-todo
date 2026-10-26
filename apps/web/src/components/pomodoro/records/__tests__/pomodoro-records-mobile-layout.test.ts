@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vite-plus/test'
 import {
+    boxVerticalPx,
     effectiveOverflowY,
     effectiveRules,
     effectiveValue,
-    isNarrowScoped,
+    hitAreaEvidence,
     mediaBreakpoints,
     narrowScopedDecls,
     parseCssRules,
+    resolvePx,
     styleTextOf,
     toPx
 } from './records-responsive-harness'
@@ -261,25 +263,84 @@ describe('T549 AC4 无横向溢出（320 / 360 / 390）', () => {
     })
 })
 
-describe('T549 AC5 分页：窄屏可点、不弹回顶端', () => {
-    it('AC5 ① 360px：分页点击区 ≥ 40px', () => {
+describe('T549 AC2 / R9 单行卡片（源级推演；jsdom 无布局引擎，几何归真机）', () => {
+    it('AC2 ⑥ ≤720px：卡片单行 —— flex-direction 非 column、无 flex-wrap:wrap、align-items:center', () => {
         const rules = allRules()
-        const measured = effectiveRules(rules, MOBILE)
-            .filter((rule) => rule.selectors.some((selector) => /pagination|pager/i.test(selector)))
-            .flatMap((rule) =>
-                rule.decls
-                    .filter((decl) => /^(min-height|min-block-size|height)$/.test(decl.prop))
-                    .map((decl) => ({
-                        selector: rule.selectors.join(', '),
-                        value: decl.value,
-                        px: toPx(decl.value)
-                    }))
-            )
-        console.log('[AC5-①] 360px 分页高度实测：', measured)
+        const measured = {
+            display: effectiveValue(rules, '.pomodoro-record-card', 'display', MOBILE),
+            flexDirection: effectiveValue(rules, '.pomodoro-record-card', 'flex-direction', MOBILE),
+            flexWrap: effectiveValue(rules, '.pomodoro-record-card', 'flex-wrap', MOBILE),
+            alignItems: effectiveValue(rules, '.pomodoro-record-card', 'align-items', MOBILE)
+        }
+        console.log('[AC2-⑥] 卡片布局实测（360px 生效值）：', measured)
+
+        // 单行：横向排布（row / 未声明即 row），或等价 grid 横向流
+        const horizontal =
+            measured.display === 'grid' ? true : (measured.flexDirection ?? 'row').startsWith('row')
+        expect(horizontal, '卡片仍为纵向堆叠（三行）⇒ 违背 R9「单行」').toBe(true)
+        expect(measured.flexDirection, '卡片显式 flex-direction: column ⇒ 不是单行').not.toBe(
+            'column'
+        )
+        expect(measured.flexWrap, '卡片允许换行 ⇒ 会退化成多行').not.toBe('wrap')
+        expect(measured.alignItems, '单行需垂直居中（否则四字段错位）').toBe('center')
+    })
+
+    it('AC2 ⑦ ≤720px：卡片高 ∈ [50,62]（目标 56±6）且列表 gap ≤8（unit ≤70）', () => {
+        const rules = allRules()
+        const card = '.pomodoro-record-card'
+        const minHeightRaw = effectiveValue(rules, card, 'min-height', MOBILE)
+        const heightRaw = effectiveValue(rules, card, 'height', MOBILE)
+        const gapRaw = effectiveValue(rules, '.pomodoro-record-card-list', 'gap', MOBILE)
+
+        const paddingRaw = effectiveValue(rules, card, 'padding', MOBILE)
+        const paddingVertical =
+            boxVerticalPx(paddingRaw) ??
+            (resolvePx(effectiveValue(rules, card, 'padding-top', MOBILE)) ?? 0) +
+                (resolvePx(effectiveValue(rules, card, 'padding-bottom', MOBILE)) ?? 0)
+        const fontSizePx = resolvePx(effectiveValue(rules, card, 'font-size', MOBILE)) ?? 16
+        const lineHeightPx =
+            resolvePx(effectiveValue(rules, card, 'line-height', MOBILE)) ??
+            Math.round(fontSizePx * 1.2)
+        const borderPx = effectiveValue(rules, card, 'border', MOBILE) ? 2 : 0
+        const heightFromBox = Math.round(paddingVertical + lineHeightPx + borderPx)
+
+        const anchored = resolvePx(minHeightRaw) ?? resolvePx(heightRaw)
+        const cardHeight = anchored ?? heightFromBox
+        const gap = resolvePx(gapRaw) ?? 0
+        const unit = cardHeight + gap
+        console.log('[AC2-⑦] 卡片高推演实测：', {
+            高度锚: { minHeight: minHeightRaw, height: heightRaw, px: anchored },
+            盒模型推演: {
+                paddingRaw,
+                paddingVertical,
+                fontSizePx,
+                lineHeightPx,
+                borderPx,
+                heightFromBox
+            },
+            采用: cardHeight,
+            列表gap: { raw: gapRaw, px: gap },
+            unit
+        })
+
+        // R9 目标 56px、容差 ±6 ⇒ [50, 62]
+        expect(cardHeight).toBeGreaterThanOrEqual(50)
+        expect(cardHeight).toBeLessThanOrEqual(62)
+        expect(gap, '列表 gap > 8px ⇒ 卡片行间距过大、首屏能见的条数变少').toBeLessThanOrEqual(8)
+        expect(unit, 'unit = 卡片高 + gap 应 ≤ 70px').toBeLessThanOrEqual(70)
+    })
+})
+
+describe('T549 AC5 分页：窄屏可点、不弹回顶端', () => {
+    it('AC5 ① 360px：可点区（命中区）≥40px —— 判据 = 按钮视觉高 + 伪元素外扩（R10）', () => {
+        const evidence = hitAreaEvidence(allRules(), MOBILE)
+        console.log('[AC5-①] 命中区推演明细：', JSON.stringify(evidence.boxes, null, 1))
+        console.log('[AC5-①] 按钮本体高度声明：', evidence.directHeights)
 
         expect(
-            measured.some((item) => (item.px ?? 0) >= 40),
-            '分页控件无 ≥40px 的点击区声明 ⇒ 手机上难点（PRD §二）'
+            evidence.boxes.some((box) => box.satisfied),
+            '未推演出 ≥40px 的可点区：需 `::after/::before` + `content` + 按钮 `overflow: visible` + ' +
+                '（伪元素高度 ≥40px 或 垂直每侧外扩 ≥6px ⇒ 28+2×6=40）'
         ).toBe(true)
     })
 
@@ -298,29 +359,37 @@ describe('T549 AC5 分页：窄屏可点、不弹回顶端', () => {
         expect(wrapping.length, '分页不允许换行 ⇒ 窄屏必然被挤出屏幕').toBeGreaterThan(0)
     })
 
-    it('AC5 ⑤ 360px：「≥40px 点击区」必须来自窄屏分支（无条件覆盖 ⇒ 桌面按钮变高 ⇒ 违 AC7）', () => {
-        const rules = allRules()
-        const hits = rules
-            .filter((rule) => isNarrowScoped(rule, MOBILE))
-            .filter((rule) => rule.selectors.some((selector) => /pagination|pager/i.test(selector)))
-            .map((rule) => ({
-                selectors: rule.selectors,
-                media: rule.media,
-                minHeight: rule.decls
-                    .filter((decl) => /^(min-height|min-block-size)$/.test(decl.prop))
-                    .map((decl) => `${decl.prop}: ${decl.value}`)
+    it('AC5 ⑤ 360px：命中区扩展必须位于 ≤720 分支（无条件写 ⇒ 桌面命中区/尺寸漂移，违 AC7）', () => {
+        const evidence = hitAreaEvidence(allRules(), MOBILE)
+        const inNarrow = evidence.boxes.filter((box) => box.satisfied && box.narrow)
+        console.log(
+            '[AC5-⑤] 满足命中区的伪元素规则（选择器 + 媒体条件 + 外扩量）：',
+            evidence.boxes.map((box) => ({
+                selectors: box.selectors,
+                media: box.media,
+                narrow: box.narrow,
+                expandedPerSide: box.expandedPerSide,
+                hitAreaPx: box.hitAreaPx,
+                satisfied: box.satisfied,
+                reason: box.reason
             }))
-            .filter((rule) => rule.minHeight.length > 0)
-        const declarations = narrowScopedDecls(rules, MOBILE, /pagination|pager/i).filter((decl) =>
-            /^(min-height|min-block-size|height)$/.test(decl.prop)
         )
-        console.log('[AC5-⑤] 窄屏分支命中的分页规则（选择器 + 媒体条件）：', hits)
-        console.log('[AC5-⑤] 窄屏分支内高度声明：', declarations)
 
         expect(
-            declarations.some((decl) => (toPx(decl.value) ?? 0) >= 40),
-            '≥40px 点击区不在 ≤720px 分支内（写成了无条件规则）⇒ 桌面分页按钮也会变高，违反「桌面零变化」；请移入 @media (max-width: 720px)'
-        ).toBe(true)
+            inNarrow.length,
+            '命中区扩展不在 ≤720px 分支内（写成了无条件规则）⇒ 桌面分页的可点区/尺寸也会漂移；请移入 @media (max-width: 720px)'
+        ).toBeGreaterThan(0)
+    })
+
+    it('AC5 ⑥ 360px：禁止用按钮本体 `min-height/height ≥40px` 直给（视觉高会变 40，违 R10「small」）', () => {
+        const evidence = hitAreaEvidence(allRules(), MOBILE)
+        const offenders = evidence.directHeights.filter((decl) => decl.px >= 40)
+        console.log('[AC5-⑥] 按钮本体高度声明（≥40px 即违 R10）：', evidence.directHeights)
+
+        expect(
+            offenders,
+            '按钮本体被撑到 ≥40px ⇒ 视觉尺寸不再是 small（R10 要求 small 视觉 + ≥40px 命中区，须用伪元素/等效扩展）'
+        ).toEqual([])
     })
 
     it('AC5 ③ 切页不得重置滚动位置（负向守卫：源码不得出现滚动归零调用）', () => {
@@ -357,6 +426,8 @@ describe('T549 AC6 三态：LoadingError 呈现且不撑破布局', () => {
     it('AC6 ② 360px：分页不得 position: absolute|fixed、不得超宽（不越出屏幕）', () => {
         const rules = allRules()
         const offenders = effectiveRules(rules, MOBILE)
+            // 排除伪元素：`::after` 属命中区扩展（absolute 定位在外扩方向上不产生页面溢出）
+            .filter((rule) => rule.selectors.every((selector) => !selector.includes('::')))
             .filter((rule) => rule.selectors.some((selector) => /pagination/i.test(selector)))
             .flatMap((rule) =>
                 rule.decls

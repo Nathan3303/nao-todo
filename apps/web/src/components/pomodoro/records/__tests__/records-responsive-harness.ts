@@ -209,15 +209,204 @@ export const effectiveValue = (
     return decls.length > 0 ? (decls[decls.length - 1]?.value ?? null) : null
 }
 
-/** 数值化：`760px` / `2.5rem` / `40` → 像素数（无法解析返回 null） */
-export const toPx = (value: string | null): number | null => {
+/**
+ * 主题 token → px（源：`nue-ui-theme-shadlike/dist/global/variables.css`，`--nue-primary-font-size-base: 16px`）
+ * ⚠️ 仅收录本单推演用到的 token；数值变更时这里的解析结果会打印在用例输出里，便于发现漂移。
+ */
+export const NUE_TOKEN_PX: Record<string, number> = {
+    '--nue-text-2xs': 10,
+    '--nue-text-xs': 12,
+    '--nue-text-sm': 14,
+    '--nue-text-df': 16,
+    '--nue-text-md': 18,
+    '--nue-text-lg': 20,
+    '--nue-text-xl': 22,
+    '--nue-padding-2xs': 4,
+    '--nue-padding-xs': 8,
+    '--nue-padding-sm': 12,
+    '--nue-padding-df': 16,
+    '--nue-padding-md': 20,
+    '--nue-padding-lg': 24,
+    '--nue-gap-2xs': 4,
+    '--nue-gap-xs': 8,
+    '--nue-gap-sm': 12,
+    '--nue-gap-df': 16,
+    '--nue-gap-md': 20,
+    '--nue-gap-lg': 24,
+    '--nue-box-size-2xs': 24,
+    '--nue-box-size-xs': 28,
+    '--nue-box-size-sm': 32,
+    '--nue-box-size-df': 36,
+    '--nue-box-size-md': 40,
+    '--nue-box-size-lg': 44
+}
+
+/** 数值化：`760px` / `3.5rem` / `var(--nue-gap-xs)` / `40` → 像素数（无法解析返回 null） */
+export const resolvePx = (value: string | null): number | null => {
     if (!value) return null
-    const px = /^(-?\d+(?:\.\d+)?)px$/.exec(value.trim())
+    const text = value.trim()
+    const px = /^(-?\d+(?:\.\d+)?)px$/.exec(text)
     if (px) return Number(px[1])
-    const rem = /^(-?\d+(?:\.\d+)?)rem$/.exec(value.trim())
+    const rem = /^(-?\d+(?:\.\d+)?)rem$/.exec(text)
     if (rem) return Number(rem[1]) * 16
-    const bare = /^(-?\d+(?:\.\d+)?)$/.exec(value.trim())
-    return bare ? Number(bare[1]) : null
+    const bare = /^(-?\d+(?:\.\d+)?)$/.exec(text)
+    if (bare) return Number(bare[1])
+    const token = /^var\(\s*(--[\w-]+)\s*\)$/.exec(text)
+    if (token) return NUE_TOKEN_PX[token[1]!] ?? null
+    return null
+}
+
+/** 兼容旧名（等价 `resolvePx`） */
+export const toPx = resolvePx
+
+/** `padding/margin/inset` 简写 → 垂直方向合计（1 值 ×2；2 值取首；3 值取首+末；4 值取首+末） */
+export const boxVerticalPx = (value: string | null): number | null => {
+    if (!value) return null
+    const parts = value.trim().split(/\s+/)
+    const nums = parts.map((part) => resolvePx(part.replace('auto', '0')))
+    if (nums.some((num) => num === null)) return null
+    const list = nums as number[]
+    if (list.length === 1) return Math.abs(list[0]! * 2)
+    if (list.length === 2) return Math.abs(list[0]! * 2)
+    if (list.length === 3) return Math.abs(list[0]! + list[2]!)
+    return Math.abs(list[0]! + list[2]!)
+}
+
+/** 伪元素负向扩展的「每侧外扩量」（`inset` / `top`+`bottom`） */
+const verticalExpansionPx = (decls: CssDecl[]): number | null => {
+    let top: number | null = null
+    let bottom: number | null = null
+    for (const decl of decls) {
+        if (decl.prop === 'inset') {
+            const parts = decl.value.split(/\s+/)
+            const values = parts.map((part) => resolvePx(part))
+            if (values.some((value) => value === null)) continue
+            const list = values as number[]
+            const pick = (index: number) => list[Math.min(index, list.length - 1)]!
+            top = pick(0)
+            bottom = list.length >= 3 ? pick(2) : pick(0)
+        } else if (decl.prop === 'top') {
+            top = resolvePx(decl.value)
+        } else if (decl.prop === 'bottom') {
+            bottom = resolvePx(decl.value)
+        }
+    }
+    if (top === null || bottom === null) return null
+    if (top >= 0 || bottom >= 0) return null
+    return Math.min(Math.abs(top), Math.abs(bottom))
+}
+
+export type HitAreaBox = {
+    selectors: string[]
+    media: string[]
+    narrow: boolean
+    content: string | null
+    pseudoHeightPx: number | null
+    expandedPerSide: number | null
+    buttonVisualPx: number
+    hitAreaPx: number | null
+    overflowVisible: boolean
+    positionRelative: boolean
+    satisfied: boolean
+    reason: string
+}
+
+export type ButtonHeightDecl = {
+    selectors: string[]
+    media: string[]
+    narrow: boolean
+    prop: string
+    value: string
+    px: number
+}
+
+/**
+ * 命中区推演（R10）：`可点区 ≥40px` 由「按钮视觉高 + 伪元素外扩」达成
+ * @param buttonVisualPx NueButton small 视觉高（`.nue-button--small { height: var(--nue-box-size-xs) }` = 28px）
+ *
+ * satisfied 的三项必要条件：① 伪元素有 `content`；② 按钮 `overflow: visible`（否则 `::after` 被裁掉、扩展静默失效）；
+ * ③ 伪元素 `height ≥ 40px` 或 垂直每侧外扩 ≥6px（28 + 2×6 = 40）。absolute 定位形态还需 `position: relative`。
+ */
+export const hitAreaEvidence = (
+    rules: CssRule[],
+    width: number,
+    buttonVisualPx = NUE_TOKEN_PX['--nue-box-size-xs'] ?? 28
+): { boxes: HitAreaBox[]; directHeights: ButtonHeightDecl[] } => {
+    const applicable = effectiveRules(rules, width)
+    const buttonRules = applicable.filter(
+        (rule) =>
+            rule.selectors.some((selector) => /nue-button/.test(selector)) &&
+            !rule.selectors.some((selector) => selector.includes('::'))
+    )
+    const buttonDecls = buttonRules.flatMap((rule) => rule.decls)
+    const overflowVisible = buttonDecls.some(
+        (decl) => decl.prop === 'overflow' && /\bvisible\b/.test(decl.value)
+    )
+    const positionRelative = buttonDecls.some(
+        (decl) => decl.prop === 'position' && decl.value === 'relative'
+    )
+    const directHeights: ButtonHeightDecl[] = buttonRules.flatMap((rule) =>
+        rule.decls
+            .filter((decl) => /^(min-height|min-block-size|height)$/.test(decl.prop))
+            .map((decl) => ({
+                selectors: rule.selectors,
+                media: rule.media,
+                narrow: isNarrowScoped(rule, width),
+                prop: decl.prop,
+                value: decl.value,
+                px: resolvePx(decl.value) ?? -1
+            }))
+    )
+
+    const boxes: HitAreaBox[] = applicable
+        .filter(
+            (rule) =>
+                rule.selectors.some((selector) => /::(after|before)/.test(selector)) &&
+                rule.selectors.some((selector) => /nue-button|pagination|pager/i.test(selector))
+        )
+        .map((rule) => {
+            const content = rule.decls.find((decl) => decl.prop === 'content')?.value ?? null
+            const heightDecl = [...rule.decls]
+                .reverse()
+                .find((decl) => /^(min-height|min-block-size|height)$/.test(decl.prop))
+            const pseudoHeightPx = resolvePx(heightDecl?.value ?? null)
+            const expandedPerSide = verticalExpansionPx(rule.decls)
+            const usesAbsolute = rule.decls.some(
+                (decl) => decl.prop === 'position' && decl.value === 'absolute'
+            )
+            const hitAreaPx =
+                pseudoHeightPx !== null && pseudoHeightPx >= buttonVisualPx
+                    ? pseudoHeightPx
+                    : expandedPerSide !== null
+                      ? buttonVisualPx + expandedPerSide * 2
+                      : null
+
+            let reason = 'ok'
+            if (content === null) reason = '伪元素无 content'
+            else if (!overflowVisible)
+                reason = '按钮缺 overflow:visible ⇒ 伪元素被裁掉（扩展静默失效）'
+            else if (usesAbsolute && !positionRelative)
+                reason = 'absolute 定位缺 position:relative（定位基准错误）'
+            else if (hitAreaPx === null) reason = '伪元素未声明可推演的高度/外扩量'
+            else if (hitAreaPx < 40) reason = `命中区仅 ${hitAreaPx}px < 40px`
+
+            return {
+                selectors: rule.selectors,
+                media: rule.media,
+                narrow: isNarrowScoped(rule, width),
+                content,
+                pseudoHeightPx,
+                expandedPerSide,
+                buttonVisualPx,
+                hitAreaPx,
+                overflowVisible,
+                positionRelative,
+                satisfied: reason === 'ok',
+                reason
+            }
+        })
+
+    return { boxes, directHeights }
 }
 
 /** 生效的纵向 `overflow`（`overflow-y` 优先，回落 `overflow` 简写；无声明返回 null） */

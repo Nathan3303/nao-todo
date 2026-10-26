@@ -8,6 +8,7 @@ import { makeRecord, type MockRecordsContext } from './records-page-context-mock
 import {
     effectiveOverflowY,
     effectiveValue,
+    narrowScopedDecls,
     parseCssRules,
     setViewport,
     styleTextOf,
@@ -191,6 +192,51 @@ describe('T549 AC5 分页（真实挂载 @360px）', () => {
         expect(scrollToSpy, '切页调用了 scrollTo ⇒ 用户会被弹回页面顶端').not.toHaveBeenCalled()
 
         scrollToSpy.mockRestore()
+        wrapper.unmount()
+    })
+})
+
+describe('T549 R11 分页箭头居中（真实挂载 @360px + 源级判据）', () => {
+    it('R11 ① 箭头在按钮内水平居中：icon 变体 / `--nue-button-alignment: center` / 显式 flex 居中（三选一）', async () => {
+        const context = mockContext()
+        context.records.value = [makeRecord(1)]
+        const wrapper = await mountPage(MOBILE)
+
+        // 形态①：真实挂载取证 —— 分页按钮是否都是 icon 变体（`--icon` 会把 alignment 置 center）
+        const buttons = wrapper.findAll('.pomodoro-records-page__pagination .nue-button')
+        const buttonClasses = buttons.map((button) => button.classes().join(' '))
+        const iconVariant =
+            buttons.length > 0 &&
+            buttons.every((button) => button.classes().includes('nue-button--icon'))
+
+        // 形态②/③：源级 —— 窄屏分支内改主题自身的 alignment，或显式 flex 居中
+        const narrowButtonDecls = narrowScopedDecls(
+            parseCssRules(styleTextOf(sourceOf('index.vue'))),
+            MOBILE,
+            /nue-button/
+        )
+        const alignmentCenter = narrowButtonDecls.some(
+            (decl) => decl.prop === '--nue-button-alignment' && decl.value === 'center'
+        )
+        const flexCentered =
+            narrowButtonDecls.some(
+                (decl) => decl.prop === 'justify-content' && decl.value === 'center'
+            ) &&
+            narrowButtonDecls.some((decl) => decl.prop === 'align-items' && decl.value === 'center')
+
+        console.log('[R11-①] 证据：', {
+            buttonCount: buttons.length,
+            buttonClasses,
+            iconVariant,
+            alignmentCenter,
+            flexCentered
+        })
+
+        expect(
+            iconVariant || alignmentCenter || flexCentered,
+            '箭头未居中：需 icon 变体（`nue-button--icon`）或窄屏 `--nue-button-alignment: center`（与 icon 同机制）或显式 `justify-content/align-items: center`'
+        ).toBe(true)
+
         wrapper.unmount()
     })
 })
