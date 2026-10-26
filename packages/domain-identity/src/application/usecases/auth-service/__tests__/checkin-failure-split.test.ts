@@ -132,11 +132,11 @@ describe('AuthUseCase.checkIn - DEF-5 失败分流', () => {
  *              且不依赖服务端文案（闭合 DEF-25）。
  */
 describe('C-67：checkin 分类 = 网络白名单 + code 优先（DEF-33）', () => {
-    it('业务码 10022 / 10021（检入失败 / 参数错误）⇒ 凭证类 ⇒ 清认证', async () => {
-        for (const [code, message] of [
-            [10022, '检入失败'],
-            [10021, '参数错误']
-        ] as const) {
+    // T558：`10022`（服务端 CAS 冲突）已从「凭证失效」**使用点**降级为「冲突-可重试」
+    // （不清认证 / 不导航 / 去抖后重试 1 次），见 `checkin-single-flight.test.ts`。
+    // 共享判定器未改：`isCredentialError(10022)` 仍为 `true`（仅使用点先判 `isRetryableCheckInConflict`）。
+    it('业务码 10021（参数错误）⇒ 凭证类 ⇒ 清认证', async () => {
+        for (const [code, message] of [[10021, '参数错误']] as const) {
             const { store, clearAuthData } = createStore()
             const failure = Object.assign(new Error(message), { code, businessCode: code })
             const useCase = new AuthUseCase(

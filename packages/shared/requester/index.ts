@@ -18,7 +18,7 @@ let requester: Requester = emptyRequester
 export const getRequesterImpl = () => requester
 
 export const initRequester = (options: UseRequesterOptions) => {
-    const { name, baseURL, enableRetry = true, onAuthExpired } = options
+    const { name, baseURL, enableRetry = true, onAuthExpired, getAuthToken } = options
 
     switch (name) {
         case 'LynxRequester': {
@@ -28,7 +28,7 @@ export const initRequester = (options: UseRequesterOptions) => {
         }
         case 'AxiosRequester':
         default: {
-            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired)
+            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired, getAuthToken)
             break
         }
     }

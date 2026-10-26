@@ -22,7 +22,9 @@ const useApp = () => {
             onAuthExpired: () => {
                 useUserStore().clearAuthData()
                 router.replace('/auth/signin')
-            }
+            },
+            // T558：失效响应必须与**当前** token 一致才登出（陈旧响应 / `Bearer null` 只记录）
+            getAuthToken: () => useUserStore().userToken || null
         })
         // 加载本地的用户主题偏好 - 应该是先应用本地数据在加载服务器数据
         const themeStore = useThemeStore()

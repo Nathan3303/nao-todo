@@ -27,6 +27,12 @@ export type UseRequesterOptions = {
      * @description 响应 code === 10041（被下线/被顶号/会话过期）时触发，由应用层注入登出处理
      */
     onAuthExpired?: () => void
+    /**
+     * 当前 token 读取器（T558）
+     * @description 失效响应仅在「请求发出时的 token 快照 === 当前 token」时才触发 `onAuthExpired`；
+     *              未注入 ⇒ 保持旧口径（收到 10041 即登出）。**移动端零改动**（不使用本选项）。
+     */
+    getAuthToken?: () => string | null
 }
 
 /**

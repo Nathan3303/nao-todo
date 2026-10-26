@@ -18,7 +18,9 @@ initRequester({
     onAuthExpired: () => {
         useUserStore().clearAuthData()
         router.replace('/auth/signin')
-    }
+    },
+    // T558：失效响应必须与**当前** token 一致才登出（陈旧响应 / `Bearer null` 只记录）
+    getAuthToken: () => useUserStore().userToken || null
 })
 
 // SHELL-05 C-27：全局未捕获异常可观测（同源单点；与 web 端同一实现）

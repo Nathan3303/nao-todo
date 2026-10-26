@@ -3,7 +3,7 @@ import type { HttpMethod, Requester, RequesterOpRtn } from './types'
 import { createLog, markFailed, removeLog } from './operation-log'
 import { MAX_RETRY, delay, getBackoffDelay, isIdempotentMethod, isRetriableError } from './retry'
 import { getDeviceId } from '../utils/device-id'
-import { consumeRotationGrace } from './auth-rotation'
+import { consumeRotationGrace, extractBearerToken, isStaleTokenSnapshot } from './auth-rotation'
 
 /**
  * 最近一次创建的请求器闭包的登出闸复位器（Issue #260 修复③）
@@ -28,9 +28,16 @@ export const resetAuthExpiredLatch = (): void => {
  * @param baseURL 基础 URL
  * @param enableRetry 是否开启幂等请求自动重试（默认开启）
  * @param onAuthExpired 凭证失效回调（响应 code === 10041 时触发，由应用层注入登出处理）
+ * @param getAuthToken 当前 token 读取器（T558：失效响应仅在「请求快照 === 当前 token」时才登出；
+ *                     未注入 ⇒ 保持旧口径「收到 10041 即登出」）
  * @returns Axios 请求器
  */
-export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void): Requester => {
+export default (
+    baseURL: string,
+    enableRetry = true,
+    onAuthExpired?: () => void,
+    getAuthToken?: () => string | null
+): Requester => {
     /**
      * 创建 Axios 实例
      */
@@ -59,6 +66,8 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
      *              **轮换宽限（R2 / Issue #260）**：续期刚换发 token 时旧 token 的在途请求会拿到 10041 ⇒
      *              `consumeRotationGrace()` 命中则**不触发登出**（不置 `authExpiredFired`），响应如实返回。
      *              Web 端从不 `mark` ⇒ 该分支恒不命中，行为零变化。
+     *              **token 一致性（T558）**：优先级更高 —— 请求发出时的 token 快照 ≠ 当前 token
+     *              （含 `Bearer null`）⇒ 陈旧响应，只记录、不登出。未注入 `getAuthToken` ⇒ 旧口径。
      */
     let authExpiredFired = false
     const notifyAuthExpired = () => {
@@ -70,15 +79,69 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
     latestLatchReset = () => {
         authExpiredFired = false
     }
-    /** 10041 处置：轮换宽限内放行（窗口内全员生效，#260），否则按真实失效登出 */
-    const handleCredentialExpired = () => {
+
+    /**
+     * 取本次请求自带出去的 token 快照（T558）
+     * @description 只认请求 `config.headers.Authorization`（可能是 `Bearer null`）
+     * @returns `undefined` = 请求未带 Bearer 头（无法比对 ⇒ 沿用旧口径）
+     */
+    const requestTokenOf = (headers: unknown): string | undefined => {
+        const carrier = headers as
+            | { Authorization?: unknown; authorization?: unknown; get?: (name: string) => unknown }
+            | undefined
+        if (!carrier || typeof carrier !== 'object') return undefined
+        let raw = carrier.Authorization ?? carrier.authorization
+        if (raw === undefined && typeof carrier.get === 'function') {
+            try {
+                raw = carrier.get('Authorization')
+            } catch {
+                raw = undefined
+            }
+        }
+        return extractBearerToken(raw)
+    }
+
+    /** 当前 token（未注入提供器 / 读取异常 ⇒ `null`） */
+    const currentTokenOf = (): string | null => {
+        if (!getAuthToken) return null
+        try {
+            return getAuthToken()
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * 失效响应是否属于「陈旧请求」（T558：请求 token ≠ 当前 token / `Bearer null`）
+     * @description 陈旧 ⇒ **不登出、不清凭证、只记录**；未注入 token 读取器时保持旧口径。
+     */
+    const isStaleCredentialResponse = (headers: unknown): boolean => {
+        if (!getAuthToken) return false
+        const requestToken = requestTokenOf(headers)
+        // 未带 Bearer 头 ⇒ 按空快照处理（无凭据的请求不可能代表当前会话失效）
+        return isStaleTokenSnapshot(requestToken ?? '', currentTokenOf())
+    }
+
+    /**
+     * 10041 处置（T558 起带 token 一致性判据）
+     * @description 优先级：① 陈旧响应（只记录）→ ② 轮换宽限内放行 → ③ 真实失效登出。
+     * @param headers 该请求自己的 headers（取发出时的 token 快照）
+     */
+    const handleCredentialExpired = (headers: unknown) => {
+        if (isStaleCredentialResponse(headers)) {
+            console.warn('[requester] 忽略陈旧凭证响应（10041 来自旧 token / Bearer null）', {
+                event: 'auth.credential.stale',
+                snapshot: requestTokenOf(headers)?.slice(0, 8) ?? null
+            })
+            return
+        }
         if (consumeRotationGrace()) return
         notifyAuthExpired()
     }
     axiosInstance.interceptors.response.use(
         (response) => {
             const code = (response.data as { code?: number })?.code
-            if (code === 10041) handleCredentialExpired()
+            if (code === 10041) handleCredentialExpired(response.config?.headers)
             return response
         },
         async (error) => {
@@ -86,7 +149,7 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
 
             // 错误响应（HTTP 非 200）同样可能携带业务码 10041
             const errorCode = (error.response?.data as { code?: number })?.code
-            if (errorCode === 10041) handleCredentialExpired()
+            if (errorCode === 10041) handleCredentialExpired(config.headers)
 
             // 幂等请求的网络/超时错误自动重试（受 enableRetry 开关控制）
             if (enableRetry && isRetriableError(error) && isIdempotentMethod(config.method)) {

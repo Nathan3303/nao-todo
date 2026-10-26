@@ -45,3 +45,36 @@ export const consumeRotationGrace = (now: number = Date.now()): boolean => {
 export const resetTokenRotation = (): void => {
     rotatedAt = null
 }
+
+/**
+ * 从 `Authorization` 请求头取 token 快照（T558）
+ * @param authorization 原始头值（如 `Bearer eyJ...`；可能是 `Bearer null`）
+ * @returns `undefined` = 头缺失 / 非 Bearer 形态（**无法比对** ⇒ 调用方沿用旧口径）；
+ *          字符串 = 快照（可能是 `''` / `'null'` / `'undefined'`）
+ */
+export const extractBearerToken = (authorization: unknown): string | undefined => {
+    if (typeof authorization !== 'string') return undefined
+    const matched = /^Bearer\s+(.*)$/i.exec(authorization.trim())
+    return matched?.[1]?.trim()
+}
+
+/**
+ * 判定失效响应是否来自「陈旧请求」（T558 / DEF-93）
+ * @description 失效判据必须是「**当前** token 失效」，而不是「收到了 10041」：
+ *              - 请求快照缺失（`undefined`）⇒ **不**判陈旧（沿用旧口径，Web 端行为零变化）；
+ *              - 快照为 `''` / `'null'` / `'undefined'`（`Bearer null` 等）⇒ **一律**陈旧；
+ *              - 当前无 token（`null` / 未注入提供器 / `''`）⇒ 陈旧（无可失效的会话）；
+ *              - 否则「快照 ≠ 当前」⇒ 陈旧（该响应属于已换掉的旧 token）。
+ * @param requestToken 请求发出时的 token 快照（`extractBearerToken` 产物）
+ * @param currentToken 当前 token（读取失败/未提供时传 `null`）
+ * @returns `true` = 陈旧响应（调用方**不得**登出/清凭证/导航，只记录）
+ */
+export const isStaleTokenSnapshot = (
+    requestToken: string | undefined,
+    currentToken: string | null
+): boolean => {
+    if (requestToken === undefined) return false
+    if (requestToken === '' || requestToken === 'null' || requestToken === 'undefined') return true
+    if (currentToken === null || currentToken === '') return true
+    return currentToken !== requestToken
+}

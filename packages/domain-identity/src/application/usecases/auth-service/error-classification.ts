@@ -70,6 +70,29 @@ export const isCredentialError = (err: GoError): boolean => {
 }
 
 /**
+ * 检入冲突业务码（T558 / Issue #260 残余）
+ * @description 服务端 CAS 语义：同一 token 的并发检入**只许一次换发**，败者返回本码
+ *              ⇒ 「我的旧 token 已被别的请求换掉，请重试」，**不是**会话失效。
+ */
+export const CHECK_IN_CONFLICT_CODE = 10022
+
+/**
+ * 是否「检入冲突-可重试」（`10022`；仅 web / 桌面侧显式使用）
+ * @description **单源新增谓词**（不扩 `NETWORK_ERROR_CODES`、不改 `isCredentialError` 方向）：
+ *              后者被 web 检入页、域用例与**移动端**
+ *              `presentation-react/src/logic/compose-auth-usecase.ts` 共用 ⇒ 往里塞 `10022`
+ *              等于改移动端语义（红线）。⇒ 本谓词只供 web/桌面的检入处置点先判，
+ *              命中者**不** `clearAuthData`、**不**导航、**不**触发凭证失效回调。
+ *              判据只用**结构化 code**（`code` / `businessCode`），不做文案匹配（不造第二套标记集）。
+ * @param err 错误（Go 风格，字符串或 Error）
+ * @returns 是否为检入冲突（可重试）
+ */
+export const isRetryableCheckInConflict = (err: GoError): boolean => {
+    if (err === null || err === undefined || err === '') return false
+    return extractErrorCodes(err).includes(CHECK_IN_CONFLICT_CODE)
+}
+
+/**
  * 凭证 HTTP 状态（读路径回退门专用；r12 / T160）
  * @description 抛出型 axios Error 的 `response.status` 命中即视为「已知凭证信号」。
  */
