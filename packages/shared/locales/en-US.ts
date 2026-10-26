@@ -154,6 +154,8 @@ const enUS: LocaleMessages = {
     'identity.offlineName': '{name} (offline)',
     'gate.enterOffline': 'Enter offline',
     'gate.signInAgain': 'Sign in again',
+    'session.expired.title': 'Your session expired',
+    'session.expired.body': 'Please sign in again — reminders resume right after.',
     'gate.offlineUnavailable': 'Cannot enter offline. Please retry or sign in again.',
 
     // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
@@ -331,6 +333,22 @@ const enUS: LocaleMessages = {
     'settings.reminder.permission.enable': 'Turn on notifications',
     'settings.reminder.soundUnavailable':
         'System notifications are unavailable, so the sound setting has no effect',
+    // Desktop residency (D1: sub-block under Reminders; distinct status copy, no internal terms)
+    'settings.reminder.desktop.title': 'Stay running',
+    'settings.reminder.desktop.autostart': 'Start automatically when I sign in',
+    'settings.reminder.desktop.status.available':
+        'On — reminders keep arriving after you close the window',
+    'settings.reminder.desktop.status.unconfirmed': 'On — the menu bar icon may not be shown',
+    'settings.reminder.desktop.status.needsApproval':
+        'Waiting for your approval in system settings',
+    'settings.reminder.desktop.status.notEffective':
+        'Starting automatically did not take effect — the system may have blocked it',
+    'settings.reminder.desktop.status.unsupported':
+        'This system cannot keep running after the window closes',
+    'settings.reminder.desktop.retry': 'Try again',
+    'settings.reminder.desktop.quit': 'Quit NaoTodo',
+    'settings.reminder.desktop.hint':
+        'NaoTodo keeps running in the background after you close the window, so reminders still arrive. Choose “Quit NaoTodo” to stop it completely.',
     'settings.nickname': 'Edit Nickname',
     'settings.nicknameDesc':
         'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',

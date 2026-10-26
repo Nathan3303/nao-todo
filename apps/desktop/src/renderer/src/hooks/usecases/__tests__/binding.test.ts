@@ -104,16 +104,22 @@ vi.mock(
 )
 
 const { useCaseBinding } = await import('../binding')
+const { getLastCheckInAttemptAt } = await import('@nao-todo/shared/session-renewal')
+const { consumeRotationGrace, resetTokenRotation } =
+    await import('@nao-todo/shared/requester/auth-rotation')
 
 type AuthUseCaseLike = {
     signIn: (vo: { password: string }) => Promise<string | null>
     signOut: (token: string) => Promise<unknown>
+    /** T545：`checkIn` 被桌面端装饰（记录续期发起时刻 + 成功后标记 token 轮换） */
+    checkIn?: (token: string) => Promise<string | null>
 }
 
 const decorate = (): AuthUseCaseLike => {
     const base: AuthUseCaseLike = {
         signIn: vi.fn(async () => null),
-        signOut: vi.fn(async () => null)
+        signOut: vi.fn(async () => null),
+        checkIn: vi.fn(async () => null)
     }
     return useCaseBinding.decorateAuthUseCase!(base as never) as unknown as AuthUseCaseLike
 }
@@ -121,6 +127,7 @@ const decorate = (): AuthUseCaseLike => {
 describe('desktop binding - 登录路径明文迁移（AC2）', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        resetTokenRotation()
         mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
         mocks.ensureUnlocked.mockResolvedValue(undefined)
         mocks.runPlaintextMigration.mockResolvedValue({
@@ -162,5 +169,34 @@ describe('desktop binding - 登录路径明文迁移（AC2）', () => {
         )
         expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()
         expect(consoleError).toHaveBeenCalled()
+    })
+})
+
+describe('desktop binding - 续期接线（T545 / AC6 / R2）', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        resetTokenRotation()
+    })
+
+    it('checkIn 成功 ⇒ 记录发起时刻（Q2 启动 60s 内合计恰好 1 次）并武装轮换宽限（R2）', async () => {
+        const useCase = decorate()
+
+        const err = await useCase.checkIn?.('jwt')
+
+        expect(err).toBeNull()
+        expect(getLastCheckInAttemptAt()).not.toBeNull()
+        // 成功后 10s 内的 10041 被宽限（只护一次）
+        expect(consumeRotationGrace()).toBe(true)
+        expect(consumeRotationGrace()).toBe(false)
+    })
+
+    it('checkIn 失败 ⇒ 不武装轮换宽限（只有换发新 token 才需要宽限）', async () => {
+        const useCase = decorate()
+        useCase.checkIn = vi.fn(async () => '网络错误')
+
+        const err = await useCase.checkIn?.('jwt')
+
+        expect(err).toBe('网络错误')
+        expect(consumeRotationGrace()).toBe(false)
     })
 })

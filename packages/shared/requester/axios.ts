@@ -3,6 +3,7 @@ import type { HttpMethod, Requester, RequesterOpRtn } from './types'
 import { createLog, markFailed, removeLog } from './operation-log'
 import { MAX_RETRY, delay, getBackoffDelay, isIdempotentMethod, isRetriableError } from './retry'
 import { getDeviceId } from '../utils/device-id'
+import { consumeRotationGrace } from './auth-rotation'
 
 /**
  * 创建 Axios 请求器
@@ -36,7 +37,10 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
     /**
      * 添加响应拦截器
      * @description 对幂等请求的网络错误自动重试；重试耗尽或关闭时归一化错误响应；
-     *              检测凭证失效（code 10041，被下线/被顶号）并触发应用层回调（成功/错误分支同检，仅触发一次）
+     *              检测凭证失效（code 10041，被下线/被顶号）并触发应用层回调（成功/错误分支同检，仅触发一次）。
+     *              **轮换宽限（R2）**：续期刚换发 token 时旧 token 的在途请求会拿到 10041 ⇒
+     *              `consumeRotationGrace()` 命中则**不触发登出**（不置 `authExpiredFired`），响应如实返回。
+     *              Web 端从不 `mark` ⇒ 该分支恒不命中，行为零变化。
      */
     let authExpiredFired = false
     const notifyAuthExpired = () => {
@@ -44,10 +48,15 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
         authExpiredFired = true
         onAuthExpired?.()
     }
+    /** 10041 处置：轮换宽限内放行（只护一次），否则按真实失效登出 */
+    const handleCredentialExpired = () => {
+        if (consumeRotationGrace()) return
+        notifyAuthExpired()
+    }
     axiosInstance.interceptors.response.use(
         (response) => {
             const code = (response.data as { code?: number })?.code
-            if (code === 10041) notifyAuthExpired()
+            if (code === 10041) handleCredentialExpired()
             return response
         },
         async (error) => {
@@ -55,7 +64,7 @@ export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void)
 
             // 错误响应（HTTP 非 200）同样可能携带业务码 10041
             const errorCode = (error.response?.data as { code?: number })?.code
-            if (errorCode === 10041) notifyAuthExpired()
+            if (errorCode === 10041) handleCredentialExpired()
 
             // 幂等请求的网络/超时错误自动重试（受 enableRetry 开关控制）
             if (enableRetry && isRetriableError(error) && isIdempotentMethod(config.method)) {

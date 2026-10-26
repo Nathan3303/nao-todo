@@ -8,6 +8,8 @@ import type { UseCaseBinding } from '@nao-todo/webapp/src/hooks/usecases/binding
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import { deletionService } from '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service'
 import { initSnowflakeEpoch } from '@nao-todo/infrastructure/src/persistence-sync/epoch'
+import { recordCheckInAttempt } from '@nao-todo/shared/session-renewal'
+import { markTokenRotated, resetTokenRotation } from '@nao-todo/shared/requester/auth-rotation'
 import {
     localSession,
     resolveUserIdFromStoredJwt
@@ -92,6 +94,20 @@ export const useCaseBinding: UseCaseBinding = {
     decorateAuthUseCase: (useCase) => {
         const originalSignIn = useCase.signIn.bind(useCase)
         const originalSignOut = useCase.signOut.bind(useCase)
+        const originalCheckIn = useCase.checkIn.bind(useCase)
+
+        /**
+         * 检入（页面冷启动与常驻续期**共用同一入口**，AC6 / R2）
+         * @description ① 记录发起时刻 ⇒ 续期调度器读 `lastCheckInAt`，启动 60s 内**合计恰好 1 次**
+         *              （`T544` Q2 裁定：不双发，也不为 0）；② 成功即标记 token 轮换 ⇒ 10s 内到达的
+         *              10041 走宽限（不登出、不置 `authExpiredFired`），防在途旧 token 自伤登出。
+         */
+        useCase.checkIn = async (token: string) => {
+            recordCheckInAttempt()
+            const checkInError = await originalCheckIn(token)
+            if (checkInError === null) markTokenRotated()
+            return checkInError
+        }
 
         useCase.signIn = async (signInViewObject: SignInViewObject) => {
             const err = await originalSignIn(signInViewObject)
@@ -126,6 +142,8 @@ export const useCaseBinding: UseCaseBinding = {
             // 本地会话清理不依赖远程结果（改密后旧 token 可能已失效，登出仍须完成）
             localSession.clear()
             cryptoService.lock()
+            // 登出后旧 token 的轮换宽限无意义（避免吞掉下一次真实失效的 10041）
+            resetTokenRotation()
             return err
         }
 

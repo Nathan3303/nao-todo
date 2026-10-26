@@ -13,6 +13,12 @@ import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared/locales'
+import { sendNotification } from '@nao-todo/shared/utils/notification'
+import { useAuthUseCase } from '@/hooks'
+// 续期接线是**桌面专属**模块（引 preload 桥与会话调度器）⇒ 走相对路径，不经 `@/hooks` 桶
+// （桶在 Web/测试环境解析到 webapp 版，不含桌面专属导出）
+import { useDesktopSessionRenewal } from './hooks/use-desktop-session-renewal'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
     localSession,
@@ -66,13 +72,28 @@ syncTracker.setDirtyListener(() => {
 useStoreInvalidationHub()
 
 // 会话失效（10041 用户凭证验证失败）：仅删除 USER_JWT 并回登录页，不删除本地业务数据
-syncService.setSessionExpiredListener(() => {
+// 同源复用：续期发现凭证失效（AC8）也走这一处，避免两条登出路径口径分叉
+const handleSessionExpired = (): void => {
     revokeOfflineEntry() // C-25：会话失效必须清离线进入授权
     userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
     localSession.clear()
     cryptoService.lock()
     // C-35：统一导航封装（失败结构化记录，不抛错）
     void safeReplace(router, '/auth/signin', 'app-root:session-expired-navigation')
+}
+
+syncService.setSessionExpiredListener(handleSessionExpired)
+
+// 常驻会话续期（AC6/AC11）：桌面端专属（Web 无 preload 桥 ⇒ 零行为变化）
+const authUseCase = useAuthUseCase(userStore)
+useDesktopSessionRenewal({
+    authToken: () => userStore.userToken,
+    checkIn: (token) => authUseCase.checkIn(token),
+    onCredentialExpired: () => {
+        // AC8：窗口隐藏时先发系统通知（不得静默不再提醒），打开后停在登录引导
+        sendNotification(t('session.expired.title'), t('session.expired.body'), { silent: true })
+        handleSessionExpired()
+    }
 })
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
