@@ -10,6 +10,19 @@
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
 
+## [v1.13.3] - 2026-10-27
+
+安全与契约批次：**客户端登出契约 / 凭据不入本地日志 / 检入冲突终态 / 检入在途窗口**（`T558` · Issue #260 · PR #265）：
+
+- **P0-安全 · 凭据不入操作日志**：`packages/shared/requester/operation-log.ts` 原先以 `toClonableData` 原样落库请求体 ⇒ `POST /auth/signin` 的明文口令进 IndexedDB（失败/超时长期保留，实证 7 条历史残留；注册/改密同理）。现按「凭据字段（password/oldPassword/newPassword/confirmPassword/token/jwt/secret/authorization/accessToken/refreshToken，任意深度）+ `/auth/*` 路径」跳过落库，初始化执行 `purgeLegacyCredentialLogs()` 幂等清理历史残留，`replayFailedOperations` 取数面排除凭据记录。
+- **P1 · 登出真撤销**：`auth-repo-impl/impl.ts` 原发 `{ token }`（服务端契约字段是 `jwt`）且把 `10031 参数错误` 当成功 ⇒ 服务端会话**从未撤销**。现发 `{ jwt }`、成功码 `10030`、`10031` 判失败；设置页对服务端业务失败给可见反馈（网络类仍静默，离线登出「本地必达」不变）。
+- **P1 · 检入冲突终态**：`10022`（服务端 CAS 冲突）原会停在「正在验证用户凭据」永久 loading。现 `settleCheckInConflict`：`isAuthenticated && token` 成立 ⇒ 正常进入应用（深链生效）；不成立 ⇒ 回传 `10022` + 检入页显式终态（重试 / 重新登录）。两条分支均不清凭证、不导航。
+- **P1 · 检入在途窗口**：冷启动数据面 `pull` 与检入并发时，旧 token 收到的 `10041` 会被判为真实失效 ⇒ 清凭证回登录页（实机 `remove,remove,set` 已复现）。现 `checkin-window`：检入在途期间其它请求的 `10041` 只记录（`auth.credential.deferred-checkin`），由检入结果裁决；窗口关闭后照旧登出（非永久免死）。
+- **可观测**：检入冲突事件接入 `recordShellError('auth:checkin-conflict', …)`（code/phase/reason/outcome + token **仅 8 字符前缀**）。
+- **门禁**：`vp check` 0 error · 全仓 **285 文件 / 2462 例 / 0 红** · 5 guard exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 0。
+- **配套部署（强依赖）**：登出「真撤销」需要服务端 `nao-todo-server#60`（`c834404`）已部署；**只升级客户端而不部署 #60 ⇒ 点退出仍可能显示成功但会话未撤销**。
+- **Tag `v1.13.3`** · root / `apps/web` / `apps/desktop` `1.13.2 → 1.13.3`；`packages/*` 有源码改动（shared / domain-identity / infrastructure / presentation-identity），按近批惯例不单独 bump。详见 `docs/releases/v1.13.3.md`。
+
 ## [v1.13.2] - 2026-10-26
 
 发布批次：**番茄「专注记录」页手机适配**（`T548` · Issue #258 · PR #259 · PRD `docs/prds/2026-10-26-pomodoro-records-mobile.md`）：用户报障「手机浏览器打开专注记录页**整页无法下移**、首屏被统计卡占满、看不到记录表格」，读码定位为 `records/table-main.vue` 的 `min-width:760px` + `overflow:hidden` + `nowrap`（无任何 `@media`）与 `records/index.vue` 的 `overflow:hidden` 链（`DEF-31` 家族再现，本轮只修页面层）。**形态**：断点复用既有 720px，窄屏渲染**卡片列表**（同数据源、同筛选/分页状态），桌面表格分支零改动。**用户三轮真机走查裁定**：① 卡片改**单行**（卡高 ≈56px，一屏 6–8 条）② 分页改 `NueButton` small 视觉但**命中区仍 ≥40px**（`AC5` 判据由按钮高度改为命中区）③ 分页箭头**居中** ④ 详情抽屉 ≤480px **全宽**（走 props：`span/min-span=100%` + `allow-close-by-overlay`），并要求 **≥2 条关闭路径（`✕` + `Esc`）**（`R13`/`AC10`）。**红→绿**：qa 用例先行 → 48 例全绿（`+6` 为 AC10）。**门禁**：`vp check` 0 error · 全仓 **279 文件 / 2408 例 / 0 红**（qa `fe44aef5`）· 合并后 main CI `test` **281 文件 / 2421 例 / 0 红** · 5 个 guard exit 0 · 双端 build exit 0 · 移动端红线 0。**合流**：发版前与 `v1.13.1` 热修合流（`80ca75f6`，台账/缺陷池两边记录全保留）。**Tag `v1.13.2`** · root / `apps/web` / `apps/desktop` `1.13.1 → 1.13.2`。详见 `docs/releases/v1.13.2.md`。
