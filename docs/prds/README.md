@@ -62,7 +62,7 @@
 | 2026-10-22 | SmartList 标题吃满可用宽度（`T523`：表头 `space-between` + 子项均 `flex:none` ⇒ 无成员吃剩余宽度、溢出被祖先 `overflow-x:hidden` 硬裁；改为标题可伸缩 + `min-width:0` + 末尾省略 + 全文提示；动作区不被压缩、计数不丢） | Issue `#226`；PRD `docs/prds/2026-10-22-smart-list-title-width.md`（AC1–AC6） | ⏳ **待开工（已确认，待派发）** |
 | 2026-10-23 | 任务提醒改本地轮询（`T524`：Web SSE 推送 → 本机轮询，Web 与桌面共用一份实现；判定只看本机已同步数据 · 排 deleted/archived/givenUp/done · 不过滤子任务 · daily/weekly 本地续期 · 展示前落账 `taskId@remindAt`（跨标签互斥、跨重开持久）· 重开/回前台补弹且只补一次 · 通知点击聚焦 + 开详情 · 准时口径：可见 ≤10s／回前台 ≤2s／冷启动补弹 ≤30s；跨仓 `nao-todo-server` 停用提醒 cron 的字段改写开关） | Issue `#232`；PRD `docs/prds/2026-10-23-reminder-local-polling.md` |
 
-| 2026-10-25 | 桌面端托盘常驻 + 开机自启 + 会话续期（`T542`：关窗口收进托盘继续提醒 · 三平台统一关窗隐藏 · 开机自启默认开可关 · 客户端 12h 续期修 `DEF-15` · 服务端过期会话清理 `DEF-14`） | Issue `#254`；PRD `docs/prds/2026-10-25-desktop-tray-autostart.md`（AC1–AC14）；ADR `docs/adr/2026-10-25-desktop-tray-autostart.md`；评审 `docs/reports/T543-arch-review.md` | 🚧 进行中（`T543` 评审已验收 ⇒ qa 用例先行） |
+| 2026-10-25 | 桌面端托盘常驻 + 开机自启 + 会话续期（`T542`：关窗口收进托盘继续提醒 · 三平台统一关窗隐藏 · 开机自启默认开可关 · 客户端 12h 续期修 `DEF-15` · 服务端过期会话清理 `DEF-14`） | Issue `#254`；PRD `docs/prds/2026-10-25-desktop-tray-autostart.md`（AC1–AC14）；ADR `docs/adr/2026-10-25-desktop-tray-autostart.md`；评审 `docs/reports/T543-arch-review.md` | ✅ 已发布 `v1.13.0`（2026-10-26）· 用户手工与视觉验收通过 |
 
 ## 发布记录
 
