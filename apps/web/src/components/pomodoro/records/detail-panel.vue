@@ -120,8 +120,11 @@ const handleClose = () => {
                 </div>
             </div>
             <div v-if="record.note" class="pomodoro-records-detail__section">
+                <nue-text theme="field-label">笔记</nue-text>
                 <div class="pomodoro-records-detail__note">
-                    <nue-text>{{ record.note }}</nue-text>
+                    <nue-text class="pomodoro-records-detail__note-text">{{
+                        record.note
+                    }}</nue-text>
                 </div>
             </div>
         </div>
@@ -170,6 +173,14 @@ const handleClose = () => {
     background-color: var(--nue-primary-color-50);
     border-radius: var(--nue-radius-sm);
     line-height: 1.6;
+}
+
+/* R14/AC11：笔记正文明示 14px（--nue-text-sm，与其它字段值同号），保留原文换行且不撑破抽屉（无横向溢出） */
+.pomodoro-records-detail__note-text {
+    font-size: var(--nue-text-sm);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .nue-text--title {
