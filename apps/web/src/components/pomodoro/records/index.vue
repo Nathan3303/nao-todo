@@ -154,4 +154,33 @@ const handleReset = () => {
     justify-content: flex-end;
     padding-top: var(--nue-padding-sm);
 }
+
+@media (max-width: 720px) {
+    /* 窄屏：解除「内容区固定高 + 记录区 height:100%/overflow:hidden」锁死，
+       由页容器自身成为纵向滚动主体（桌面分支不受影响） */
+    .pomodoro-records-page {
+        gap: var(--nue-gap-md);
+        overflow: visible;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 记录区不再定高裁切，让卡片列表按内容高度撑开 */
+    .pomodoro-records-page__table {
+        flex: none;
+        height: auto;
+        overflow: visible;
+    }
+
+    .pomodoro-records-page__pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* 仅窄屏、为点击区达标（≥40px）：桌面分页保持原尺寸 */
+    .pomodoro-records-page__pagination :deep(.nue-button) {
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
 </style>

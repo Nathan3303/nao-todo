@@ -63,13 +63,34 @@ const formattedPercentage = computed(() => Math.round(props.pomodoroPercentage))
 
 @media (max-width: 720px) {
     .nue-div--stats-cards {
+        /* 窄屏 2×2：压缩首屏高度，保证首屏可见记录（AC3 / R4） */
         grid-template-columns: repeat(2, 1fr);
+        gap: var(--nue-gap-sm);
+    }
+
+    .nue-div--stats-card {
+        gap: var(--nue-gap-2xs);
+        padding: var(--nue-padding-sm);
+    }
+
+    .nue-text--stats-value {
+        font-size: var(--nue-text-lg);
     }
 }
 
 @media (max-width: 480px) {
+    /* 极窄屏仍保持 2×2（PRD AC4：320px 下 2×2 可读且不占满首屏），只再收紧内距/字号 */
     .nue-div--stats-cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--nue-gap-xs);
+    }
+
+    .nue-div--stats-card {
+        padding: var(--nue-padding-xs);
+    }
+
+    .nue-text--stats-value {
+        font-size: var(--nue-text-df);
     }
 }
 </style>

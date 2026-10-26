@@ -107,4 +107,26 @@ const handleReset = () => emit('reset')
     gap: var(--nue-gap-sm);
     margin-left: auto;
 }
+
+/* 窄屏：筛选保持展开，仅收紧间距并降为两列，避免把首屏记录区挤出屏（AC3） */
+@media (max-width: 720px) {
+    .nue-div--filter-panel {
+        gap: var(--nue-gap-sm);
+    }
+
+    .nue-div--filter-row {
+        gap: var(--nue-gap-sm);
+    }
+
+    .nue-div--filter-item {
+        flex: 1 1 140px;
+        min-width: 0;
+    }
+
+    .nue-div--filter-actions {
+        flex: 1 1 100%;
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+}
 </style>
