@@ -24,6 +24,7 @@ const enUS: LocaleMessages = {
     'auth.signUp.goToLogin': '',
     'auth.signUp.success': 'Registration successful',
     'auth.checkIn.verifying': 'Verifying user credentials...',
+    'auth.checkIn.conflict': 'Verification did not complete. Please try again.',
     'auth.aside.tagline':
         'Effortlessly manage your daily tasks and stay productive with a smart to-do list app tailored just for you!',
 

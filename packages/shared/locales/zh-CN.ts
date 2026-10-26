@@ -23,6 +23,7 @@ const zhCN: LocaleMessages = {
     'auth.signUp.goToLogin': '吧',
     'auth.signUp.success': '注册成功',
     'auth.checkIn.verifying': '正在验证用户凭证 ...',
+    'auth.checkIn.conflict': '验证未完成，请重试',
     'auth.aside.tagline':
         '使用专门为您量身定制的智能待办事项列表应用程序，轻松管理日常并保持高效专注！',
 

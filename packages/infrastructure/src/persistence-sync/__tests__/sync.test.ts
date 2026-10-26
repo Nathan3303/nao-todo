@@ -1,9 +1,15 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
+import { setJWTTokenProvider } from '../../persistence-go/utils'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
 import { localSession } from '../../persistence-local/session/local-session'
+import {
+    beginCheckIn,
+    endCheckIn,
+    resetCheckInWindow
+} from '@nao-todo/shared/requester/checkin-window'
 import { syncTracker } from '../sync-tracker'
 import { syncStatus } from '../sync-status'
 import { SyncService } from '../sync-service'
@@ -73,6 +79,14 @@ const remoteNowIso = (): string => new Date(Date.now() + 1).toISOString()
 const timersCreatedInTest = new Set<ReturnType<typeof globalThis.setTimeout>>()
 let realSetTimeout: typeof globalThis.setTimeout
 
+/**
+ * T558：本文件是 node 环境（无 `localStorage`）⇒ 用 token 提供器给出「当前 token」，
+ * 使 10041 用例真正代表「**当前** token 失效」（请求快照 === 当前 token）；
+ * 不依赖「无鉴权头 ⇒ 旧口径」的隐式兜底。
+ */
+const CURRENT_JWT = 'jwt-test-current'
+setJWTTokenProvider(() => CURRENT_JWT)
+
 beforeEach(() => {
     realSetTimeout = globalThis.setTimeout
     const trackingSetTimeout = (...args: Parameters<typeof globalThis.setTimeout>) => {
@@ -87,6 +101,10 @@ afterEach(() => {
     for (const id of timersCreatedInTest) clearTimeout(id)
     timersCreatedInTest.clear()
     globalThis.setTimeout = realSetTimeout
+    // T558：用例可能临时改过 token 提供器（陈旧 / Bearer null）⇒ 每个用例后复位
+    setJWTTokenProvider(() => CURRENT_JWT)
+    // T558 R1：检入在途窗口是模块级全局态 ⇒ 每个用例后复位
+    resetCheckInWindow()
 })
 
 describe('SyncTracker', () => {
@@ -499,6 +517,66 @@ describe('SyncService', () => {
         expect(state.lastError).toBe('登录已过期，请重新登录')
     })
 
+    it('拉取 10041 但请求带的是陈旧 token（响应前已轮换）⇒ 不清凭证、不触发会话失效', async () => {
+        const service = new SyncService({
+            post: async () => {
+                // 响应到达前 token 已被续期轮换（本请求快照仍是 jwt-test-current）
+                setJWTTokenProvider(() => 'jwt-rotated')
+                return { data: { code: 10041, message: '用户凭证验证失败' } }
+            },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        } as unknown as Requester)
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        await service.pullAll()
+        expect(expiredCalled).toBe(false)
+        expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
+    })
+
+    it('T558 R1 拉取 10041 且**检入在途**（换发竞争）⇒ 不清凭证、不触发会话失效', async () => {
+        const service = new SyncService(
+            mockRequester(() => ({
+                code: 10041,
+                message: '用户凭证验证失败',
+                data: null
+            }))
+        )
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        beginCheckIn()
+        try {
+            await service.pullAll()
+        } finally {
+            endCheckIn()
+        }
+        expect(expiredCalled).toBe(false)
+        expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
+    })
+
+    it('拉取 10041 且请求带 `Bearer null`（无凭证）⇒ 不清凭证、不触发会话失效', async () => {
+        setJWTTokenProvider(() => null)
+        const service = new SyncService(
+            mockRequester(() => ({
+                code: 10041,
+                message: '用户凭证验证失败',
+                data: null
+            }))
+        )
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        await service.pullAll()
+        expect(expiredCalled).toBe(false)
+        expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
+    })
+
     it('推送返回业务码 10041（用户凭证验证失败）：触发会话失效回调并提示重新登录', async () => {
         const taskRepo = newLocalTaskRepository()
         const [task, taskErr] = await taskRepo.create(
@@ -541,6 +619,48 @@ describe('SyncService', () => {
         const [item] = await syncTracker.listDirty()
         expect(item).toBeDefined()
         expect(item!.retryCount).toBe(0)
+    })
+
+    it('推送 10041 但请求带的是陈旧 token（响应前已轮换）⇒ 不清凭证、不触发会话失效', async () => {
+        const taskRepo = newLocalTaskRepository()
+        const [task] = await taskRepo.create(
+            new CreateTaskValueObject(
+                null,
+                null,
+                '任务',
+                '',
+                'todo',
+                'medium',
+                null,
+                null,
+                'project-1',
+                [],
+                null,
+                'none',
+                null,
+                []
+            )
+        )
+        const taskId = (task as { id: string }).id
+        await syncTracker.markDirty('tasks', taskId, 'upsert', new Date().toISOString())
+
+        const service = new SyncService({
+            post: async () => {
+                // 响应到达前 token 已被续期轮换（本请求快照仍是 jwt-test-current）
+                setJWTTokenProvider(() => 'jwt-rotated')
+                return { data: { code: 10041, message: '用户凭证验证失败' } }
+            },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        } as unknown as Requester)
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        await service.pushAll()
+        expect(expiredCalled).toBe(false)
+        expect(syncStatus.get().lastError).not.toBe('登录已过期，请重新登录')
     })
 
     it('拉取有实际写入时触发数据变化回调（通知视图刷新）', async () => {

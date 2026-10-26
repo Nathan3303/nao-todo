@@ -6,6 +6,7 @@ import {
     resolveUserIdFromStoredJwt
 } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
+import { closeCheckInPlan, openCheckInPlan } from '@nao-todo/shared/requester/checkin-window'
 import { isOfflineEntryGranted } from './offline-entry'
 import { evaluateOfflinePrerequisites, hasLocalMirror } from './offline-prerequisites'
 import { bootstrapLocalData } from './bootstrap-local-data'
@@ -70,6 +71,8 @@ const beforeEnter = async (to?: { fullPath?: string }) => {
             hasLocalMirror: hasMirror
         })
         if (prerequisites.ok) {
+            // 离线进入 ⇒ 本次导航不进入检入流程（清掉可能残留的待执行检入计划）
+            closeCheckInPlan()
             // C-61②：门 B 通过、挂载 App 前的启动收敛点（必须早于 syncService.start()）
             await bootstrapLocalData(jwtUserId)
             // T108 补充 / AC8 首帧：从 `meta` 恢复镜像新鲜度（T107b 已持久化）⇒ 离线冷启动
@@ -81,13 +84,28 @@ const beforeEnter = async (to?: { fullPath?: string }) => {
     }
     // 获取 LocalStorage 中的 JWT 令牌
     const jwt = localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
-    // 若有 JWT 令牌且未登录，跳转到检入页
     const userStore = useUserStore()
-    if (jwt !== null && !userStore.getIsAuthenticated()) return redirectTo('auth-checkin', to)
-    // 若没有 JWT 令牌且未登录，跳转到登录页
-    else if (jwt === null && !userStore.getIsAuthenticated()) return redirectTo('auth-signin', to)
+    /**
+     * 决定去检入页 ⇒ **先开「待执行检入计划」窗口再返回**（T558 R3）
+     * @description 实机 bracket（`qa-T556`）：数据面 `syncService.start()` / `GET /user/config`
+     *              由本次导航的 `afterEach` 立即派发，其 `10041` 可与检入请求派发**同 tick** 到达
+     *              （此时检入请求**尚未派发**）⇒ 窗口必须在「决定检入」这一刻开，
+     *              否则 `10041` 抢跑清凭证并跳登录页（Run A：`removes=2`、`checkins=0`）。
+     */
+    const toCheckIn = () => {
+        openCheckInPlan()
+        return redirectTo('auth-checkin', to)
+    }
+    // 若有 JWT 令牌且未登录，跳转到检入页
+    if (jwt !== null && !userStore.getIsAuthenticated()) return toCheckIn()
+    // 若没有 JWT 令牌且未登录，跳转到登录页（本次导航不进入检入流程 ⇒ 关窗）
+    else if (jwt === null && !userStore.getIsAuthenticated()) {
+        closeCheckInPlan()
+        return redirectTo('auth-signin', to)
+    }
     // 若有 JWT 令牌且已登录，放行
     else if (jwt !== null && userStore.getIsAuthenticated()) {
+        closeCheckInPlan()
         // C-61②：web 无 AppRoot ⇒ 门 B 通过、挂载 App 前的等价收敛点
         await bootstrapLocalData()
         // T108 补充 / AC8 首帧：同上，先恢复镜像新鲜度再放行
@@ -95,7 +113,7 @@ const beforeEnter = async (to?: { fullPath?: string }) => {
         return true
     }
     // 若没有 JWT 令牌且已登录，则跳转到检入页
-    else return redirectTo('auth-checkin', to)
+    else return toCheckIn()
 }
 
 export default routes

@@ -127,6 +127,30 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         await expect(beforeEnter()).resolves.toEqual({ name: 'auth-checkin' })
     })
 
+    it('T558 R3：决定去检入页 ⇒ 开「待执行检入计划」窗口；判定放行 ⇒ 关窗', async () => {
+        const window = await import('@nao-todo/shared/requester/checkin-window')
+        window.resetCheckInWindow()
+
+        setSessionJwt('jwt')
+        await expect(beforeEnter()).resolves.toEqual({ name: 'auth-checkin' })
+        // 开窗必须发生在守卫返回之前（早于本次导航 afterEach 的数据面请求派发）
+        expect(window.isCheckInInFlight()).toBe(true)
+
+        // 已认证放行 ⇒ 不进入检入流程 ⇒ 关窗（非永久免死）
+        useUserStore().setIsAuthenticated(true)
+        await expect(beforeEnter()).resolves.toBe(true)
+        expect(window.isCheckInInFlight()).toBe(false)
+    })
+
+    it('T558 R3：判定去登录页（无 JWT）⇒ 不开窗', async () => {
+        const window = await import('@nao-todo/shared/requester/checkin-window')
+        window.resetCheckInWindow()
+
+        setSessionJwt(null)
+        await expect(beforeEnter()).resolves.toEqual({ name: 'auth-signin' })
+        expect(window.isCheckInInFlight()).toBe(false)
+    })
+
     it('安全回归线：登出后即使 flag 残留 true（JWT 已清）⇒ 仍不放行 index（走 signin）', async () => {
         grantOfflineEntry()
         mocks.resolveUserIdFromStoredJwt.mockReturnValue(null)

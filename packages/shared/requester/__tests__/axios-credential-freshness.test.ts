@@ -1,0 +1,262 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
+
+/**
+ * T558 / Issue #260 残余：失效处置的 **token 一致性判据**（axios 请求器）
+ *
+ * @description 失效判据必须是「**当前** token 失效」，不是「收到了 10041」：
+ *              - 请求发出时的 token 快照（`config.headers.Authorization`）≠ 当前 token ⇒ **陈旧响应**：
+ *                不登出、不清凭证、不导航，只记录；
+ *              - `Bearer null` / 无 Authorization ⇒ 同样按陈旧处理（顺带降级 DEF-93 危害）；
+ *              - 快照 === 当前 token ⇒ 真实失效，仍登出（宽限窗内仍放行，R2 语义不变）；
+ *              - 未注入 `getAuthToken` ⇒ 保持旧口径（收到 10041 即登出），零行为变化。
+ * @see docs/reports/T557-auth-residual-blockers.md（P0-1 / P1-5）
+ */
+
+const captured = vi.hoisted(() => ({
+    successHandlers: [] as Array<(response: unknown) => unknown>
+}))
+
+vi.mock('axios', () => {
+    const instance = {
+        interceptors: {
+            request: { use: () => undefined },
+            response: {
+                use: (onSuccess: (response: unknown) => unknown) => {
+                    captured.successHandlers.push(onSuccess)
+                }
+            }
+        }
+    }
+    return {
+        default: { create: () => instance },
+        AxiosError: class AxiosError extends Error {}
+    }
+})
+
+type CreateOptions = {
+    onAuthExpired: () => void
+    getAuthToken?: () => string | null
+}
+
+const createHandler = async (options: CreateOptions) => {
+    const { default: useAxiosRequester } = await import('../axios')
+    useAxiosRequester('http://localhost:3302', false, options.onAuthExpired, options.getAuthToken)
+    const handler = captured.successHandlers.at(-1)
+    if (!handler) throw new Error('请求器未注册响应拦截器')
+    return handler
+}
+
+/** HTTP 200 + 业务码 10041，并带上该请求自己的 Authorization（token 快照） */
+const emit10041 = async (
+    handler: (response: unknown) => unknown,
+    authorization?: string
+): Promise<unknown> => {
+    const response = {
+        data: { code: 10041, message: '会话已失效' },
+        config: { headers: authorization === undefined ? {} : { Authorization: authorization } }
+    }
+    return handler(response)
+}
+
+afterEach(async () => {
+    const rotation = await import('../auth-rotation')
+    rotation.resetTokenRotation()
+    const window = await import('../checkin-window')
+    window.resetCheckInWindow()
+})
+
+describe('axios 10041 · token 一致性（T558）', () => {
+    it('请求快照 ≠ 当前 token ⇒ 陈旧响应：不登出、只记录', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer jwt-stale')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        const logged = JSON.stringify(warn.mock.calls)
+        expect(logged).toContain('auth.credential.stale')
+        expect(logged).not.toContain('jwt-stale')
+        warn.mockRestore()
+    })
+
+    it('`Bearer null`（空凭证）⇒ 一律按陈旧处理：不登出', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer null')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        warn.mockRestore()
+    })
+
+    it('请求未带 Authorization ⇒ 视为陈旧（无凭据的请求不可能代表当前会话失效）', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler)
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        warn.mockRestore()
+    })
+
+    it('快照 === 当前 token（宽限窗外）⇒ 真实失效，仍登出 1 次', async () => {
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer jwt-current')
+
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+    })
+
+    it('快照 === 当前 token 且轮换宽限内 ⇒ 不登出（R2 语义保持）', async () => {
+        const rotation = await import('../auth-rotation')
+        rotation.resetTokenRotation()
+        rotation.markTokenRotated()
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer jwt-current')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+    })
+
+    it('T558 R1 检入在途 ⇒ 快照一致也**不登出**（由检入结果裁决），窗口关闭后恢复登出', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const window = await import('../checkin-window')
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        window.beginCheckIn()
+        // 冷启动并发 pull 的 10041：快照 === 当前 token，但检入正在换发 ⇒ 延后处置
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        expect(JSON.stringify(warn.mock.calls)).toContain('auth.credential.deferred-checkin')
+
+        // 窗口关闭（检入已落定）⇒ 真实失效照旧登出（不是永久免死金牌）
+        window.endCheckIn()
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+        warn.mockRestore()
+    })
+
+    it('T558 R3 必测 A：10041 与检入计划**同 tick**（检入尚未派发，checkins=0）⇒ 不登出、不导航，记 deferred-checkin', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const window = await import('../checkin-window')
+        window.resetCheckInWindow()
+        // 守卫决定去 `/auth/checkin` 的那一刻开窗；此时检入请求**尚未派发**（qa 实测：`checkins=0`）
+        window.openCheckInPlan()
+        expect(window.isCheckInInFlight()).toBe(true)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        // 同 tick 落地（未修版本：`removes=2` + 跳 `#/auth/signin`）
+        await emit10041(handler, 'Bearer jwt-current')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        expect(JSON.stringify(warn.mock.calls)).toContain('auth.credential.deferred-checkin')
+        warn.mockRestore()
+    })
+
+    it('T558 R3 必测 B：10041 晚 50ms（检入仍未派发 / 仍在途）⇒ 同样不登出（覆盖调度抖动）', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const window = await import('../checkin-window')
+        window.resetCheckInWindow()
+        window.openCheckInPlan()
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 50))
+        await emit10041(handler, 'Bearer jwt-current')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        expect(JSON.stringify(warn.mock.calls)).toContain('auth.credential.deferred-checkin')
+        warn.mockRestore()
+    })
+
+    it('T558 R3 必测 C：检入落定 / 页面卸载（窗口关闭）后 10041 ⇒ 仍登出（防永久免死）', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const window = await import('../checkin-window')
+        window.resetCheckInWindow()
+        window.openCheckInPlan()
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).not.toHaveBeenCalled()
+
+        window.closeCheckInPlan()
+        expect(window.isCheckInInFlight()).toBe(false)
+        await emit10041(handler, 'Bearer jwt-current')
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+        warn.mockRestore()
+    })
+
+    it('T558 R3 必测 D：无检入计划（正常会话内）⇒ 10041 仍登出（回归）', async () => {
+        const window = await import('../checkin-window')
+        window.resetCheckInWindow()
+        expect(window.isCheckInInFlight()).toBe(false)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => 'jwt-current'
+        })
+
+        await emit10041(handler, 'Bearer jwt-current')
+
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+    })
+
+    it('未注入 token 读取器 ⇒ 保持旧口径（收到 10041 即登出，两端行为零变化）', async () => {
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({ onAuthExpired })
+
+        await emit10041(handler, 'Bearer jwt-whatever')
+
+        expect(onAuthExpired).toHaveBeenCalledTimes(1)
+    })
+
+    it('当前已无 token（已登出）⇒ 陈旧响应，不重复登出', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const onAuthExpired = vi.fn()
+        const handler = await createHandler({
+            onAuthExpired,
+            getAuthToken: () => null
+        })
+
+        await emit10041(handler, 'Bearer jwt-stale')
+
+        expect(onAuthExpired).not.toHaveBeenCalled()
+        warn.mockRestore()
+    })
+})

@@ -29,6 +29,12 @@ export type AuthStore = {
     // user
     setUserDeletion: (userDeletion: UserDeletion) => void
     setUserToken: (userToken: string) => void
+    /**
+     * 读取当前 token（可选；T558 检入冲突重试前**重读**用）
+     * @description 可选以保持既有实现（含移动端 `AuthStoreCore`）零改动：
+     *              未提供 ⇒ 冲突重试无法校验 token 新鲜度 ⇒ 放弃重试（保守，仍保持认证）。
+     */
+    getUserToken?: () => string
     // ---
     clearAuthData: () => void
 }

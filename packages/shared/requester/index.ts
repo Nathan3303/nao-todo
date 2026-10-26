@@ -1,7 +1,12 @@
 import type { Requester, UseRequesterOptions, RequesterOpRtn } from './types'
 import useAxiosRequester from './axios'
 import { useLynxRequester } from './lynx'
-import { listLogs, listFailedIdempotentLogs, removeLog } from './operation-log'
+import {
+    listLogs,
+    listFailedIdempotentLogs,
+    purgeLegacyCredentialLogs,
+    removeLog
+} from './operation-log'
 
 const emptyRequester: Requester = {
     _instance: null,
@@ -17,8 +22,11 @@ let requester: Requester = emptyRequester
 
 export const getRequesterImpl = () => requester
 
+/** 历史凭据日志清理是否已发起（幂等：两端多次 `initRequester` 只清一次） */
+let credentialPurgeStarted = false
+
 export const initRequester = (options: UseRequesterOptions) => {
-    const { name, baseURL, enableRetry = true, onAuthExpired } = options
+    const { name, baseURL, enableRetry = true, onAuthExpired, getAuthToken } = options
 
     switch (name) {
         case 'LynxRequester': {
@@ -28,7 +36,12 @@ export const initRequester = (options: UseRequesterOptions) => {
         }
         case 'AxiosRequester':
         default: {
-            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired)
+            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired, getAuthToken)
+            // T560 / P0-安全：旧版本把明文口令写进 IndexedDB ⇒ 初始化一次性扫除（不阻塞启动）
+            if (!credentialPurgeStarted) {
+                credentialPurgeStarted = true
+                void purgeLegacyCredentialLogs()
+            }
             break
         }
     }
@@ -75,6 +88,7 @@ export const replayFailedOperations = async () => {
     }
 }
 
+export { purgeLegacyCredentialLogs, shouldSkipOperationLog } from './operation-log'
 export type { Requester } from './types'
 export type { OperationLog, OperationLogStatus, HttpMethod } from './types'
 export { resetAuthExpiredLatch } from './axios'

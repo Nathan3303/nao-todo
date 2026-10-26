@@ -21,6 +21,7 @@ export interface LocaleMessages {
     'auth.signUp.goToLogin': string
     'auth.signUp.success': string
     'auth.checkIn.verifying': string
+    'auth.checkIn.conflict': string
     'auth.aside.tagline': string
 
     // Navigation

@@ -6,6 +6,12 @@
  *              拉取写入直连表 + converters（不触发 markDirty，避免同步回环）。
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
+import {
+    consumeRotationGrace,
+    extractBearerToken,
+    isStaleTokenSnapshot
+} from '@nao-todo/shared/requester/auth-rotation'
+import { isCheckInInFlight } from '@nao-todo/shared/requester/checkin-window'
 import type { Table } from 'dexie'
 import { pickUnexpectedDroppedFields } from './dropped-fields'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
@@ -448,6 +454,60 @@ export class SyncService {
         }
     }
 
+    /**
+     * 10041 是否属于「陈旧请求」（T558：发出时 token 快照 ≠ 当前 token / `Bearer null`）
+     * @description 陈旧响应**只记录**：不清凭证、不导航、不置失效态；真实失效才走后续处置。
+     * @param headers 该请求发出时的鉴权头
+     */
+    private isStaleCredentialResponse(headers: Record<string, string>): boolean {
+        // 未带 Bearer 头 ⇒ 按空快照处理（无凭据的请求不可能代表当前会话失效）
+        const requestToken = extractBearerToken(headers.Authorization) ?? ''
+        let currentToken: string | null = null
+        try {
+            currentToken = getJWTFromLocalStorage()
+        } catch {
+            currentToken = null
+        }
+        return isStaleTokenSnapshot(requestToken, currentToken)
+    }
+
+    /**
+     * 处置 sync 的 10041：陈旧快照 / 轮换宽限内 ⇒ 仅结构化记录（T558）
+     * @description 优先级：① 陈旧响应 → ② 轮换宽限（Web 端从不 `markTokenRotated` ⇒ 恒不命中，行为零变化）
+     *              → ③ **检入在途**（T558 R1：检入换发期间的在途请求必然拿 10041，由检入结果裁决）。
+     * @param headers 该请求发出时的鉴权头（token 快照）
+     * @param phase 'pull' | 'push'
+     * @param userId 当前用户
+     * @returns `true` = 已按「陈旧/宽限/检入在途」处置（调用方**直接 return**，不做后续失效动作）
+     */
+    private skipStaleCredentialFailure(
+        headers: Record<string, string>,
+        phase: 'pull' | 'push',
+        userId: string
+    ): boolean {
+        const stale = this.isStaleCredentialResponse(headers)
+        const checkInInFlight = isCheckInInFlight()
+        if (!stale && !checkInInFlight && !consumeRotationGrace()) return false
+        const requestToken = extractBearerToken(headers.Authorization)
+        logStructured(
+            'warn',
+            phase === 'pull'
+                ? STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED
+                : STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED,
+            {
+                userId,
+                phase,
+                kind: stale
+                    ? 'stale-credential'
+                    : checkInInFlight
+                      ? 'checkin-in-flight'
+                      : 'rotation-grace',
+                snapshot: requestToken ? `${requestToken.slice(0, 8)}…` : null
+            }
+        )
+        return true
+    }
+
     private currentUserId(): string | null {
         return localSession.getCurrentUserId()
     }
@@ -745,9 +805,11 @@ export class SyncService {
                     }
                 }
                 let response
+                // T558：记下本次请求**自带出去**的 token 快照，供 10041 处置判「陈旧响应」
+                const pullHeaders = this.authHeaders()
                 try {
                     response = await this.requester.post('/sync/pull', pullBody, {
-                        headers: this.authHeaders()
+                        headers: pullHeaders
                     })
                 } catch (err) {
                     // HTTP 4xx/5xx：区分鉴权失败（不误报网络错误，提示重新登录）
@@ -779,6 +841,8 @@ export class SyncService {
                 // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
                 if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
                     this.pullIncomplete = true
+                    // T558：陈旧快照 / 轮换宽限内 ⇒ 只记录，不清凭证不导航
+                    if (this.skipStaleCredentialFailure(pullHeaders, 'pull', userId)) return
                     logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
                         userId,
                         kind: 'credential'
@@ -1105,11 +1169,13 @@ export class SyncService {
                 deletions: deletions.length
             })
             let response
+            // T558：记下本次请求**自带出去**的 token 快照，供 10041 处置判「陈旧响应」
+            const pushHeaders = this.authHeaders()
             try {
                 response = await this.requester.post(
                     '/sync/push',
                     { ...pushBody, deletions },
-                    { headers: this.authHeaders() }
+                    { headers: pushHeaders }
                 )
             } catch (err) {
                 // SHELL-06 C-38：三分类 —— 凭证（401/403）维持会话失效；网络类暂停不计数；其余业务退避
@@ -1153,6 +1219,8 @@ export class SyncService {
             // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
             const dataRaw = raw?.data as { code?: unknown } | undefined
             if (this.isSessionExpiredCode(dataRaw?.code)) {
+                // T558：陈旧快照 / 轮换宽限内 ⇒ 只记录，不清凭证不导航
+                if (this.skipStaleCredentialFailure(pushHeaders, 'push', userId)) return
                 logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
                     userId,
                     kind: 'credential'

@@ -91,6 +91,8 @@ export const useUserStore = defineStore('UserStore', () => {
         getIsAuthenticated: () => state.value.isAuthenticated,
         setIsAuthenticated: (isAuthenticated: boolean) => updateState({ isAuthenticated }),
         setUserToken: (token: string) => updateState({ userToken: token }),
+        // T558：检入冲突重试前**重读**当前 token（未提供 ⇒ 不重试，保持认证）
+        getUserToken: () => state.value?.userToken ?? '',
         userToken: computed(() => state.value.userToken),
         clearAuthData,
         // user

@@ -11,12 +11,14 @@
 import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
 import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
-import { ref } from 'vue'
+import { closeCheckInPlan, openCheckInPlan } from '@nao-todo/shared/requester/checkin-window'
+import { onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
 import {
     AuthUseCase,
     isCredentialError,
+    isRetryableCheckInConflict,
     USER_JWT_LOCALSTORAGE_KEY
 } from '@nao-todo/domain-identity'
 
@@ -31,6 +33,14 @@ const loading = ref(true)
 const failed = ref(false)
 const errorMessage = ref('')
 
+/**
+ * 待执行检入计划窗口（T558 R3）
+ * @description 守卫通常已在「决定检入」时开窗（**早于**数据面请求派发）；本处再开一次是
+ *              **幂等兜底**（组件被直接挂载/单测场景）。窗口生命周期 = 检入落定 或 本页卸载。
+ */
+openCheckInPlan()
+onUnmounted(() => closeCheckInPlan())
+
 /** 检入（可重试；失败态下点「重试」再次进入本函数） */
 const checkIn = async (): Promise<void> => {
     loading.value = true
@@ -39,6 +49,8 @@ const checkIn = async (): Promise<void> => {
     const err = await props.authUseCase.checkIn(
         localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY) || ''
     )
+    // T558 R3：检入已落定 ⇒ 关闭计划窗口（非永久免死：此后到达的 10041 照旧处置）
+    closeCheckInPlan()
     // B-3①：失败处理前先判路由 —— 用户已离开检入页（如「离线进入」）⇒ 静默 return，不弹错、不跳转
     if (route.name !== 'auth-checkin') return
     if (err === null) {
@@ -46,6 +58,13 @@ const checkIn = async (): Promise<void> => {
         return
     }
     loading.value = false
+    // T558 R1：检入冲突（`10022`）是「可重试」而非「会话失效」⇒ 显式可重试出口
+    // （锦上添花：不清凭证、不回登录页；失败态自带「重试」+「重新登录」两个可前进动作）
+    if (isRetryableCheckInConflict(err)) {
+        failed.value = true
+        errorMessage.value = t('auth.checkIn.conflict')
+        return
+    }
     const message = unwrapError(err)
     if (isCredentialError(err)) {
         NueMessage.error(message)
