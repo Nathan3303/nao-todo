@@ -62,11 +62,14 @@ const clickButton = (label: string): void => {
     target?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 }
 
-afterEach(() => {
+afterEach(async () => {
     wrapper?.unmount()
     wrapper = null
     document.body.innerHTML = ''
     vi.restoreAllMocks()
+    // 检入窗口是模块级全局态 ⇒ 用例间复位
+    const window = await import('@nao-todo/shared/requester/checkin-window')
+    window.resetCheckInWindow()
 })
 
 describe('AuthCheckIn - SHELL-03 失败分支', () => {
@@ -109,6 +112,26 @@ describe('AuthCheckIn - SHELL-03 失败分支', () => {
 
         expect(mocks.messageError).toHaveBeenCalled()
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
+    })
+
+    it('T558 R3 挂载即开计划窗口（早于请求派发）；检入落定 / 卸载即关闭', async () => {
+        mocks.routeName = 'auth-checkin'
+        const window = await import('@nao-todo/shared/requester/checkin-window')
+        window.resetCheckInWindow()
+
+        const gate = mountCheckIn(async () => null)
+        // 组件 setup 内、`checkIn()` 落定之前就已开窗 ⇒ 数据面并发的 10041 会被延后处置
+        expect(window.isCheckInInFlight()).toBe(true)
+
+        // 检入落定（成功）⇒ 关窗（此后到达的 10041 照旧处置，不再无脑延后）
+        await flushPromises()
+        expect(window.isCheckInInFlight()).toBe(false)
+
+        // 卸载路径同样关窗（幂等）
+        window.openCheckInPlan()
+        gate.unmount()
+        wrapper = null
+        expect(window.isCheckInInFlight()).toBe(false)
     })
 
     it('T558 R1 检入冲突（10022）⇒ 显式可重试终态（重试 + 重新登录），不跳 signin、不弹凭证错误', async () => {

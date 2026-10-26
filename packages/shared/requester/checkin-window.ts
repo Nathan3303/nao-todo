@@ -20,6 +20,12 @@
 /** 在途检入计数（同一 token 单飞 ⇒ 事实上 ≤1；用计数便于嵌套/并发调用安全结算） */
 let inFlight = 0
 
+/** 待执行检入计划（守卫决定去 `/auth/checkin` / 检入页挂载时开启；落定/卸载/改道时关闭） */
+let planned = 0
+
+/** 当前计划窗口的关闭器（`null` = 无计划；幂等，避免守卫重复决策叠加多层窗口） */
+let currentPlanClose: (() => void) | null = null
+
 /** 开始一次检入（`AuthUseCase.checkIn` 单飞体入口调用；必须与 `endCheckIn` 成对） */
 export const beginCheckIn = (): void => {
     inFlight += 1
@@ -30,10 +36,41 @@ export const endCheckIn = (): void => {
     inFlight = inFlight > 0 ? inFlight - 1 : 0
 }
 
-/** 当前是否有检入在途（`true` ⇒ 失效处置必须延后，由检入结果裁决） */
-export const isCheckInInFlight = (): boolean => inFlight > 0
+/**
+ * 开启「待执行检入计划」窗口（T558 R3）
+ * @description **必须在决定检入的那一刻调用**（路由守卫判定去 `/auth/checkin`），
+ *              **早于**数据面 `syncService.start()` / `GET|PUT /user/config` 的派发。
+ *              实机 bracket 实测（`qa-T556`，未修版本）：`10041` 可与数据面请求**同 tick** 到达，
+ *              那时检入请求还**未派发**（`checkins=0`）⇒ 只看「检入在途」挡不住这一格。
+ *              幂等：已有计划 ⇒ 不重复开（守卫每次导航都会决策）。
+ */
+export const openCheckInPlan = (): void => {
+    if (currentPlanClose !== null) return
+    planned += 1
+    let closed = false
+    currentPlanClose = () => {
+        if (closed) return
+        closed = true
+        currentPlanClose = null
+        planned = planned > 0 ? planned - 1 : 0
+    }
+}
+
+/** 关闭当前「待执行检入计划」（幂等；检入落定 / 检入页卸载 / 守卫改道时调用） */
+export const closeCheckInPlan = (): void => {
+    currentPlanClose?.()
+}
+
+/**
+ * 当前是否有检入在途**或待执行检入计划**（`true` ⇒ 失效处置必须延后，由检入结果裁决）
+ * @description 两个维度互补：`inFlight` 覆盖「已派发、未落定」，`planned` 覆盖「已决定去检入、
+ *              请求尚未派发」（R3 实机缺口）。**都不覆盖「无检入计划」的普通会话** ⇒ 真实失效照旧登出。
+ */
+export const isCheckInInFlight = (): boolean => inFlight > 0 || planned > 0
 
 /** 复位（仅测试 / 会话整体重置用） */
 export const resetCheckInWindow = (): void => {
     inFlight = 0
+    planned = 0
+    currentPlanClose = null
 }
