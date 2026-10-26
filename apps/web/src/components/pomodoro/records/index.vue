@@ -177,10 +177,25 @@ const handleReset = () => {
         justify-content: center;
     }
 
-    /* 仅窄屏、为点击区达标（≥40px）：桌面分页保持原尺寸 */
+    /* 仅窄屏、为可点区达标（R10，命中区口径 ≥40px）：small 视觉不变（Pager 自身已是 small = 28px 高），
+       用不可见伪元素向外扩 6px/侧 ⇒ 命中区 = 28+12 = 40px；
+       必须同时开 overflow:visible —— .nue-button 基础样式 overflow:hidden 会把出盒的 ::after 整个裁掉（扩展失效） */
     .pomodoro-records-page__pagination :deep(.nue-button) {
-        min-width: 40px;
-        min-height: 40px;
+        position: relative;
+        overflow: visible;
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+        }
+    }
+
+    /* 仅窄屏、为箭头图标在按钮内水平居中（R11）：改主题自身的 alignment 机制
+       （与 .nue-button--icon 变体同法：--nue-button-alignment:center；垂直居中由 align-items:center 已保证），
+       桌面分页保持原样 */
+    .pomodoro-records-page__pagination :deep(.nue-button) {
+        --nue-button-alignment: center;
     }
 }
 </style>

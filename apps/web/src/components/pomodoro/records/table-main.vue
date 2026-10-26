@@ -113,20 +113,18 @@ const cardLabel = (record: PomodoroRecordViewObject) =>
                 @click="emit('showDetail', record.id)"
                 @keydown.enter.prevent="emit('showDetail', record.id)"
             >
-                <div class="pomodoro-record-card__head">
-                    <div class="pomodoro-record-card__type">
-                        <nue-icon :name="getTypeIcon(record.type)" />
-                        <span>{{ getTypeLabel(record.type) }}</span>
-                    </div>
-                    <div class="pomodoro-record-card__time" :title="formatDate(record.startAt)">
-                        {{ formatTime(record.startAt) }}
-                    </div>
+                <div class="pomodoro-record-card__type">
+                    <nue-icon :name="getTypeIcon(record.type)" />
+                    <span>{{ getTypeLabel(record.type) }}</span>
                 </div>
                 <div class="pomodoro-record-card__task" :title="record.taskName || '-'">
                     {{ record.taskName || '-' }}
                 </div>
                 <div class="pomodoro-record-card__duration">
                     {{ formatDuration(record.duration) }}
+                </div>
+                <div class="pomodoro-record-card__time" :title="formatDate(record.startAt)">
+                    {{ formatTime(record.startAt) }}
                 </div>
             </div>
         </nue-div>
@@ -255,18 +253,20 @@ const cardLabel = (record: PomodoroRecordViewObject) =>
 .pomodoro-record-card-list {
     display: flex;
     flex-direction: column;
-    gap: var(--nue-gap-sm);
+    gap: var(--nue-gap-xs);
     width: 100%;
 }
 
+/* 单行卡片（R9）：min-height 钉死 3.5rem=56px，360px 首屏列表区可见 6–8 条 */
 .pomodoro-record-card {
     display: flex;
-    flex-direction: column;
-    gap: var(--nue-gap-xs);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--nue-gap-sm);
     width: 100%;
-    min-height: 40px;
+    min-height: 3.5rem;
     box-sizing: border-box;
-    padding: var(--nue-padding-sm) var(--nue-padding-md);
+    padding: var(--nue-padding-xs) var(--nue-padding-sm);
     background-color: var(--nue-primary-color-0);
     border: 1px solid var(--nue-divider-color);
     border-radius: var(--nue-radius-sm);
@@ -285,20 +285,31 @@ const cardLabel = (record: PomodoroRecordViewObject) =>
     }
 }
 
-.pomodoro-record-card__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--nue-gap-sm);
-    min-width: 0;
-}
-
 .pomodoro-record-card__type {
     display: flex;
     align-items: center;
-    gap: var(--nue-gap-xs);
+    gap: var(--nue-gap-2xs);
+    flex: none;
     font-size: var(--nue-text-sm);
     color: var(--nue-primary-color-600);
+}
+
+/* 长任务名末尾省略，不撑宽卡片（AC4） */
+.pomodoro-record-card__task {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-900);
+}
+
+.pomodoro-record-card__duration {
+    flex: none;
+    font-size: var(--nue-text-sm);
+    font-weight: 500;
+    color: var(--nue-primary-color-700);
 }
 
 .pomodoro-record-card__time {
@@ -306,21 +317,6 @@ const cardLabel = (record: PomodoroRecordViewObject) =>
     font-size: var(--nue-text-sm);
     color: var(--nue-primary-color-600);
     font-variant-numeric: tabular-nums;
-}
-
-/* 长任务名末尾省略，不撑宽卡片（AC4） */
-.pomodoro-record-card__task {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--nue-text-df);
-    color: var(--nue-primary-color-900);
-}
-
-.pomodoro-record-card__duration {
-    font-size: var(--nue-text-sm);
-    font-weight: 500;
-    color: var(--nue-primary-color-700);
 }
 
 /* 760px 硬宽只保留在桌面分支（窄屏卡片化，禁止横向溢出） */
