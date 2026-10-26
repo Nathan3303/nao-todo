@@ -200,6 +200,7 @@ const zhCN: LocaleMessages = {
     'common.edit': '编辑',
     'common.save': '保存',
     'common.retry': '重试',
+    'common.navigationFailed': '页面跳转失败，请重试',
     'common.all': '全部',
     'common.normal': '正常',
     'common.deleted': '已删除',

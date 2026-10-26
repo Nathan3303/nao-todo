@@ -264,38 +264,56 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
         )
     })
 
-    it('C-26：离线进入导航 reject ⇒ 结构化打点 + finally 仍进壳（不卡门）', async () => {
+    it('C-26：离线进入导航 reject ⇒ 结构化打点 + 用户可见反馈 + 一次重试成功 + finally 仍进壳', async () => {
         localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/calendar')
-        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
 
         const root = mountRoot()
         const gate = await reachSyncGate(root)
-        gate.$emit('offline')
-        await flushPromises()
+        // #260 修复⑤：safeReplace 首败后有 250ms 自动重试 ⇒ 用假时钟推进（真实定时器 flushPromises 推不动）
+        vi.useFakeTimers()
+        try {
+            mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
 
-        // 失败仍进入终态（永不卡门）；授权先于跳转仍生效
-        expect(root.find('#app-stub').exists()).toBe(true)
-        expect(isOfflineEntryGranted()).toBe(true)
-        expect(console.error).toHaveBeenCalledWith(
-            expect.stringContaining('[SHELL-05]'),
-            expect.objectContaining({ source: 'app-root:offline-navigation' })
-        )
+            gate.$emit('offline')
+            await flushPromises()
+            // 重试延迟 250ms + 重试后的导航微任务
+            await vi.advanceTimersByTimeAsync(250)
+            await flushPromises()
+
+            // 失败后重试成功仍进入终态（永不卡门）；授权先于跳转仍生效
+            expect(root.find('#app-stub').exists()).toBe(true)
+            expect(isOfflineEntryGranted()).toBe(true)
+            expect(console.error).toHaveBeenCalledWith(
+                expect.stringContaining('[SHELL-05]'),
+                expect.objectContaining({ source: 'app-root:offline-navigation' })
+            )
+        } finally {
+            vi.useRealTimers()
+        }
     })
 
-    it('C-26：登出导航 reject ⇒ 打点 + finally 仍进壳', async () => {
+    it('C-26：登出导航 reject ⇒ 打点 + 一次重试 + finally 仍进壳', async () => {
         grantOfflineEntry()
-        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
 
         const root = mountRoot()
         const gate = await reachSyncGate(root)
-        gate.$emit('signOut')
-        await flushPromises()
+        vi.useFakeTimers()
+        try {
+            mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
 
-        expect(root.find('#app-stub').exists()).toBe(true)
-        expect(console.error).toHaveBeenCalledWith(
-            expect.stringContaining('[SHELL-05]'),
-            expect.objectContaining({ source: 'app-root:signout-navigation' })
-        )
+            gate.$emit('signOut')
+            await flushPromises()
+            await vi.advanceTimersByTimeAsync(250)
+            await flushPromises()
+
+            expect(root.find('#app-stub').exists()).toBe(true)
+            expect(console.error).toHaveBeenCalledWith(
+                expect.stringContaining('[SHELL-05]'),
+                expect.objectContaining({ source: 'app-root:signout-navigation' })
+            )
+        } finally {
+            vi.useRealTimers()
+        }
     })
 
     it('C-28：LAST_VISITED 失效 ⇒ 清理该键并回落 SECTION_LAST（/tasks）', async () => {
