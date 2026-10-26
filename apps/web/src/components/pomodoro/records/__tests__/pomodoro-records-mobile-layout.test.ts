@@ -4,6 +4,7 @@ import {
     effectiveOverflowY,
     effectiveRules,
     effectiveValue,
+    isNarrowScoped,
     mediaBreakpoints,
     narrowScopedDecls,
     parseCssRules,
@@ -289,6 +290,31 @@ describe('T549 AC5 分页：窄屏可点、不弹回顶端', () => {
         expect(wrapping.length, '分页不允许换行 ⇒ 窄屏必然被挤出屏幕').toBeGreaterThan(0)
     })
 
+    it('AC5 ⑤ 360px：「≥40px 点击区」必须来自窄屏分支（无条件覆盖 ⇒ 桌面按钮变高 ⇒ 违 AC7）', () => {
+        const rules = allRules()
+        const hits = rules
+            .filter((rule) => isNarrowScoped(rule, MOBILE))
+            .filter((rule) => rule.selectors.some((selector) => /pagination|pager/i.test(selector)))
+            .map((rule) => ({
+                selectors: rule.selectors,
+                media: rule.media,
+                minHeight: rule.decls
+                    .filter((decl) => /^(min-height|min-block-size)$/.test(decl.prop))
+                    .map((decl) => `${decl.prop}: ${decl.value}`)
+            }))
+            .filter((rule) => rule.minHeight.length > 0)
+        const declarations = narrowScopedDecls(rules, MOBILE, /pagination|pager/i).filter((decl) =>
+            /^(min-height|min-block-size|height)$/.test(decl.prop)
+        )
+        console.log('[AC5-⑤] 窄屏分支命中的分页规则（选择器 + 媒体条件）：', hits)
+        console.log('[AC5-⑤] 窄屏分支内高度声明：', declarations)
+
+        expect(
+            declarations.some((decl) => (toPx(decl.value) ?? 0) >= 40),
+            '≥40px 点击区不在 ≤720px 分支内（写成了无条件规则）⇒ 桌面分页按钮也会变高，违反「桌面零变化」；请移入 @media (max-width: 720px)'
+        ).toBe(true)
+    })
+
     it('AC5 ③ 切页不得重置滚动位置（负向守卫：源码不得出现滚动归零调用）', () => {
         const offenders = Object.entries(modules).flatMap(([key, source]) =>
             [
@@ -340,15 +366,24 @@ describe('T549 AC6 三态：LoadingError 呈现且不撑破布局', () => {
 })
 
 describe('T549 口径守卫（断点 / 视口单位 / 红线 / 详情复用）', () => {
-    it('断点口径：只允许 720（主）+ 480（既有次级），721 视为 720 的补集', () => {
-        const breakpoints = mediaBreakpoints(allRules())
-        console.log('[断点] 记录页实测断点：', breakpoints)
+    it('断点口径（含桌面分支）：只允许 720（主）+ 480（既有次级），721 视为 720 的补集', () => {
+        const rules = allRules()
+        const breakpoints = mediaBreakpoints(rules)
+        const byBranch = {
+            窄屏: [
+                ...new Set(rules.flatMap((rule) => rule.media).filter((c) => /max-width/.test(c)))
+            ],
+            桌面: [
+                ...new Set(rules.flatMap((rule) => rule.media).filter((c) => /min-width/.test(c)))
+            ]
+        }
+        console.log('[断点] 记录页全分支实测阈值：', breakpoints, '按分支：', byBranch)
 
         expect(breakpoints.length, '记录页没有任何媒体查询 ⇒ 窄屏适配缺失').toBeGreaterThan(0)
         expect(breakpoints).toContain(720)
         expect(
             breakpoints.filter((value) => ![480, 720, 721].includes(value)),
-            '新增了第三套断点常量（PRD R2 只允许 720 / 480）'
+            '出现新阈值（PRD R2 + PM 2026-10-26 裁定：桌面分支也不得出现 768/780 等新断点）'
         ).toEqual([])
     })
 

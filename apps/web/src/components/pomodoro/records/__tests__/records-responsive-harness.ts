@@ -273,13 +273,20 @@ export const narrowScopedDecls = (
         .filter((rule) => rule.selectors.some((selector) => selectorPattern.test(selector)))
         .flatMap((rule) => rule.decls)
 
-/** 收集记录页所有媒体查询的宽度断点（去重升序），用于「不新增第三套断点」守卫 */
+/**
+ * 收集记录页**所有分支**（窄屏 + 桌面）媒体查询的宽度阈值（去重升序）
+ * 用于「不新增第三套断点」守卫 —— 同时识别 `max-width/min-width: Npx` 与 `width <= Npx` 两种写法。
+ */
 export const mediaBreakpoints = (rules: CssRule[]): number[] => {
     const found = new Set<number>()
     for (const rule of rules) {
         for (const condition of rule.media) {
-            for (const match of condition.matchAll(/(?:max|min)-width\s*:\s*(\d+)px/g)) {
-                found.add(Number(match[1]))
+            const matches = condition.matchAll(
+                /(?:max-width|min-width)\s*:\s*(\d+)px|width\s*[<>]=?\s*(\d+)px/g
+            )
+            for (const match of matches) {
+                const value = Number(match[1] ?? match[2])
+                if (Number.isFinite(value)) found.add(value)
             }
         }
     }
