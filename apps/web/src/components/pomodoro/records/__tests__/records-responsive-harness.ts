@@ -330,11 +330,15 @@ export type ButtonHeightDecl = {
 export const hitAreaEvidence = (
     rules: CssRule[],
     width: number,
-    buttonVisualPx = NUE_TOKEN_PX['--nue-box-size-xs'] ?? 28
+    options: { buttonVisualPx?: number; selectorPattern?: RegExp } = {}
 ): { boxes: HitAreaBox[]; directHeights: ButtonHeightDecl[] } => {
+    const buttonVisualPx = options.buttonVisualPx ?? NUE_TOKEN_PX['--nue-box-size-xs'] ?? 28
+    /** 限定命中区所属组件（分页 / 详情抽屉），避免把别处的扩展误当成本处的 */
+    const pattern = options.selectorPattern ?? /nue-button|pagination|pager/i
     const applicable = effectiveRules(rules, width)
     const buttonRules = applicable.filter(
         (rule) =>
+            rule.selectors.some((selector) => pattern.test(selector)) &&
             rule.selectors.some((selector) => /nue-button/.test(selector)) &&
             !rule.selectors.some((selector) => selector.includes('::'))
     )
@@ -362,7 +366,7 @@ export const hitAreaEvidence = (
         .filter(
             (rule) =>
                 rule.selectors.some((selector) => /::(after|before)/.test(selector)) &&
-                rule.selectors.some((selector) => /nue-button|pagination|pager/i.test(selector))
+                rule.selectors.some((selector) => pattern.test(selector))
         )
         .map((rule) => {
             const content = rule.decls.find((decl) => decl.prop === 'content')?.value ?? null
@@ -531,11 +535,49 @@ export const setViewport = (width: number): (() => void) => {
     }
 }
 
-/** nue-ui `nue-scroll-bar` 依赖 `ResizeObserver`（jsdom 未实现） */
+/**
+ * nue-ui `nue-scroll-bar` 依赖 `ResizeObserver`（jsdom 未实现）
+ *
+ * 桩会**按当前视口宽度回报 `contentRect.width`**（`observe()` 时同步回调一次）——
+ * 这样「用 `ResizeObserver` 观察 `document.body` 做窄屏判定」的实现（如 `useResponsiveFlag`）
+ * 在 360 / 1280 两种挂载下都能被正确判定，不会被空壳桩误判成移动端。
+ */
 export const stubResizeObserver = (): void => {
     class ResizeObserverStub {
-        observe() {}
+        private readonly callback: ResizeObserverCallback
+
+        constructor(callback: ResizeObserverCallback) {
+            this.callback = callback
+        }
+
+        observe(): void {
+            const width = window.innerWidth
+            const height = window.innerHeight
+            const entry = {
+                target: document.body,
+                contentRect: {
+                    width,
+                    height,
+                    top: 0,
+                    left: 0,
+                    right: width,
+                    bottom: height,
+                    x: 0,
+                    y: 0
+                },
+                borderBoxSize: [],
+                contentBoxSize: [],
+                devicePixelContentBoxSize: []
+            } as unknown as ResizeObserverEntry
+            try {
+                this.callback([entry], this as unknown as ResizeObserver)
+            } catch {
+                // 桩回调失败不应打断挂载（真实浏览器里会在下一帧回调）
+            }
+        }
+
         unobserve() {}
+
         disconnect() {}
     }
     ;(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverStub
