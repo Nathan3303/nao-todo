@@ -25,6 +25,9 @@ import { getDesktopBridge } from '../desktop-bridge'
 export interface DesktopSessionRenewalOptions {
     /** 当前登录凭证（**响应式**取值：登录/登出即时启停续期） */
     authToken(): string
+    /** 是否已认证（**响应式**；Issue #260 修复④：冷启动 JWT 在而未检入时不启动续期，
+     *  避免与检入页双发 checkin ⇒ 轮换自伤）；登录/登出/切号即时启停 */
+    isAuthenticated(): boolean
     /** 复用既有认证用例（内部已含 `DEF-5` 网络/凭证分流） */
     checkIn(token: string): Promise<string | null>
     /** 凭证失效（隐藏态先发系统通知；打开后走既有登录引导） */
@@ -59,11 +62,12 @@ export const useDesktopSessionRenewal = (options: DesktopSessionRenewalOptions):
         onCredentialExpired: () => options.onCredentialExpired()
     })
 
-    // 已登录才启动（登出即停；重新登录后再启动）
+    // 已认证且有凭证才启动（Issue #260 修复④：冷启动「JWT 在但未检入」不启动，
+    // 避免调度器与检入页双发 checkin ⇒ 旧 token 轮换 ⇒ 10041 自伤；登出/切号即停）
     watch(
-        () => options.authToken(),
-        (token) => {
-            if (token) void scheduler.start()
+        () => [options.isAuthenticated(), options.authToken()] as const,
+        ([authed, token]) => {
+            if (authed && token) void scheduler.start()
             else scheduler.stop()
         },
         { immediate: true }

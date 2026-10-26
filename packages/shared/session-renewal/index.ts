@@ -80,6 +80,11 @@ export const recordCheckInAttempt = (at: number = Date.now()): void => {
 /** 读取最近一次 checkin 发起时刻（调度器 `lastCheckInAt` 端口的默认实现） */
 export const getLastCheckInAttemptAt = (): number | null => lastCheckInAttemptAt
 
+/** 清除发起记录（登出/测试隔离用；生产路径登录成功时由应用层覆写） */
+export const resetCheckInAttempt = (): void => {
+    lastCheckInAttemptAt = null
+}
+
 /**
  * 创建续期调度器
  * @param deps 注入依赖（checkin / 时钟 / 定时器 / 空闲 / 凭证失效回调）

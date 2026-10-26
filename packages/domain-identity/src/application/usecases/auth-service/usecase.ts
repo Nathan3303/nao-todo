@@ -7,6 +7,7 @@ import {
     signUpViewObject2ValueObject
 } from './converters'
 import { isCredentialError } from './error-classification'
+import { recordCheckInAttempt } from '@nao-todo/shared/session-renewal'
 
 /**
  * 认证用例
@@ -35,6 +36,11 @@ export class AuthUseCase {
         if (signInError !== null) {
             return signInError
         }
+        // Issue #260 修复①：登录成功即记录 checkin 发起时刻 —— 必须在 `setUserToken` **之前**：
+        // store watch 的微任务先于本用例续体执行，晚于 setUserToken 才记录 ⇒ 桌面续期调度器
+        // `start()` 的同步段读到 null ⇒ 立即用旧 token 补发 checkin ⇒ 服务端轮换 ⇒
+        // 在途 pull/Epoch/导航请求拿 10041 ⇒ 被登出 ⇒ 「登录成功但卡在登录页」。
+        recordCheckInAttempt()
         const sessionViewObject = sessionValueObject2ViewObject(authSession)
         this.authStore.setIsAuthenticated(true)
         this.authStore.setUserToken(sessionViewObject.token)

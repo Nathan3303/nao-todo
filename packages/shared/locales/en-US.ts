@@ -203,6 +203,7 @@ const enUS: LocaleMessages = {
     'common.edit': 'Edit',
     'common.save': 'Save',
     'common.retry': 'Retry',
+    'common.navigationFailed': 'Page navigation failed, please try again',
     'common.all': 'All',
     'common.normal': 'Normal',
     'common.deleted': 'Deleted',

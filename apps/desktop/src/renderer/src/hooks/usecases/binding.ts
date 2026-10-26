@@ -112,6 +112,7 @@ export const useCaseBinding: UseCaseBinding = {
         useCase.signIn = async (signInViewObject: SignInViewObject) => {
             const err = await originalSignIn(signInViewObject)
             if (err !== null) return err
+            // checkin 发起时刻已由 AuthUseCase.signIn 成功分支在 setUserToken 之前记录（#260 修复①，域层单点）
             // signIn 成功后 user-store 已将 JWT 写入 localStorage，解析用户 ID 建立本地会话
             const userId = resolveUserIdFromStoredJwt()
             if (!userId) {
