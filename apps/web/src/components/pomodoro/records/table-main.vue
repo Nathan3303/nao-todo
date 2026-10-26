@@ -24,10 +24,15 @@ const getTypeLabel = (type: number) => (type === 1 ? '番茄钟' : '正计时')
 const getTypeIcon = (type: number) => (type === 1 ? 'ntd-fanqie' : 'focus')
 const formatTime = (time: string) => dayjs(time).format('HH:mm')
 const formatDate = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
+
+/** 窄屏卡片可访问名（AC9）：类型 + 任务名 + 开始时间 */
+const cardLabel = (record: PomodoroRecordViewObject) =>
+    `${getTypeLabel(record.type)} ${record.taskName || '-'} ${formatTime(record.startAt)}`
 </script>
 
 <template>
     <nue-div class="pomodoro-records-table">
+        <!-- 桌面（>720px）表格：保持既有结构不动 -->
         <nue-scroll-bar vertical horizontal>
             <div class="pomodoro-records-table__header">
                 <div class="pomodoro-records-table__cell pomodoro-records-table__cell--type">
@@ -95,6 +100,34 @@ const formatDate = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
                 </div>
             </div>
         </nue-scroll-bar>
+
+        <!-- 窄屏（≤720px）卡片列表：与表格同一 records 数据源（R1） -->
+        <nue-div class="pomodoro-record-card-list">
+            <div
+                v-for="record in records"
+                :key="record.id"
+                class="pomodoro-record-card"
+                role="button"
+                tabindex="0"
+                :aria-label="cardLabel(record)"
+                @click="emit('showDetail', record.id)"
+                @keydown.enter.prevent="emit('showDetail', record.id)"
+            >
+                <div class="pomodoro-record-card__type">
+                    <nue-icon :name="getTypeIcon(record.type)" />
+                    <span>{{ getTypeLabel(record.type) }}</span>
+                </div>
+                <div class="pomodoro-record-card__task" :title="record.taskName || '-'">
+                    {{ record.taskName || '-' }}
+                </div>
+                <div class="pomodoro-record-card__duration">
+                    {{ formatDuration(record.duration) }}
+                </div>
+                <div class="pomodoro-record-card__time" :title="formatDate(record.startAt)">
+                    {{ formatTime(record.startAt) }}
+                </div>
+            </div>
+        </nue-div>
     </nue-div>
 </template>
 
@@ -132,14 +165,12 @@ const formatDate = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
     top: 0;
     z-index: 1;
     background-color: var(--nue-primary-color-0);
-    min-width: 760px;
 }
 
 .pomodoro-records-table__body {
     display: flex;
     flex-direction: column;
     /* 列宽固定，窄容器时触发横向滚动 */
-    min-width: 760px;
 }
 
 .pomodoro-records-table__row {
@@ -215,6 +246,104 @@ const formatDate = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
         &:hover {
             color: var(--nue-primary-color-900);
         }
+    }
+}
+
+/* 窄屏卡片列表：默认只在 ≤720px 出现，桌面由下方媒体块隐藏 */
+.pomodoro-record-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
+    width: 100%;
+}
+
+/* 单行卡片（R9）：min-height 钉死 3.5rem=56px，360px 首屏列表区可见 6–8 条 */
+.pomodoro-record-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--nue-gap-sm);
+    width: 100%;
+    min-height: 3.5rem;
+    box-sizing: border-box;
+    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+    background-color: var(--nue-primary-color-0);
+    border: 1px solid var(--nue-divider-color);
+    border-radius: var(--nue-radius-sm);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+
+    &:hover {
+        background-color: var(--nue-primary-color-100);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--nue-primary-color-500);
+        outline-offset: 2px;
+    }
+}
+
+.pomodoro-record-card__type {
+    display: flex;
+    align-items: center;
+    gap: var(--nue-gap-2xs);
+    flex: none;
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-600);
+}
+
+/* 长任务名末尾省略，不撑宽卡片（AC4） */
+.pomodoro-record-card__task {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-900);
+}
+
+.pomodoro-record-card__duration {
+    flex: none;
+    font-size: var(--nue-text-sm);
+    font-weight: 500;
+    color: var(--nue-primary-color-700);
+}
+
+.pomodoro-record-card__time {
+    flex: none;
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-600);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 760px 硬宽只保留在桌面分支（窄屏卡片化，禁止横向溢出） */
+@media (min-width: 721px) {
+    .pomodoro-records-table__header {
+        min-width: 760px;
+    }
+
+    .pomodoro-records-table__body {
+        min-width: 760px;
+    }
+
+    /* 桌面保持表格为唯一列表形态 */
+    .pomodoro-record-card-list {
+        display: none;
+    }
+}
+
+@media (max-width: 720px) {
+    /* 窄屏：表格让位给卡片列表 */
+    .pomodoro-records-table {
+        flex: none;
+        min-height: auto;
+    }
+
+    .pomodoro-records-table :deep(.nue-scroll-bar) {
+        display: none;
     }
 }
 </style>
