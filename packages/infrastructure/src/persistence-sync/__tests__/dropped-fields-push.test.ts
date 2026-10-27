@@ -148,7 +148,7 @@ describe('T471 droppedFields 消费', () => {
         expect(await syncTracker.countDirty()).toBe(0)
     })
 
-    it('② 仅白名单字段（projects.icon / sortId）⇒ 零告警、计数归 0、正常出队', async () => {
+    it('② 仅白名单字段（projects.icon）⇒ 零告警、计数归 0、正常出队', async () => {
         const [project, err] = await newLocalProjectRepository().create(
             new CreateProjectValueObject('白名单用例清单', 'more2', '')
         )
@@ -161,7 +161,7 @@ describe('T471 droppedFields 消费', () => {
                     id,
                     outcome: 'applied',
                     serverUpdatedAt: '2031-01-01T00:00:00.000Z',
-                    droppedFields: ['icon', 'sortId']
+                    droppedFields: ['icon']
                 }
             ])
         )

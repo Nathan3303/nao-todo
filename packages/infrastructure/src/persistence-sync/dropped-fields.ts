@@ -17,14 +17,14 @@
 
 /** 表 → 已知「客户端在发、服务端 sync DTO 不承载」的字段集（集中常量，单一事实源） */
 export const KNOWN_UNSUPPORTED_PUSH_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
-    /** `icon` / `sortId` 无 DTO 承载（`DEF-47`） */
-    projects: new Set(['icon', 'sortId']),
-    /** `icon` / `sortId` 无 DTO 承载（`DEF-47` 同族：`CreateTagReq` 亦无） */
-    tags: new Set(['icon', 'sortId']),
+    /** `icon` 无 DTO 承载（`DEF-47` / `DEF-107`：服务端无该列）；`sortId` 自服务端 `f494f9e`（`F-06`）起已承载 */
+    projects: new Set(['icon']),
+    /** `icon` 无 DTO 承载（`DEF-47` 同族：`CreateTagReq` 亦无）；`sortId` 自服务端 `f494f9e`（`F-06`）起已承载 */
+    tags: new Set(['icon']),
     /** `totalDuration` 无 DTO 承载（历史字段，服务端只存 `duration`） */
     pomodoros: new Set(['totalDuration']),
-    /** `attachments` / `isTopUp` 仅 `UpdateTaskCommentReq` 承载；`deletedAt` 无承载（删除走独立 `deletions`） */
-    taskComments: new Set(['attachments', 'isTopUp', 'deletedAt']),
+    /** `attachments` / `isTopUp` 自服务端 `7c8f483`（`F-06`）起已入 sync DTO；`deletedAt` 无承载（删除走独立 `deletions`） */
+    taskComments: new Set(['deletedAt']),
     /** `deletedAt` 无承载（删除走独立 `deletions`） */
     taskCheckItems: new Set(['deletedAt']),
     /** `deletedAt` 无承载（删除走独立 `deletions`） */
