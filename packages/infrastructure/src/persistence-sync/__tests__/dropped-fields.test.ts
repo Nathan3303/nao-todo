@@ -30,9 +30,19 @@ const SERVER_CARRIED: Record<string, ReadonlySet<string>> = {
         'updatedAt',
         'deletedAt',
         'archivedAt',
-        'deactivedAt'
+        'deactivedAt',
+        'sortId'
     ]),
-    tags: new Set(['id', 'name', 'description', 'color', 'createdAt', 'updatedAt', 'deletedAt']),
+    tags: new Set([
+        'id',
+        'name',
+        'description',
+        'color',
+        'createdAt',
+        'updatedAt',
+        'deletedAt',
+        'sortId'
+    ]),
     tasks: new Set([
         'id',
         'parentTaskId',
@@ -66,7 +76,15 @@ const SERVER_CARRIED: Record<string, ReadonlySet<string>> = {
         'isDone',
         'sortId'
     ]),
-    taskComments: new Set(['id', 'taskId', 'content', 'createdAt', 'updatedAt']),
+    taskComments: new Set([
+        'id',
+        'taskId',
+        'content',
+        'attachments',
+        'isTopUp',
+        'createdAt',
+        'updatedAt'
+    ]),
     pomodoros: new Set([
         'id',
         'type',
@@ -108,9 +126,9 @@ describe('T471 挑拣助手', () => {
     it('非白名单字段被挑出；去重 + 字典序', () => {
         expect(pickUnexpectedDroppedFields(['someNewField'], 'tasks')).toEqual(['someNewField'])
         expect(pickUnexpectedDroppedFields(['b', 'a', 'b'], 'tasks')).toEqual(['a', 'b'])
-        // projects 的 icon/sortId 属白名单 ⇒ 只剩 someNewField
+        // projects 的 icon 属白名单 ⇒ 只剩真·漂移字段（`sortId` 自服务端 `f494f9e` 起已承载，不再白名单）
         expect(pickUnexpectedDroppedFields(['icon', 'someNewField', 'sortId'], 'projects')).toEqual(
-            ['someNewField']
+            ['someNewField', 'sortId']
         )
     })
 
@@ -124,6 +142,7 @@ describe('T471 挑拣助手', () => {
 
     it('白名单命中判定（含未知表 ⇒ 非已知）', () => {
         expect(isKnownUnsupportedPushField('projects', 'icon')).toBe(true)
+        expect(isKnownUnsupportedPushField('projects', 'sortId')).toBe(false)
         expect(isKnownUnsupportedPushField('taskCheckItems', 'deletedAt')).toBe(true)
         expect(isKnownUnsupportedPushField('projects', 'name')).toBe(false)
         expect(isKnownUnsupportedPushField('unknown-table', 'icon')).toBe(false)
