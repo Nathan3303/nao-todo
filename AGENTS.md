@@ -105,7 +105,8 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 ## nao 舰队接入（2026-09-21）
 
 > 只写「在哪里」；角色级/团队级内容不复制到此处，留在 `$NAO_SKILLS/.agents/`。
-> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**。
+> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**（当前 **0.19.2**）。
+> **运行前提（0.19.0 起，破坏性）**：`ensure` / `status` / `close` **只接受 tmux 会话内**且 **`pi ≥ 1.4.0`**（非 tmux ⇒ `exit 3` + 一行提示 `tmux new -s nao`，不建 session/pane）；旧的终端窗口 / `--background` / screen 多宿主阶梯已删除（ADR `2026-10-27-strict-tmux-pi`）。旧版用 `--background` / screen 拉起的会话 `status` 看不到、`close` 收不回 ⇒ 先 `screen -ls` 手工清一次。
 
 ### 角色与流程（指针）
 
@@ -114,6 +115,8 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - 舰队拉起与自检（**经项目内转发入口 / shim** —— 0.12.0 起 `.agents/scripts/nao-fleet.sh` 是 shim，自动定位机制包内真身）：`bash .agents/scripts/nao-fleet.sh check | status | ensure <role>`；`status` 在本机**不可靠**（pi 进程 argv 被清空，`pgrep --name` 恒失配）→ 在线判定以 `intercom list` 为准
 - **tmux 布局开关（舰队 v0.9.0+，`ensure` 用；多会话不再被挤成多列）**：`NAO_TMUX_LAYOUT=main-row2|main-col|grid`（默认 `main-row2`）· `NAO_TMUX_MIN_PANE_WIDTH=<10..80>`（最小非主 pane 列宽，默认 30；低于则自动回退）· `NAO_TMUX_MAIN_WIDTH=<10..90>`（主 pane 宽度百分比，默认 35）。**窄窗口下自动降级（不中断）** ⇒ 用 `NAO_TMUX_LAYOUT=main-col` 可让后续会话在右列**纵向堆叠**（原「挤成 4 列」问题的解）
 - 运行时任务状态（PM 维护）：`docs/tasks-state.md`；需求与决策留痕：`docs/prds/`、`docs/adr/`；**缺陷池（单一登记源，PM 维护）：`docs/reports/defect-pool.md`**
+- **任务完成协议（0.18.6 起）**：`$NAO_SKILLS/.agents/skills/task-completion.md` —— DoD 四类 / 维护型补充判据（**`exit 0` ≠ 完成**：`npm audit` 与 `install-scripts` 须各自决策）/ 遗留项**三出口**（关闭 · 接受含到期日 · 转办；零遗留显式写「无」）/ 分级复盘；回执新增 **`遗留：`** 字段（模板 `$NAO_SKILLS/.agents/checklists/comm-templates.md`）
+- **角色 agent 运行时注册（0.18.5 起）**：包内扩展 `$NAO_SKILLS/.agents/extensions/nao-role-agents.mjs` 在 `session_start` 把 6 个角色卡注册为 pi-subagents agent（`nao-<role-id>`，与舰队会话**同卡同锚**；逃生阀 `NAO_ROLE_AGENTS=off`）⇒ 会话内子代理可直接 `agent: nao-qa` 等；**需会话重启后生效**
 
 ### 机制衔接
 
