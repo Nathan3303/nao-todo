@@ -18,6 +18,19 @@
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
 
+## [v1.14.0] - 2026-10-29
+
+番茄轮次语义批次：**`DEF-112` 修复（静止态圆点显示真实已完成轮次）+ 新增「重新开始本周期」**（`T580`/`T581` · Issue #279 · PR #280 · PRD `docs/prds/2026-10-29-pomodoro-rounds-semantics.md`）：
+
+- **`DEF-112`**（P2，用户实测发现）：`resolveRoundIndicator()` 的 `idle` 分支无条件返回 `filled: 0`，而引擎 `resetToIdle()` 有意不清零 `completedRounds` ⇒ 用户第 3 轮「结束专注」后看到**四个空圈**（像被清零）、再点开始又回到 **第 4/4 轮**。根因 = **上一批 PM 的「验收补正 D11」口径判错**（非实现问题），已在本批 PRD 与缺陷池写明。修复：`filled = completed >= total ? 0 : completed` + `idle` 文案分两档（`pomodoro.rounds.idle` / `.idleProgress`）；`longBreak` 仍 0 实心 +「新周期」。
+- **业界形态对齐**：把「中止本次」（`结束专注` / `跳过`，不计数）与「清空整组」（新增独立入口 + 二次确认）分离；依据 = 方法论原文（番茄不可分割 / 被打断则重来 / 4 个番茄后长休）。**不改已发布的 `v1.13.4` 三条行为变更**。
+- **新增 `resetCycle()`**：仅一行 `completedRounds.value = 0`（不动阶段 / 任务与模板 / 笔记 / 记录）。入口 `canResetCycle = phase === 'idle' && completedRounds > 0`，`v-if` 不渲染（非 disabled）；`NueConfirm` 文案写明「今天的专注记录不受影响」；取消 / Esc 零副作用。
+- **无障碍**：`role="img"` 只包「圆点 + 文案」，入口为兄弟节点原生 `button`（`aria-label` = `title` = 可见文案）。
+- **不跳动**：`min-height: var(--nue-box-size-xs)` 与 `.nue-button--small` 的 `height` 同 token ⇒ 960/720 × M∈{4,10} 四组合行高 28px、`timerTop`/`noteTop` 一致（RD 实测）。
+- **`confirm.css`**：新增 `.nue-confirm--destructive` → 库自带 error 语义色（仅换引用、不自造色值；类名由库 `theme → ${namespace}--${token}` 动态生成，已核非死代码）。
+- **门禁**：`vp check` 0 error（1707 / 1401 文件）· 全仓 **294 文件 / 2580 例 / 0 红** · 五守卫 exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 0。
+- **Tag `v1.14.0`** · root / `apps/web` / `apps/desktop` `1.13.4 → 1.14.0`（MINOR，含新能力）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.14.0.md`。
+
 ## [v1.13.4] - 2026-10-29
 
 番茄钟批次：**通知接入提醒设置 / 页签标题与托盘 tooltip 显示进度 / 轮次指示 / 长休时点修复**（`T573`–`T576` · Issue #274 · PR #275 · PRD `docs/prds/2026-10-29-pomodoro-notify-title-round.md` · ADR `docs/adr/2026-10-29-tray-tooltip-channel.md`）：
