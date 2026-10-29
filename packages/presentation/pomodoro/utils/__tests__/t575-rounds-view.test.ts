@@ -14,8 +14,9 @@ import { loadImpl } from './impl-seam'
  *       → `{ total, filled, label, longBreakUpcoming }`
  *   - `total` = 圆点总数 = M；`filled` = 实心圆点数；`label` = 文字标签（三态兜底，**不得仅靠颜色**）
  *
- * ⚠️ PRD 内部不一致（已报 PM）：§五 规定「M = 1 时圆点只显示 1 个实心」，而 AC9 的口径是
- *    「实心数 = 已完成数」（M=4 完成 1 次 ⇒ ●○○○）。本用例按 §五 **字面**固化 M=1 ⇒ filled=1。
+ * 裁定②（PM 2026-10-29 · D11）：**以 AC9 为准 —— 实心数恒等于「已完成数」，不分阶段、M=1 无特例**
+ *    （原 §五「M=1 显示 1 个实心」已作废并回填 PRD）。故 M=1：idle/focus ⇒ ○（0 已完成）、
+ *    break（该轮已完成）⇒ ●；文字分别为「共 1 轮一轮长休」/「第 1/1 轮 · 本轮结束后长休」/「休息中 · 已完成 1/1」。
  * @see docs/prds/2026-10-29-pomodoro-notify-title-round.md（§五 轮次 · §七 AC9–AC12 · §九 D3）
  */
 
@@ -105,7 +106,21 @@ describe('T575 ③ AC9 主路径（M=4）', () => {
 })
 
 describe('T575 ③ AC10 边界（M=1 / M=10）', () => {
-    it('AC10 M=1 ⇒ 1 个实心 +「第 1/1 轮 · 本轮结束后长休」', async () => {
+    // 裁定②（PM 2026-10-29 · D11）：实心数**恒等于已完成数**，M=1 无特例（原 §五「M=1 显示 1 实心」作废）
+    it('AC10 M=1 处于 idle ⇒ ○ 且「共 1 轮一轮长休」', async () => {
+        const { resolveRoundIndicator } = await load('AC10')
+        const view = resolveRoundIndicator({
+            phase: 'idle',
+            completedRounds: 0,
+            sessionsUntilLongBreak: 1
+        })
+        expect(view.total).toBe(1)
+        expect(view.filled).toBe(0)
+        expect(view.label).toBe('共 1 轮一轮长休')
+        expect(view.longBreakUpcoming).toBe(false)
+    })
+
+    it('AC10 M=1 专注进行中（本轮即最后一轮）⇒ ○（0 已完成）+「第 1/1 轮 · 本轮结束后长休」', async () => {
         const { resolveRoundIndicator } = await load('AC10')
         const view = resolveRoundIndicator({
             phase: 'focus',
@@ -113,9 +128,22 @@ describe('T575 ③ AC10 边界（M=1 / M=10）', () => {
             sessionsUntilLongBreak: 1
         })
         expect(view.total).toBe(1)
-        expect(view.filled).toBe(1)
+        expect(view.filled).toBe(0)
         expect(view.label).toBe('第 1/1 轮 · 本轮结束后长休')
         expect(view.longBreakUpcoming).toBe(true)
+    })
+
+    it('AC10 M=1 休息中（该轮已完成）⇒ ● 且「休息中 · 已完成 1/1」', async () => {
+        const { resolveRoundIndicator } = await load('AC10')
+        const view = resolveRoundIndicator({
+            phase: 'break',
+            completedRounds: 1,
+            sessionsUntilLongBreak: 1
+        })
+        expect(view.total).toBe(1)
+        expect(view.filled).toBe(1)
+        expect(view.label).toBe('休息中 · 已完成 1/1')
+        expect(view.longBreakUpcoming).toBe(false)
     })
 
     it('AC10 M=10 ⇒ 圆点总数 10 且不越界（filled ≤ total）', async () => {

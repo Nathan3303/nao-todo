@@ -84,16 +84,17 @@ export const resolveRoundIndicator: (input: {
 }) => { total: number; filled: number; label: string; longBreakUpcoming: boolean }
 ```
 
-| phase       | filled                             | label                                                             |
-| ----------- | ---------------------------------- | ----------------------------------------------------------------- |
-| `idle`      | 0                                  | `共 M 轮一轮长休`                                                 |
-| `focus`     | 已完成数（**M=1 时固定 1**，见下） | `第 N/M 轮`，`N = 已完成 + 1`；`N === M` 追加 ` · 本轮结束后长休` |
-| `break`     | 已完成数                           | `休息中 · 已完成 N/M`                                             |
-| `longBreak` | 0                                  | `长休息 · 新周期`                                                 |
+| phase       | filled                           | label                                                             |
+| ----------- | -------------------------------- | ----------------------------------------------------------------- |
+| `idle`      | 0                                | `共 M 轮一轮长休`                                                 |
+| `focus`     | 已完成数（**M=1 无特例**，见下） | `第 N/M 轮`，`N = 已完成 + 1`；`N === M` 追加 ` · 本轮结束后长休` |
+| `break`     | 已完成数                         | `休息中 · 已完成 N/M`                                             |
+| `longBreak` | 0                                | `长休息 · 新周期`                                                 |
 
 - `total = M`（圆点总数）；`filled ≤ total`（越界防守）。
-- ⚠️ **PRD 内部不一致（已报 PM）**：§五 规定「M = 1 时圆点只显示 1 个实心」，与 AC9「实心数 = 已完成数」在
-  `M=1, completed=0` 时冲突；用例按 §五 **字面**固化 `filled=1`。
+- **裁定②（PM 2026-10-29 · D11，已回填 PRD §五/§九）**：**以 AC9 为准 —— 实心数恒等于已完成数，不分阶段、
+  M=1 无特例**（原 §五「M=1 显示 1 个实心」作废）。故 `M=1`：`idle`/`focus` ⇒ ○（0 已完成）、`break`（该轮已完成）⇒ ●；
+  文字分别为 `共 1 轮一轮长休` / `第 1/1 轮 · 本轮结束后长休` / `休息中 · 已完成 1/1`。
 
 ## §4 托盘 tooltip（AC7 / AC8 · 依据 T574 arch 评审）
 
@@ -136,7 +137,7 @@ export const resolveRoundIndicator: (input: {
 | `packages/presentation/pomodoro/utils/__tests__/t575-notify-gating.test.ts`       | AC1–AC4（判定层 + 永不抛 + 判定顺序）                                                | 14   |
 | `packages/presentation/pomodoro/stores/__tests__/t575-notify-integration.test.ts` | AC1–AC4（真实 store + localStorage 设置 + 4 个通知点 + 跨午夜）                      | 10   |
 | `packages/presentation/pomodoro/utils/__tests__/t575-title.test.ts`               | AC5 / AC6（文案格式 · 秒级节流 · 暂停冻结 · 阶段切换 · 复位 NaoTodo · 跨页继续更新） | 18   |
-| `packages/presentation/pomodoro/utils/__tests__/t575-rounds-view.test.ts`         | AC9–AC12（视图模型：M=1/4/10 · 文案 · 三态可辨 · 纯函数）                            | 12   |
+| `packages/presentation/pomodoro/utils/__tests__/t575-rounds-view.test.ts`         | AC9–AC12（视图模型：M=1/4/10 · 文案 · 三态可辨 · 纯函数）                            | 14   |
 | `packages/presentation/pomodoro/stores/__tests__/t575-rounds-engine.test.ts`      | AC9 / AC10 / AC11（`DEF-111` · 计数点 · 跳过/结束不计数 · 周期归零）                 | 9    |
 | `apps/desktop/src/main/__tests__/t575-tray-tooltip.test.ts`                       | AC7 / AC8（单向通道常量 · 载荷校验 · 不受信忽略 · tray 四态 no-op · 基线 D9）        | 14   |
 | `apps/desktop/src/renderer/src/hooks/__tests__/t575-use-tray-tooltip.test.ts`     | AC7 / AC8（按值去重 · ≤5/5s（跨切换 +1）· 暂停冻结 · 复位 · 三支降级静默）           | 10   |
@@ -154,5 +155,5 @@ export const resolveRoundIndicator: (input: {
 - 断言 `expected undefined to be …`（`completedRounds`）⇒ 计数未暴露（同上）。
 - 断言 `expected 'break' to be 'longBreak'` ⇒ **`DEF-111` 现状**，修复后转绿。
 - `sentOptions(0)` 为 `undefined` ⇒ 当前通知未传 `silent`（AC1 的 `silent === false` 未成立）。
-- 本批 4 个纯函数模块已用参考实现**验证过可满足性**（52 例全绿；渲染层 hook 10 例全绿），
+- 本批纯函数模块已用参考实现**验证过可满足性**（`notify` 14 + `title` 18 + `rounds` 14 = 46 例全绿；渲染层 hook 10 例全绿），
   参考实现未入库 —— 仅证明「断言本身可满足」，不构成实现建议。
