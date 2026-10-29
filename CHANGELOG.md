@@ -18,6 +18,18 @@
 
 **nao 舰队机制迁移到 `nao-skill@0.12.0`（pi 原生包形态）**（`T506` · Issue #188 · PRD `docs/prds/2026-10-08-nao-fleet-0.12.0-migration.md`）：机制不再铺进项目 —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `.agents/`；项目内 `.agents/` 仅留转发入口 shim（`.agents/scripts/nao-fleet.sh`）+ 项目自有 skill `.agents/skills/nue-ui/`，**pin 版本记于 `.pi/settings.json`（入库，唯一版本权威）**。旧完整性判据（项目内 `.agents/**` 与上游逐字节 sha 一致）已失效，改为「以 pin 的包版本为准」。**无版本号变化**（不改运行行为 / 源码 / 测试 / 构建配置）。迁移前的机制副本备份在本地 `.agents/.nao-obsolete/`（不入库，回滚靠 git 历史 + 本地备份）。
 
+## [v1.13.4] - 2026-10-29
+
+番茄钟批次：**通知接入提醒设置 / 页签标题与托盘 tooltip 显示进度 / 轮次指示 / 长休时点修复**（`T573`–`T576` · Issue #274 · PR #275 · PRD `docs/prds/2026-10-29-pomodoro-notify-title-round.md` · ADR `docs/adr/2026-10-29-tray-tooltip-channel.md`）：
+
+- **`#1` 通知接提醒设置**（AC1–AC4）：4 个通知点（专注完成 / 休息即将结束 / 休息结束 / 结束专注）统一走判定 ①②③④ —— ① 读设置失败 fail-open ② **免打扰命中 ⇒ 应用内 `NueMessage` 提示后结束**（**优先于通知开关**，该开关只管辖系统通知）③ `notify === false` ⇒ 全静默 ④ 其余发通知 `silent = !sound`。派发层双层 try/catch，永不抛。
+- **`#2` 页签标题 + 托盘 tooltip**（AC5–AC8）：`formatPomodoroTitle` **单函数单源**（`24:59 · 专注` / `04:30 · 休息` / `⏸ 24:59 · 专注`）；按值去重（秒级 ⇒ ≤1 次/秒，**不新增定时器**）；复位值恒为 `NaoTodo`（非空）。桌面新增**单向通道** `ipcRenderer.send` / `ipcMain.on` + 独立常量 `DESKTOP_ONEWAY_CHANNELS`（未并入 `DESKTOP_IPC_CHANNELS`，其「4 个 invoke 通道」断言未动）；载荷 1..64、不受信/非串/超长回基线、六支降级全静默且无 `console.error`；`AppRoot` 走**相对路径**（避开 `@/hooks` 桶在测试环境解析到 webapp 的坑）。
+- **`#3` 轮次指示**（AC9–AC12）：圆点组 + 文字（`第 N/M 轮` / `本轮结束后长休` / `休息中 · 已完成 N/M` / `长休息 · 新周期`），三态 = 实心/空心/文字（不只靠颜色），`role="img"` + `aria-label`；仅用既有 `nue-*` token，无新增 token/组件；新增文案中英 13 键齐备。
+- **`DEF-111` 修复**：长休时点 off-by-one —— 计数点原在 break 完成、判定在 focus 完成 ⇒ `M=4` 实际第 5 轮才长休。现计数点迁至「**专注自然完成**」，跳过/结束/取消/跳过休息均不计数，长休后周期归零 ⇒ 第 4 轮结束即长休。**行为变更**：跳过与结束不再推进轮次。
+- **观察项（登记未改）**：`idle` / `longBreak` 圆点实心虚心固定为 0 ⇒ idle 不显示本周期已完成轮数（进入 focus 恢复）；如需改变须同步用例契约，另批评估。
+- **门禁**：`vp check` 0 error（1703 文件格式 / 1400 文件 0 lint·型错）· 全仓 **293 文件 / 2562 例 / 0 红** · 五守卫 exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 0。CI `check` 45s / `test` 2m54s pass。
+- **Tag `v1.13.4`** · root / `apps/web` / `apps/desktop` `1.13.3 → 1.13.4`；`packages/*` 有源码改动（presentation / shared），按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.13.4.md`。
+
 ## [v1.13.3] - 2026-10-27
 
 安全与契约批次：**客户端登出契约 / 凭据不入本地日志 / 检入冲突终态 / 检入在途窗口**（`T558` · Issue #260 · PR #265）：
