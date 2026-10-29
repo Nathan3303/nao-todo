@@ -762,6 +762,19 @@ const enUS: LocaleMessages = {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': 'Failed to save focus record: {error}',
+    'pomodoro.title.focus': 'Focus',
+    'pomodoro.title.break': 'Break',
+    'pomodoro.title.longBreak': 'Long break',
+    'pomodoro.title.countUp': 'Stopwatch',
+    'pomodoro.rounds.idle': '{count} rounds per long break',
+    'pomodoro.rounds.current': 'Round {current}/{total}',
+    'pomodoro.rounds.upcoming': 'long break after this round',
+    'pomodoro.rounds.resting': 'Resting · {completed}/{total} done',
+    'pomodoro.rounds.newCycle': 'Long break · new cycle',
+    'pomodoro.notify.focusDone': 'Focus complete · {duration}, time for a break',
+    'pomodoro.notify.focusEnded': 'Focus complete · {duration}',
+    'pomodoro.notify.breakEndingSoon': 'Break ending soon · {time} left',
+    'pomodoro.notify.breakDone': 'Break over · ready for the next round',
 
     // Calendar
     'calendar.today': 'Today',

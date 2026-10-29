@@ -1,6 +1,9 @@
 import type { GoAsync } from '@nao-todo/shared'
 import { useTimerDriver } from '@nao-todo/shared/hooks'
+import { readReminderSettings, type ReminderSettings } from '@nao-todo/shared/reminder'
+import { t } from '@nao-todo/shared/locales'
 import { nanoid } from 'nanoid'
+import { NueMessage } from 'nue-ui'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { TimerPhase, TimerStatus } from '../components/timer'
@@ -12,6 +15,7 @@ import type {
 import {
     buildPomodoroRecord,
     clearTimerSnapshot,
+    createPomodoroNotifier,
     formatMinutes,
     loadTimerSnapshot,
     persistPomodoroRecord,
@@ -44,6 +48,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const status = ref<TimerStatus>('paused')
     const remainingSeconds = ref(sessionStore.focusDuration)
     const totalSeconds = ref(sessionStore.focusDuration)
+    /** 本周期已完成的专注轮次（D11：指示器实心数 = 本值；T575 契约名，不得改名） */
+    const completedRounds = ref(0)
 
     const isIdle = computed(() => phase.value === 'idle')
     const isRunning = computed(() => status.value === 'running')
@@ -62,8 +68,24 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     let targetEndTime = 0
     let pausedRemainingMs = 0
     let breakWarningSent = false
-    let completedRoundCount = 0
     let autoStartCount = 0
+
+    /** 提醒设置存储面（身份级单键 `REMINDER_SETTINGS`，与任务提醒同源） */
+    const getReminderStorage = (): Storage | undefined =>
+        typeof localStorage === 'undefined' ? undefined : localStorage
+
+    /**
+     * 番茄通知派发（T576 #1）
+     * @description 4 个通知点统一走判定层：免打扰 ⇒ 应用内提示 / 通知关闭 ⇒ 静默 /
+     *              否则系统通知 `silent = !sound`；读设置失败 ⇒ fail-open。永不抛。
+     */
+    const notifyPomodoro = createPomodoroNotifier({
+        readSettings: (): ReminderSettings => readReminderSettings(getReminderStorage()),
+        send: (title, body, options) => sendNotification(title, body, options),
+        notifyInApp: (text) => {
+            NueMessage.info(text)
+        }
+    })
 
     // 计时快照持久化定时器（每 5s 保存一次，setInterval 独立于 driver 的 250ms）
     let persistIntervalId: ReturnType<typeof setInterval> | null = null
@@ -82,7 +104,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             targetEndTime,
             pausedRemainingMs,
             breakWarningSent,
-            completedRoundCount,
+            completedRoundCount: completedRounds.value,
             autoStartCount,
             recordId: sessionStore.currentRecordId,
             recordStartAt: sessionStore.currentRecordStartAt,
@@ -131,7 +153,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const calcElapsed = (): number => totalSeconds.value - calcRemaining()
 
     /** 判断当前是否该进入长休息 */
-    const isLongBreakDue = (): boolean => completedRoundCount >= sessionStore.sessionsUntilLongBreak
+    const isLongBreakDue = (): boolean =>
+        completedRounds.value >= sessionStore.sessionsUntilLongBreak
 
     /**
      * 生成新的专注会话 ID
@@ -198,10 +221,11 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
                 const secs = remainingSeconds.value % 60
                 const timeStr =
                     mins > 0 ? `${mins} 分钟${secs > 0 ? ` ${secs} 秒` : ''}` : `${secs} 秒`
-                sendNotification(
-                    '休息即将结束',
-                    `剩余 ${timeStr} 的休息时间，准备好进行下一轮专注了吗？`
-                )
+                notifyPomodoro({
+                    title: '休息即将结束',
+                    body: `剩余 ${timeStr} 的休息时间，准备好进行下一轮专注了吗？`,
+                    inAppText: t('pomodoro.notify.breakEndingSoon', { time: timeStr })
+                })
             }
         }
 
@@ -218,7 +242,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const resetToIdle = () => {
         phase.value = 'idle'
         status.value = 'paused'
-        completedRoundCount = 0
+        // 注意：`completedRounds` 不在此归零 —— 计数点 = 专注自然完成（DEF-111），
+        // 休息结束 / 取消 / 结束专注都不得抹掉本周期已完成的轮次
         autoStartCount = 0
         const fd = sessionStore.focusDuration
         totalSeconds.value = fd
@@ -233,7 +258,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     /** 当前阶段完成后进入休息阶段（自动判断短休息/长休息） */
     const enterBreakPhase = () => {
         const long = isLongBreakDue()
-        if (long) completedRoundCount = 0
+        if (long) completedRounds.value = 0
         const nextPhase: TimerPhase = long ? 'longBreak' : 'break'
         const nextDuration = long ? sessionStore.longBreakDuration : sessionStore.breakDuration
         phase.value = nextPhase
@@ -292,27 +317,38 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
         if (phase.value === 'focus') {
             const total = totalSeconds.value
+            // DEF-111：计数点 = **专注自然完成**（跳过 / 结束 / 取消都不计数）
+            completedRounds.value += 1
             const record = buildRecord(total)
             // 异步持久化，不阻塞阶段流转
             if (createRecordFn) {
                 persistPomodoroRecord(createRecordFn, record, '[Pomodoro] Failed to create record:')
             }
-            sendNotification('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
+            notifyPomodoro({
+                title: '专注完成',
+                body: `已完成 ${formatMinutes(total)} 的专注，现在开始休息`,
+                inAppText: t('pomodoro.notify.focusDone', { duration: formatMinutes(total) })
+            })
 
             if (!sessionStore.autoRest) {
+                // 不自动休息 ⇒ 周期内没有长休通道；满周期即开新周期，避免出现「第 M+1 轮」
+                if (completedRounds.value >= sessionStore.sessionsUntilLongBreak) {
+                    completedRounds.value = 0
+                }
                 resetToIdle()
             } else {
                 enterBreakPhase()
             }
         } else if (phase.value === 'break' || phase.value === 'longBreak') {
-            if (phase.value === 'break') {
-                completedRoundCount++
-            } else {
-                completedRoundCount = 0
-            }
+            // 休息（含长休）完成不计数；长休结束即新周期
+            if (phase.value === 'longBreak') completedRounds.value = 0
             // 如果没有自动开始下一轮专注，不提示专注开始
             if (!transitionToNextFocusOrIdle()) return
-            sendNotification('休息结束', '现在开始下一轮的专注计时')
+            notifyPomodoro({
+                title: '休息结束',
+                body: '现在开始下一轮的专注计时',
+                inAppText: t('pomodoro.notify.breakDone')
+            })
         }
     }
 
@@ -354,7 +390,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         // 恢复引擎变量
         totalSeconds.value = snapshot.totalSeconds
         breakWarningSent = snapshot.breakWarningSent
-        completedRoundCount = snapshot.completedRoundCount
+        completedRounds.value = snapshot.completedRoundCount
         autoStartCount = snapshot.autoStartCount
         phase.value = snapshot.phase
 
@@ -453,7 +489,11 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
                     '[Pomodoro] Failed to create record on end:'
                 )
             }
-            sendNotification('专注完成', `已完成 ${formatMinutes(elapsed)} 的专注`)
+            notifyPomodoro({
+                title: '专注完成',
+                body: `已完成 ${formatMinutes(elapsed)} 的专注`,
+                inAppText: t('pomodoro.notify.focusEnded', { duration: formatMinutes(elapsed) })
+            })
         }
         sessionStore.clearCurrentSession()
         resetToIdle()
@@ -481,12 +521,13 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
                 )
             }
             generateNewSessionId()
+            // DEF-111：跳过专注不计数（也不推进轮次）
             enterBreakPhase()
         } else if (phase.value === 'break') {
-            completedRoundCount++
+            // 跳过休息不计数（原实现此处 +1，是 off-by-one 的另一半）
             transitionToNextFocusOrIdle()
         } else if (phase.value === 'longBreak') {
-            completedRoundCount = 0
+            completedRounds.value = 0
             transitionToNextFocusOrIdle()
         }
     }
@@ -560,6 +601,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         totalSeconds,
         isIdle,
         isRunning,
+        completedRounds,
 
         // Actions
         start,

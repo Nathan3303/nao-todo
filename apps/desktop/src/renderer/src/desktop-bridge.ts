@@ -28,6 +28,12 @@ export interface DesktopBridge {
     setAutostart(enabled: boolean): Promise<{ autostart: DesktopAutostartStatus }>
     showMainWindow(): Promise<void>
     quit(): Promise<void>
+    /**
+     * 写入托盘 tooltip（单向，无返回值）
+     * @description **可选**：容旧 preload / 测试桩（无此方法 ⇒ 调用方静默 no-op）；
+     *              载荷为已拼好的文案（1..64 字符），主进程零拼装。
+     */
+    setTrayTooltip?(text: string): void
     /** 系统从休眠恢复（返回取消订阅） */
     onPowerResume(callback: () => void): () => void
 }

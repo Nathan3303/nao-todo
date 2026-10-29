@@ -716,6 +716,19 @@ export interface LocaleMessages {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': string
+    'pomodoro.title.focus': string
+    'pomodoro.title.break': string
+    'pomodoro.title.longBreak': string
+    'pomodoro.title.countUp': string
+    'pomodoro.rounds.idle': string
+    'pomodoro.rounds.current': string
+    'pomodoro.rounds.upcoming': string
+    'pomodoro.rounds.resting': string
+    'pomodoro.rounds.newCycle': string
+    'pomodoro.notify.focusDone': string
+    'pomodoro.notify.focusEnded': string
+    'pomodoro.notify.breakEndingSoon': string
+    'pomodoro.notify.breakDone': string
 
     // Calendar
     'calendar.today': string

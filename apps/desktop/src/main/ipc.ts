@@ -12,6 +12,7 @@
  * @see docs/prds/2026-10-25-desktop-tray-autostart.md（AC2 / AC13 / AC9②）
  * @see docs/reports/T543-arch-review.md（§二 2.1 ipc.ts / §六 安全语义）
  */
+import { DEFAULT_TRAY_TOOLTIP } from './tray'
 
 /** 通道名（渲染层经 preload 的窄封装调用，不直接暴露 ipcRenderer） */
 export const DESKTOP_IPC_CHANNELS = {
@@ -19,6 +20,14 @@ export const DESKTOP_IPC_CHANNELS = {
     setAutostart: 'setAutostart',
     showMainWindow: 'showMainWindow',
     quit: 'quit'
+} as const
+
+/** 主进程单向推送通道（渲染层 → 主进程）
+ * @description **独立常量**：`on` 无回程通道、无拒绝面，语义与 4 个 `handle` 通道不同，
+ *              ⛔ 不得并入 `DESKTOP_IPC_CHANNELS`（既有 `ipc.test.ts` 断言“4 个 invoke 通道”）。
+ */
+export const DESKTOP_ONEWAY_CHANNELS = {
+    setTrayTooltip: 'setTrayTooltip'
 } as const
 
 /** 主进程向渲染层单向推送（非 `handle` 通道，不属可调用面）：系统从休眠恢复 */
@@ -76,5 +85,37 @@ export const registerDesktopIpcHandlers = (deps: RegisterDesktopIpcDeps): void =
     deps.ipcMain.handle(DESKTOP_IPC_CHANNELS.quit, (event) => {
         assertTrusted(event, deps)
         deps.actions.quit()
+    })
+}
+
+/** tooltip 载荷长度上限（ADR §决策 1 / T574 §二：1..64 字符） */
+const TRAY_TOOLTIP_MAX_LENGTH = 64
+
+export interface RegisterDesktopTrayTooltipDeps {
+    ipcMain: { on(channel: string, listener: IpcListener): void }
+    isTrustedUrl(url: string): boolean
+    /** 写入托盘 tooltip（托盘侧自行降级为 no-op） */
+    setTrayTooltip(text: string): void
+}
+
+/**
+ * 注册托盘 tooltip 单向通道（T576 #2 · AC7 / AC8）
+ * @description 渲染层经 `ipcRenderer.send` 发来**已拼好的单个字符串**（1..64 字符）；
+ *              主进程零拼装、零 i18n。不受信来源 / 来源不可判定 ⇒ 静默忽略；
+ *              非字符串 / 空串 / 超长 ⇒ 回基线；整体 try/catch（单向通道永不抛）。
+ */
+export const registerDesktopTrayTooltipHandler = (deps: RegisterDesktopTrayTooltipDeps): void => {
+    deps.ipcMain.on(DESKTOP_ONEWAY_CHANNELS.setTrayTooltip, (event, text) => {
+        try {
+            const url = event?.senderFrame?.url
+            if (!url || !deps.isTrustedUrl(url)) return
+            const valid =
+                typeof text === 'string' &&
+                text.length >= 1 &&
+                text.length <= TRAY_TOOLTIP_MAX_LENGTH
+            deps.setTrayTooltip(valid ? (text as string) : DEFAULT_TRAY_TOOLTIP)
+        } catch {
+            // 单向通道无回程面：任何异常只允许落在主进程，且不得影响其它能力
+        }
     })
 }

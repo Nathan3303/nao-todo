@@ -1,2 +1,5 @@
 export * from './pomodoro'
 export * from './pomodoro-persistence'
+export * from './pomodoro-notify'
+export * from './pomodoro-title'
+export * from './pomodoro-rounds'
