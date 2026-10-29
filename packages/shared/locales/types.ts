@@ -721,10 +721,16 @@ export interface LocaleMessages {
     'pomodoro.title.longBreak': string
     'pomodoro.title.countUp': string
     'pomodoro.rounds.idle': string
+    'pomodoro.rounds.idleProgress': string
     'pomodoro.rounds.current': string
     'pomodoro.rounds.upcoming': string
     'pomodoro.rounds.resting': string
     'pomodoro.rounds.newCycle': string
+    'pomodoro.rounds.resetEntry': string
+    'pomodoro.rounds.resetConfirmTitle': string
+    'pomodoro.rounds.resetConfirmContent': string
+    'pomodoro.rounds.resetConfirm': string
+    'pomodoro.rounds.resetSuccess': string
     'pomodoro.notify.focusDone': string
     'pomodoro.notify.focusEnded': string
     'pomodoro.notify.breakEndingSoon': string

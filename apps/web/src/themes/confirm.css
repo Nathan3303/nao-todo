@@ -31,3 +31,16 @@
         }
     }
 }
+
+/* Destructive（T581）：`NueConfirm` 的确认按钮硬编码 `primary`、库无 destructive 变体 ⇒
+   在容器主题上映射到**库自带的 error 语义色**（只换引用、不自造色值；AA 对比度沿用库 error 按钮口径，
+   不违背 DEF-64 的「不自造 danger/warning 覆盖」结论） */
+.nue-confirm.nue-confirm--destructive {
+    > .nue-confirm__footer {
+        > .nue-button--primary {
+            --nue-button-color: var(--nue-error-color-0);
+            --nue-button-base-color: var(--nue-error-color-100);
+            --nue-button-border-color: transparent;
+        }
+    }
+}

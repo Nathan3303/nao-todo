@@ -12,6 +12,8 @@ import { usePomodoroSessionStore, usePomodoroTimerStore } from '../../../stores'
  * @description 真实组件挂载（不 stub nue-div / nue-text）：断言容器 `role="img"` + `aria-label`、
  *              圆点 `aria-hidden`、实心数 = 已完成数、M=10 时节点数 = 10。
  *              纯视图模型的文案口径已由 `t575-rounds-view.test.ts` 覆盖，本文件只补 DOM 契约。
+ *              **T581 接缝调整**：`role="img"` 收在「圆点 + 文案」容器内（入口是它的兄弟节点，
+ *              否则辅助技术会把可交互入口当表现性元素 —— PRD §七 AC9）⇒ 断言改定位 `[role="img"]`。
  */
 
 const FOCUS_S = 25 * 60
@@ -22,6 +24,9 @@ let timer: ReturnType<typeof usePomodoroTimerStore>
 let session: ReturnType<typeof usePomodoroSessionStore>
 
 const mountIndicator = () => mount(RoundsIndicator, { global: { components: nueComponents } })
+
+/** 可访问性容器：`role="img"` + `aria-label`（T581 起不再在组件根节点上） */
+const indicatorOf = (wrapper: ReturnType<typeof mountIndicator>) => wrapper.find('[role="img"]')
 
 const dotCount = (wrapper: ReturnType<typeof mountIndicator>) =>
     wrapper.findAll('.nue-div--rounds-dot').length
@@ -55,8 +60,8 @@ describe('T576 ③ 轮次指示器组件', () => {
     it('idle（M=4）⇒ 4 个空心圆点 + role=img / aria-label / 圆点 aria-hidden', () => {
         const wrapper = mountIndicator()
 
-        expect(wrapper.attributes('role')).toBe('img')
-        expect(wrapper.attributes('aria-label')).toBe('共 4 轮一轮长休')
+        expect(indicatorOf(wrapper).attributes('role')).toBe('img')
+        expect(indicatorOf(wrapper).attributes('aria-label')).toBe('共 4 轮一轮长休')
         expect(dotCount(wrapper)).toBe(4)
         expect(filledCount(wrapper)).toBe(0)
         expect(wrapper.text()).toContain('共 4 轮一轮长休')
@@ -75,7 +80,7 @@ describe('T576 ③ 轮次指示器组件', () => {
             expect(timer.phase).toBe('break')
             expect(dotCount(wrapper)).toBe(4)
             expect(filledCount(wrapper)).toBe(1)
-            expect(wrapper.attributes('aria-label')).toBe('休息中 · 已完成 1/4')
+            expect(indicatorOf(wrapper).attributes('aria-label')).toBe('休息中 · 已完成 1/4')
             wrapper.unmount()
         })
     })
@@ -85,7 +90,7 @@ describe('T576 ③ 轮次指示器组件', () => {
         const wrapper = mountIndicator()
 
         expect(dotCount(wrapper)).toBe(10)
-        expect(wrapper.attributes('aria-label')).toBe('共 10 轮一轮长休')
+        expect(indicatorOf(wrapper).attributes('aria-label')).toBe('共 10 轮一轮长休')
 
         wrapper.unmount()
     })
@@ -97,7 +102,7 @@ describe('T576 ③ 轮次指示器组件', () => {
         return wrapper.vm.$nextTick().then(() => {
             expect(dotCount(wrapper)).toBe(1)
             expect(filledCount(wrapper)).toBe(0)
-            expect(wrapper.attributes('aria-label')).toBe('第 1/1 轮 · 本轮结束后长休')
+            expect(indicatorOf(wrapper).attributes('aria-label')).toBe('第 1/1 轮 · 本轮结束后长休')
             wrapper.unmount()
         })
     })

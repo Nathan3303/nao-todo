@@ -565,6 +565,15 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     }
 
     /**
+     * 重新开始本周期（T581）
+     * @description **只归零本周期已完成轮次**：不动阶段 / 任务与模板选择 / 笔记 / 任何已保存记录。
+     *              入口侧须二次确认后调用（PRD §五「重新开始本周期」）。
+     */
+    const resetCycle = () => {
+        completedRounds.value = 0
+    }
+
+    /**
      * 同步配置
      * @description 设置对话框关闭后调用，确保 idle 态显示最新的默认专注时长
      */
@@ -611,6 +620,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         end,
         skip,
         adjustTime,
+        resetCycle,
         updateConfig,
         setCreateRecordFn,
         destroy
