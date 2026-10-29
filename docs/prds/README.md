@@ -65,6 +65,7 @@
 | 2026-10-25 | 桌面端托盘常驻 + 开机自启 + 会话续期（`T542`：关窗口收进托盘继续提醒 · 三平台统一关窗隐藏 · 开机自启默认开可关 · 客户端 12h 续期修 `DEF-15` · 服务端过期会话清理 `DEF-14`） | Issue `#254`；PRD `docs/prds/2026-10-25-desktop-tray-autostart.md`（AC1–AC14）；ADR `docs/adr/2026-10-25-desktop-tray-autostart.md`；评审 `docs/reports/T543-arch-review.md` | ✅ 已发布 `v1.13.0`（2026-10-26）· 用户手工与视觉验收通过 |
 | 2026-10-26 | 番茄「专注记录」页手机适配（`T548`：窄屏改**卡片列表**（同数据源、同筛选/分页）；表格分支零改动 · 首屏统计区 ≤ 视口 1/3 · 分页命中区 ≥40px · 详情抽屉 ≤480px 全宽 + `✕`/`Esc` 双关闭） | Issue `#258`；PRD `docs/prds/2026-10-26-pomodoro-records-mobile.md`；代码 PR `#259`（`aedca274`） | `v1.13.2` |
 | 2026-10-29 | 番茄钟三件套（`T573`–`T576`：通知接提醒设置（免打扰⇒应用内提示，② 早于 ③）· 页签标题 + 桌面托盘 tooltip（单源 `formatPomodoroTitle`、单向通道、复位 `NaoTodo`）· 轮次指示（圆点 + 文字）· **`DEF-111` 修复**（长休时点 off-by-one）) | Issue `#274`；PRD `docs/prds/2026-10-29-pomodoro-notify-title-round.md`；ADR `docs/adr/2026-10-29-tray-tooltip-channel.md`；代码 PR `#275`（`75a7f0c8`） | `v1.13.4` |
+| 2026-10-29 | 番茄轮次语义对齐业界形态（`T580`/`T581`：**`DEF-112`** 修复 —— 静止态圆点实心 = 本周期已完成轮次 + idle 文案分档 · 新增「**重新开始本周期**」独立入口（仅 idle 且已完成>0 · `v-if` 不渲染 · 二次确认 · `resetCycle()` 仅置零轮次）· `role="img"` 只包圆点+文案、入口为兄弟节点原生 button） | Issue `#279`；PRD `docs/prds/2026-10-29-pomodoro-rounds-semantics.md`；缺陷 `DEF-112`；代码 PR `#280`（`6fae0afc`） | `v1.14.0` |
 
 ## 发布记录
 
@@ -105,6 +106,7 @@
 | `v1.13.2` | 发版提交 **`d05d8e07`**（root / `apps/web` / `apps/desktop` `1.13.1 → 1.13.2`）；**注解 tag `v1.13.2`**（tag 对象 `1f475593` → peeled `d05d8e07`）。前置：代码 PR **`#259`**（`aedca274`）+ 发版 PR **`#263`**（`d05d8e07`），并与 `v1.13.1` 热修合流（`80ca75f6`）。附 `docs/releases/v1.13.2.md` | 2026-10-26 | web（移动端零改动）：专注记录页窄屏卡片列表 · 首屏统计区收缩 · 分页命中区放大 · 详情抽屉窄屏全宽 + 双关闭路径 |
 | `v1.13.3` | 发版提交 **`6f62fb47`**（root / `apps/web` / `apps/desktop` `1.13.2 → 1.13.3`）；**注解 tag `v1.13.3`**（tag 对象 `2a1b7583` → peeled `6f62fb47`）。前置：代码 PR **`#265`**（`164b5e95`）+ 发版 PR **`#266`**（`6f62fb47`）。附 `docs/releases/v1.13.3.md` | 2026-10-27 | web + desktop：凭据不入本地操作日志 · 登出真撤销会话 · 检入冲突终态与在途窗口 · **需配套服务端 `nao-todo-server#60`** |
 | `v1.13.4` | 发版提交 **`2b3014fa`**（root / `apps/web` / `apps/desktop` `1.13.3 → 1.13.4`；`packages/*` 有源码改动但按近批惯例不 bump）；**注解 tag `v1.13.4`**（tag 对象 `9cbbfa20` → peeled `2b3014fa`）。前置：代码 PR **`#275`**（`75a7f0c8`）+ 发版 PR **`#276`**（`2b3014fa`）+ 文档收尾 PR **`#277`**（`963a9410`）。附 `docs/releases/v1.13.4.md` | 2026-10-29 | web + desktop（移动端零改动）：番茄通知接提醒设置 · 页签标题与托盘 tooltip 显示进度 · 轮次指示 · 长休时点修复（`DEF-111`）。**无服务端改动** |
+| `v1.14.0` | 发版提交 **`a388b8e7`**（root / `apps/web` / `apps/desktop` `1.13.4 → 1.14.0`，MINOR 含新能力；`packages/*` 按近批惯例不 bump）；**注解 tag `v1.14.0`**（tag 对象 `-` → peeled `a388b8e7`）。前置：代码 PR **`#280`**（`6fae0afc`）+ 发版 PR **`#281`**（`a388b8e7`）+ 文档收尾 PR **`#282`**。附 `docs/releases/v1.14.0.md` | 2026-10-29 | web + desktop（移动端零改动）：`DEF-112` 修复（静止态显示真实已完成轮次 + idle 文案分档）· 新增「重新开始本周期」入口（二次确认，不影响已有记录）· `confirm.css` destructive→error 语义映射。**无服务端改动**。⚠️ 首轮打包 mac runner 未分配被取消，整轮重跑成功 |
 
 ## 事后补录（2026-09-30，PM 补录）
 
