@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
-import { PomodoroTimer, PomodoroFocus, PomodoroNoteInputer } from '@nao-todo/presentation/pomodoro'
+import {
+    PomodoroTimer,
+    PomodoroFocus,
+    PomodoroNoteInputer,
+    PomodoroRoundsIndicator
+} from '@nao-todo/presentation/pomodoro'
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroFocusDependDropdown } from './focus-depend-dropdown'
 import { PomodoroHeader } from './header'
@@ -65,6 +70,8 @@ const dependLabel = computed(() => {
                             </nue-text>
                         </template>
                     </pomodoro-focus-depend-dropdown>
+                    <!-- 轮次指示（T576 #3）：纯展示，圆点 + 文字标签 -->
+                    <pomodoro-rounds-indicator v-if="activeTab === 'timer'" />
                     <!-- 番茄专注计时器 -->
                     <pomodoro-timer
                         v-if="activeTab === 'timer'"

@@ -5,11 +5,15 @@ import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
 import { showPlaintextNoticeConfirm } from '@/components/plaintext-notice'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
+import { usePomodoroTitle } from '@nao-todo/presentation/pomodoro'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
 defineOptions({ name: 'AppContainer' })
 
 const { isLoading, IndexViewInitialize } = useIndexView()
+
+// 番茄页签标题（T576 #2）：应用壳级挂载 ⇒ 离开番茄页但引擎仍在跑时继续更新
+usePomodoroTitle()
 
 onMounted(() => {
     IndexViewInitialize()

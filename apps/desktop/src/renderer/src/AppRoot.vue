@@ -19,6 +19,8 @@ import { useAuthUseCase } from '@/hooks'
 // 续期接线是**桌面专属**模块（引 preload 桥与会话调度器）⇒ 走相对路径，不经 `@/hooks` 桶
 // （桶在 Web/测试环境解析到 webapp 版，不含桌面专属导出）
 import { useDesktopSessionRenewal } from './hooks/use-desktop-session-renewal'
+// 托盘 tooltip 同步同样是**桌面专属**模块（引 preload 桥）⇒ 同上走相对路径，不经 `@/hooks` 桶
+import { useTrayTooltip } from './hooks/use-tray-tooltip'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
     localSession,
@@ -96,6 +98,9 @@ useDesktopSessionRenewal({
         handleSessionExpired()
     }
 })
+
+// 番茄计时写入托盘 tooltip（T576 #2）：无 preload 桥 / 旧桥缺方法 ⇒ 静默 no-op
+useTrayTooltip()
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
 const onSynced = (): void => {

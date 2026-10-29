@@ -739,6 +739,19 @@ const zhCN: LocaleMessages = {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': '专注记录保存失败：{error}',
+    'pomodoro.title.focus': '专注',
+    'pomodoro.title.break': '休息',
+    'pomodoro.title.longBreak': '长休息',
+    'pomodoro.title.countUp': '正计时',
+    'pomodoro.rounds.idle': '共 {count} 轮一轮长休',
+    'pomodoro.rounds.current': '第 {current}/{total} 轮',
+    'pomodoro.rounds.upcoming': '本轮结束后长休',
+    'pomodoro.rounds.resting': '休息中 · 已完成 {completed}/{total}',
+    'pomodoro.rounds.newCycle': '长休息 · 新周期',
+    'pomodoro.notify.focusDone': '专注完成 · {duration}，该休息了',
+    'pomodoro.notify.focusEnded': '专注完成 · {duration}',
+    'pomodoro.notify.breakEndingSoon': '休息即将结束 · 还剩 {time}',
+    'pomodoro.notify.breakDone': '休息结束 · 该开始下一轮了',
 
     // Calendar
     'calendar.today': '今天',

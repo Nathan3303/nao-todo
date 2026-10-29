@@ -14,6 +14,9 @@
 
 export type TrayStatus = 'available' | 'unconfirmed' | 'unsupported'
 
+/** 基线 tooltip（D9：非空串 —— Electron `setToolTip('')` 等于移除 tooltip） */
+export const DEFAULT_TRAY_TOOLTIP = 'NaoTodo'
+
 /** 托盘实例最小面（Electron `Tray` 满足） */
 export interface TrayLike {
     setToolTip?(toolTip: string): void
@@ -48,6 +51,8 @@ export interface CreateTrayDeps {
 export interface TrayHandle {
     status: TrayStatus
     tray: TrayLike | null
+    /** 写入 tooltip（不可用 / 已销毁 / 实现缺方法 ⇒ 静默 no-op，不抛） */
+    setTooltip(text: string): void
     destroy(): void
 }
 
@@ -71,11 +76,24 @@ export const createTray = (deps: CreateTrayDeps): TrayHandle => {
         tray = new deps.Tray(deps.iconPath)
     } catch {
         // 托盘不可用（无 StatusNotifier 宿主 / 无图形会话）：不冒泡，交给生命周期回退旧行为
-        return { status: 'unsupported', tray: null, destroy: () => undefined }
+        return {
+            status: 'unsupported',
+            tray: null,
+            setTooltip: () => undefined,
+            destroy: () => undefined
+        }
     }
 
     const labels = deps.labels ?? { open: '打开 NaoTodo', quit: '退出' }
-    tray.setToolTip?.(deps.tooltip ?? 'NaoTodo')
+    // 基线 tooltip（D9：非空串）：未显式指定时写默认基线；显式 `tooltip` 视为调用方自备文案，
+    // 不在创建时重复写入。初始写入同样容忍托盘已销毁（AC8）
+    if (deps.tooltip === undefined) {
+        try {
+            tray.setToolTip?.(DEFAULT_TRAY_TOOLTIP)
+        } catch {
+            // 托盘实现不可用：静默降级，不影响创建结果
+        }
+    }
     tray.setContextMenu(
         deps.Menu.buildFromTemplate([
             { label: labels.open, click: () => deps.actions.open() },
@@ -86,6 +104,13 @@ export const createTray = (deps: CreateTrayDeps): TrayHandle => {
     return {
         status: resolveStatus(deps.platform, deps.env),
         tray,
+        setTooltip: (text: string) => {
+            try {
+                tray.setToolTip?.(text)
+            } catch {
+                // 托盘已销毁 / 平台不支持：静默降级（AC8 不得有控制台错误）
+            }
+        },
         destroy: () => tray.destroy()
     }
 }

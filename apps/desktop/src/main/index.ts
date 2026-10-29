@@ -26,7 +26,11 @@ import {
     type AutostartDeps,
     type FsLike
 } from './autostart'
-import { DESKTOP_POWER_EVENT_CHANNEL, registerDesktopIpcHandlers } from './ipc'
+import {
+    DESKTOP_POWER_EVENT_CHANNEL,
+    registerDesktopIpcHandlers,
+    registerDesktopTrayTooltipHandler
+} from './ipc'
 
 /**
  * Windows toast 通知依赖 AppUserModelID，未设置则打包版系统通知不显示
@@ -219,6 +223,13 @@ const registerIpc = (): void => {
             showMainWindow,
             quit: requestQuit
         }
+    })
+
+    // 单向通道（渲染层 → 托盘 tooltip）：惰性读 `trayHandle`，`before-quit` 置 null 后自然 no-op
+    registerDesktopTrayTooltipHandler({
+        ipcMain,
+        isTrustedUrl,
+        setTrayTooltip: (text) => trayHandle?.setTooltip(text)
     })
 }
 

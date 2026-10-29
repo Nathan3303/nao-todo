@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { DESKTOP_IPC_CHANNELS, DESKTOP_POWER_EVENT_CHANNEL } from '../main/ipc'
+import {
+    DESKTOP_IPC_CHANNELS,
+    DESKTOP_ONEWAY_CHANNELS,
+    DESKTOP_POWER_EVENT_CHANNEL
+} from '../main/ipc'
 
 /**
  * 最小桌面能力桥（AC13 / 安全语义）
@@ -23,6 +27,9 @@ contextBridge.exposeInMainWorld('desktopAPI', {
         ipcRenderer.invoke(DESKTOP_IPC_CHANNELS.setAutostart, Boolean(enabled)),
     showMainWindow: () => ipcRenderer.invoke(DESKTOP_IPC_CHANNELS.showMainWindow),
     quit: () => ipcRenderer.invoke(DESKTOP_IPC_CHANNELS.quit),
+    // 单向写（无返回值 / 无拒绝面）：托盘 tooltip 走 `send`，handler 缺失时静默降级
+    setTrayTooltip: (text: string) =>
+        ipcRenderer.send(DESKTOP_ONEWAY_CHANNELS.setTrayTooltip, text),
     onPowerResume: (callback: () => void) => {
         const listener = () => callback()
         ipcRenderer.on(DESKTOP_POWER_EVENT_CHANNEL, listener)
