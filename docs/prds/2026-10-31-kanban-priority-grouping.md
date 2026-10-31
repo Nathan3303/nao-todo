@@ -5,7 +5,7 @@
 
 ## 一、问题证据
 
-1. **`DEF-114`（P2，"选项形同虚设 + 会写坏状态"）**：看板有「按优先级分组」选项，但列**头恒为 `<task-state-info :state="category" />`**、列过滤恒为 `t.state === category`、拖拽恒写 `update(taskId, { state: category })`。后果三层：① 切到按优先级分组 ⇒ **四列全空**；② 列头显示状态名（语义错）；③ **拖到「紧急」列会把 `state` 写成 `'urgent'`（非法值）**。`T583` 只让列名单覆盖四档，未接线。
+1. **`DEF-114`（P2，"无入口 + 若接线会写坏状态"）**：~~看板有「按优先级分组」选项~~ —— **⚠️ 口径更正（2026-10-31，`qa-T608` 核实）**：**用户侧根本没有切换入口**；`getKanbanColumns(groupBy)` 唯一调用点（`kanban.vue:22`）**无参**、`TaskKanbanProps` 无 `groupBy`、`useKanban` 未 `defineExpose` ⇒ 恒为 `state`。原「有选项」是 PM 依据 `KANBAN_GROUP_BY_NAMES` 常量存在推断的**误判**。而一旦接线，现有三处都是 state 语义：列**头恒 `<task-state-info :state="category" />`**（`kanban-column.vue:26`）、列过滤 `t.state === category`（`use-kanban-column.ts:16`）、拖拽 `update(taskId, { state: category })`（`use-kanban.ts:20`）。后果三层：① 切到按优先级分组 ⇒ **四列全空**；② 列头显示状态名（语义错）；③ **拖到「紧急」列会把 `state` 写成 `'urgent'`（非法值）**。`T583` 只让列名单覆盖四档，未接线。
 2. **`DEF-124`（P3）**：任务侧栏「已归档」入口是 `<nue-link theme="route" @click>`（**无 `route`**）⇒ 渲染无 `href` 的 `<a>` ⇒ **键盘不可达**。它属「点击触发」而非「导航」，与 `DEF-116` 那批不同。
 3. **`DEF-125`（P3）**：`DEF-113` 删掉 `parseTaskPriority` 后，`parseTaskPriorityBackward` 仍导出但 **0 调用方**，且是 `prioritySNMapReverse` 的唯一非测试消费者 ⇒ 一对「只为彼此存在」的死件。
 
@@ -19,7 +19,7 @@
 
 **范围**
 
-- `DEF-114`：`getKanbanColumns(groupBy)` 接线 + 列头按 groupBy 渲染 + 列过滤按 groupBy 分流 + 拖拽按 groupBy 写对应字段（state ⇒ `state`，priority ⇒ `priority`）。
+- `DEF-114`：**新增分组切换入口**（看板顶部工具栏右侧，「按状态 / 按优先级」分段切换；默认 `state`；**不持久化**）+ `getKanbanColumns(groupBy)` 接线 + 列头按 groupBy 渲染 + 列过滤按 groupBy 分流 + 拖拽按 groupBy 写对应字段（state ⇒ `state`，priority ⇒ `priority`）。
 - `DEF-124`：「已归档」入口改可聚焦形态（`<button>` 或 `button` 语义的 `nue-button`），保留原 `@click` 行为。
 - `DEF-125`：成对删除或补消费者。
 
@@ -44,6 +44,7 @@
 - **R3 未知值口径不变**：优先级脏值/空值落「低」列，不改写库里的原值（**读取时归类，写入时才归一**）。
 - **R4 交互零回归**：拖拽手感、动画、冲突/失败提示、离线只读拦截沿用既有实现。
 - **R5 无新契约**：拖拽改优先级复用既有 `update` + `markDirty` + sync 路径；不新增字段、不改服务端。
+- **R7 入口不持久化**：分组切换不写入任何偏好存储（刷新回 `state`）；若产品后续要记住，另立单。
 - **R6 「已归档」行为等价**：改成可聚焦形态后，点击后的跳转/打开行为与现状逐项一致（含离线态、只读态）。
 
 ## 六、NFRs（业务视角基线）
@@ -54,7 +55,8 @@
 
 ## 七、AC
 
-- **AC1（`DEF-114` 主路径）** 切到 `groupBy='priority'` ⇒ 渲染 **4 列**，列头文本 = 四档优先级标签；每列只含该优先级任务。
+- **AC1a（切换入口）** 看板顶部存在分组切换控件（两档：「按状态」/「按优先级」）；默认选中「按状态」；**选中态可辨识**（`aria-pressed` 或 `role=tab`+`aria-selected`，不得只靠背景色）。
+- **AC1b（`DEF-114` 主路径）** 切到「按优先级」⇒ 渲染 **4 列**，列头文本 = 四档优先级标签（**不是**状态名）；每列只含该优先级任务；切回「按状态」⇒ 列头恢复状态名（防单向接线）。
 - **AC2（`DEF-114` 主路径）** 在 `priority` 分组下把任务从「中」拖到「紧急」⇒ **只写 `priority='urgent'`，`state` 逐字节不变**（断言写入载荷）。
 - **AC3（`DEF-114` 负向/回归）** 在 `state` 分组下拖拽 ⇒ **只写 `state`，`priority` 不变**（防交叉写回归）。
 - **AC4（`DEF-114` 边界）** 优先级为空 / 脏值（如 `'unknown-x'`）的任务 ⇒ 落在**低**列；库中原值**不被改写**。
