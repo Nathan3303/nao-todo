@@ -2,6 +2,22 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.15.0] - 2026-10-31
+
+凭证失效口径收口批次：**登录失效与本地数据解锁收口**（`DEF-90/91/93–96` 修复 · `T589`–`T592` · Issue #291 · PR #293 · PRD `docs/prds/2026-10-31-credential-coherence.md` · ADR `docs/adr/2026-10-31-credential-coherence.md` · 复验报告 `docs/reports/2026-10-31-T591-credential-coherence-verify.md`）：
+
+- **判据单点（ADR D1）**：`shared/requester/credential-codes.ts` 固化 `AUTH_CREDENTIAL_CODES = [10041, 10042]`（落 shared 这个两侧共同下界，避免 domain↔shared 环）；`domain-identity` 再导出并新增 `classifyAuthFailure` / `decideSessionEnd` —— 被动请求仅显式凭证码登出，主动请求沿用 C-67 fail-closed；网络类 / 业务类不登出、不清数据（AC2 不回归）。
+- **执行单点与清理矩阵（D2，`DEF-90`）**：新增 `apps/web/src/session-end.ts`（桌面端经 `@` 复用同一实现）—— 一次失效事件固定动作：清「JWT + store + 离线授权 + 轮换窗」并**锁内存 DEK**；**留**业务 11 表 / `syncQueue` / 游标 / 操作日志 / **`key-bundle`**（不清库）。axios / sync / 续期 / 跨标签收敛到同一处，消除「有的清了、有的留着、保险库还开着」。
+- **恢复出口 E+B+D（D3，`DEF-91`）**：E 已明文迁移库解锁失败**只降级不阻断登录**并用本次密码重建包裹；B 旧密码自助解锁成功后按新密码重包（断言「新可解 / 旧不可解」，本地 3 次上限 + 30s 退避）；D「重建本地数据」走 `NueConfirm` 二次确认 + 既有 C-54 护栏，取消零副作用。解锁失败文案改为「本地数据未能解锁（可能在其他设备改过密码）」并给出可自助下一步，不再归因「密码错」。
+- **双初始化幂等（D4，`DEF-94`）**：`initRequester` 同名同 baseURL 复用同一实例、回调注册到单例 ⇒ 「1 个有效处理者 + 1 个闩」；参数漂移留结构化告警、不静默换实例；axios 识别 `10042`。
+- **后台静默（D6，`DEF-93`）**：`authHeaders()` 无 token 返回 `{}`（`Bearer` 拼接只在 `shared/requester/auth-headers` 一处，永不 `Bearer null`）+ sync 各网络相位「无 token ⇒ 会话已结束」双早退门 ⇒ 会话结束后零请求。
+- **注册 redirect（D7，`DEF-95`）**：注册成功保留 `query.redirect`（只认站内绝对路径，防开放重定向）；登录 ↔ 注册互链携带 `redirect`。
+- **storage 守卫（D7，`DEF-96`）**：`getDeviceId` 读写双 `try/catch` + 进程内缓存降级（存储不可用 ⇒ 登录不失败，降级留结构化日志、不弹 UI）；`theme-store` 补 `matchMedia` 守卫（缺失 ⇒ 回退默认浅色 + 日志）。
+- **新增防回归**：`shared/requester/__tests__/auth-seam-scan.test.ts` 19 例 —— 5 条源码扫描规则 + 4 项**冻结计数棘轮**（`shared/requester` 除白名单 0 处 / `persistence-go` 61 处 Bearer 拼接 / `lynx.ts` 1 处 / 5 处 `10041` 字面量比较）；双向锁「恰等于」⇒ 新增即红、清理须同步下调常量，只统计代码行。
+- **门禁**：`vp check` rc=0（1737 文件格式 / 1421 文件 0 lint·型错）· 全仓 **310 文件 / 2664 例 / 0 红** · 五守卫 exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 0 行 · **8 组变异**全部按预期转红并还原。
+- **Tag `v1.15.0`** · root / `apps/web` / `apps/desktop` `1.14.1 → 1.15.0`（MINOR，含新能力）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.15.0.md`。
+- **转办（本版不含）**：`DEF-92`（到期 / 被顶号可见提示 + 跨标签广播）· `DEF-117`（61 处 Bearer 拼接 + 5 处 `10041` 字面量清理）· `DEF-116`（`nue-link` 不产出 `href`）。
+
 ## 机制变更（无版本号） - 2026-10-31
 
 **nao 机制包升级 `@nathan33/nao-skill` `0.20.0 → 0.20.1`**（`M20261031-nao-skill-0201`）：仅机制包与版本标记，**无源码 / 测试 / 构建配置变化**。执行链路：`pi install -l --approve npm:@nathan33/nao-skill@0.20.1`（改 `.pi/settings.json` pin + 物化 `.pi/npm`，`found 0 vulnerabilities`）→ `nao-skill init . --verbose`（幂等，**`shim same`**，转发入口零变更）→ `.agents/.nao-version` 写为 `0.20.1`。**体检**：`check: OK · roles=6 · files=50` + 第二行 `✓ codegraph 齐备`（文件数与 0.20.0 相同 —— 本版**无新增 / 删除机制文件**，仅 4 个文件内容变更）。**上游行为变化（本版唯一主题 = 文档随任务 PR）**：① `skills/github-flow.md` 新增「文档与台账载体（一任务一 PR）」**BR1–BR6**（84 → 100 行）—— 一个任务 PR = 全量改动（实现 / 测试 / PRD 定稿 / 报告 / ADR / `tasks-state` / `followups` / 索引 / release notes）；**禁为文档单开 PR、禁任务期文档独立直落 main**（例外仅 BR3 立项摘要三条件：仅摘要三要素 · 单条 `docs(<编号>):` 提交 · 不与其它改动混提；**降级批次无例外**）；批间收尾事实随**发布提交**一并带走（BR5）· ② 八阶段表逐行标注文档载体（阶段 1/2/4/5 产出列 + 阶段 6/7/8 说明）· ③ 角色卡 PM **v28 → v29**（`prompts/product-manager.md` +1 净行：合并闸门补「文档随任务 PR」；配套红线 **33 → 34**、交付清单 **41 → 42**，`checklists/pm.md` +2 净行）· ④ `package.json` 仅版本号。**未变**：`roles.yaml` · `nao-fleet.sh`（shim 文本一致）· `skills/codegraph.md` · `skills/task-completion.md` · 其余 5 张角色卡 · `README.md`。**无破坏性变更**（不需改项目侧配置 / 脚本）。**生效注意**：角色卡与 skills 为**启动期注入、不热更** ⇒ 新纪律在下次 `ensure` / 会话重开时进上下文；生效前按本条与 `docs/tasks-state.md` 记载执行。
