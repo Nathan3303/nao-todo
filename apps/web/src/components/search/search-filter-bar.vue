@@ -64,6 +64,7 @@ const stateOptions = computed(() => TaskStateSelectOptions.value)
 
 /** 优先级短名（仅搜索筛选栏触发器展示；下拉面板项与其它页面仍用长名 label） */
 const PRIORITY_SHORT_NAME_KEYS: Partial<Record<string, LocaleKey>> = {
+    urgent: 'task.priority.short.urgent',
     high: 'task.priority.short.high',
     medium: 'task.priority.short.medium',
     low: 'task.priority.short.low'

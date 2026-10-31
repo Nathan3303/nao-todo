@@ -2,8 +2,8 @@
 export const TASK_STATES = ['todo', 'in-progress', 'done'] as const
 export type TaskState = (typeof TASK_STATES)[number]
 
-// 待办事项优先级白名单
-export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const
+// 待办事项优先级白名单（"紧急"为服务端 / 其它端已启用的第四档，T582）
+export const TASK_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const
 export type TaskPriority = (typeof TASK_PRIORITIES)[number]
 
 // 待办事项提醒重复类型白名单
@@ -36,7 +36,7 @@ export const stateSNMap = { todo: 1, 'in-progress': 2, doing: 2, done: 3 }
 export const stateSNMapReverse = [null, 'todo', 'in-progress', 'done']
 
 // 待办事项优先级序列号映射
-export const prioritySNMap = { low: 1, medium: 2, high: 3 }
+export const prioritySNMap = { low: 1, medium: 2, high: 3, urgent: 4 }
 
 // 待办事项优先级选项的反向映射
-export const prioritySNMapReverse = [null, 'low', 'medium', 'high']
+export const prioritySNMapReverse = [null, 'low', 'medium', 'high', 'urgent']

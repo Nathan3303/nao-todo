@@ -96,8 +96,9 @@ const useExportTask = () => {
         return t('task.state.todo')
     }
 
-    // @method 优先级文案
+    // @method 优先级文案（四档：紧急 / 高 / 中 / 低；白名单外脏值沿用既有口径 ⇒ 低）
     const resolvePriorityLabel = (task: TaskViewObject): string => {
+        if (task.priority === 'urgent') return t('task.priority.urgent')
         if (task.priority === 'high') return t('task.priority.high')
         if (task.priority === 'medium') return t('task.priority.medium')
         return t('task.priority.low')

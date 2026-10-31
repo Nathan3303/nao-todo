@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vite-plus/test'
-import { TaskEntity } from '@nao-todo/domain-task'
+import { DEFAULT_TASK_PRIORITY, TaskEntity } from '@nao-todo/domain-task'
 import {
     taskEntityToViewObject,
     taskEntitiesToViewObjects,
@@ -95,16 +95,32 @@ describe('taskEntityToViewObject - state 合法化', () => {
     })
 })
 
-describe('taskEntityToViewObject - priority 合法化', () => {
-    it('合法 priority 原样保留', () => {
+/**
+ * T582 / DEF-84 优先级四档（PRD `docs/prds/2026-10-30-priority-urgent.md` AC1/AC4/AC5 · R2/R3）
+ * @description **红基线（T582，DEF-84）**：`urgent` 目前不在 `TASK_PRIORITIES` 白名单 ⇒ 被降级成 `low`，
+ *              AC1/AC5 用例当前应为红；`unknown-x` / `null` / 空串的兜底口径（R2/R3）现状即正确 ⇒ 绿，作回归护栏。
+ *              ⛔ 不得把 `urgent` 再写回「非法值」组（那是缺陷本身）。
+ */
+describe('taskEntityToViewObject - priority 合法化（T582 四档）', () => {
+    it('AC1：四档合法 priority 原样保留（`urgent` 不得回落 `low`）', () => {
         expect(taskEntityToViewObject(makeEntity({ priority: 'low' })).priority).toBe('low')
         expect(taskEntityToViewObject(makeEntity({ priority: 'medium' })).priority).toBe('medium')
         expect(taskEntityToViewObject(makeEntity({ priority: 'high' })).priority).toBe('high')
+        expect(taskEntityToViewObject(makeEntity({ priority: 'urgent' })).priority).toBe('urgent')
     })
 
-    it('非法 priority 回退为 low', () => {
-        expect(taskEntityToViewObject(makeEntity({ priority: 'urgent' })).priority).toBe('low')
-        expect(taskEntityToViewObject(makeEntity({ priority: '' })).priority).toBe('low')
+    it('AC4/R2：脏值（`unknown-x` / 大小写变体）仍回退为 low', () => {
+        expect(taskEntityToViewObject(makeEntity({ priority: 'unknown-x' })).priority).toBe('low')
+        expect(taskEntityToViewObject(makeEntity({ priority: 'URGENT' })).priority).toBe('low')
+    })
+
+    it('AC4/R3：null / 空串回退为 DEFAULT_TASK_PRIORITY（口径不变）', () => {
+        expect(
+            taskEntityToViewObject(makeEntity({ priority: null as unknown as string })).priority
+        ).toBe(DEFAULT_TASK_PRIORITY)
+        expect(taskEntityToViewObject(makeEntity({ priority: '' })).priority).toBe(
+            DEFAULT_TASK_PRIORITY
+        )
     })
 })
 

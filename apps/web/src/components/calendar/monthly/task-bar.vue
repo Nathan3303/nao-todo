@@ -44,8 +44,9 @@ const emit = defineEmits<{
 const isDone = computed(() => props.task.state === 'done')
 const isOverdue = computed(() => isTaskOverdue(props.task))
 
-// @computed 左缘色条：仅随优先级（high=error 红 / medium=warning 琥珀 / low 无色）；逾期改由背景提示
+// @computed 左缘色条：仅随优先级（urgent=error 深红 / high=error 红 / medium=warning 琥珀 / low 无色）；逾期改由背景提示
 const barColor = computed<string>(() => {
+    if (props.task.priority === 'urgent') return 'var(--nue-error-color-70)'
     if (props.task.priority === 'high') return 'var(--nue-error-color-60)'
     if (props.task.priority === 'medium') return 'var(--nue-warning-color-60)'
     return 'transparent'

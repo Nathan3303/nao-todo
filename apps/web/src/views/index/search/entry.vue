@@ -233,15 +233,17 @@ const availableTagOptions = computed<TaskTagViewObject[]>(() =>
 const isDone = (task: SearchRow['task']) => task.state === 'done'
 // 日期展示源：沿用 endAt ?? startAt（原始 ISO 交给 TaskDateInfo 相对文案 + 时刻级过期着色）
 const dateIsoOf = (task: SearchRow['task']) => task.endAt || task.startAt || ''
-// 优先级圆点色（high=error 红 / medium=warning 琥珀 / low 无；完成态不显示）
+// 优先级圆点色（urgent=error 深红 / high=error 红 / medium=warning 琥珀 / low 无；完成态不显示）
 const priorityDotOf = (task: SearchRow['task']) => {
     if (isDone(task)) return ''
+    if (task.priority === 'urgent') return 'var(--nue-error-color-70)'
     if (task.priority === 'high') return 'var(--nue-error-color-60)'
     if (task.priority === 'medium') return 'var(--nue-warning-color-60)'
     return ''
 }
 // 优先级可读文案（title，非仅颜色）
 const priorityTitleOf = (task: SearchRow['task']) => {
+    if (task.priority === 'urgent') return t('task.priority.urgent')
     if (task.priority === 'high') return t('task.priority.high')
     if (task.priority === 'medium') return t('task.priority.medium')
     return ''
