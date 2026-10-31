@@ -2,6 +2,19 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.14.1] - 2026-10-31
+
+任务优先级新增「紧急」档：**`DEF-84` 修复（客户端识别并展示 `urgent`）**（`T584` · Issue #287 · PR #288 · PRD `docs/prds/2026-10-30-priority-urgent.md` · 复验报告 `docs/reports/2026-10-31-T584-def84-verification.md`）：
+
+- **四档优先级（单一来源）**：`packages/domain-task` 的 `TASK_PRIORITIES` / `prioritySNMap` / `prioritySNMapReverse` 扩为 `urgent(4) > high > medium > low`；选择器、看板列名单（`[...TASK_PRIORITIES].reverse()`）、排序（本地列表 + 日历，rank 仍只取 `prioritySNMap`）、标签预设全部由它派生。
+- **转换层（`DEF-84` 根因）**：`converters.ts` 把 `urgent` 从「白名单外未知值 ⇒ `low`」中摘出；清洗规则不变 —— 白名单外脏值仍回落 `low`（`R2`），`null` / 空串仍走 `DEFAULT_TASK_PRIORITY`（`R3`）。
+- **展示**：`TaskPriorityPresets` 改为 `Record<TaskPriority, [icon, label, color]>`（缺档/多档由类型拦住）；紧急复用既有 `--nue-error-color-70` + `warning` 图标，未新造 token；`TaskPriorityInfo` 遇白名单外脏值回落默认档（原会抛错、标签空白）。
+- **三处可见面**：日历任务条左缘颜色 · 搜索结果优先级圆点与悬浮提示 · 搜索筛选栏短名（原显示为空）；i18n 新增 `task.priority.urgent` / `task.priority.short.urgent`（中英齐备）。
+- **看板 + 导出**：`KANBAN_PRIORITY` 由 domain 枚举降序派生 ⇒ 紧急有列可落；`resolvePriorityLabel` 补 `urgent` 分支 ⇒ 导出写「紧急优先级」（原写成「低优先级」）。
+- **转办（本版不含）**：`DEF-113`（`parseTaskPriority` 第二份三档 switch 死件）· `DEF-114`（看板按优先级分组整体未接线，列头/过滤/拖拽三处 state 语义）· `DEF-115`（移动端不识别 `urgent`，需授权）。
+- **门禁**（`T584`）：`vp check` 1716 文件格式 / 1407 文件 0 lint·型错 · 全仓 **300 文件 / 2601 例 / 0 红** · 五守卫 exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 0 行 · 5 组变异全部按预期转红并还原。
+- **Tag `v1.14.1`** · root / `apps/web` / `apps/desktop` `1.14.0 → 1.14.1`（PATCH）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.14.1.md`。
+
 ## 机制变更（无版本号） - 2026-10-29
 
 **nao 机制包升级 `@nathan33/nao-skill` `0.19.2 → 0.20.0`**（`M20261029-nao-skill-0200`）：仅机制包与版本标记，**无源码 / 测试 / 构建配置变化**。执行链路：`pi install -l --approve npm:@nathan33/nao-skill@0.20.0`（改 `.pi/settings.json` pin + 物化 `.pi/npm`，`found 0 vulnerabilities`）→ `nao-skill init .`（幂等，**`shim same`**，转发入口零变更）→ `.agents/.nao-version` 写为 `0.20.0`。**体检**：`check: OK · roles=6 · files=50` · 新增第二行摘要 `✓ codegraph 齐备`。**上游行为变化（本版主题 = CodeGraph 三段阶梯）**：① 代码定位口径统一为「**原生入口 `codegraph_explore` → CLI → `grep -rn` + 行段**」，`skills/codegraph.md` 重写（69 行）· ② `nao-fleet.sh` 新增 **`codegraph_state` 四态检测**（未声明 / CLI 缺失 / 无索引 / 齐备，**全部只提示、永不进退出码**；默认不 fork CLI，`-v` 与 `ensure` 才每仓一次 `codegraph status`）· ③ `ensure` 注入 **`CODEGRAPH_TELEMETRY=0`** · ④ tmux 主 pane 默认宽 **35% → 33%** · ⑤ 角色卡版本 bump：PM **v27 → v28** · arch **v12 → v13** · rd-fe **v11 → v12** · rd-be **v11 → v12** · qa **v14 → v15** · rd-infra **v3 → v4**（均只改 codegraph 指针）；`roles.yaml` **未变**、**无破坏性变更**。**本仓现状**：CodeGraph 已恢复可用（`codegraph init` 建索引 1387 文件 / 17,512 节点 / 46,265 边，`.codegraph/` 不入库），`AGENTS.md`「代码结构检索」条由「插件已卸载、只有 grep」改写为三段阶梯 + 索引维护 + daemon / `.pi/APPEND_SYSTEM.md` 边界。**生效注意**：角色卡**启动期注入、不热更** ⇒ 新卡在下次 `ensure` / 会话重开时生效（PM 常驻会话未重启，本条按新纪律实践）。
