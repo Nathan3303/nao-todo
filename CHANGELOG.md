@@ -2,6 +2,21 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.15.2] - 2026-10-31
+
+导航可访问性规避批次：**侧栏导航可用键盘与新标签打开 + 会话边界单一清理**（`DEF-116/123/113` 修复 · Issue #300 · PR #301 · PRD `docs/prds/2026-10-31-nav-a11y-and-cleanup.md` · 发版说明 `docs/releases/v1.15.2.md`）：
+
+- **`DEF-116` 本仓规避（AC1–AC4）**：`packages/shared/components/router-link/router-link.vue` 改由 `resolveDynamicComponent('router-link')` 渲染原生 `RouterLink`（模板直写 `<router-link>` 在未注册时会被 Vue 当作组件自引用 ⇒ 爆栈），渲染出 `href = router.resolve(path).href`、可 Tab 聚焦、中键 / 按住 `Ctrl` 点击开新标签、点击走 SPA；保留 `.nue-link` / `.nue-link--route` / `--route-icon` / `actived` 全部主题类，补 `:focus-visible` 焦点环（`2px solid --nue-primary-color-600`，offset 2px）。覆盖 **7 处活调用点**（番茄钟侧栏 4 / 任务侧栏 3）+ `smart-list` 动态面（自建清单 / 标签 0 · 1 · 多条）+ `NaoRouterLink` 5 个调用方自动受益；图标型导航项补可访问名（`AppAside` / `aside-v2` / `float-aside` / 番茄钟指示器，复用既有 `nav.*` i18n 键）。
+- **`DEF-123` 会话边界单一入口（AC5–AC6）**：新增 `packages/shared/requester/session-boundary.ts` 的 `onSessionBoundary()`（清「会话结束类别」+ 复位检入冲突计数，幂等）；`clearSessionEndReason()` 非测试调用点收敛为 **1 处**，5 个落点 = 登录成功 / 设置页登出 / 桌面 `unlock-gate` / 跨标签广播接收侧 / 桌面 `AppRoot`（第 5 处漏清补齐）。失效路径「先写类别后清凭据」顺序未动；「只清认证不调入口」由检测器锁红（回归护栏）。
+- **`DEF-113` 判据死件（AC7）**：删除 `parseTaskPriority`（第二份三档 switch）及其 JSDoc，连带移除空掉的 `prioritySNMap` 导入；全仓非测试源码 0 引用。
+- **影响面口径更正**：`NaoRouterLink` = **7 处活调用点 + 4 处死件**（注释块未解开，番茄钟顶栏 4 处）。上游 **`nue-ui#108`** 仍开。
+- **视觉零变化证据**：以 `git worktree` 检出基线 `60e5c52e`，同一探针在两棵树真实挂载对照 ⇒ **23/23 锚点 class 串逐字一致**；`link.css` 选择器全为类选择器；唯一 DOM 差异是图标型不再渲染空的 `.nue-link__content`（被上游 CSS `display:none` 隐藏，无可视影响）。
+- **能力边界**：`NaoRouterLink` 不再支持 `prepend` 槽；传 `custom` 会失去 `<a>`（当前无调用方）。
+- **门禁**：`vp check` rc=0（1758 文件格式 / 1433 文件 0 lint·型错）· 全仓 **320 文件 / 2725 例 / 0 红** · 五守卫 rc=0 · `webapp build` / `desktop:build` rc=0 · 移动端红线 0 行 · **变异 5 处**全部按预期转红并还原。
+- **Tag `v1.15.2`** · root / `apps/web` / `apps/desktop` `1.15.1 → 1.15.2`（PATCH）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.15.2.md`。
+- **关闭**：`DEF-116`（本仓规避，上游待立单） · `DEF-123` · `DEF-113`。
+- **转办（本版不含）**：`DEF-124`（任务侧栏「已归档」入口键盘不可达 —— 点击触发而非跳转链接，改法涉及交互语义）· `DEF-125`（`parseTaskPriorityBackward` + `prioritySNMapReverse` 成对死件）。
+
 ## [v1.15.1] - 2026-10-31
 
 登录体验收尾批次：**会话结束提示 + 改密后检入文案 + 凭证单点清偿**（`DEF-92/117/119/121/122` 修复 · Issue #297 · PR #298 · PRD `docs/prds/2026-10-31-session-ux-tail.md` · 发版说明 `docs/releases/v1.15.1.md`）：
