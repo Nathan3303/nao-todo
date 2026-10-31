@@ -16,6 +16,11 @@ import {
     NueText
 } from 'nue-ui'
 import UnlockGate from '../unlock-gate.vue'
+import {
+    readSessionEndCategory,
+    readVisibleSessionEndCategory,
+    writeSessionEndCategory
+} from '@nao-todo/shared/requester/session-end-reason'
 
 /**
  * 解锁门终态与离线身份断言（SHELL-03 C-01…C-04/C-18/C-20、BC-2/BC-4/BC-7）
@@ -125,6 +130,7 @@ const interactiveCount = (): number =>
 
 beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     vi.clearAllMocks()
     mocks.hasKeyBundle.mockResolvedValue(true)
     mocks.unlock.mockResolvedValue(undefined)
@@ -327,5 +333,32 @@ describe('UnlockGate - SHELL-03 终态与离线身份', () => {
         expect(mocks.wipeLocalDataOnSignOut).toHaveBeenCalledWith('u-1')
         expect(mocks.clearSession).not.toHaveBeenCalled()
         expect(gate.emitted('unlocked')).toBeFalsy()
+    })
+})
+
+describe('T600 / `F1`：解锁门主动登出 ⇒ 同时清会话结束类别', () => {
+    it('登出用户 ⇒ sessionStorage 类别清空（不得在下次登录页误报「登录已过期」）', async () => {
+        // 前置：本窗口内曾发生过一次会话失效（横幅类别仍在）
+        writeSessionEndCategory('expired')
+        expect(readSessionEndCategory(), '前置：类别应可读').toBe('expired')
+
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        mountGate()
+        await flushPromises()
+
+        const signOutButton = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '登出用户'
+        )
+        signOutButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.clearSession, '前置：本路径必须真的清了本地会话').toHaveBeenCalled()
+        expect(
+            readSessionEndCategory(),
+            '主动登出 ≠ 会话失效 ⇒ 必须清类别（桌面解锁门是唯一不经设置页的登出入口）'
+        ).toBeNull()
+        expect(readVisibleSessionEndCategory(), '登出后不得再有可展示类别').toBeNull()
     })
 })

@@ -71,18 +71,19 @@ const ALLOWED_CLEANUP_FILES = new Set([
 
 /**
  * 棘轮（ratchet）冻结值 —— **新增一处即红；清理一处须同步下调本常量**
- * @description 本批只开「不再变多」的闸，不做一次性清洗（清洗属 L2/L5 转办批）：
- *              - `Bearer` 拼接收口（DEF-93）：`persistence-go/**` 61 处 + `shared/requester/lynx.ts`
- *                1 处（Lynx 运行时 token 必填，ADR D6 已知边界）为已登记债务；
- *              - 凭证判据字面量（AC1/R1）：`=== 10041` 类比较 5 处
- *                （`preference-sync.ts` ×4、`lynx.ts` ×1）。
+ * @description 本批（T597 / `DEF-117`）已完成两处债务清偿 ⇒ 常量同步下调：
+ *              - `Bearer` 拼接收口（DEF-93）：`persistence-go/**` 61 处 ⇒ **0 处**（全改走
+ *                `persistence-go/utils.ts` 的 `authHeaders()` → `buildAuthHeaders`）；`shared/requester/lynx.ts`
+ *                保留 1 处（Lynx 运行时 token 必填，ADR D6 已登记边界，归零需**移动端授权**）；
+ *              - 凭证判据字面量（AC1/R1）：`=== 10041` 类比较 5 处 ⇒ **0 处**
+ *                （`preference-sync.ts` ×4 改 `isCredentialCode`、`lynx.ts` ×1 同改）。
  *              双向锁的理由：只锁「不变多」会让「清理后常量仍停在旧值 ⇒ 又能偷偷加回来」；
  *              只锁「不变少」则无法防新增。故断言**恰等于**冻结值。
  */
 const KNOWN_BEARER_CONCAT_SITES = {
-    /** `persistence-go/**`：内联 `Bearer ${…}`（L2/L5 批统一改指 `auth-headers`） */
-    'persistence-go': 61,
-    /** `shared/requester/lynx.ts`：Lynx token 必填参数（ADR D6 边界，不在本批） */
+    /** `persistence-go/**`：内联 `Bearer ${…}`（T597 已清零，应为 0） */
+    'persistence-go': 0,
+    /** `shared/requester/lynx.ts`：Lynx token 必填参数（ADR D6 边界，归零需移动端授权） */
     'shared/requester/lynx.ts': 1
 } as const
 
@@ -90,12 +91,14 @@ const KNOWN_BEARER_CONCAT_SITES = {
 const BEARER_CONCAT_ALLOWED_FILES = new Set(['auth-headers.ts', 'lynx.ts'])
 
 /**
- * 凭证码**比较**字面量冻结值（剔除注释行）
- * @description 现存 5 处：`preference-sync.ts` 387/419/452/539（未纳入 `10042`）、`lynx.ts:109`。
+ * 凭证码**比较**字面量冻结值（剔除注释行；T597 / `DEF-117` 已清零）
+ * @description 原 5 处（`preference-sync.ts` 387/419/452/539、`lynx.ts:109`）已全部改走
+ *              `isCredentialCode`（唯一集合 `credential-codes.ts`）⇒ 冻结值 = **0**，新增即红。
+ *              判据正则（T599）已从 `10041` 扩为 `1004[12]`（同族两个码都算比较字面量）。
  *              不计入本计数的 `10041` 用法（均非判据）：`credential-codes.ts`（唯一集合定义）、
  *              `error-classification.ts` 的 r12 集合（ADR「语义逐字不变」）、`axios.ts` 2 处日志文案。
  */
-const KNOWN_CREDENTIAL_LITERAL_COMPARISONS = 5
+const KNOWN_CREDENTIAL_LITERAL_COMPARISONS = 0
 
 type SourceFile = { path: string; text: string }
 
@@ -281,9 +284,10 @@ describe('AC6/R4 棘轮：Bearer 拼接面冻结（M4b 盲区闭合，新增即�
     })
 })
 
-describe('AC1/R1 棘轮：凭证判据字面量冻结（`=== 10041` 类，新增即红）', () => {
+describe('AC1/R1 棘轮：凭证判据字面量冻结（`1004[12]` 类，新增即红）', () => {
     const sources = readSources(SCAN_ROOTS)
-    const literalComparison = /(===|!==|==|!=)\s*10041\b/
+    // T599：覆盖同族两个凭证码（`10041` / `10042`）；T600：恢复 `==`/`!=` 宽松比较覆盖（只认比较，不认集合定义）
+    const literalComparison = /(===|!==|==|!=)\s*1004[12]\b/
 
     it(`凭证码比较字面量 = ${KNOWN_CREDENTIAL_LITERAL_COMPARISONS} 处（新增即红；清理后须下调常量）`, () => {
         const { total, rows } = countCodeOccurrences(sources, literalComparison)

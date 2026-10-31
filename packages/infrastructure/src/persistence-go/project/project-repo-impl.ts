@@ -12,7 +12,7 @@ import type {
     ProjectRes,
     ResponseData
 } from '../models'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import {
     createProjectRes2Entity,
     createProjectValueObject2Req,
@@ -40,7 +40,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async get(id: string): GoAsync<ProjectEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/projects/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -63,7 +63,7 @@ export class ProjectRepoImpl implements ProjectRepository {
         const createRto = createProjectValueObject2Req(createVO)
         // 2. 调用接口
         const response = await this.requester.post('/projects/', createRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -86,7 +86,7 @@ export class ProjectRepoImpl implements ProjectRepository {
         const rto = updateProjectValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put(`/projects/${updateVO.id}`, rto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -105,7 +105,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async delete(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/projects/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -124,7 +124,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async restore(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.put(`/projects/restore/${id}`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -143,7 +143,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async archive(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.put(`/projects/archive/${id}`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -162,7 +162,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async unarchive(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.put(`/projects/unarchive/${id}`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -180,7 +180,7 @@ export class ProjectRepoImpl implements ProjectRepository {
     async list(): GoAsync<ProjectEntity[]> {
         // 1. 调用接口
         const response = await this.requester.get('/projects/', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 获取结果
         const res = response.data as ResponseData
@@ -205,7 +205,7 @@ export class ProjectRepoImpl implements ProjectRepository {
         const response = await this.requester.put(
             '/projects/',
             { projects: updateRtos },
-            { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
+            { headers: authHeaders() }
         )
         // 3. 判断结果
         const res = response.data as ResponseData

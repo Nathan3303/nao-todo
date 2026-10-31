@@ -1,7 +1,7 @@
 import type { TagEntity, TagRepository } from '@nao-todo/domain-tag'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import { CreateTagRes, ResponseData, TagRes } from '../models'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import {
     createTagRes2Entity,
     listTagRes2Entities,
@@ -28,7 +28,7 @@ export class TagRepoImpl implements TagRepository {
     async getById(id: string): GoAsync<TagEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/tags/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -49,7 +49,7 @@ export class TagRepoImpl implements TagRepository {
         const createRTO = tagEntity2CreateReq(createdEntity)
         // 2. 调用接口
         const response = await this.requester.post('/tags/', createRTO, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -70,7 +70,7 @@ export class TagRepoImpl implements TagRepository {
         const updateRTO = tagEntity2UpdateReq(updatedEntity)
         // 2. 调用接口
         const response = await this.requester.put(`/tags/${updatedEntity.id}`, updateRTO, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -89,7 +89,7 @@ export class TagRepoImpl implements TagRepository {
     async deleteById(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/tags/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -107,7 +107,7 @@ export class TagRepoImpl implements TagRepository {
     async list(): GoAsync<TagEntity[]> {
         // 1. 调用接口
         const response = await this.requester.get('/tags/', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 获取结果
         const res = response.data as ResponseData
@@ -126,7 +126,7 @@ export class TagRepoImpl implements TagRepository {
     async getByIds(ids: string[]): GoAsync<TagEntity[]> {
         // 1. 调用接口
         const response = await this.requester.get(`/tags/?ids=${ids.join(',')}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 获取结果
         const res = response.data as ResponseData
@@ -151,7 +151,7 @@ export class TagRepoImpl implements TagRepository {
         const response = await this.requester.put(
             '/tags/',
             { tags: updateRTO },
-            { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
+            { headers: authHeaders() }
         )
         // 3. 判断结果
         const res = response.data as ResponseData

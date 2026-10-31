@@ -20,7 +20,7 @@ import {
     userProfile2Entity,
     userSessionRes2ValueObject
 } from './converters'
-import { getJWTFromLocalStorage } from '../../utils'
+import { authHeaders } from '../../utils'
 
 /**
  * 用户仓库实现类
@@ -41,7 +41,7 @@ export class UserRepoImpl implements UserRepository {
     async getProfile(): GoAsync<UserEntity> {
         // 1. 调用接口
         const response = await this.requester.get('/user/profile', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -63,7 +63,7 @@ export class UserRepoImpl implements UserRepository {
         const updateRto = updateUserNicknameValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put('/user/nickname', updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -85,7 +85,7 @@ export class UserRepoImpl implements UserRepository {
         const updateRto = updateUserPasswordValueObject2Req(updateVO)
         // 3. 调用接口
         const response = await this.requester.put('/user/password', updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 4. 判断结果
         const res = response.data as ResponseData
@@ -105,7 +105,7 @@ export class UserRepoImpl implements UserRepository {
         const updateRto = { avatarURL: url }
         // 2. 调用接口
         const response = await this.requester.put('/user/avatar', updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -129,7 +129,7 @@ export class UserRepoImpl implements UserRepository {
         // 2. 调用接口
         const response = await this.requester.put('/user/avatar', formData, {
             headers: {
-                Authorization: `Bearer ${getJWTFromLocalStorage()}`,
+                ...authHeaders(),
                 'Content-Type': 'multipart/form-data'
             }
         })
@@ -150,7 +150,7 @@ export class UserRepoImpl implements UserRepository {
      */
     async deactive(deactiveVO: DeactiveUserValueObject): GoAsync<void> {
         const response = await this.requester.delete('/user/', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` },
+            headers: authHeaders(),
             data: { password: deactiveVO.password }
         })
         const res = response.data as ResponseData
@@ -171,7 +171,7 @@ export class UserRepoImpl implements UserRepository {
             '/user/restore',
             { password: restoreVO.password },
             {
-                headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+                headers: authHeaders()
             }
         )
         const res = response.data as ResponseData
@@ -189,7 +189,7 @@ export class UserRepoImpl implements UserRepository {
     async listSessions(): GoAsync<UserSessionValueObject[]> {
         // 1. 调用接口
         const response = await this.requester.get('/user/sessions', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -210,7 +210,7 @@ export class UserRepoImpl implements UserRepository {
     async signOutSession(sessionId: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/user/sessions/${sessionId}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果（10142：会话不存在或已下线，视为已下线成功，由前端刷新列表兜底）
         const res = response.data as ResponseData
@@ -229,7 +229,7 @@ export class UserRepoImpl implements UserRepository {
     async signOutOtherSessions(): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete('/user/sessions', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData

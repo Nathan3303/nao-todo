@@ -20,8 +20,15 @@ export interface LocaleMessages {
     'auth.signUp.loginLink': string
     'auth.signUp.goToLogin': string
     'auth.signUp.success': string
+    'auth.sessionEnd.expired': string
+    'auth.sessionEnd.signedInElsewhere': string
+    'auth.sessionEnd.ended': string
+    'auth.sessionEnd.dismiss': string
     'auth.checkIn.verifying': string
     'auth.checkIn.conflict': string
+    'auth.checkIn.conflictRevoked': string
+    'auth.checkIn.conflictConcurrent': string
+    'auth.checkIn.conflictExpired': string
     'auth.aside.tagline': string
 
     // Navigation

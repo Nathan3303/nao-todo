@@ -48,7 +48,9 @@ vi.mock('@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service', 
     cryptoService: { lock: mocks.lock }
 }))
 vi.mock('@nao-todo/infrastructure/src/persistence-local/session/local-session', () => ({
-    localSession: { clear: mocks.clearSession }
+    localSession: { clear: mocks.clearSession },
+    // T597 / W3：session-end 在清凭据**之前**解析 userId（广播载体）⇒ 模块面新增该导出（连带注册）
+    resolveUserIdFromStoredJwt: () => null
 }))
 vi.mock('@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service', () => ({
     deletionService: { wipeUserData: mocks.wipeUserData }

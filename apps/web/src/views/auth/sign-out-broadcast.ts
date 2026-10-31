@@ -1,6 +1,12 @@
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { useUserStore } from '@nao-todo/presentation-identity'
+import {
+    SESSION_END_CATEGORIES,
+    clearSessionEndReason,
+    writeSessionEndCategory,
+    type SessionEndCategory
+} from '@nao-todo/shared/requester/session-end-reason'
 import { safeReplace, type SafeNavigationRouter } from '@/safe-navigation'
 import { revokeOfflineEntry } from './offline-entry'
 
@@ -24,11 +30,16 @@ import { revokeOfflineEntry } from './offline-entry'
 /** 广播频道名（同 origin 多标签共享） */
 export const SIGN_OUT_BROADCAST_CHANNEL = 'nao-todo.sign-out'
 
-/** 广播消息（字段白名单；禁 PII：仅登出事件 + 发起者 id + 时间戳） */
+/**
+ * 广播消息（字段白名单；禁 PII：仅登出事件 + 发起者 id + 时间戳 + 可选的失效类别）
+ * @description `reason` **只在会话失效**时携带（类别枚举，见 `session-end-reason`），
+ *              接收标签据此显示**同一**登录页横幅（W3 / AC5）；主动登出**不带** ⇒ 接收方无横幅（R3）。
+ */
 export type SignOutBroadcastMessage = {
     type: 'sign-out'
     userId: string
     at: string
+    reason?: SessionEndCategory
 }
 
 /** `BroadcastChannel` 最小接口（便于测试注入与降级） */
@@ -63,18 +74,25 @@ export const isSignOutBroadcastMessage = (data: unknown): data is SignOutBroadca
     return record.type === 'sign-out' && typeof record.userId === 'string'
 }
 
+/** 从消息里取失效类别（未知 / 脏值 ⇒ `null` = 无类别） */
+const readReason = (message: SignOutBroadcastMessage): SessionEndCategory | null =>
+    SESSION_END_CATEGORIES.find((category) => category === message.reason) ?? null
+
 /**
  * 广播「本标签已登出」（在清库 + 清认证**之后**调用）
  * @param userId 发起登出的用户 id
+ * @param reason 失效类别（会话失效时携带；主动登出不传）
  */
-export const broadcastSignOut = (userId: string): void => {
+export const broadcastSignOut = (userId: string, reason?: SessionEndCategory): void => {
     const target = getChannel()
     if (!target) return
     try {
         target.postMessage({
             type: 'sign-out',
             userId,
-            at: new Date().toISOString()
+            at: new Date().toISOString(),
+            // 无类别时**不写该字段**（消息形状对主动登出保持不变）
+            ...(reason ? { reason } : {})
         } satisfies SignOutBroadcastMessage)
     } catch {
         /* 广播失败不得影响登出本身 */
@@ -82,12 +100,17 @@ export const broadcastSignOut = (userId: string): void => {
 }
 
 /**
- * 其它标签登出后本标签的反应：清 store + 跳登录页
+ * 其它标签登出后本标签的反应：清 store + 跳登录页（失效时同时落类别 ⇒ 同一横幅）
  * @description **不清库**（清库归发起标签且已过护栏）；导航失败由 `safeReplace` 结构化记录、不抛错。
+ *              无类别（主动登出）⇒ **清掉**残留类别：用户自己登出不得看到上一次的失效横幅（R3）。
+ *              接收侧永远**不再广播** ⇒ 无回环（AC5）。
  */
 export const applyRemoteSignOut = async (
-    router: SafeNavigationRouter | undefined
+    router: SafeNavigationRouter | undefined,
+    reason?: SessionEndCategory
 ): Promise<void> => {
+    if (reason) writeSessionEndCategory(reason)
+    else clearSessionEndReason()
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
     useUserStore().clearAuthData()
     localSession.clear()
@@ -106,7 +129,7 @@ export const installSignOutBroadcastListener = (
     if (!target) return () => {}
     const onMessage = (event: MessageEvent): void => {
         if (!isSignOutBroadcastMessage(event.data)) return
-        void applyRemoteSignOut(router)
+        void applyRemoteSignOut(router, readReason(event.data) ?? undefined)
     }
     target.addEventListener('message', onMessage)
     return () => target.removeEventListener('message', onMessage)

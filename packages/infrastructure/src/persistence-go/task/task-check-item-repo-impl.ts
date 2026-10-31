@@ -5,7 +5,7 @@ import {
     UpdateTaskCheckItemValueObject
 } from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import type { BatchUpdateTaskCheckItemRes, ResponseData, TaskCheckItemRes } from '../models'
 import {
     batchUpdateTaskCheckItemRes2Entities,
@@ -36,7 +36,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async get(id: string): GoAsync<TaskCheckItemEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/events/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -57,7 +57,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
         const createRto = createTaskCheckItemValueObject2Req(createVO)
         // 2. 调用接口
         const response = await this.requester.post('/events/', createRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -79,7 +79,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
         const updateRto = updateTaskCheckItemValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put(`/events/${id}`, updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -98,7 +98,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async delete(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/events/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -117,7 +117,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async list(taskId: string): GoAsync<TaskCheckItemEntity[]> {
         // 1. 调用接口
         const response = await this.requester.get(`/events/?taskId=${taskId}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -138,7 +138,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
         const updateRto = updateTaskCheckItemValueObjects2BatchUpdateReq(updateVOs)
         // 2. 调用接口
         const response = await this.requester.put('/events/', updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData

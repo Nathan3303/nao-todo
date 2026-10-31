@@ -12,6 +12,7 @@
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
 import { buildAuthHeaders } from '@nao-todo/shared/requester/auth-headers'
+import { isCredentialCode } from '@nao-todo/shared/requester/credential-codes'
 import {
     normalizeQuietHours,
     normalizeReminderSettings,
@@ -384,7 +385,7 @@ const pushUserConfig = async (
         )
         const { code, data, network } = readResponse(response)
         if (network) return { ok: false, errorClass: 'network' }
-        if (code === 10041) return { ok: false, errorClass: 'credential' }
+        if (isCredentialCode(code)) return { ok: false, errorClass: 'credential' }
         if (code !== USER_CONFIG_UPDATE_CODE) return { ok: false, errorClass: 'business' }
         const serverUpdatedAt = (data as { updatedAt?: string } | undefined)?.updatedAt
         return { ok: true, serverUpdatedAt }
@@ -416,7 +417,7 @@ const pushProjectPreference = async (
         )
         const { code, data, network } = readResponse(response)
         if (network) return { ok: false, errorClass: 'network' }
-        if (code === 10041) return { ok: false, errorClass: 'credential' }
+        if (isCredentialCode(code)) return { ok: false, errorClass: 'credential' }
         if (code !== PROJECT_PREFERENCE_SAVE_CODE) return { ok: false, errorClass: 'business' }
         // §9.4.1：服务端响应回传权威 `updatedAt`（T163 additive）⇒ 落该行 per-row 版本基线
         const serverUpdatedAt = (data as { updatedAt?: string } | undefined)?.updatedAt
@@ -449,7 +450,7 @@ const pushTagPreference = async (requester: Requester, tagId: string): Promise<P
         )
         const { code, data, network } = readResponse(response)
         if (network) return { ok: false, errorClass: 'network' }
-        if (code === 10041) return { ok: false, errorClass: 'credential' }
+        if (isCredentialCode(code)) return { ok: false, errorClass: 'credential' }
         if (code !== TAG_PREFERENCE_SAVE_CODE) return { ok: false, errorClass: 'business' }
         // 服务端当前 `POST /tags/:tagId/preference` 不回 `updatedAt`（Data = tagId）⇒ 仅在回传时落基线，
         // 否则由读时对账刷新（§9.4.1；无需服务端增量）
@@ -536,7 +537,7 @@ export const pullAndMergeUserConfig = async (
         const response = await requester.get('/user/config', { headers: authHeaders() })
         const { code, data, network } = readResponse(response)
         if (network) return
-        if (code === 10041) {
+        if (isCredentialCode(code)) {
             context.onSessionExpired?.()
             return
         }

@@ -7,7 +7,7 @@ import type {
 } from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import type { ListTaskRes, ResponseData, TaskRes } from '../models'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import {
     createTaskValueObject2Req,
     listTaskRes2TaskEntities,
@@ -33,7 +33,7 @@ export class TaskRepoImpl implements TaskRepository {
     async get(id: string): GoAsync<TaskEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/tasks/${id}?isDeleted=true`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -56,7 +56,7 @@ export class TaskRepoImpl implements TaskRepository {
         const createTaskReq = createTaskValueObject2Req(createVO)
         // 2. 调用接口
         const response = await this.requester.post(`/tasks/`, createTaskReq, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -78,7 +78,7 @@ export class TaskRepoImpl implements TaskRepository {
         const updateTaskReq = updateTaskValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put(`/tasks/${id}`, updateTaskReq, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -97,7 +97,7 @@ export class TaskRepoImpl implements TaskRepository {
     async remove(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/tasks/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -116,7 +116,7 @@ export class TaskRepoImpl implements TaskRepository {
     async restore(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.put(`/tasks/restore/${id}`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -137,7 +137,7 @@ export class TaskRepoImpl implements TaskRepository {
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
         // 1. 调用接口
         const response = await this.requester.get(`/tasks/?${queryString}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -162,7 +162,7 @@ export class TaskRepoImpl implements TaskRepository {
     async copy(id: string): GoAsync<TaskEntity> {
         // 1. 调用接口
         const response = await this.requester.post(`/tasks/copy/${id}`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -184,7 +184,7 @@ export class TaskRepoImpl implements TaskRepository {
         const response = await this.requester.post(
             `/tasks/${id}/snooze`,
             { durationMinutes },
-            { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
+            { headers: authHeaders() }
         )
         // 2. 判断结果
         const res = response.data as ResponseData

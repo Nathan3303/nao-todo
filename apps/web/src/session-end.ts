@@ -17,18 +17,31 @@
  *    `unlock-gate` / 桌面 `binding`）；
  * 3. 本模块**不得**触碰业务数据与密钥包（`D2` 矩阵：留 11 表、留密钥包）。
  *
- * 四路复用：axios 请求器 / 后台同步 / 常驻续期 / 跨标签广播 均收敛到 `handleSessionEnd`。
+ * 路数：**3 路**发布方（axios 请求器 / 后台同步 / 常驻续期）+ **1 路**跨标签广播（收广播的标签
+ * 只清认证、不回广播）均收敛到 `handleSessionEnd`。
+ *
+ * W3（`DEF-92` / ADR D5）：失效类别在**清凭据之前**按本地证据推断（JWT `exp`），落
+ * `sessionStorage`（只存类别枚举），供共享登录页组件 `sign-in.vue` 渲染顶部横幅。
  *
  * @see docs/adr/2026-10-31-credential-coherence.md（D1 / D2 / D4 / D6）
  */
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@nao-todo/presentation-identity'
+import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
-import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import {
+    localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { resetTokenRotation } from '@nao-todo/shared/requester/auth-rotation'
 import { onAuthExpiry, type AuthExpiryReason } from '@nao-todo/shared/requester/auth-expiry'
+import {
+    inferSessionEndCategory,
+    writeSessionEndCategory
+} from '@nao-todo/shared/requester/session-end-reason'
 import { safeReplace, type SafeNavigationRouter } from '@/safe-navigation'
 import { revokeOfflineEntry } from '@/views/auth/offline-entry'
+import { broadcastSignOut } from '@/views/auth/sign-out-broadcast'
 
 /** 显式绑定的 router（装配面在入口处绑定；组件内兜底用 `useRouter`） */
 let boundRouter: SafeNavigationRouter | undefined
@@ -73,18 +86,27 @@ export type SessionEndOptions = {
 }
 
 /**
- * 处理一次会话结束（清矩阵 + 回登录页）
+ * 处理一次会话结束（推断类别 + 清矩阵 + 广播 + 回登录页）
  * @description **幂等**由事件单例的单闩保证（`fireAuthExpiry` 只投递一次）；
  *              直接调用本函数不做二次去重（测试与装配面需要可重复驱动）。
- * @param _reason 失效类别（W3 横幅消费；本批只承接、不落存储）
+ *              顺序硬约束：**先推断类别（需要 token）→ 落 `sessionStorage` → 清凭据
+ *              → 广播（其它标签据此显示同一横幅）→ 导航**；颠倒任一步都会让横幅丢类别。
+ * @param reason 失效类别（发布方给的占位值；未知 ⇒ 通用兜底）
  * @param options router / 导航标记覆盖（跨标签接收方复用本单点）
  */
 export const handleSessionEnd = async (
-    _reason?: AuthExpiryReason,
+    reason?: AuthExpiryReason,
     options?: SessionEndOptions
 ): Promise<void> => {
     const router = options?.router ?? resolveRouter()
+    const token =
+        typeof localStorage === 'undefined' ? null : localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
+    const category = inferSessionEndCategory(reason, token)
+    writeSessionEndCategory(category)
+    const userId = resolveUserIdFromStoredJwt()
     clearSessionCredentials()
+    // W3/AC5：其它标签据此回登录页并显示**同一**类别（主动登出不走本函数 ⇒ 不给横幅）
+    broadcastSignOut(userId ?? '', category)
     await safeReplace(router, '/auth/signin', options?.navigationTag ?? 'session-end:navigation')
 }
 

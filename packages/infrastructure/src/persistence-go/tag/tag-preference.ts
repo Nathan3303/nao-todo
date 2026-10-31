@@ -1,6 +1,6 @@
 import { TagPreferenceEntity, TagPreferenceRepository } from '@nao-todo/domain-tag'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import { ResponseData, TagPreferenceRes } from '../models'
 import {
     defaultTagPreferenceRes2Entity,
@@ -26,7 +26,7 @@ export class TagPreferenceRepoImpl implements TagPreferenceRepository {
     async get(id: string): GoAsync<TagPreferenceEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/tags/${id}/preference`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 获取
         const res = response.data as ResponseData
@@ -48,7 +48,7 @@ export class TagPreferenceRepoImpl implements TagPreferenceRepository {
         const rto = tagPreferenceEntity2UpdateReq(updatedEntity)
         // 2. 调用接口
         const response = await this.requester.post(`/tags/${updatedEntity.tagId}/preference`, rto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData

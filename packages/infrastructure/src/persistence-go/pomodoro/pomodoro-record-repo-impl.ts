@@ -17,7 +17,7 @@ import {
     PomodoroRecordEntity,
     type PomodoroRecordRepository
 } from '@nao-todo/domain-pomodoro'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 
 /**
  * 番茄专注记录操作仓库实现
@@ -37,7 +37,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
     async get(id: string): GoAsync<PomodoroRecordEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/pomodoro-records/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -58,7 +58,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
         const createRto = createPomodoroRecordValueObjectToReq(createVO)
         // 2. 调用接口
         const response = await this.requester.post('/pomodoro-records/', createRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -81,7 +81,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
     ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: Pagination }> {
         // 1. 调用接口
         const response = await this.requester.get(`/pomodoro-records/?${queryString ?? ''}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
