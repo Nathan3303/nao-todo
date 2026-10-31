@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
@@ -123,9 +123,9 @@ const submit = async (e: Event) => {
         <nue-footer>
             <nue-text align="center">
                 {{ t('auth.signUp.hasAccount') }}
-                <nue-link :route="authLinkRoute('/auth/signin')">{{
+                <router-link class="nue-link auth-link" :to="authLinkRoute('/auth/signin')">{{
                     t('auth.signUp.loginLink')
-                }}</nue-link>
+                }}</router-link>
                 {{ t('auth.signUp.goToLogin') }}
             </nue-text>
         </nue-footer>
@@ -133,6 +133,20 @@ const submit = async (e: Event) => {
 </template>
 
 <style scoped>
+/* 互链：原生 router-link（DEF-116 规避：nue-link 的 route 分支在本版本不出 href）+ 既有主题色 */
+.auth-link {
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+.auth-link:focus-visible {
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
+}
+
 .nue-container--sign-up {
     align-items: center;
     justify-content: center;

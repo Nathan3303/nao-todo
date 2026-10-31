@@ -73,4 +73,32 @@ export const resetCheckInWindow = (): void => {
     inFlight = 0
     planned = 0
     currentPlanClose = null
+    conflictStreak = 0
+    lastConflictAt = 0
+}
+
+/* —— 检入冲突连续计数（`DEF-119`：区分「并发检入」与「他端改密」） —— */
+
+/** 冲突「短时」窗口（ms）：窗口内连续两次 `10022` 更像并发检入，而非密码被改 */
+export const CHECK_IN_CONFLICT_STREAK_WINDOW_MS = 60_000
+
+/** 窗口内的连续冲突次数（两次间隔超过窗口 ⇒ 重新从 1 计） */
+let conflictStreak = 0
+let lastConflictAt = 0
+
+/**
+ * 记一次检入冲突（`10022`）
+ * @description 判据（ADR / PRD AC7）：**同一个检入页生命周期内、窗口内的第二（及以后）次冲突**
+ *              一律按「并发检入」看待 ⇒ 文案不夸大为「密码被改」、主动作回到「重试」。
+ *              ⛔ 不参与会话失效判据（`10022` 永远不是登出理由，T558 R1 不回归）。
+ * @param now 当前时间（ms；仅测试注入）
+ * @returns 窗口内的连续冲突次数（首次 = 1）
+ */
+export const markCheckInConflict = (now: number = Date.now()): number => {
+    conflictStreak =
+        lastConflictAt > 0 && now - lastConflictAt <= CHECK_IN_CONFLICT_STREAK_WINDOW_MS
+            ? conflictStreak + 1
+            : 1
+    lastConflictAt = now
+    return conflictStreak
 }

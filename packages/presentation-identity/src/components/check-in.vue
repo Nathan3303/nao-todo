@@ -11,7 +11,12 @@
 import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
 import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
-import { closeCheckInPlan, openCheckInPlan } from '@nao-todo/shared/requester/checkin-window'
+import {
+    closeCheckInPlan,
+    markCheckInConflict,
+    openCheckInPlan
+} from '@nao-todo/shared/requester/checkin-window'
+import { isJwtExpired } from '@nao-todo/shared/requester/session-end-reason'
 import { onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
@@ -32,6 +37,14 @@ const route = useRoute()
 const loading = ref(true)
 const failed = ref(false)
 const errorMessage = ref('')
+
+/**
+ * 失败态主动作（`DEF-119`）
+ * @description 主按钮必须与**真实概率**一致（R3）：
+ *              - `signIn`：「重新登录」为主（他端改密 / 会话已过期 ⇒ 重试无意义）；
+ *              - `retry`：「重试」为主（网络/业务类、短时并发冲突、原因不明）。
+ */
+const primaryAction = ref<'retry' | 'signIn'>('retry')
 
 /**
  * 待执行检入计划窗口（T558 R3）
@@ -60,9 +73,26 @@ const checkIn = async (): Promise<void> => {
     loading.value = false
     // T558 R1：检入冲突（`10022`）是「可重试」而非「会话失效」⇒ 显式可重试出口
     // （锦上添花：不清凭证、不回登录页；失败态自带「重试」+「重新登录」两个可前进动作）
+    // DEF-119：同一冲突码的原因分类 —— token 已过期 ⇒ 过期语义；未过期且首次 ⇒ 密码可能在他端被改；
+    //          短时连续冲突 ⇒ 更像并发检入（主次回到「重试」，文案不夸大为「密码被改」）。
     if (isRetryableCheckInConflict(err)) {
+        const streak = markCheckInConflict()
+        const expired = isJwtExpired(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY))
         failed.value = true
-        errorMessage.value = t('auth.checkIn.conflict')
+        if (expired === true) {
+            errorMessage.value = t('auth.checkIn.conflictExpired')
+            primaryAction.value = 'signIn'
+        } else if (expired === false && streak === 1) {
+            errorMessage.value = t('auth.checkIn.conflictRevoked')
+            primaryAction.value = 'signIn'
+        } else if (expired === false) {
+            errorMessage.value = t('auth.checkIn.conflictConcurrent')
+            primaryAction.value = 'retry'
+        } else {
+            // 无 token / token 不可解析 ⇒ 不猜原因，保持原通用文案与「重试」为主
+            errorMessage.value = t('auth.checkIn.conflict')
+            primaryAction.value = 'retry'
+        }
         return
     }
     const message = unwrapError(err)
@@ -73,6 +103,7 @@ const checkIn = async (): Promise<void> => {
     }
     // 网络类/其它：可重试失败态（不跳 signin）
     failed.value = true
+    primaryAction.value = 'retry'
     errorMessage.value = message
 }
 
@@ -91,10 +122,23 @@ void checkIn()
         <nue-main v-else-if="failed">
             <nue-div vertical align="center" gap="0.75rem">
                 <nue-text size="var(--nue-text-sm)">{{ errorMessage }}</nue-text>
-                <nue-button theme="primary" @click="checkIn">{{ t('common.retry') }}</nue-button>
-                <nue-button size="small" theme="pure" @click="goSignIn">
-                    {{ t('gate.signInAgain') }}
-                </nue-button>
+                <!-- 主次按真实概率排列（DEF-119）；DOM 顺序 = 用户看到的主次 -->
+                <template v-if="primaryAction === 'signIn'">
+                    <nue-button theme="primary" @click="goSignIn">
+                        {{ t('gate.signInAgain') }}
+                    </nue-button>
+                    <nue-button size="small" theme="pure" @click="checkIn">
+                        {{ t('common.retry') }}
+                    </nue-button>
+                </template>
+                <template v-else>
+                    <nue-button theme="primary" @click="checkIn">
+                        {{ t('common.retry') }}
+                    </nue-button>
+                    <nue-button size="small" theme="pure" @click="goSignIn">
+                        {{ t('gate.signInAgain') }}
+                    </nue-button>
+                </template>
             </nue-div>
         </nue-main>
     </nue-container>

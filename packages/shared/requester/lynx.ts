@@ -1,4 +1,5 @@
 import type { Requester, RequesterConfig, RequesterOpRtn } from './types'
+import { isCredentialCode } from './credential-codes'
 
 /**
  * 设备 ID
@@ -106,7 +107,7 @@ export const useLynxRequester = (
         }
 
         // 凭证失效（code 10041：被下线/被顶号/会话过期）：触发应用层登出回调（仅一次）
-        if ((body as { code?: number } | null)?.code === 10041) {
+        if (isCredentialCode((body as { code?: number } | null)?.code)) {
             notifyAuthExpired()
         }
 

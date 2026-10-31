@@ -6,7 +6,7 @@ import {
     UpdatePomodoroValueObject
 } from '@nao-todo/domain-pomodoro'
 import type { Requester, GoAsync } from '@nao-todo/shared'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import { CreatePomodoroRes, ListPomodoroRes, PomodoroRes, ResponseData } from '../models'
 import {
     createPomodoroRes2Entity,
@@ -33,7 +33,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
      */
     async get(id: string): GoAsync<PomodoroEntity> {
         const response = await this.requester.get(`/pomodoros/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         if (res.code !== 70040) {
@@ -50,7 +50,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
     async create(createVO: CreatePomodoroValueObject): GoAsync<PomodoroEntity> {
         const createRto = createPomodoroValueObject2Req(createVO)
         const response = await this.requester.post('/pomodoros/', createRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         if (res.code !== 70050) {
@@ -67,7 +67,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
     async update(updateVO: UpdatePomodoroValueObject): GoAsync<void> {
         const updateRto = UpdatePomodoroValueObject2Req(updateVO)
         const response = await this.requester.put(`/pomodoros/${updateVO.id}`, updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         return res.code !== 70060 ? res.message : null
@@ -80,7 +80,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
      */
     async delete(id: string): GoAsync<void> {
         const response = await this.requester.delete(`/pomodoros/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         return res.code !== 70100 ? res.message : null
@@ -93,7 +93,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
      */
     async archived(id: string): GoAsync<void> {
         const response = await this.requester.put(`/pomodoros/${id}/archived`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         return res.code !== 70070 ? res.message : null
@@ -106,7 +106,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
      */
     async unarchived(id: string): GoAsync<void> {
         const response = await this.requester.put(`/pomodoros/${id}/unarchived`, null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         return res.code !== 70080 ? res.message : null
@@ -121,7 +121,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
         queryString?: string
     ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: Pagination }> {
         const response = await this.requester.get(`/pomodoros/?${queryString ?? ''}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as ResponseData
         if (res.code !== 70090) {

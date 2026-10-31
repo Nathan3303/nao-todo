@@ -23,8 +23,19 @@ const enUS: LocaleMessages = {
     'auth.signUp.loginLink': 'Sign In',
     'auth.signUp.goToLogin': '',
     'auth.signUp.success': 'Registration successful',
+    // Session-end notice (W3 / DEF-92)
+    'auth.sessionEnd.expired': 'Your session has expired. Please sign in again.',
+    'auth.sessionEnd.signedInElsewhere':
+        'Your account was signed in on another device. Please sign in again.',
+    'auth.sessionEnd.ended': 'Your session has ended. Please sign in again.',
+    'auth.sessionEnd.dismiss': 'Dismiss notice',
     'auth.checkIn.verifying': 'Verifying user credentials...',
     'auth.checkIn.conflict': 'Verification did not complete. Please try again.',
+    'auth.checkIn.conflictRevoked':
+        'Your password may have been changed on another device, so this session is no longer valid. Please sign in again.',
+    'auth.checkIn.conflictConcurrent':
+        'Verification did not complete several times in a row. Please try again in a moment.',
+    'auth.checkIn.conflictExpired': 'Your session has expired. Please sign in again.',
     'auth.aside.tagline':
         'Effortlessly manage your daily tasks and stay productive with a smart to-do list app tailored just for you!',
 

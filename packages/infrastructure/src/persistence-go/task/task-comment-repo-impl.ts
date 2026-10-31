@@ -5,7 +5,7 @@ import {
     UpdateTaskCommentValueObject
 } from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 import {
     createTaskCommentRes2Entity,
     createTaskCommentValueObject2Req,
@@ -33,7 +33,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
     async get(id: string): GoAsync<TaskCommentEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/comments/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -54,7 +54,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
         const createRto = createTaskCommentValueObject2Req(createVO)
         // 2. 调用接口
         const response = await this.requester.post('/comments/', createRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -76,7 +76,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
         const updateRto = updateTaskCommentValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put(`/comments/${updateVO.id}`, updateRto, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -95,7 +95,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
     async delete(id: string): GoAsync<void> {
         // 1. 调用接口
         const response = await this.requester.delete(`/comments/${id}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -114,7 +114,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
     async list(taskId: string): GoAsync<TaskCommentEntity[]> {
         // 1. 调用接口
         const response = await this.requester.get(`/comments/?taskId=${taskId}`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 判断结果
         const res = response.data as ResponseData

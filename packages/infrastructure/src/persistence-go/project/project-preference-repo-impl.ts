@@ -2,7 +2,7 @@ import { ProjectPreferenceEntity, ProjectPreferenceRepository } from '@nao-todo/
 import type { Requester, GoAsync } from '@nao-todo/shared'
 import { defaultProjectPreferenceRes2Entity, projectPreferenceRes2Entity } from './converters'
 import { ProjectPreferenceRes, ResponseData } from '../models'
-import { getJWTFromLocalStorage } from '../utils'
+import { authHeaders } from '../utils'
 
 /**
  * 项目偏好仓库实现
@@ -23,7 +23,7 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
     async getByProjectId(projectId: string): GoAsync<ProjectPreferenceEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/projects/${projectId}/preference`, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         // 2. 获取结果
         const res = response.data as ResponseData
@@ -51,7 +51,7 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
         const response = await this.requester.post(
             `/projects/${updatedEntity.projectId}/preference`,
             saveRto,
-            { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
+            { headers: authHeaders() }
         )
         // 3. 判断结果
         const res = response.data as ResponseData

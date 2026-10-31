@@ -11,6 +11,10 @@ import {
 } from '@nao-todo/shared/constants/storage-keys'
 import { REMINDER_SETTINGS_STORAGE_KEY } from '@nao-todo/shared/reminder'
 import {
+    SESSION_END_REASON_DISMISSED_KEY,
+    SESSION_END_REASON_KEY
+} from '@nao-todo/shared/requester/session-end-reason'
+import {
     SERVER_TIME_OFFSET_KEY,
     SNOWFLAKE_EPOCH_KEY,
     SNOWFLAKE_MACHINE_ID_KEY
@@ -75,6 +79,17 @@ export const USER_SCOPED_STORAGE_KEYS: readonly string[] = [
     'LAST_TASKS_ROUTE',
     // calendar 分区上次路由
     'LAST_CALENDAR_ROUTE'
+]
+
+/**
+ * 身份/会话级 **sessionStorage** 键（**必清**，D2 / D5 W3）
+ * @description 与 `USER_SCOPED_STORAGE_KEYS` **同口径登记**（身份/会话级数据、登出即清），
+ *              但生命周期不同（关标签即清、刷新仍在）⇒ 单独成表，不混进 localStorage 名单。
+ *              当前只有会话结束横幅的类别与其「已关闭」标记（值只存类别枚举，无凭据）。
+ */
+export const USER_SCOPED_SESSION_STORAGE_KEYS: readonly string[] = [
+    SESSION_END_REASON_KEY,
+    SESSION_END_REASON_DISMISSED_KEY
 ]
 
 /** 身份/会话级 localStorage 键前缀（**必清**，前缀匹配） */

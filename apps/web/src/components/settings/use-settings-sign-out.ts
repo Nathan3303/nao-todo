@@ -5,6 +5,7 @@ import { NueConfirm, NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/shared/locales'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { isNetworkError } from '@nao-todo/domain-identity'
+import { clearSessionEndReason } from '@nao-todo/shared/requester/session-end-reason'
 import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
     localSession,
@@ -49,6 +50,8 @@ export const useSettingsSignOut = () => {
         userStore.clearAuthData()
         localSession.clear()
         cryptoService.lock()
+        // W3（AC4）：主动登出 ≠ 会话失效 ⇒ 清掉上一次的失效类别（下次登录页不得误报「已过期」）
+        clearSessionEndReason()
         // AC16b：本标签登出已完成（清库已过 C-54 护栏 + 清认证）⇒ 通知其它标签清 store + 跳登录页
         if (userId) broadcastSignOut(userId)
         // 远程登出（撤销服务端会话）：本地登出已完成 ⇒ 传输层失败不阻断、不弹错误封锁；
