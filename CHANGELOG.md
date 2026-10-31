@@ -2,6 +2,19 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.0] - 2026-10-31
+
+看板按优先级分组批次：**看板可按优先级分组并拖拽改优先级 + 「已归档」入口键盘可达**（`DEF-114/124/125` 修复 · Issue #303 · PR #304 · PRD `docs/prds/2026-10-31-kanban-priority-grouping.md` · 发版说明 `docs/releases/v1.16.0.md`）：
+
+- **`DEF-114` 分组真正接线（AC1–AC4）**：看板顶部工具栏新增「按状态 / 按优先级」分段切换（默认 `state`，**不持久化**，刷新回默认）；`getKanbanColumns(groupBy)` 真正可切换（此前唯一调用点无参 ⇒ 恒 `state`、用户侧零入口）。列头按分组渲染（priority ⇒ `TaskPriorityInfo` 四档优先级标签）、列过滤按分组分流、拖拽 `payload` 由分组决定 —— **priority 分组 `Object.keys(payload)` 恰为 `['priority']`，state 分组恰为 `['state']`**（杜绝交叉写；修掉「拖到「紧急」列把 `state` 写成 `'urgent'` 非法值」的核心 bug）。未知/空优先级落「低」列，**读取归类、写入才归一**（不改写库里原值）。新增 **3 个 i18n 键**（`task.kanban.groupByLabel` / `groupByState` / `groupByPriority`，zh/en 同步）。
+- **单一来源（`DESIGN.md §4.5`）**：`segmented-switch.vue` 从 `apps/web/.../calendar/` 迁至 `packages/shared/components/segmented-switch/`（`git` 判 `R096`，全文件差异仅 2 行：显式 `import { NueButton, NueButtonGroup }` + `defineOptions` 名）。**4 个调用方**（日历视图切换 / 周起始 / 设置窄屏分类 / 看板分组）共用同一组件；3 个既有测试仅改路径字面量（断言 0 改动）；`§4.5` 文档指针同步。
+- **`DEF-124`**：「已归档」入口由无 `href` 的 `<a>`（键盘不可达）改为原生 `<button>`，内部图标/文本结构与 `NueLink` 逐项一致（无 UA 按钮外观残留）；`open(PROJECT_MANAGER_DIALOG_KEY, { activeTab: 'archived' })` 恰 1 次、路由不变，点击行为与鼠标一致。
+- **`DEF-125` 判据死件（成对删除）**：`parseTaskPriorityBackward` + `prioritySNMapReverse` 一并删除（非测试非声明 0 引用）⇒ 优先级只剩一份权威定义。
+- **门禁**：`vp check` rc=0（1769 格式 / 1442 文件 0 error）· 全仓 **327 文件 / 2754 例 / 0 红** · 五守卫 rc=0 · `webapp build` / `desktop:build` rc=0 · 移动端红线 **0 行** · **变异 6+1 处**全部按预期转红并还原（含「改分段件样式值 ⇒ calendar/settings 既有 `?raw` 守卫必须红」，证明搬迁后守卫非空转）。
+- **Tag `v1.16.0`** · root / `apps/web` / `apps/desktop` `1.15.2 → 1.16.0`（MINOR，含新能力）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.16.0.md`。
+- **关闭**：`DEF-114` · `DEF-124` · `DEF-125`。
+- **转办（本版不含）**：`DEF-115`（移动端 `urgent` 优先级未识别，需移动端授权）· 上游 `nue-ui#108`。
+
 ## [v1.15.2] - 2026-10-31
 
 导航可访问性规避批次：**侧栏导航可用键盘与新标签打开 + 会话边界单一清理**（`DEF-116/123/113` 修复 · Issue #300 · PR #301 · PRD `docs/prds/2026-10-31-nav-a11y-and-cleanup.md` · 发版说明 `docs/releases/v1.15.2.md`）：
