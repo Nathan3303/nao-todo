@@ -37,6 +37,3 @@ export const stateSNMapReverse = [null, 'todo', 'in-progress', 'done']
 
 // 待办事项优先级序列号映射
 export const prioritySNMap = { low: 1, medium: 2, high: 3, urgent: 4 }
-
-// 待办事项优先级选项的反向映射
-export const prioritySNMapReverse = [null, 'low', 'medium', 'high', 'urgent']
