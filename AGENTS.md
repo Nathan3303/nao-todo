@@ -105,7 +105,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 ## nao 舰队接入（2026-09-21）
 
 > 只写「在哪里」；角色级/团队级内容不复制到此处，留在 `$NAO_SKILLS/.agents/`。
-> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**（当前 **0.20.0**）。
+> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**（当前 **0.20.1**）。
 > **运行前提（0.19.0 起，破坏性）**：`ensure` / `status` / `close` **只接受 tmux 会话内**且 **`pi ≥ 1.4.0`**（非 tmux ⇒ `exit 3` + 一行提示 `tmux new -s nao`，不建 session/pane）；旧的终端窗口 / `--background` / screen 多宿主阶梯已删除（ADR `2026-10-27-strict-tmux-pi`）。旧版用 `--background` / screen 拉起的会话 `status` 看不到、`close` 收不回 ⇒ 先 `screen -ls` 手工清一次。
 
 ### 角色与流程（指针）
@@ -154,6 +154,6 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 
 - **移动端红线**：`packages/presentation-react` 与 `apps/mobile` 不随桌面端 / Web 需求改动，除非用户明确授权
 - 服务端契约（如分页稳定排序）不得为展示层需求擅动
-- **流程（2026-09-24 用户启用）：GitHub flow** —— 一个需求 = 一个 **Issue** + 一条分支 `feat/<issue-id>-<slug>` + 一个 **PR**（**squash 合并**，main 上 1 条 = 1 需求）；**`main` 为始终可发布的主干**；**合并由 RD 在 PR 上执行**，**PM 不亲自合并、不 `push` main**（PM 只验收授权 + 发布）；**tag 指向 main 的合并提交**；Issue 只放 TL;DR/AC/优先级/`docs/` 指针（**正文权威在 docs，禁双源**）；细则 `$NAO_SKILLS/.agents/skills/github-flow.md`，运行时状态见 `docs/tasks-state.md`「需求分支 / PR / 发布」。**唯一例外（须登记白名单）**：历史积压追平的 baseline 合并可用 **merge commit**（一次性），其后严格 squash；无 `gh`/无远端时按该技能「降级」表执行并在台账标注。
+- **流程（2026-09-24 用户启用）：GitHub flow** —— 一个需求 = 一个 **Issue** + 一条分支 `feat/<issue-id>-<slug>` + 一个 **PR**（**squash 合并**，main 上 1 条 = 1 需求）；**`main` 为始终可发布的主干**；**合并由 RD 在 PR 上执行**，**PM 不亲自合并、不 `push` main**（PM 只验收授权 + 发布）；**tag 指向 main 的合并提交**；Issue 只放 TL;DR/AC/优先级/`docs/` 指针（**正文权威在 docs，禁双源**）；**文档与台账随任务 PR**（PRD 定稿 / 报告 / ADR / `tasks-state` / 索引 / release notes 与实现同属**一条** PR，**禁为文档单开 PR**、禁任务期文档独立直落 main；例外仅立项摘要三条件 —— BR1–BR6 见 `github-flow.md`「文档与台账载体」）；细则 `$NAO_SKILLS/.agents/skills/github-flow.md`，运行时状态见 `docs/tasks-state.md`「需求分支 / PR / 发布」。**唯一例外（须登记白名单）**：历史积压追平的 baseline 合并可用 **merge commit**（一次性），其后严格 squash；无 `gh`/无远端时按该技能「降级」表执行并在台账标注。
 
 <!-- NAO FLEET END -->

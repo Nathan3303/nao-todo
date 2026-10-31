@@ -2,6 +2,10 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## 机制变更（无版本号） - 2026-10-31
+
+**nao 机制包升级 `@nathan33/nao-skill` `0.20.0 → 0.20.1`**（`M20261031-nao-skill-0201`）：仅机制包与版本标记，**无源码 / 测试 / 构建配置变化**。执行链路：`pi install -l --approve npm:@nathan33/nao-skill@0.20.1`（改 `.pi/settings.json` pin + 物化 `.pi/npm`，`found 0 vulnerabilities`）→ `nao-skill init . --verbose`（幂等，**`shim same`**，转发入口零变更）→ `.agents/.nao-version` 写为 `0.20.1`。**体检**：`check: OK · roles=6 · files=50` + 第二行 `✓ codegraph 齐备`（文件数与 0.20.0 相同 —— 本版**无新增 / 删除机制文件**，仅 4 个文件内容变更）。**上游行为变化（本版唯一主题 = 文档随任务 PR）**：① `skills/github-flow.md` 新增「文档与台账载体（一任务一 PR）」**BR1–BR6**（84 → 100 行）—— 一个任务 PR = 全量改动（实现 / 测试 / PRD 定稿 / 报告 / ADR / `tasks-state` / `followups` / 索引 / release notes）；**禁为文档单开 PR、禁任务期文档独立直落 main**（例外仅 BR3 立项摘要三条件：仅摘要三要素 · 单条 `docs(<编号>):` 提交 · 不与其它改动混提；**降级批次无例外**）；批间收尾事实随**发布提交**一并带走（BR5）· ② 八阶段表逐行标注文档载体（阶段 1/2/4/5 产出列 + 阶段 6/7/8 说明）· ③ 角色卡 PM **v28 → v29**（`prompts/product-manager.md` +1 净行：合并闸门补「文档随任务 PR」；配套红线 **33 → 34**、交付清单 **41 → 42**，`checklists/pm.md` +2 净行）· ④ `package.json` 仅版本号。**未变**：`roles.yaml` · `nao-fleet.sh`（shim 文本一致）· `skills/codegraph.md` · `skills/task-completion.md` · 其余 5 张角色卡 · `README.md`。**无破坏性变更**（不需改项目侧配置 / 脚本）。**生效注意**：角色卡与 skills 为**启动期注入、不热更** ⇒ 新纪律在下次 `ensure` / 会话重开时进上下文；生效前按本条与 `docs/tasks-state.md` 记载执行。
+
 ## [v1.14.1] - 2026-10-31
 
 任务优先级新增「紧急」档：**`DEF-84` 修复（客户端识别并展示 `urgent`）**（`T584` · Issue #287 · PR #288 · PRD `docs/prds/2026-10-30-priority-urgent.md` · 复验报告 `docs/reports/2026-10-31-T584-def84-verification.md`）：
