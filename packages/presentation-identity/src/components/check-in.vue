@@ -14,7 +14,8 @@ import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import {
     closeCheckInPlan,
     markCheckInConflict,
-    openCheckInPlan
+    openCheckInPlan,
+    resetCheckInConflictStreak
 } from '@nao-todo/shared/requester/checkin-window'
 import { isJwtExpired } from '@nao-todo/shared/requester/session-end-reason'
 import { onUnmounted, ref } from 'vue'
@@ -39,10 +40,11 @@ const failed = ref(false)
 const errorMessage = ref('')
 
 /**
- * 失败态主动作（`DEF-119`）
+ * 失败态主动作（`DEF-119` / T599 `F4`）
  * @description 主按钮必须与**真实概率**一致（R3）：
- *              - `signIn`：「重新登录」为主（他端改密 / 会话已过期 ⇒ 重试无意义）；
- *              - `retry`：「重试」为主（网络/业务类、短时并发冲突、原因不明）。
+ *              - `signIn`：「重新登录」为主 —— 检入冲突（`10022`，**恒为主**，不随次数降级）
+ *                与 token 已过期（重试无意义）；
+ *              - `retry`：「重试」为主 —— 网络类 / 其他可重试失败。
  */
 const primaryAction = ref<'retry' | 'signIn'>('retry')
 
@@ -52,7 +54,11 @@ const primaryAction = ref<'retry' | 'signIn'>('retry')
  *              **幂等兜底**（组件被直接挂载/单测场景）。窗口生命周期 = 检入落定 或 本页卸载。
  */
 openCheckInPlan()
-onUnmounted(() => closeCheckInPlan())
+onUnmounted(() => {
+    closeCheckInPlan()
+    // T599：冲突计数属本页生命周期 ⇒ 离开即复位
+    resetCheckInConflictStreak()
+})
 
 /** 检入（可重试；失败态下点「重试」再次进入本函数） */
 const checkIn = async (): Promise<void> => {
@@ -67,31 +73,34 @@ const checkIn = async (): Promise<void> => {
     // B-3①：失败处理前先判路由 —— 用户已离开检入页（如「离线进入」）⇒ 静默 return，不弹错、不跳转
     if (route.name !== 'auth-checkin') return
     if (err === null) {
+        // T599：检入成功 = 会话健康 ⇒ 冲突计数清零（新生命周期重新计）
+        resetCheckInConflictStreak()
         emit('checkInSuccess')
         return
     }
     loading.value = false
     // T558 R1：检入冲突（`10022`）是「可重试」而非「会话失效」⇒ 显式可重试出口
     // （锦上添花：不清凭证、不回登录页；失败态自带「重试」+「重新登录」两个可前进动作）
-    // DEF-119：同一冲突码的原因分类 —— token 已过期 ⇒ 过期语义；未过期且首次 ⇒ 密码可能在他端被改；
-    //          短时连续冲突 ⇒ 更像并发检入（主次回到「重试」，文案不夸大为「密码被改」）。
+    // DEF-119 / T599（`F4`）：同一冲突码只按**文案**分类，**主次按钮恒为「重新登录」**：
+    //   - token 已过期 ⇒ 过期语义；
+    //   - token 未过期 + 极短窗口（≤3s）内前后两次 `10022` ⇒ 并发文案（只换文案，不换主次）；
+    //   - token 未过期（其余）⇒ 密码可能在他端被改 / 会话被撤销；
+    //   - token 缺失或不可解析 ⇒ 不猜原因（T558 原文案）。
+    //   理由：用例层已自动重试一次（token 已变即放弃）⇒ 走到页面的 `10022` 已吸收真并发；
+    //   用户读文案后手动再试仍失败 ⇒ 反而**提高**「非并发」置信度，不得把主按钮降级成「重试」。
     if (isRetryableCheckInConflict(err)) {
         const streak = markCheckInConflict()
         const expired = isJwtExpired(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY))
         failed.value = true
+        primaryAction.value = 'signIn'
         if (expired === true) {
             errorMessage.value = t('auth.checkIn.conflictExpired')
-            primaryAction.value = 'signIn'
         } else if (expired === false && streak === 1) {
             errorMessage.value = t('auth.checkIn.conflictRevoked')
-            primaryAction.value = 'signIn'
         } else if (expired === false) {
             errorMessage.value = t('auth.checkIn.conflictConcurrent')
-            primaryAction.value = 'retry'
         } else {
-            // 无 token / token 不可解析 ⇒ 不猜原因，保持原通用文案与「重试」为主
             errorMessage.value = t('auth.checkIn.conflict')
-            primaryAction.value = 'retry'
         }
         return
     }

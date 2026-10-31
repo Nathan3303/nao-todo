@@ -73,14 +73,18 @@ export const resetCheckInWindow = (): void => {
     inFlight = 0
     planned = 0
     currentPlanClose = null
-    conflictStreak = 0
-    lastConflictAt = 0
+    resetCheckInConflictStreak()
 }
 
-/* —— 检入冲突连续计数（`DEF-119`：区分「并发检入」与「他端改密」） —— */
+/* —— 检入冲突连续计数（`DEF-119`：区分「并发检入」与「他端改密 / 会话被撤销」） —— */
 
-/** 冲突「短时」窗口（ms）：窗口内连续两次 `10022` 更像并发检入，而非密码被改 */
-export const CHECK_IN_CONFLICT_STREAK_WINDOW_MS = 60_000
+/**
+ * 冲突「并发」窗口（ms）
+ * @description **极短**窗口：真正的并发检入（同一 tick / 快速刷新 / 双提交）才落在 3s 内；
+ *              而用户看到失败态、读文案、再点「重试」通常远超 3s ⇒ 不构成并发证据（T599 / `F4`）。
+ *              用户手动重试**仍得** `10022` ⇒ 反而**提高**「非并发」的置信度（用例层已自动重试一次）。
+ */
+export const CHECK_IN_CONFLICT_CONCURRENCY_WINDOW_MS = 3000
 
 /** 窗口内的连续冲突次数（两次间隔超过窗口 ⇒ 重新从 1 计） */
 let conflictStreak = 0
@@ -88,17 +92,28 @@ let lastConflictAt = 0
 
 /**
  * 记一次检入冲突（`10022`）
- * @description 判据（ADR / PRD AC7）：**同一个检入页生命周期内、窗口内的第二（及以后）次冲突**
- *              一律按「并发检入」看待 ⇒ 文案不夸大为「密码被改」、主动作回到「重试」。
+ * @description 判据（T599 / `F4`）：**极短窗口内的连续冲突**才当作并发证据，且**只影响文案**
+ *              （主次按钮恒为「重新登录」，不随次数降级）。
  *              ⛔ 不参与会话失效判据（`10022` 永远不是登出理由，T558 R1 不回归）。
  * @param now 当前时间（ms；仅测试注入）
  * @returns 窗口内的连续冲突次数（首次 = 1）
  */
 export const markCheckInConflict = (now: number = Date.now()): number => {
     conflictStreak =
-        lastConflictAt > 0 && now - lastConflictAt <= CHECK_IN_CONFLICT_STREAK_WINDOW_MS
+        lastConflictAt > 0 && now - lastConflictAt <= CHECK_IN_CONFLICT_CONCURRENCY_WINDOW_MS
             ? conflictStreak + 1
             : 1
     lastConflictAt = now
     return conflictStreak
+}
+
+/**
+ * 复位连续冲突计数（**生产代码专用**）
+ * @description 生命周期边界 = 检入成功 / 检入页卸载 / 登出 / 换账号（T599）。
+ *              ⛔ 不要用 `resetCheckInWindow()` 代替：它还会把 `inFlight` / `planned` 归零，
+ *              会关掉 T558「检入在途期间 `10041` 延后处置」的保护。
+ */
+export const resetCheckInConflictStreak = (): void => {
+    conflictStreak = 0
+    lastConflictAt = 0
 }

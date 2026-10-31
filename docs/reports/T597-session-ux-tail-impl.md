@@ -29,29 +29,29 @@
 
 ## 二、AC 逐条（21 红 → 21 绿）
 
-| #   | AC                                             | 判据落点                                                           | 结果 |
-| :-- | :--------------------------------------------- | :----------------------------------------------------------------- | :--- |
-| 1   | AC1 `exp` 已过 ⇒ 过期横幅                      | `inferSessionEndCategory` → `expired` → `auth.sessionEnd.expired`  | 绿   |
-| 2   | AC2 未过期 + `10041/10042` ⇒ 他处登录横幅      | 同上 → `signed-in-elsewhere`                                       | 绿   |
-| 3   | AC3 reason 缺失 ⇒ 通用兜底                     | 未知 reason ⇒ `session-ended`（`auth.sessionEnd.ended`）           | 绿   |
-| 4   | AC3 reason 脏值 ⇒ 通用兜底                     | 非白名单 reason ⇒ `session-ended`（不被 token 带偏）               | 绿   |
-| 5   | AC4 关闭控件可访问 + 点击消失                  | 横幅内 `<button aria-label="关闭提示">`                            | 绿   |
-| 6   | AC4 关闭后刷新不复现、类别仍可读               | `SESSION_END_REASON_DISMISSED` 标记独立于类别                      | 绿   |
-| 7   | AC4 刷新后横幅仍在                             | 读 `sessionStorage`（不靠组件内存）                                | 绿   |
-| 8   | AC4 不阻断表单 / 顶部 / 非模态                 | 横幅为 `nue-container` 首子节点、`role="status"`、无遮罩           | 绿   |
-| 9   | R1 文案零技术键名 / 错误码                     | 文案无数字、无内部键名                                             | 绿   |
-| 10  | R5 存储只含类别枚举                            | 仅 `expired` / `signed-in-elsewhere` / `session-ended`             | 绿   |
-| 11  | AC4 主动登出清类别                             | `use-settings-sign-out` 调 `clearSessionEndReason()`               | 绿   |
-| 12  | AC5 A 失效广播恰 1 条                          | `session-end` → `broadcastSignOut(userId, category)`               | 绿   |
-| 13  | AC5 B 回登录页 1 次 + 同一横幅 + 不回广播      | 接收侧 `applyRemoteSignOut(router, reason)`，不广播                | 绿   |
-| 14  | AC5 重复投递无回环                             | 同上（`postMessage` 恒 1）                                         | 绿   |
-| 15  | AC6 `10022` + 未过期 ⇒ 密码语义 + 重新登录为主 | `conflictRevoked` + `primaryAction='signIn'`                       | 绿   |
-| 16  | AC7 `10022` + 已过期 ⇒ 过期语义                | `conflictExpired`（不含「密码」）                                  | 绿   |
-| 17  | AC7 短时并发 ⇒ 重试为主                        | `markCheckInConflict` ≥2 + 未过期 ⇒ `conflictConcurrent` + `retry` | 绿   |
-| 18  | AC10 登录 → 注册互链可访问 + 可聚焦            | 原生 `router-link`（`href="/auth/signup…"`）                       | 绿   |
-| 19  | AC10 注册 → 登录互链同理                       | 原生 `router-link`                                                 | 绿   |
-| 20  | AC8 persistence-go `Bearer` 拼接 0 处          | 全改 `authHeaders()`                                               | 绿   |
-| 21  | AC8 `=== 10041` 字面量比较 0 处                | `isCredentialCode` 单点                                            | 绿   |
+| #   | AC                                             | 判据落点                                                                                              | 结果        |
+| :-- | :--------------------------------------------- | :---------------------------------------------------------------------------------------------------- | :---------- |
+| 1   | AC1 `exp` 已过 ⇒ 过期横幅                      | `inferSessionEndCategory` → `expired` → `auth.sessionEnd.expired`                                     | 绿          |
+| 2   | AC2 未过期 + `10041/10042` ⇒ 他处登录横幅      | 同上 → `signed-in-elsewhere`                                                                          | 绿          |
+| 3   | AC3 reason 缺失 ⇒ 通用兜底                     | 未知 reason ⇒ `session-ended`（`auth.sessionEnd.ended`）                                              | 绿          |
+| 4   | AC3 reason 脏值 ⇒ 通用兜底                     | 非白名单 reason ⇒ `session-ended`（不被 token 带偏）                                                  | 绿          |
+| 5   | AC4 关闭控件可访问 + 点击消失                  | 横幅内 `<button aria-label="关闭提示">`                                                               | 绿          |
+| 6   | AC4 关闭后刷新不复现、类别仍可读               | `SESSION_END_REASON_DISMISSED` 标记独立于类别                                                         | 绿          |
+| 7   | AC4 刷新后横幅仍在                             | 读 `sessionStorage`（不靠组件内存）                                                                   | 绿          |
+| 8   | AC4 不阻断表单 / 顶部 / 非模态                 | 横幅为 `nue-container` 首子节点、`role="status"`、无遮罩                                              | 绿          |
+| 9   | R1 文案零技术键名 / 错误码                     | 文案无数字、无内部键名                                                                                | 绿          |
+| 10  | R5 存储只含类别枚举                            | 仅 `expired` / `signed-in-elsewhere` / `session-ended`                                                | 绿          |
+| 11  | AC4 主动登出清类别                             | `use-settings-sign-out` 调 `clearSessionEndReason()`                                                  | 绿          |
+| 12  | AC5 A 失效广播恰 1 条                          | `session-end` → `broadcastSignOut(userId, category)`                                                  | 绿          |
+| 13  | AC5 B 回登录页 1 次 + 同一横幅 + 不回广播      | 接收侧 `applyRemoteSignOut(router, reason)`，不广播                                                   | 绿          |
+| 14  | AC5 重复投递无回环                             | 同上（`postMessage` 恒 1）                                                                            | 绿          |
+| 15  | AC6 `10022` + 未过期 ⇒ 密码语义 + 重新登录为主 | `conflictRevoked` + `primaryAction='signIn'`（T599 起 10022 恒为「重新登录」为主）                    | 绿          |
+| 16  | AC7 `10022` + 已过期 ⇒ 过期语义                | `conflictExpired`（不含「密码」）                                                                     | 绿          |
+| 17  | AC7 短时并发 ⇒ 重试为主（**T599 修订**）       | ≤3s 连续冲突只换文案（`conflictConcurrent`），**主按钮仍为「重新登录」** ⇒ qa 断言待 T600 更新（§八） | 红（待 qa） |
+| 18  | AC10 登录 → 注册互链可访问 + 可聚焦            | 原生 `router-link`（`href="/auth/signup…"`）                                                          | 绿          |
+| 19  | AC10 注册 → 登录互链同理                       | 原生 `router-link`                                                                                    | 绿          |
+| 20  | AC8 persistence-go `Bearer` 拼接 0 处          | 全改 `authHeaders()`                                                                                  | 绿          |
+| 21  | AC8 `=== 10041` 字面量比较 0 处                | `isCredentialCode` 单点                                                                               | 绿          |
 
 - **AC9（回归）**：`def6-mirror-e2e` / `t326` / `sync` / `preference-sync` / `sign-out-broadcast` / `check-in` 全绿（见 §五）。
 - **AC11（设计一致）**：横幅只用 `--nue-warning-color-10/30/90`、`--nue-radius-sm`、`--nue-gap-xs`、`--nue-text-sm`、`--nue-padding-sm/df`，无新色值；符号 `!` + 文案 + 颜色三重冗余；`focus-visible` 轮廓。
@@ -62,10 +62,10 @@
 | 键                                  | zh-CN                                                | en-US                                                                                                            |
 | :---------------------------------- | :--------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
 | `auth.sessionEnd.expired`           | 登录已过期，请重新登录                               | Your session has expired. Please sign in again.                                                                  |
-| `auth.sessionEnd.signedInElsewhere` | 你的账号已在其它设备登录，请重新登录                 | Your account was signed in on another device. Please sign in again.                                              |
+| `auth.sessionEnd.signedInElsewhere` | 你的账号可能已在其他设备登录，请重新登录             | Your account may have been signed in on another device. Please sign in again.                                    |
 | `auth.sessionEnd.ended`             | 会话已结束，请重新登录                               | Your session has ended. Please sign in again.                                                                    |
 | `auth.sessionEnd.dismiss`           | 关闭提示                                             | Dismiss notice                                                                                                   |
-| `auth.checkIn.conflictRevoked`      | 密码可能已在其它设备修改，当前登录已失效，请重新登录 | Your password may have been changed on another device, so this session is no longer valid. Please sign in again. |
+| `auth.checkIn.conflictRevoked`      | 密码可能已在其他设备修改，当前登录已失效，请重新登录 | Your password may have been changed on another device, so this session is no longer valid. Please sign in again. |
 | `auth.checkIn.conflictConcurrent`   | 短时间内多次验证未完成，请稍后重试                   | Verification did not complete several times in a row. Please try again in a moment.                              |
 | `auth.checkIn.conflictExpired`      | 登录已过期，请重新登录                               | Your session has expired. Please sign in again.                                                                  |
 | `auth.checkIn.conflict`（保留）     | 验证未完成，请重试                                   | Verification did not complete. Please try again.                                                                 |
@@ -119,3 +119,20 @@
   其余受影响页面（番茄钟侧栏/顶栏 8 处、任务侧栏 2 处、`NaoRouterLink` 包装 1 处）本批**只登记不改** ⇒ 建议进缺陷池由后续批处理。
 - **接受（含到期日）**：`lynx.ts` 的 1 处 `Bearer` 拼接（待移动端授权；ADR D6 已登记边界，棘轮守护）⇒ 到期日 = 移动端授权批次。
 - **接受**：文案/视觉走查按 PRD §九 由用户发版后执行（本批按语义关键词断言，未钉整句）。
+
+## 八、T599 修订（qa `T598` 复验四项，PM 裁定后实施）
+
+| #   | 项                                                         | 落点                                                                                                                                                                                                                                                                                                                                 | 结果                                                                                                                                                                                                                                                |
+| :-- | :--------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ①   | `F1` 成功登录 / 桌面解锁门登出后仍残留失效类别             | `sign-in.vue` 登录成功分支、`unlock-gate.vue` 的「登出用户」分支（+ `use-settings-sign-out` 已清）→ `clearSessionEndReason()`                                                                                                                                                                                                        | 探针实测：`writeSessionEndCategory('expired')` → 登录成功 ⇒ `readVisibleSessionEndCategory() = null`、`sessionStorage` 该键为 `null`；桌面解锁门登出同理（临时探针，跑完即删）。⛔ 未塞进 `clearSessionCredentials`（失效路径「先写后清」顺序保留） |
+| ②   | `F4` 反向误判（真撤销 + 点重试 ⇒ 降级「并发 / 重试为主」） | **主按钮恒为「重新登录」**（`10022` 分支不再随次数降级）；并发文案窗口 **60s → 3s**（`CHECK_IN_CONFLICT_CONCURRENCY_WINDOW_MS = 3000`）；新增 `resetCheckInConflictStreak()`，在**检入成功 / 页面卸载 / 登出 / 登录（换账号）** 调用；⛔ 生产**不用** `resetCheckInWindow()`（会把 `inFlight/planned` 归零、关掉 T558 在途延后处置） | 探针：gap 3000ms ⇒ 计数 2；gap 3001ms ⇒ 计数 1；`resetCheckInConflictStreak()` 后 `isCheckInInFlight() = true`（不影响在途窗口）                                                                                                                    |
+| ③   | 文案                                                       | `signedInElsewhere` 补「可能」并统一「其他」；`conflictRevoked` 的「其它」→「其他」                                                                                                                                                                                                                                                  | 见 §三（已就地更新；其余 6 条按 qa 判决未动）                                                                                                                                                                                                       |
+| ④   | 棘轮正则缺口                                               | `auth-seam-scan` 判据正则 `(===                                                                                                                                                                                                                                                                                                      | !==                                                                                                                                                                                                                                                 | ==  | !=)\s*10041\b`→`(=== | !==)\s*1004[12]\b` | 扩后仍 **0 处**（`KNOWN_CREDENTIAL_LITERAL_COMPARISONS = 0` 不变） |
+
+**T599 门禁（受影响面）**：`vp check` 0 error（1750 文件格式化 / 1428 文件 lint+type）·
+`vp test --run apps/web packages/{shared,presentation-identity,infrastructure,domain-identity} apps/desktop` = **244 文件 / 2099 例 / 1 红**（唯一红 = §八② 的 qa 断言，待 T600 更新）·
+T596 基线 7 文件 48 例 **47 绿 / 1 红**（同上）· 五守卫 rc=0 · 移动端 0 行。
+
+**待 qa 更新（T600）**：`packages/presentation-identity/src/components/__tests__/check-in-def119.test.ts:170`
+（用例「短时并发检入（连续两次 10022）⇒ 第二次以「重试」为主」断言 `buttons()[0] === '重试'`）⇒ 按 T599 新判据应为「主按钮恒为『重新登录』，并发只换文案」，
+建议断言改为 `buttons()[0] === '重新登录'` + 文案仍不含「密码」。同文件其余断言（含 `F2` 提示的 `reasonValues()` 白名单缺 `session-ended`）仍属 qa 待更新面。

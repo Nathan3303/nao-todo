@@ -20,6 +20,8 @@ import {
 } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { readCachedNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
 import { useUserStore, UserInitialAvatar } from '@nao-todo/presentation-identity'
+import { clearSessionEndReason } from '@nao-todo/shared/requester/session-end-reason'
+import { resetCheckInConflictStreak } from '@nao-todo/shared/requester/checkin-window'
 import { useUserUseCase } from '@/hooks'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { computed, onMounted, ref } from 'vue'
@@ -301,6 +303,9 @@ const onSignOut = async () => {
     userStore.clearAuthData()
     localSession.clear()
     cryptoService.lock()
+    // T599（`F1`）：主动登出 ≠ 会话失效 ⇒ 清失效类别（下次登录页不得愚报「已过期」）+ 复位冲突计数
+    clearSessionEndReason()
+    resetCheckInConflictStreak()
     emit('unlocked')
 }
 </script>

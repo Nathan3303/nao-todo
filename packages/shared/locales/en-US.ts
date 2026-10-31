@@ -26,7 +26,7 @@ const enUS: LocaleMessages = {
     // Session-end notice (W3 / DEF-92)
     'auth.sessionEnd.expired': 'Your session has expired. Please sign in again.',
     'auth.sessionEnd.signedInElsewhere':
-        'Your account was signed in on another device. Please sign in again.',
+        'Your account may have been signed in on another device. Please sign in again.',
     'auth.sessionEnd.ended': 'Your session has ended. Please sign in again.',
     'auth.sessionEnd.dismiss': 'Dismiss notice',
     'auth.checkIn.verifying': 'Verifying user credentials...',

@@ -24,12 +24,12 @@ const zhCN: LocaleMessages = {
     'auth.signUp.success': '注册成功',
     // 会话结束横幅（W3 / DEF-92；说人话：发生了什么 + 下一步，禁技术键名）
     'auth.sessionEnd.expired': '登录已过期，请重新登录',
-    'auth.sessionEnd.signedInElsewhere': '你的账号已在其它设备登录，请重新登录',
+    'auth.sessionEnd.signedInElsewhere': '你的账号可能已在其他设备登录，请重新登录',
     'auth.sessionEnd.ended': '会话已结束，请重新登录',
     'auth.sessionEnd.dismiss': '关闭提示',
     'auth.checkIn.verifying': '正在验证用户凭证 ...',
     'auth.checkIn.conflict': '验证未完成，请重试',
-    'auth.checkIn.conflictRevoked': '密码可能已在其它设备修改，当前登录已失效，请重新登录',
+    'auth.checkIn.conflictRevoked': '密码可能已在其他设备修改，当前登录已失效，请重新登录',
     'auth.checkIn.conflictConcurrent': '短时间内多次验证未完成，请稍后重试',
     'auth.checkIn.conflictExpired': '登录已过期，请重新登录',
     'auth.aside.tagline':

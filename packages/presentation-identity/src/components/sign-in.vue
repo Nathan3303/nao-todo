@@ -2,10 +2,12 @@
 import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import {
+    clearSessionEndReason,
     dismissSessionEndBanner,
     readVisibleSessionEndCategory,
     type SessionEndCategory
 } from '@nao-todo/shared/requester/session-end-reason'
+import { resetCheckInConflictStreak } from '@nao-todo/shared/requester/checkin-window'
 import { NueMessage } from 'nue-ui'
 import { computed, reactive, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -68,6 +70,10 @@ const submit = async (e: Event) => {
         return
     }
     NueMessage.success(t('auth.signIn.success'))
+    // T599（`F1`）：登录成功 ⇒ 会话重新建立，清掉上一次失效类别（否则重登后仍会报「已过期」）；
+    // 同时复位检入冲突计数（登入 / 换账号属新生命周期）
+    clearSessionEndReason()
+    resetCheckInConflictStreak()
     emit('signInSuccess')
 }
 </script>

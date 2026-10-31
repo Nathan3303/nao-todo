@@ -94,6 +94,7 @@ const BEARER_CONCAT_ALLOWED_FILES = new Set(['auth-headers.ts', 'lynx.ts'])
  * 凭证码**比较**字面量冻结值（剔除注释行；T597 / `DEF-117` 已清零）
  * @description 原 5 处（`preference-sync.ts` 387/419/452/539、`lynx.ts:109`）已全部改走
  *              `isCredentialCode`（唯一集合 `credential-codes.ts`）⇒ 冻结值 = **0**，新增即红。
+ *              判据正则（T599）已从 `10041` 扩为 `1004[12]`（同族两个码都算比较字面量）。
  *              不计入本计数的 `10041` 用法（均非判据）：`credential-codes.ts`（唯一集合定义）、
  *              `error-classification.ts` 的 r12 集合（ADR「语义逐字不变」）、`axios.ts` 2 处日志文案。
  */
@@ -285,7 +286,8 @@ describe('AC6/R4 棘轮：Bearer 拼接面冻结（M4b 盲区闭合，新增即�
 
 describe('AC1/R1 棘轮：凭证判据字面量冻结（`=== 10041` 类，新增即红）', () => {
     const sources = readSources(SCAN_ROOTS)
-    const literalComparison = /(===|!==|==|!=)\s*10041\b/
+    // T599：覆盖同族两个凭证码（`10041` / `10042`）；只认比较，不认集合定义（口径同棘轮）
+    const literalComparison = /(===|!==)\s*1004[12]\b/
 
     it(`凭证码比较字面量 = ${KNOWN_CREDENTIAL_LITERAL_COMPARISONS} 处（新增即红；清理后须下调常量）`, () => {
         const { total, rows } = countCodeOccurrences(sources, literalComparison)
