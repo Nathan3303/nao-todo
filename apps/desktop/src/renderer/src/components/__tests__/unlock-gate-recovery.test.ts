@@ -182,7 +182,9 @@ describe('AC4/B：旧密码无损解锁 + 自动重包', () => {
         const advanced = await clickByText(/^(解锁|确认|继续|重试|用旧密码解锁)$/)
         expect(advanced, '旧密码入口需可提交').toBe(true)
 
-        expect(gate.emitted('unlocked'), '解锁成功后应放行进入').toBeTruthy()
+        // T590：真 crypto（PBKDF2 600k ≈ 300ms）异步完成，`flushPromises` 只等一个宏任务
+        // ⇒ 等够再断言（断言本身零改动；否则等于要求实现在解锁完成前提前放行）
+        await vi.waitFor(() => expect(gate.emitted('unlocked')).toBeTruthy(), { timeout: 5000 })
 
         // 真证据：新密码可解、旧密码不再可解（DEK 已被新密码重包）
         cryptoService.lock()
