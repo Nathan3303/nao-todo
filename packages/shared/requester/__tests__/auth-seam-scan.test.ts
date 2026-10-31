@@ -69,6 +69,34 @@ const ALLOWED_CLEANUP_FILES = new Set([
     'binding.ts'
 ])
 
+/**
+ * 棘轮（ratchet）冻结值 —— **新增一处即红；清理一处须同步下调本常量**
+ * @description 本批只开「不再变多」的闸，不做一次性清洗（清洗属 L2/L5 转办批）：
+ *              - `Bearer` 拼接收口（DEF-93）：`persistence-go/**` 61 处 + `shared/requester/lynx.ts`
+ *                1 处（Lynx 运行时 token 必填，ADR D6 已知边界）为已登记债务；
+ *              - 凭证判据字面量（AC1/R1）：`=== 10041` 类比较 5 处
+ *                （`preference-sync.ts` ×4、`lynx.ts` ×1）。
+ *              双向锁的理由：只锁「不变多」会让「清理后常量仍停在旧值 ⇒ 又能偷偷加回来」；
+ *              只锁「不变少」则无法防新增。故断言**恰等于**冻结值。
+ */
+const KNOWN_BEARER_CONCAT_SITES = {
+    /** `persistence-go/**`：内联 `Bearer ${…}`（L2/L5 批统一改指 `auth-headers`） */
+    'persistence-go': 61,
+    /** `shared/requester/lynx.ts`：Lynx token 必填参数（ADR D6 边界，不在本批） */
+    'shared/requester/lynx.ts': 1
+} as const
+
+/** `shared/requester` 内允许出现 `Bearer ${` 的文件（唯一实现处 + Lynx 例外） */
+const BEARER_CONCAT_ALLOWED_FILES = new Set(['auth-headers.ts', 'lynx.ts'])
+
+/**
+ * 凭证码**比较**字面量冻结值（剔除注释行）
+ * @description 现存 5 处：`preference-sync.ts` 387/419/452/539（未纳入 `10042`）、`lynx.ts:109`。
+ *              不计入本计数的 `10041` 用法（均非判据）：`credential-codes.ts`（唯一集合定义）、
+ *              `error-classification.ts` 的 r12 集合（ADR「语义逐字不变」）、`axios.ts` 2 处日志文案。
+ */
+const KNOWN_CREDENTIAL_LITERAL_COMPARISONS = 5
+
 type SourceFile = { path: string; text: string }
 
 const isSkippedPath = (path: string): boolean =>
@@ -121,6 +149,29 @@ const access = (path: string): string => {
     const abs = join(REPO_ROOT, path)
     return existsSync(abs) ? readFileSync(abs, 'utf8') : ''
 }
+
+/** 注释行（`* …` / `// …` / `/* …`）不计入统计：只认**代码行**（防注释提到原语名造成假阳性） */
+const isCommentLine = (line: string): boolean => /^\s*(\*|\/\/|\/\*)/.test(line)
+
+/** 按文件统计**代码行**命中数（失败信息可定位到文件与处数） */
+const countCodeOccurrences = (
+    sources: SourceFile[],
+    pattern: RegExp
+): { total: number; rows: { path: string; hits: number }[] } => {
+    const rows = sources
+        .map((file) => ({
+            path: file.path,
+            hits: file.text
+                .split(/\r?\n/)
+                .filter((line) => !isCommentLine(line))
+                .filter((line) => pattern.test(line)).length
+        }))
+        .filter((row) => row.hits > 0)
+    return { total: rows.reduce((sum, row) => sum + row.hits, 0), rows }
+}
+
+const formatRows = (rows: { path: string; hits: number }[]): string =>
+    rows.map((row) => `${row.path}(${row.hits})`).join('、')
 
 describe('AC1/R1：失效执行单点存在且覆盖清理矩阵', () => {
     it('apps/web/src/session-end.ts 存在', () => {
@@ -196,6 +247,47 @@ describe('AC6/R4：persistence-sync 不再拼 `Bearer null`', () => {
             .filter((file) => file.text.includes('Bearer ${'))
             .map((file) => file.path)
         expect(offenders, `DEF-93 源头：${offenders.join('、')}`).toEqual([])
+    })
+})
+
+describe('AC6/R4 棘轮：Bearer 拼接面冻结（M4b 盲区闭合，新增即红）', () => {
+    const requester = readSources(['packages/shared/requester'])
+    const persistenceGo = readSources(['packages/infrastructure/src/persistence-go'])
+    const bearerTemplate = /Bearer \$\{/
+
+    it('shared/requester：除 auth-headers.ts / lynx.ts 外 0 处拼接', () => {
+        const offenders = requester
+            .filter((file) => bearerTemplate.test(file.text))
+            .map((file) => basename(file.path))
+            .filter((name) => !BEARER_CONCAT_ALLOWED_FILES.has(name))
+        expect(
+            offenders,
+            `绕过 auth-headers 的拼接（应改指 shared/requester/auth-headers）：${offenders.join('、')}`
+        ).toEqual([])
+    })
+
+    it(`shared/requester/lynx.ts 拼接数 = ${KNOWN_BEARER_CONCAT_SITES['shared/requester/lynx.ts']}（棘轮，双向）`, () => {
+        const { rows } = countCodeOccurrences(requester, bearerTemplate)
+        const lynxHits =
+            rows.find((row) => row.path.endsWith('shared/requester/lynx.ts'))?.hits ?? 0
+        expect(lynxHits, `现状：${formatRows(rows)}`).toBe(
+            KNOWN_BEARER_CONCAT_SITES['shared/requester/lynx.ts']
+        )
+    })
+
+    it(`persistence-go 拼接数 = ${KNOWN_BEARER_CONCAT_SITES['persistence-go']}（棘轮：新增即红；清理后须下调常量）`, () => {
+        const { total, rows } = countCodeOccurrences(persistenceGo, bearerTemplate)
+        expect(total, `现状：${formatRows(rows)}`).toBe(KNOWN_BEARER_CONCAT_SITES['persistence-go'])
+    })
+})
+
+describe('AC1/R1 棘轮：凭证判据字面量冻结（`=== 10041` 类，新增即红）', () => {
+    const sources = readSources(SCAN_ROOTS)
+    const literalComparison = /(===|!==|==|!=)\s*10041\b/
+
+    it(`凭证码比较字面量 = ${KNOWN_CREDENTIAL_LITERAL_COMPARISONS} 处（新增即红；清理后须下调常量）`, () => {
+        const { total, rows } = countCodeOccurrences(sources, literalComparison)
+        expect(total, `现状：${formatRows(rows)}`).toBe(KNOWN_CREDENTIAL_LITERAL_COMPARISONS)
     })
 })
 

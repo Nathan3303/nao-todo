@@ -145,14 +145,88 @@ B1 分布：`auth-seam-scan` 15 · `credential-classification` 9 · `binding` 7 
 
 ## 五、遗留（三出口）
 
-| #   | 遗留                                                                                                                                                                                                                                                                                                                                              | 措辞/证据                                                       | 出口                                                                                                                                                |
-| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | W3（`DEF-92` 到期/顶号横幅 + 跨标签广播）未实现；`session-end.ts` 与 `auth-expiry.ts` 文档称「四路复用含跨标签」为超前表述                                                                                                                                                                                                                        | PRD §九「下一批（W3）」；代码只见 3 路（axios/同步/续期）接线   | **转办** rd-fe（W3 批，随 `DEF-92`），届时同步修正文档表述                                                                                          |
-| L2  | AC1「判据 1 处」在字面量层仍有分叉：`lynx.ts:109`、`preference-sync.ts:387/419/452/539` 写死 `=== 10041`（10042 未纳入）；无扫描规则覆盖                                                                                                                                                                                                          | 见 §四 AC1；行为无分叉（登出仍由 axios 统一裁决）               | **转办**（下个「R1 单一来源清理」批）：改指 D1 判据 + 增扫描规则（`=== 10041` 白名单），P3                                                          |
-| L3  | 未迁移库 sign-in 失败文案「本地数据解锁失败，请检查密码」仍指向密码，且登录页无 B/D 直达入口（需重启进解锁门）                                                                                                                                                                                                                                    | `binding.ts:136`；ADR D3「文案不说『密码错』」                  | **需 PM 裁定**：改文案（如「本地数据未能用当前密码解锁，可能在其他设备改过密码」）+ 可选加「去解锁门」入口；P3                                      |
-| L4  | 文档/命名精确性：`auth-headers.ts`「唯一 Bearer 拼接实现处」、`credential-codes.ts`「唯一集合」与实际不符（`persistence-go/**` 61 处 + `lynx.ts` 1 处拼接；另有 `CREDENTIAL_FAILURE_CODES` 集合）；`auth-headers.ts`/`credential-codes.ts`/`device-id.ts` 无文件末尾换行（`vp check` 容忍）；`def6-mirror-e2e` 夹具用字面量 `'USER_JWT'` 未用常量 | 本报告 §一 A-2、§四 AC1/AC6                                     | **接受**（不修代码，随 L2/L5 批一并处理；不影响判据）                                                                                               |
-| L5  | R4 扫描盲区：`Bearer ${` 只扫 `persistence-sync`（M4b 在 `shared/requester/retry.ts` 注入 ⇒ **用例仍绿**）⇒ 「绕过 `auth-headers`」在 shared/persistence-go 中不会被拦                                                                                                                                                                            | M4b                                                             | **转办**（下批扩展 R4 扫描面到 `shared/requester` + `persistence-go`，或改为「除 `auth-headers.ts` 外 0 处」）                                      |
-| L6  | AC8 入口链接用户可点性依赖 `DEF-116`（nue-ui `nue-link route` 不产出 href）                                                                                                                                                                                                                                                                       | `sign-up-redirect.test.ts` 头注（实测 props 正确、DOM 缺 href） | **接受**（已登记 `DEF-116`；本仓规避或等上游，到期日 = `DEF-116` 关闭时复验）                                                                       |
-| L7  | E 路径只用 `isPlaintextMigrationDone` 标记做「无密文可丢」判据：同 origin 版本错峰下若有旧密文残留（仓内已有 `hasLegacyCipherResidue` 可判），`setup()` 生成新 DEK 会使残留不可解                                                                                                                                                                 | ADR §限制「D3 结论依赖明文姿态（C-46），恢复密文须重评」        | **接受**（当前明文姿态成立；建议 W3 或下次迁移批在 E 后补一次 `selfHealLegacyCipherMirror`（带脏队列护栏）或先判残留；到期日 = 下次密文相关变更前） |
+| #   | 遗留                                                                                                                                                                                                                                                    | 措辞/证据                                                       | 出口                                                                                                                                                                                                                                                                             |
+| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | W3（`DEF-92` 到期/顶号横幅 + 跨标签广播）未实现；`session-end.ts` 与 `auth-expiry.ts` 文档称「四路复用含跨标签」为超前表述                                                                                                                              | PRD §九「下一批（W3）」；代码只见 3 路（axios/同步/续期）接线   | **转办** rd-fe（W3 批，随 `DEF-92`），届时同步修正文档表述                                                                                                                                                                                                                       |
+| L2  | AC1「判据 1 处」在字面量层仍有分叉：`lynx.ts:109`、`preference-sync.ts:387/419/452/539` 写死 `=== 10041`（10042 未纳入）；无扫描规则覆盖                                                                                                                | 见 §四 AC1；行为无分叉（登出仍由 axios 统一裁决）               | **转办**（下个「R1 单一来源清理」批）：改指 D1 判据 + 增扫描规则（`=== 10041` 白名单），P3                                                                                                                                                                                       |
+| L3  | ~~未迁移库 sign-in 失败文案「本地数据解锁失败，请检查密码」仍指向密码，且登录页无 B/D 直达入口（需重启进解锁门）~~ **已于 `9aeb6c47` 按 PM 裁定修复**（见 §六 A-1）                                                                                     | 原 `binding.ts:136`；ADR D3「文案不说『密码错』」               | **关闭**（文案改为不归因密码错 + 给自救下一步；不加直达入口，入口归 W3 —— T592 A-1）                                                                                                                                                                                             |
+| L4  | 文档/命名精确性：`auth-headers.ts`「唯一 Bearer 拼接实现处」、`credential-codes.ts`「唯一集合」与实际不符（`persistence-go/**` 61 处 + `lynx.ts` 1 处拼接；另有 `CREDENTIAL_FAILURE_CODES` 集合）；`def6-mirror-e2e` 夹具用字面量 `'USER_JWT'` 未用常量 | 本报告 §一 A-2、§四 AC1/AC6                                     | **接受**（不修代码，随 L2/L5 批一并处理；不影响判据）。**口径更正（T592）**：~~「无文件末尾换行」~~ **不作为缺陷** —— 本仓 `.editorconfig` 为 `insert_final_newline = false`（`end_of_line = crlf`），无末尾换行即基线；我此前把它列入 nit 是错的（PM 已撤回该要求，见 §六 A-3） |
+| L5  | R4 扫描盲区：`Bearer ${` 只扫 `persistence-sync`（M4b 在 `shared/requester/retry.ts` 注入 ⇒ **用例仍绿**）⇒ 「绕过 `auth-headers`」在 shared/persistence-go 中不会被拦                                                                                  | M4b                                                             | **转办**（下批扩展 R4 扫描面到 `shared/requester` + `persistence-go`，或改为「除 `auth-headers.ts` 外 0 处」）                                                                                                                                                                   |
+| L6  | AC8 入口链接用户可点性依赖 `DEF-116`（nue-ui `nue-link route` 不产出 href）                                                                                                                                                                             | `sign-up-redirect.test.ts` 头注（实测 props 正确、DOM 缺 href） | **接受**（已登记 `DEF-116`；本仓规避或等上游，到期日 = `DEF-116` 关闭时复验）                                                                                                                                                                                                    |
+| L7  | E 路径只用 `isPlaintextMigrationDone` 标记做「无密文可丢」判据：同 origin 版本错峰下若有旧密文残留（仓内已有 `hasLegacyCipherResidue` 可判），`setup()` 生成新 DEK 会使残留不可解                                                                       | ADR §限制「D3 结论依赖明文姿态（C-46），恢复密文须重评」        | **接受**（当前明文姿态成立；建议 W3 或下次迁移批在 E 后补一次 `selfHealLegacyCipherMirror`（带脏队列护栏）或先判残留；到期日 = 下次密文相关变更前）                                                                                                                              |
 
 **纪律确认**：未合并、未碰 `main`、未改产品代码（8 处变异全部还原，`git status --porcelain` 每次为空）、未动移动端。
+
+## 七、T592 收尾复验（L3 文案 + 棘轮 + 终验）
+
+被测提交：`9aeb6c47`（`fix(291): L3 文案`，2 文件 +25/−2）+ 本报告同批的棘轮测试（只改测试文件）。
+
+### A-1 L3 文案核验 —— **与 PM 裁定逐字一致，成立**
+
+| 判据               | 结果                                                                                                                                                                          |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 文案逐字一致       | 实现（`binding.ts:134`，字符串拼接后无多余字符）= PM 引文「本地数据无法用当前密码解开，可能是账号密码已在其他设备修改；请重启后在本地数据解锁页用旧密码解锁，或重建本地数据」 |
+| 不归因「密码错」   | 无「密码错 / 请检查密码 / 密码有误 / 密码不正确」（新增用例用正则断言；E 分支既有 `not.toMatch(/密码错误/)` 仍在）                                                            |
+| 给自救下一步       | 含「旧密码」+「重建本地数据」两个出口，并说明需**重启后**到解锁页（如实反映当前入口位置）                                                                                     |
+| 不加登录页直达入口 | 符合裁定（入口归 W3）；未新增产品代码路径，仅文案                                                                                                                             |
+| 未迁移库仍阻断     | 保持 `return`（不进入 `runPlaintextMigration`，用例断言 `not.toHaveBeenCalled`）                                                                                              |
+
+### A-2 rd-fe 改了一处既有断言 —— **判定：必要同步，不越界（签字）**
+
+事实：`binding.test.ts` 的「解锁失败 ⇒ 返回错误文案且不执行迁移」把旧文案钉成字面量，`9aeb6c47` 把它同步为**新文案**（仍 `toBe(...)` 精确匹配）。四点依据：
+
+1. **不改则否决裁定**：该断言钉死的是被 PM 裁定作废的旧文案 ⇒ 不改就必须让产品继续说「请检查密码」，与 L3 直接冲突。
+2. **强度未降**：仍是 `toBe`（精确全等），没有退化成 `toMatch`/`toContain`/`toBeTruthy`；同用例的 `expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()` 与 `expect(consoleError).toHaveBeenCalled()` 原样保留。
+3. **实际更强（双锁）**：pinned 用例锁**字面**，新增 L3 用例锁**性质**（不含 4 种密码归因措辞 + 必含自救关键词）⇒ 任一侧回退（改回旧文案 / 改成另一种甩锅文案）都会红。
+4. **范围最小**：产品侧 +7/−2（仅该 `return`），测试侧 +20/−1（1 处字面量同步 + 1 条新用例），无顺手改动。
+
+### A-3 L4 口径更正 —— **认同 PM 撤回；我原措辞有误**
+
+- 事实：`.editorconfig` = `end_of_line = crlf` + **`insert_final_newline = false`** ⇒ 缺末尾换行**就是基线**，不是缺陷（实测本批新增文件末字节为 `}` / `)`）。
+- 更正：我此前把「`auth-headers.ts` / `credential-codes.ts` 无末尾换行」列入 L4 nit 是**错的**（已从 §五 L4 删除并标注更正），PM 的撤回成立；`vp check` 从未因此报错（`1737 files correctly formatted`）。
+- L4 其余项仍成立（`auth-headers.ts`「唯一 Bearer 拼接实现处」等表述与实际不符），已由本批棘轮量化承接（见 B）。
+
+### B 棘轮（不一次性清洗）
+
+形态：**冻结计数 + 「恰等于」双向锁**（新增一处即红；清理一处后必须同步下调常量，否则红 —— 防「清了却忘了降常量 ⇒ 又能偷偷加回来」）。只统计**代码行**（注释行剔除，避免注释提到 `Bearer ${` / `10041` 造成假阳性）。
+
+| 常量（`auth-seam-scan.test.ts` 顶部，显眼位置）         | 冻结值                        | 覆盖                                                       |
+| :------------------------------------------------------ | :---------------------------- | :--------------------------------------------------------- |
+| `KNOWN_BEARER_CONCAT_SITES['persistence-go']`           | **61**                        | `persistence-go/**` 内联 `Bearer ${…}`（L2/L5 批收口）     |
+| `KNOWN_BEARER_CONCAT_SITES['shared/requester/lynx.ts']` | **1**                         | Lynx 运行时 token 必填（ADR D6 已知边界）                  |
+| `BEARER_CONCAT_ALLOWED_FILES`                           | `auth-headers.ts` / `lynx.ts` | `shared/requester/**` 其余文件 **0 处**（有则红）          |
+| `KNOWN_CREDENTIAL_LITERAL_COMPARISONS`                  | **5**                         | `=== 10041` 类比较：`preference-sync.ts` ×4 + `lynx.ts` ×1 |
+
+**与 PM 口径的一处偏差（需你知悉，非本批修复项）**：PM 写「`shared/requester` 侧除 `auth-headers.ts` 外**应为 0**」——实际 `lynx.ts:64` 有 1 处（Lynx 运行时 `token` 为必填参数，`useLynxRequester` 直拼；ADR D6 明确 `lynx.ts` 不在本批范围，且属移动端红线）。我按「其余文件 0 + lynx 单列冻结 1」落地，**没有**为了凑「0」去改运行时代码。若确要归零，须移动端授权后改 `lynx.ts`（届时把该常量改 0）。
+
+**明确不计入**的 `10041` 非判据用法（注释里点名，防误判）：`credential-codes.ts`（唯一集合定义）、`error-classification.ts` 的 r12 集合（ADR「语义逐字不变」）、`axios.ts` 2 处日志文案。
+
+变异自证（本批新增；每次变异后 `git status --porcelain` 均只剩本批测试文件改动，产品代码零就地残留）：
+
+| #   | 变异                                                          | 结果   | 证据                                                                                                   |
+| :-- | :------------------------------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------- |
+| ①   | `shared/requester/retry.ts` 注入 `` `Bearer ${token}` ``      | **红** | `绕过 auth-headers 的拼接…：retry.ts: expected [ 'retry.ts' ] to deeply equal []` ⇒ **M4b 盲区已闭**   |
+| ②   | `persistence-go/tag/tag-preference.ts` 再加 1 处              | **红** | `expected 62 to be 61`（明细逐文件列出）                                                               |
+| ③   | `persistence-go/tag/tag.ts` 注释掉 1 处（模拟清理、不改常量） | **红** | `expected 60 to be 61` ⇒ **双向锁生效**（选双向而非单向：PM 提的「清理后须下调」正是单向锁会漏掉的洞） |
+| ④   | `shared/requester/retry.ts` 再增一处 `code === 10041`         | **红** | `现状：…preference-sync.ts(4)、lynx.ts(1)、retry.ts(1): expected 6 to be 5`                            |
+
+### C 终验精确数字（本批全范围）
+
+| 项         | 命令                                                                  | 结果                                                                                                         |
+| :--------- | :-------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `vp check` | 全仓                                                                  | **rc=0**：格式 1737 文件全对；lint/类型 1421 文件 0 error（17.1s）                                           |
+| 全仓测试   | `pnpm exec vp test --run`                                             | **310 文件 / 2664 例 / 0 红**（160.0s）                                                                      |
+| 目标文件   | `binding.test.ts` + `auth-seam-scan.test.ts`                          | **2 文件 / 27 例 / 0 红**（`binding` **8/8** 含新增 L3 用例；`auth-seam-scan` **19/19** = 15 既有 + 4 棘轮） |
+| 五守卫     | ddd / mobile-imports / barrel-imports / gate-pathspec / test-location | **5 × rc=0**（mobile-imports 72 源文件；barrel 全仓可解析；test-location 302 文件）                          |
+| 构建       | `vp run webapp build` · `pnpm run desktop:build`                      | **rc=0 / rc=0**（14.38s / 16.50s）                                                                           |
+| 移动端红线 | `git status --porcelain -- packages/presentation-react apps/mobile`   | **0 行**                                                                                                     |
+
+### D `DEF-117` 登记建议（供 PM 写池）
+
+- **一句话问题**：凭证判据与 `Bearer` 头拼接仍有多处残留未走单点 —— `persistence-go/**` **61 处**内联 `Bearer ${getJWTFromLocalStorage()}`、**5 处** `=== 10041` 字面量比较（`preference-sync.ts` ×4、`lynx.ts` ×1），未引用 ADR D1/D6 的 `credential-codes` / `auth-headers` 单点。
+- **影响**：会话结束后这些路径仍可能发出 `Bearer null` 并收 `10041` 噪音（`DEF-93` 的同源复发面）；`10042` 在这些路径不被判为凭证类（`preference-sync` 的 `errorClass` 标注、Lynx 不登出）；「凭证判据 1 处」只能靠**冻结计数**守住，不能靠静态「0 处」。
+- **已加棘轮**：`auth-seam-scan.test.ts` 的 `KNOWN_BEARER_CONCAT_SITES`（61 / 1）与 `KNOWN_CREDENTIAL_LITERAL_COMPARISONS`（5）⇒ 新增即红。
+- **建议修法**：① `persistence-go/**` 61 处改 `buildAuthHeaders(getJWTFromLocalStorage())`（或由请求器统一注入头）；② 5 处比较改指 `isCredentialCode` / `decideSessionEnd`；③ **每改一处同步下调对应常量**，全部完成后把棘轮改为硬 0 断言（`toBe(0)`）；④ `lynx.ts` 归零需移动端红线授权（单列）。
+- **建议工作量/优先级**：P3 ≈0.5 人天（机械替换 + 局部回归），可与「R1 单一来源清理」批同批做。
+
+**T592 纪律**：只改测试文件（`packages/shared/requester/__tests__/auth-seam-scan.test.ts`）+ 本报告；产品代码零改动（4 次变异全部还原，`git status --porcelain` 仅本批两个文件）；未合并、未碰 `main`。
