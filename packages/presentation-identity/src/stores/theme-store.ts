@@ -52,9 +52,18 @@ export const useThemeStore = defineStore('ThemeStore', () => {
 
     /**
      * 初始化系统偏好监听器
-     * @description 初始化系统偏好变化监听器，用于监听用户系统偏好变化
+     * @description 初始化系统偏好变化监听器，用于监听用户系统偏好变化。
+     *              环境无 `matchMedia`（受限 WebView / 老环境）时**不得抛错**（DEF-96）：
+     *              回退默认浅色 + 结构化告警（PM 裁定④：可见口径 = 日志，不弹 UI）。
      */
     const initSystemListener = () => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            console.warn('[theme] matchMedia 不可用，回退默认浅色主题', {
+                event: 'theme.matchmedia.unavailable'
+            })
+            systemPrefersDark.value = false
+            return
+        }
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
         systemPrefersDark.value = mediaQuery.matches
 
