@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vite-plus/test'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { VueWrapper } from '@vue/test-utils'
 import {
     clickSegment,
@@ -124,5 +124,39 @@ describe('T608 AC1a · 分组切换入口存在且语义可辨识', () => {
             headers.some((text) => text.includes(stateLabel('todo'))),
             `切回后列头实测 = ${JSON.stringify(headers)}`
         ).toBe(true)
+    })
+
+    it('AC1a⑥ 切分组不写任何偏好存储（PRD R7：刷新回默认）', async () => {
+        const setItem = vi.spyOn(Storage.prototype, 'setItem')
+        const removeItem = vi.spyOn(Storage.prototype, 'removeItem')
+        const clear = vi.spyOn(Storage.prototype, 'clear')
+        // 键值快照：直写属性（`localStorage.foo = x`）不一定经过 `setItem`，故以内容对账兜底
+        const dump = (storage: Storage): string =>
+            JSON.stringify(
+                Array.from({ length: storage.length }, (_, index) => storage.key(index))
+                    .map((key) => [key, storage.getItem(key as string)] as const)
+                    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+            )
+        const before = `${dump(localStorage)}|${dump(sessionStorage)}`
+
+        const { wrapper: w } = mountWith()
+        await clickSegment(w, 'priority')
+        await clickSegment(w, 'state')
+
+        const writes = {
+            setItem: setItem.mock.calls,
+            removeItem: removeItem.mock.calls,
+            clear: clear.mock.calls
+        }
+        expect(writes, `分组切换不得写偏好存储（R7）：实测 ${JSON.stringify(writes)}`).toEqual({
+            setItem: [],
+            removeItem: [],
+            clear: []
+        })
+        expect(
+            `${dump(localStorage)}|${dump(sessionStorage)}`,
+            '分组切换前后 local/sessionStorage 内容须逐字不变（R7）'
+        ).toBe(before)
+        vi.restoreAllMocks()
     })
 })
