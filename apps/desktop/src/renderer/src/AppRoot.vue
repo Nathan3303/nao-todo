@@ -8,6 +8,7 @@ import SyncStatusBar from '@/components/sync/sync-status-bar.vue'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { bootstrapLocalData, withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
+import { clearSessionCredentials, installSessionEnd } from '@/session-end'
 import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
 import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
@@ -21,11 +22,8 @@ import { useAuthUseCase } from '@/hooks'
 import { useDesktopSessionRenewal } from './hooks/use-desktop-session-renewal'
 // 托盘 tooltip 同步同样是**桌面专属**模块（引 preload 桥）⇒ 同上走相对路径，不经 `@/hooks` 桶
 import { useTrayTooltip } from './hooks/use-tray-tooltip'
-import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
-import {
-    localSession,
-    resolveUserIdFromStoredJwt
-} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { fireAuthExpiry } from '@nao-todo/shared/requester/auth-expiry'
+import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { registerBackfillTriggers } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
 import {
     flushPreferenceQueue,
@@ -73,18 +71,14 @@ syncTracker.setDirtyListener(() => {
 // 应用级失效中心接线（DEF-STORE-06 方向 1：落库后经 hub 派发 RefreshData；幂等注册，见 store-invalidation.ts）
 useStoreInvalidationHub()
 
-// 会话失效（10041 用户凭证验证失败）：仅删除 USER_JWT 并回登录页，不删除本地业务数据
-// 同源复用：续期发现凭证失效（AC8）也走这一处，避免两条登出路径口径分叉
-const handleSessionExpired = (): void => {
-    revokeOfflineEntry() // C-25：会话失效必须清离线进入授权
-    userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
-    localSession.clear()
-    cryptoService.lock()
-    // C-35：统一导航封装（失败结构化记录，不抛错）
-    void safeReplace(router, '/auth/signin', 'app-root:session-expired-navigation')
-}
+// 会话失效（10041 / 10042）：清矩阵 + 回登录页**只有一处**（`@/session-end`，ADR D1）
+// 同步层 / 续期 / 跨标签 / 请求器四路共用；本组件只负责注册同一处理者
+installSessionEnd(router)
 
-syncService.setSessionExpiredListener(handleSessionExpired)
+syncService.setSessionExpiredListener(() => {
+    // 同步层只发布事件（AC1「请求层 / 同步层零清理」）
+    fireAuthExpiry('credential-invalid')
+})
 
 // 常驻会话续期（AC6/AC11）：桌面端专属（Web 无 preload 桥 ⇒ 零行为变化）
 const authUseCase = useAuthUseCase(userStore)
@@ -95,7 +89,7 @@ useDesktopSessionRenewal({
     onCredentialExpired: () => {
         // AC8：窗口隐藏时先发系统通知（不得静默不再提醒），打开后停在登录引导
         sendNotification(t('session.expired.title'), t('session.expired.body'), { silent: true })
-        handleSessionExpired()
+        fireAuthExpiry('credential-invalid')
     }
 })
 
@@ -148,11 +142,8 @@ const onSignOut = async (): Promise<void> => {
     // C-54：脏队列阻塞确认（先于清库/清认证；取消则中止）
     const userId = resolveUserIdFromStoredJwt()
     if (userId && !(await wipeLocalDataOnSignOut(userId))) return
-    revokeOfflineEntry() // C-25：登出必须清离线进入授权
     // 清认证（原 InitialSyncGate.onSignOut 职责；移至此处保证护栏先于清库）
-    userStore.clearAuthData()
-    localSession.clear()
-    cryptoService.lock()
+    clearSessionCredentials()
     try {
         await safeReplace(router, '/auth/signin', 'app-root:signout-navigation')
     } finally {

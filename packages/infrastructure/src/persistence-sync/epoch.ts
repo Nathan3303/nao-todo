@@ -5,9 +5,19 @@
  *              认证流程不创建业务实体，无循环依赖（见 data-sync-plan.md §1.4）。
  */
 import { getRequesterImpl } from '@nao-todo/shared/requester'
+import { buildAuthHeaders } from '@nao-todo/shared/requester/auth-headers'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { setSnowflakeEpoch } from './sync-config'
 import { snowflake } from './snowflake'
+
+/** 鉴权头（D6 单点拼接；无 token ⇒ `{}`，永不 `Bearer null`） */
+const authHeaders = (): Record<string, string> => {
+    try {
+        return buildAuthHeaders(getJWTFromLocalStorage())
+    } catch {
+        return {}
+    }
+}
 
 interface SystemConfigRes {
     data?: {
@@ -23,7 +33,7 @@ interface SystemConfigRes {
 export const initSnowflakeEpoch = async (): Promise<number | null> => {
     try {
         const response = await getRequesterImpl().get('/system/config', {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            headers: authHeaders()
         })
         const res = response.data as SystemConfigRes
         const raw = res?.data?.snowflakeEpoch
