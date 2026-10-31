@@ -6,6 +6,7 @@ import router from '@/router'
 import { startWebDataPlane } from '@/data-plane'
 import { useLocaleStore, useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { initRequester } from '@nao-todo/shared/requester'
+import { installSessionEnd } from './session-end'
 import { t } from '@nao-todo/shared/locales'
 import { useResponsiveFlag } from '@nao-todo/shared/hooks'
 import { provide } from 'vue'
@@ -18,14 +19,11 @@ const useApp = () => {
         initRequester({
             name: 'AxiosRequester',
             baseURL: env.apiBaseURL,
-            // 凭证失效（code 10041：被下线/被同设备重登顶掉/会话过期）：清空登录态并跳转登录页
-            onAuthExpired: () => {
-                useUserStore().clearAuthData()
-                router.replace('/auth/signin')
-            },
             // T558：失效响应必须与**当前** token 一致才登出（陈旧响应 / `Bearer null` 只记录）
             getAuthToken: () => useUserStore().userToken || null
         })
+        // D1/D4：会话结束只有一处执行点（清理矩阵 + 回登录页）；两端注册同一个处理者
+        installSessionEnd(router)
         // 加载本地的用户主题偏好 - 应该是先应用本地数据在加载服务器数据
         const themeStore = useThemeStore()
         themeStore.loadSavedTheme()

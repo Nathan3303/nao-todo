@@ -11,6 +11,7 @@
  * @see docs/adr/2026-09-23-local-preference-sync.md（§D-1b / §D-4 / PS-1 / PS-8 / PS-10）
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
+import { buildAuthHeaders } from '@nao-todo/shared/requester/auth-headers'
 import {
     normalizeQuietHours,
     normalizeReminderSettings,
@@ -341,9 +342,10 @@ const resolveContext = (context: PreferenceSyncContext) => ({
     nowMs: context.nowMs ?? Date.now()
 })
 
+/** 鉴权头（D6 单点拼接；无 token ⇒ `{}`，永不 `Bearer null`） */
 const authHeaders = (): Record<string, string> => {
     try {
-        return { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+        return buildAuthHeaders(getJWTFromLocalStorage())
     } catch {
         return {}
     }

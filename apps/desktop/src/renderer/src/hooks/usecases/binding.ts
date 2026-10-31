@@ -23,7 +23,10 @@ import { newLocalTagRepository } from '@nao-todo/infrastructure/src/persistence-
 import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
 import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
 import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
-import { runPlaintextMigration } from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
+import {
+    isPlaintextMigrationDone,
+    runPlaintextMigration
+} from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
 import {
     PROJECT_ARCHIVE_WRITE_METHODS,
     TASK_ARCHIVE_WRITE_METHODS,
@@ -125,8 +128,28 @@ export const useCaseBinding: UseCaseBinding = {
             try {
                 await cryptoService.ensureUnlocked(userId, signInViewObject.password)
             } catch (unlockErr) {
-                console.error('[desktop] 本地数据解锁失败', unlockErr)
-                return '本地数据解锁失败，请检查密码'
+                // D3-E（DEF-91）：已明文迁移的库**不需要** DEK（数据全是 `plain:` 直读）
+                // ⇒ 解锁失败只降级、不阻断登录；并用本次密码重建包裹（丢失 0：无密文可丢）
+                const migrated = await isPlaintextMigrationDone(userId)
+                if (!migrated) {
+                    console.error('[desktop] 本地数据解锁失败', unlockErr)
+                    // DEF-91 / L3：不得把「密钥包裹失效」说成「密码错」——
+                    // 用户多半是在其它设备改过账号密码，本地密钥包仍是旧密码包裹。
+                    return (
+                        '本地数据无法用当前密码解开，可能是账号密码已在其他设备修改；' +
+                        '请重启后在本地数据解锁页用旧密码解锁，或重建本地数据'
+                    )
+                }
+                console.warn(
+                    '[desktop] 本地密钥包无法用当前密码解开（已迁移明文库）⇒ 降级进入并重建密钥包',
+                    { event: 'desktop.unlock.degraded', userId }
+                )
+                try {
+                    await cryptoService.setup(userId, signInViewObject.password)
+                } catch (rebuildErr) {
+                    // 重建失败不阻断登录（明文直读）；下次登录/解锁门再重试
+                    console.error('[desktop] 本地密钥包重建失败（登录已放行）', rebuildErr)
+                }
             }
             // C-47/C-56：登录路径已带明文密码 ⇒ 首次登录静默完成全库明文迁移
             // （失败不阻塞登录：双格式读取兜底，下次启动/登录重试）

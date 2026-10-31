@@ -16,12 +16,17 @@ import { isCheckInInFlight } from './checkin-window'
 type AuthExpiredLatchReset = () => void
 let latestLatchReset: AuthExpiredLatchReset | null = null
 
+import { isCredentialCode } from './credential-codes'
+import { resetAuthExpiryLatch } from './auth-expiry'
+
 /**
  * 复位凭证失效登出闸（登录成功后调用；两端共用）
  * @description 无请求器（未 init / Lynx 无闩）时静默 no-op；多次调用安全。
+ *              同时复位事件单例的单闩（D4：闩只有一处口径）。
  */
 export const resetAuthExpiredLatch = (): void => {
     latestLatchReset?.()
+    resetAuthExpiryLatch()
 }
 
 /**
@@ -152,15 +157,15 @@ export default (
     axiosInstance.interceptors.response.use(
         (response) => {
             const code = (response.data as { code?: number })?.code
-            if (code === 10041) handleCredentialExpired(response.config?.headers)
+            if (isCredentialCode(code)) handleCredentialExpired(response.config?.headers)
             return response
         },
         async (error) => {
             const config = error.config || {}
 
-            // 错误响应（HTTP 非 200）同样可能携带业务码 10041
+            // 错误响应（HTTP 非 200）同样可能携带凭证类业务码（10041 / 10042）
             const errorCode = (error.response?.data as { code?: number })?.code
-            if (errorCode === 10041) handleCredentialExpired(config.headers)
+            if (isCredentialCode(errorCode)) handleCredentialExpired(config.headers)
 
             // 幂等请求的网络/超时错误自动重试（受 enableRetry 开关控制）
             if (enableRetry && isRetriableError(error) && isIdempotentMethod(config.method)) {

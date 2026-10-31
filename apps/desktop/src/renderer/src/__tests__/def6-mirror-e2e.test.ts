@@ -174,6 +174,8 @@ describe('DEF-6 / AC13（端到端）：冷启动 1 次 ⇒ 本地镜像含最�
         await localDatabase.deletionSchedules.clear()
         await localDatabase.meta.clear()
         cryptoService.lock()
+        // T590 AC6：新不变量「无 token ⇒ 不发请求」，夹具显式置 token
+        localStorage.setItem('USER_JWT', 'jwt-e2e')
         localSession.setCurrentUserId('u-1')
         await cryptoService.setup('u-1', 'test-password')
     })

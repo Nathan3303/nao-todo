@@ -3,6 +3,7 @@ import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { AuthUseCase, type SignInViewObject } from '@nao-todo/domain-identity'
 
 defineOptions({ name: 'AuthSignIn' })
@@ -11,6 +12,20 @@ const emit = defineEmits<{ (e: 'signInSuccess'): void }>()
 
 const loading = ref(false)
 const disabled = ref(false)
+const route = useRoute()
+
+/**
+ * 注册链接的 `route`（DEF-95 / ADR D7）：携带 `redirect` 以保持深链不丢
+ * @description 只接受**站内绝对路径**（防开放重定向），其余丢弃。
+ */
+const signUpLinkRoute = () => {
+    const redirect = route.query.redirect
+    const target =
+        typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+            ? redirect
+            : null
+    return target ? { path: '/auth/signup', query: { redirect: target } } : { path: '/auth/signup' }
+}
 const signInVO = reactive<SignInViewObject>({ email: '', password: '' })
 
 const submit = async (e: Event) => {
@@ -69,7 +84,7 @@ const submit = async (e: Event) => {
         <nue-footer>
             <nue-text align="center">
                 {{ t('auth.signIn.noAccount') }}
-                <nue-link route="/auth/signup">{{ t('auth.signIn.registerLink') }}</nue-link>
+                <nue-link :route="signUpLinkRoute()">{{ t('auth.signIn.registerLink') }}</nue-link>
                 {{ t('auth.signIn.goToRegister') }}
             </nue-text>
         </nue-footer>

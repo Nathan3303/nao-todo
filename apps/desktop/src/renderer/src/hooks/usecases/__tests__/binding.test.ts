@@ -10,6 +10,10 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 const mocks = vi.hoisted(() => ({
     ensureUnlocked: vi.fn(async () => undefined),
+    // T589/AC4：E 路径「明文姿态下解锁失败只降级不阻断」需要判定迁移姿态 + 用新密码重建包
+    isPlaintextMigrationDone: vi.fn(async () => true),
+    setup: vi.fn(async () => undefined),
+    changePassword: vi.fn(async () => undefined),
     runPlaintextMigration: vi.fn(async () => ({ ran: true, migrated: 0, lockSkipped: false })),
     resolveUserIdFromStoredJwt: vi.fn(() => 'u-1'),
     setCurrentUserId: vi.fn(),
@@ -23,10 +27,12 @@ vi.mock('@nao-todo/infrastructure', () => ({
     cryptoService: {
         ensureUnlocked: mocks.ensureUnlocked,
         lock: mocks.lock,
-        changePassword: vi.fn()
+        setup: mocks.setup,
+        changePassword: mocks.changePassword
     },
     deletionService: { recordDeletion: vi.fn(), cancelDeletion: vi.fn() },
     initSnowflakeEpoch: mocks.initSnowflakeEpoch,
+    isPlaintextMigrationDone: mocks.isPlaintextMigrationDone,
     localSession: {
         setCurrentUserId: mocks.setCurrentUserId,
         getCurrentUserId: mocks.getCurrentUserId,
@@ -132,6 +138,8 @@ describe('desktop binding - 登录路径明文迁移（AC2）', () => {
         resetCheckInAttempt()
         mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
         mocks.ensureUnlocked.mockResolvedValue(undefined)
+        // T589/AC4：本组断言的「解锁失败 ⇒ 阻断」= **未迁移库**口径（已迁移库走 E 路径不阻断）
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
         mocks.runPlaintextMigration.mockResolvedValue({
             ran: true,
             migrated: 0,
@@ -167,7 +175,8 @@ describe('desktop binding - 登录路径明文迁移（AC2）', () => {
         const useCase = decorate()
 
         await expect(useCase.signIn({ password: 'bad' })).resolves.toBe(
-            '本地数据解锁失败，请检查密码'
+            '本地数据无法用当前密码解开，可能是账号密码已在其他设备修改；' +
+                '请重启后在本地数据解锁页用旧密码解锁，或重建本地数据'
         )
         expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()
         expect(consoleError).toHaveBeenCalled()
@@ -204,5 +213,70 @@ describe('desktop binding - 续期接线（T545 / AC6 / R2）', () => {
 
         expect(err).toBe('网络错误')
         expect(consumeRotationGrace()).toBe(false)
+    })
+})
+describe('desktop binding - AC4 恢复出口 E（明文姿态下解锁失败不阻断登录，DEF-91）', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        resetTokenRotation()
+        resetCheckInAttempt()
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.ensureUnlocked.mockRejectedValue(new Error('旧密码包裹的密钥包无法用新密码解开'))
+        mocks.runPlaintextMigration.mockResolvedValue({
+            ran: true,
+            migrated: 0,
+            lockSkipped: false
+        })
+    })
+
+    it('已迁移库 + 解锁失败 ⇒ 登录成功（返回 null）且用新密码重建包', async () => {
+        mocks.isPlaintextMigrationDone.mockResolvedValue(true)
+        const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const useCase = decorate()
+
+        const err = await useCase.signIn({ password: 'new-password' })
+
+        expect(err, 'E 路径：明文姿态下解锁失败只降级，不阻断登录').toBeNull()
+        // 重建包 = setup 或 changePassword（实现可二选一，但必须带 userId + 新密码）
+        const rebuildCalls = [...mocks.setup.mock.calls, ...mocks.changePassword.mock.calls]
+        expect(rebuildCalls.length, '应以新密码重建密钥包').toBe(1)
+        expect(JSON.stringify(rebuildCalls[0])).toContain('u-1')
+        expect(JSON.stringify(rebuildCalls[0])).toContain('new-password')
+        // 降级必须留结构化痕迹（PM 裁定：可见口径 = 结构化日志，不弹 UI）
+        expect(consoleWarn.mock.calls.length + consoleError.mock.calls.length).toBeGreaterThan(0)
+    })
+
+    it('未迁移库 + 解锁失败 ⇒ 仍阻断（返回错误），且不得静默重建/丢历史密文', async () => {
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const useCase = decorate()
+
+        const err = await useCase.signIn({ password: 'new-password' })
+
+        expect(err).not.toBeNull()
+        expect(mocks.setup).not.toHaveBeenCalled()
+        expect(mocks.changePassword).not.toHaveBeenCalled()
+        // 文案红线：不得把「密钥包裹失效」说成「密码错误」
+        expect(String(err)).not.toMatch(/密码错误/)
+        expect(consoleError).toHaveBeenCalled()
+    })
+
+    // T590b / L3：未迁移库的失败文案**不得归因「密码错」**（DEF-91 原症状），
+    // 且必须给出可自助的下一步（重启后到本地数据解锁页：旧密码解锁 / 重建）。
+    // 本用例为**新增断言**（不改既有用例），断言文本可沿用。
+    it('未迁移库 + 解锁失败 ⇒ 文案不归因密码错，且给出自救下一步（L3）', async () => {
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        vi.spyOn(console, 'warn').mockImplementation(() => {})
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        const useCase = decorate()
+
+        const err = await useCase.signIn({ password: 'new-password' })
+
+        expect(err).not.toBeNull()
+        const text = String(err)
+        expect(text).not.toMatch(/密码错误|请检查密码|密码有误|密码不正确/)
+        expect(text).toMatch(/旧密码|重建/)
     })
 })

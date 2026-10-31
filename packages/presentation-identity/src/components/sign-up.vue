@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/shared/locales'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
@@ -11,6 +11,24 @@ defineOptions({ name: 'AuthSignUp' })
 const props = defineProps<{ authUseCase: AuthUseCase }>()
 
 const router = useRouter()
+const route = useRoute()
+
+/**
+ * 深链目标（DEF-95 / ADR D7）：只接受**站内绝对路径**，其余丢弃
+ * @description 防开放重定向：`//host` / `http(s)://` / 非字符串一律不认。
+ */
+const deepLinkTarget = (): string | null => {
+    const redirect = route.query.redirect
+    if (typeof redirect !== 'string') return null
+    if (!redirect.startsWith('/') || redirect.startsWith('//')) return null
+    return redirect
+}
+
+/** 登录/注册互链的 `route`（携带 `redirect` 以保持深链不丢） */
+const authLinkRoute = (path: '/auth/signin' | '/auth/signup') => {
+    const target = deepLinkTarget()
+    return target ? { path, query: { redirect: target } } : { path }
+}
 
 const loading = ref(false)
 const disabled = ref(false)
@@ -33,7 +51,8 @@ const submit = async (e: Event) => {
         return
     }
     NueMessage.success(t('auth.signUp.success'))
-    await router.push({ path: '/auth/signin' })
+    // DEF-95：注册成功保留 `query.redirect`，回到分享链接的目标页
+    await router.push(deepLinkTarget() ?? '/auth/signin')
 }
 </script>
 
@@ -104,7 +123,9 @@ const submit = async (e: Event) => {
         <nue-footer>
             <nue-text align="center">
                 {{ t('auth.signUp.hasAccount') }}
-                <nue-link route="/auth/signin">{{ t('auth.signUp.loginLink') }}</nue-link>
+                <nue-link :route="authLinkRoute('/auth/signin')">{{
+                    t('auth.signUp.loginLink')
+                }}</nue-link>
                 {{ t('auth.signUp.goToLogin') }}
             </nue-text>
         </nue-footer>

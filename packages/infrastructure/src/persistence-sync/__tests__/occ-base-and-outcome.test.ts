@@ -7,6 +7,7 @@ import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
 import { newLocalTaskRepository } from '../../persistence-local/repos/task-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
+import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { loadConflictJournal } from '../conflict-journal'
 import { syncStatus } from '../sync-status'
 import { syncTracker } from '../sync-tracker'
@@ -101,6 +102,8 @@ const resetLocalState = async (): Promise<void> => {
     await localDatabase.syncQueue.clear()
     await localDatabase.syncCursor.clear()
     cryptoService.lock()
+    // T590 AC6：新不变量「无 token ⇒ 不发请求」，夹具显式置 token
+    localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, 'jwt-sync-fixture')
     localSession.setCurrentUserId(USER_ID)
     await cryptoService.setup(USER_ID, 'test-password')
     syncStatus.setConflictCount(0)

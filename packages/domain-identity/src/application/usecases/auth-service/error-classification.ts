@@ -1,5 +1,13 @@
 import type { GoError } from '@nao-todo/shared/types'
 import { unwrapError } from '@nao-todo/shared/utils/unwrap-go-error'
+import { AUTH_CREDENTIAL_CODES } from '@nao-todo/shared/requester/credential-codes'
+
+/**
+ * 凭证类业务码（唯一集合；定义在 `shared`，此处**再导出**供域/应用层引用）
+ * @description `10041`（用户凭证验证失败）与 `10042`（凭证校验未通过）同属凭证类；
+ *              网络码白名单之外的其余失败**不**因此升级为凭证类（需走显式判定，见下方分类器）。
+ */
+export { AUTH_CREDENTIAL_CODES }
 
 /**
  * 网络类失败白名单（C-67 / r11，DEF-33）
@@ -106,6 +114,64 @@ export const CHECK_IN_CONFLICT_CODE = 10022
 export const isRetryableCheckInConflict = (err: GoError): boolean => {
     if (err === null || err === undefined || err === '') return false
     return extractErrorCodes(err).includes(CHECK_IN_CONFLICT_CODE)
+}
+
+/** 认证失败分类（ADR D1 单一判据的三类投影） */
+export type AuthFailureClass = 'credential' | 'network' | 'business'
+
+/** 认证失败输入（结构化 code 或错误对象，二者可并存） */
+export type AuthFailureInput = {
+    code?: string | number | null
+    err?: GoError
+}
+
+/** 收集输入上的全部结构化 code（显式 code 优先，其次错误自带 code / businessCode） */
+const collectAuthCodes = (input: AuthFailureInput): (string | number)[] => {
+    const codes: (string | number)[] = []
+    if (typeof input.code === 'string' || typeof input.code === 'number') {
+        codes.push(input.code)
+    }
+    codes.push(...extractErrorCodes(input.err))
+    return codes
+}
+
+/**
+ * 认证失败分类（**唯一判据**，ADR D1 / AC1）
+ * @description 表驱动，各层引用本函数，**禁止各自 `switch`**：
+ *              - `10041` / `10042` ⇒ `credential`；
+ *              - `NETWORK_ERROR_CODES`（6 个）⇒ `network`；
+ *              - 其余（`10022` / 5xx / 未知 / 无信号）⇒ `business`（被动投影**不登出**）。
+ *              无结构化 code 时沿用既有**仓内归一化网络文案**兜底识别 `network`
+ *              （不构成第二套文案标记集，标记集仍是本模块同一常量）。
+ * @param input 结构化 code 与/或错误对象
+ */
+export const classifyAuthFailure = (input: AuthFailureInput): AuthFailureClass => {
+    const codes = collectAuthCodes(input)
+    if (codes.some((code) => AUTH_CREDENTIAL_CODES.includes(code))) return 'credential'
+    if (codes.some((code) => NETWORK_ERROR_CODES.includes(code))) return 'network'
+    if (codes.length === 0 && input.err !== null && input.err !== undefined) {
+        const message = unwrapError(input.err)
+        if (NETWORK_ERROR_MESSAGES.some((marker) => message.includes(marker))) return 'network'
+    }
+    return 'business'
+}
+
+/**
+ * 是否结束会话（**唯一「是否登出」判据**，ADR D1 / AC2）
+ * @description 两个投影共用同一分类器，方向不同：
+ *              - `passive`（被动响应：axios / sync 收到失败）**仅** `credential` 结束
+ *                ⇒ 网络类 / 业务类**不登出、不清数据**（C-67 口径不回归）；
+ *              - `active`（主动校验：checkIn 等）沿用 C-67 **fail-closed**
+ *                ⇒ `credential` 与未知（`business` 兜底）结束，`network` 保持。
+ * @param input source + 结构化 code 与/或错误对象
+ * @returns `true` = 结束会话（登出 / 清凭证）
+ */
+export const decideSessionEnd = (
+    input: AuthFailureInput & { source: 'active' | 'passive' }
+): boolean => {
+    const failureClass = classifyAuthFailure(input)
+    if (input.source === 'passive') return failureClass === 'credential'
+    return failureClass !== 'network'
 }
 
 /**

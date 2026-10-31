@@ -6,12 +6,14 @@
  *              拉取写入直连表 + converters（不触发 markDirty，避免同步回环）。
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
+import { buildAuthHeaders } from '@nao-todo/shared/requester/auth-headers'
 import {
     consumeRotationGrace,
     extractBearerToken,
     isStaleTokenSnapshot
 } from '@nao-todo/shared/requester/auth-rotation'
 import { isCheckInInFlight } from '@nao-todo/shared/requester/checkin-window'
+import { decideSessionEnd } from '@nao-todo/domain-identity'
 import type { Table } from 'dexie'
 import { pickUnexpectedDroppedFields } from './dropped-fields'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
@@ -424,9 +426,9 @@ export class SyncService {
         this.sessionExpiredListener = listener
     }
 
-    /** 判定业务码是否为会话失效（用户凭证验证失败） */
+    /** 判定业务码是否为会话失效（D1 单一判据：被动投影仅凭证类 ⇒ 结束；纳入 `10042`） */
     private isSessionExpiredCode(code: unknown): boolean {
-        return code === 10041
+        return decideSessionEnd({ source: 'passive', code: code as string | number })
     }
 
     /** 触发会话失效回调（不删除本地数据，仅通知装配层清 JWT 回登录页） */
@@ -447,10 +449,24 @@ export class SyncService {
 
     private authHeaders(): Record<string, string> {
         try {
-            return { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            // D6：无 token ⇒ `{}`（**永不** `Bearer null`）；拼接只在 shared 单点实现
+            return buildAuthHeaders(getJWTFromLocalStorage())
         } catch {
             // 无 localStorage 环境（测试）：不带鉴权头
             return {}
+        }
+    }
+
+    /**
+     * 会话是否已结束（D6 「sessionEnded 门」）
+     * @description 可读到 token 源且拿不到 token ⇒ 会话已结束（登出/失效后 JWT 已被清）；
+     *              token 源本身不可读（无 localStorage 的运行时）⇒ 无法判定，**不**据此拦截。
+     */
+    private hasEndedSession(): boolean {
+        try {
+            return getJWTFromLocalStorage() === null
+        } catch {
+            return false
         }
     }
 
@@ -725,6 +741,8 @@ export class SyncService {
     private async pullAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
+        // D6：会话结束后后台同步**零请求**（不清队列；重新登录后由既有触发源补拉）
+        if (this.hasEndedSession()) return
         await this.withPullLock(userId, () => this.pullAllInnerLocked(userId))
     }
 
@@ -1069,6 +1087,8 @@ export class SyncService {
     private async pushAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
+        // D6：会话结束后停发（队列/游标保留 ⇒ 重新登录后继续推送，不丢未推送修改）
+        if (this.hasEndedSession()) return
         await this.withPushLock(userId, () => this.pushAllInnerLocked(userId))
     }
 

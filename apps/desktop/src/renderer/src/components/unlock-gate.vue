@@ -44,6 +44,8 @@ const password = ref('')
 const error = ref('')
 const unlocking = ref(false)
 const migrating = ref(false)
+/** 解锁失败终态（DEF-91：出现旧密码 / 重建两个可自助出口） */
+const unlockFailed = ref(false)
 /** 有历史密文库且尚未明文迁移 ⇒ 需密码解锁并（可选）升级；未迁移即 UI 标「待升级」（AC4） */
 const migrationPending = ref(false)
 const userId = ref<string | null>(null)
@@ -130,12 +132,125 @@ const doUnlock = async (): Promise<boolean> => {
     error.value = ''
     try {
         await cryptoService.unlock(userId.value, password.value)
+        unlockFailed.value = false
         return true
     } catch {
-        error.value = '密码错误，无法解锁本地数据'
+        // DEF-91：不得说成「密码错」——多数场景是**他设备改密后本地密钥包仍是旧密码包裹**
+        unlockFailed.value = true
+        error.value = '本地数据未能解锁（可能在其他设备改过密码）'
         return false
     } finally {
         unlocking.value = false
+    }
+}
+
+/** 旧密码自助解锁的尝试上限与退避（DEF-91 / D3-B：本地 3 次上限 + 退避） */
+const RECOVERY_MAX_ATTEMPTS = 3
+const RECOVERY_LOCK_MS = 30_000
+const recoveryAttempts = ref(0)
+const recoveryBlockedUntil = ref(0)
+const recoveryMode = ref(false)
+const oldPassword = ref('')
+/** 进入旧密码模式时暂存「本次登录的新密码」（重包目标；不依赖输入框当前值） */
+const pendingNewPassword = ref('')
+const recovering = ref(false)
+const rebuilding = ref(false)
+
+/** 进入旧密码自助解锁（失败终态的可见出口之一） */
+const enterRecovery = () => {
+    recoveryMode.value = true
+    // 记住失败时使用的新密码作为重包目标（切到旧密码输入后不再依赖原输入框）
+    pendingNewPassword.value = password.value
+    oldPassword.value = ''
+    error.value = ''
+}
+
+/**
+ * 用旧密码解锁，并用**本次登录的新密码**重新包裹（D3-B：无损、成功后不再需要旧密码）
+ * @description 3 次上限 + 30s 退避：防止把服务端账号密码当成本地密钥包口令反复试探。
+ */
+const onRecover = async () => {
+    if (!userId.value) {
+        error.value = '无法识别当前用户，请重新登录'
+        return
+    }
+    if (!oldPassword.value) {
+        error.value = '请输入旧密码'
+        return
+    }
+    if (recoveryAttempts.value >= RECOVERY_MAX_ATTEMPTS) {
+        recoveryBlockedUntil.value = Date.now() + RECOVERY_LOCK_MS
+        error.value = '尝试次数过多，请稍后再试，或使用「重建本地数据」'
+        return
+    }
+    if (Date.now() < recoveryBlockedUntil.value) {
+        error.value = '尝试次数过多，请稍后再试，或使用「重建本地数据」'
+        return
+    }
+    recovering.value = true
+    error.value = ''
+    try {
+        await cryptoService.unlock(userId.value, oldPassword.value)
+    } catch {
+        recoveryAttempts.value += 1
+        error.value = '旧密码不正确，无法解锁本地数据'
+        recovering.value = false
+        return
+    }
+    try {
+        if (pendingNewPassword.value) {
+            await cryptoService.changePassword(
+                userId.value,
+                oldPassword.value,
+                pendingNewPassword.value
+            )
+        }
+    } catch (rewrapErr) {
+        // 重包失败不阻断进入（已解锁即可读写）；下次改密/登录会再重包
+        console.error('[desktop] 本地密钥包重包失败（已放行）', rewrapErr)
+    } finally {
+        recovering.value = false
+    }
+    recoveryAttempts.value = 0
+    unlockFailed.value = false
+    emit('unlocked')
+}
+
+/**
+ * 重建本地数据兜底（D3-D）：二次确认后抛弃本地库并全量重拉
+ * @description 唯一不可逆开关（C-51）：取消 ⇒ **零副作用**（不清会话、不锁、不重建、不进入）。
+ */
+const onRebuild = async () => {
+    if (!userId.value) return
+    const [isByCancel] = await NueConfirm({
+        title: '重建本地数据？',
+        content: '将清空本机缓存并从云端重新下载；未同步的本地改动会丢失。',
+        confirmButtonText: '重建',
+        cancelButtonText: '取消'
+    })
+    if (isByCancel) return
+    rebuilding.value = true
+    error.value = ''
+    try {
+        // 既有护栏（C-54 同口径）：未回传写入会阻塞重建
+        if (!(await wipeLocalDataOnSignOut(userId.value))) {
+            error.value = '仍有未同步的修改，请先联网同步后再重建'
+            return
+        }
+        // 复用 C-68 一次性自愈 + 全量重拉（不新造重建路径）；按需加载，避免启动期拉入同步层
+        const [{ selfHealLegacyCipherMirror }, { syncService }] = await Promise.all([
+            import('@nao-todo/infrastructure/src/persistence-local/migration/legacy-cipher-self-heal'),
+            import('@nao-todo/infrastructure/src/persistence-sync/sync-service')
+        ])
+        await selfHealLegacyCipherMirror(userId.value)
+        await syncService.pullAll()
+        unlockFailed.value = false
+        emit('unlocked')
+    } catch (rebuildErr) {
+        console.error('[desktop] 本地数据重建失败', rebuildErr)
+        error.value = '重建失败，请检查网络后重试'
+    } finally {
+        rebuilding.value = false
     }
 }
 
@@ -161,9 +276,10 @@ const onUnlockAndMigrate = async () => {
     }
 }
 
-/** 回车提交：待迁移时走「解锁并升级」 */
+/** 回车提交：旧密码模式提交旧密码；待迁移时走「解锁并升级」 */
 const onSubmit = (): void => {
-    if (migrationPending.value) void onUnlockAndMigrate()
+    if (recoveryMode.value) void onRecover()
+    else if (migrationPending.value) void onUnlockAndMigrate()
     else void onUnlock()
 }
 
@@ -228,21 +344,66 @@ const onSignOut = async () => {
                                 本地数据待升级：需输入密码完成明文迁移
                             </nue-text>
                             <nue-input
+                                v-if="!recoveryMode"
                                 v-model="password"
                                 :disabled="unlocking || migrating"
                                 allow-show-password
                                 placeholder="输入密码解锁"
                                 type="password"
                             />
+                            <nue-input
+                                v-else
+                                v-model="oldPassword"
+                                :disabled="recovering"
+                                allow-show-password
+                                placeholder="输入旧密码（改密前使用过的密码）"
+                                type="password"
+                            />
+                            <nue-text
+                                v-if="!recoveryMode"
+                                class="unlock-gate__recovery-hint"
+                                size="0.875rem"
+                            >
+                                {{
+                                    unlockFailed
+                                        ? '本地数据未能解锁（可能在其他设备改过密码）'
+                                        : '在其他设备改过密码？'
+                                }}
+                                可用旧密码解锁（之后会自动改用新密码），或用「重建本地数据」从云端重新开始
+                            </nue-text>
                             <nue-button
+                                v-if="!recoveryMode"
                                 :loading="migrating || unlocking"
                                 :disabled="unlocking || migrating"
                                 theme="primary"
                                 type="submit"
                                 @click="onSubmit"
+                                >解锁</nue-button
                             >
-                                解锁
-                            </nue-button>
+                            <nue-button
+                                v-else
+                                :loading="recovering"
+                                :disabled="recovering"
+                                theme="primary"
+                                type="submit"
+                                @click="onRecover"
+                                >用旧密码解锁</nue-button
+                            >
+                            <nue-button
+                                v-if="!recoveryMode"
+                                :disabled="unlocking || migrating"
+                                size="small"
+                                theme="pure"
+                                @click="enterRecovery"
+                                >用旧密码解锁</nue-button
+                            >
+                            <nue-button
+                                :disabled="rebuilding"
+                                size="small"
+                                theme="pure"
+                                @click="onRebuild"
+                                >重建本地数据</nue-button
+                            >
                             <nue-button
                                 v-if="migrationPending"
                                 :disabled="unlocking || migrating"
@@ -334,6 +495,13 @@ const onSignOut = async () => {
     .unlock-gate__pending {
         color: var(--nue-warning-color-60);
         text-align: center;
+    }
+
+    /* 解锁失败的自助说明（DEF-91：不得说成「密码错」，给出可自助的下一步） */
+    .unlock-gate__recovery-hint {
+        color: var(--nue-secondary-text-color);
+        text-align: center;
+        line-height: 1.5;
     }
 }
 </style>

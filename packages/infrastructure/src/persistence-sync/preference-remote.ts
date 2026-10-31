@@ -12,16 +12,17 @@ import { projectPreferenceRes2Entity } from '../persistence-go/project/converter
 import { tagPreferenceRes2Entity } from '../persistence-go/tag/converters'
 import type { ProjectPreferenceRes, TagPreferenceRes, ResponseData } from '../persistence-go/models'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
+import { buildAuthHeaders } from '@nao-todo/shared/requester/auth-headers'
 
 /** 服务端普通清单偏好获取成功码（T130 契约） */
 export const PROJECT_PREFERENCE_GET_CODE = 20080
 /** 服务端标签偏好获取成功码（DP-5 契约） */
 export const TAG_PREFERENCE_GET_CODE = 30050
 
-/** 鉴权头（无 localStorage 环境/异常 ⇒ 空头，由请求器归一化） */
+/** 鉴权头（D6 单点拼接；无 token ⇒ `{}`，永不 `Bearer null`） */
 const authHeaders = (): Record<string, string> => {
     try {
-        return { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+        return buildAuthHeaders(getJWTFromLocalStorage())
     } catch {
         return {}
     }
