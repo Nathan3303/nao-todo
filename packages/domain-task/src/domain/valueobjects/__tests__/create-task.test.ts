@@ -74,7 +74,14 @@ describe('CreateTaskValueObject.validate 枚举校验', () => {
         expect(makeVO({ state: 'unknown' }).validate()).toBe(TaskErrorCode.STATE_INVALID)
     })
     it('非法优先级返回 PRIORITY_INVALID', () => {
-        expect(makeVO({ priority: 'urgent' }).validate()).toBe(TaskErrorCode.PRIORITY_INVALID)
+        expect(makeVO({ priority: 'unknown-x' }).validate()).toBe(TaskErrorCode.PRIORITY_INVALID)
+    })
+    /**
+     * T582 / DEF-84（**红基线**）：`urgent` 是服务端 / 其它端已在用的第四档
+     * @description 现状 `TASK_PRIORITIES` 只有三档 ⇒ 本用例红；实现后应通过。
+     */
+    it('T582/AC2（红基线，DEF-84）：`urgent` 为合法档位，不再返回 PRIORITY_INVALID', () => {
+        expect(makeVO({ priority: 'urgent' }).validate()).toBe(null)
     })
     it('非法提醒重复类型返回 REMIND_REPEAT_INVALID', () => {
         expect(makeVO({ remindRepeat: 'hourly' }).validate()).toBe(

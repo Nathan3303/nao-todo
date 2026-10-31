@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import dayjs from 'dayjs'
-import { TaskDomain, UpdateTaskValueObject } from '@nao-todo/domain-task'
+import { prioritySNMap, TaskDomain, UpdateTaskValueObject } from '@nao-todo/domain-task'
 import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects'
 import { localDatabase } from '../db/local-database'
 import { LocalTaskRepoImpl } from '../repos/task-repo-impl'
@@ -359,15 +359,15 @@ describe('LocalTaskRepoImpl', () => {
      * DEF-11（T539 红基线）`priority` 排序语义
      * @description 通用比较器对字符串走 `localeCompare` ⇒ 现为**字母序**（high/low/medium）。
      *              口径（PRD AC1 + PM 2026-10-25 裁定）：「按**用户可见值**归一」——转换层
-     *              `converters.ts:48-50` 已把非白名单值（`''` / `urgent` / 其它）映为 `low`（`DEFAULT_TASK_PRIORITY`）
-     *              ⇒ **排序必须同档**，不得把无值/urgent 单列一档（否则「都是低却分成两拨」）。
-     *              定稿序：降序 高 → 中 → 低（同档：`low` / `''` / `urgent`，组内按既有次级序）；升序反向。
-     *              `urgent` 的显示缺陷（客户端不识别 ⇒ 显示成低）另单登记，不在本批修。
+     *              `converters.ts` 已把非白名单值（`''` / 其它脏值）映为 `low`（`DEFAULT_TASK_PRIORITY`）
+     *              ⇒ **排序必须同档**，不得把无值/脏值单列一档（否则「都是低却分成两拨」）。
+     *              定稿序：降序 紧急 → 高 → 中 → 低（同档：`low` / `''` / 脏值，组内按既有次级序）；升序反向。
+     *              **T582 / DEF-84 更新**：`urgent` 已成为第四档（最高），**不再**与 low 同档。
      *              实现提示：语义序须**单一来源**（domain 既有 `prioritySNMap`），禁字符串比较、禁第二份映射。
      */
-    it('DEF-11/AC1：priority 语义序 高→中→低，空值与 urgent 归 low 同档；升序反向', async () => {
+    it('DEF-11/AC1 + T582/AC3：priority 语义序 紧急→高→中→低，空值归 low 同档；升序反向', async () => {
         const repo = new LocalTaskRepoImpl()
-        // 低档内插入顺序 = 低 → 无值 → 紧急（用于证明「同档 + 组内次级序」，而非「无值独立一档」）
+        // 低档内插入顺序 = 低 → 无值（用于证明「同档 + 组内次级序」，而非「无值独立一档」）
         await repo.create(makeTaskVO({ name: '低', priority: 'low' }))
         await repo.create(makeTaskVO({ name: '无值', priority: '' }))
         await repo.create(makeTaskVO({ name: '紧急', priority: 'urgent' }))
@@ -376,12 +376,39 @@ describe('LocalTaskRepoImpl', () => {
 
         const [desc, descError] = await repo.list('isDeleted=false&sort=priority:desc')
         expect(descError).toBeNull()
-        // 反例区分力：若 `''` 单列最低档 ⇒ 末位是「无值」；若 `urgent` 单列最高档 ⇒ 首位是「紧急」
-        expect(desc!.taskEntities.map((t) => t.name)).toEqual(['高', '中', '低', '无值', '紧急'])
+        // 反例区分力：若 `urgent` 仍与 low 同档 ⇒ 首位会是「高」；若 `''` 单列最低档 ⇒ 末位是「无值」
+        expect(desc!.taskEntities.map((t) => t.name)).toEqual(['紧急', '高', '中', '低', '无值'])
 
         const [asc, ascError] = await repo.list('isDeleted=false&sort=priority:asc')
         expect(ascError).toBeNull()
-        expect(asc!.taskEntities.map((t) => t.name)).toEqual(['低', '无值', '紧急', '中', '高'])
+        expect(asc!.taskEntities.map((t) => t.name)).toEqual(['低', '无值', '中', '高', '紧急'])
+    })
+
+    /**
+     * T582 / AC3（**红基线（T582，DEF-84）**）优先级四档排序
+     * @description 同一列表 `urgent` / `high` / `medium` / `low` 各一条 ⇒ 紧急 → 高 → 中 → 低。
+     *              rank 必须走**单一来源**（domain `prioritySNMap`）⇒ 本用例只钉**语义顺序**，
+     *              ⛔ 不断言各自 rank 字面量（否则等于把映射复制进用例）。
+     */
+    it('T582/AC3（红基线，DEF-84）：四档各一条 ⇒ 紧急 → 高 → 中 → 低', async () => {
+        const repo = new LocalTaskRepoImpl()
+        // 插入顺序故意打乱，避免「靠原序碰巧通过」
+        await repo.create(makeTaskVO({ name: '中', priority: 'medium' }))
+        await repo.create(makeTaskVO({ name: '低', priority: 'low' }))
+        await repo.create(makeTaskVO({ name: '紧急', priority: 'urgent' }))
+        await repo.create(makeTaskVO({ name: '高', priority: 'high' }))
+
+        const [desc] = await repo.list('isDeleted=false&sort=priority:desc')
+        expect(desc!.taskEntities.map((t) => t.name)).toEqual(['紧急', '高', '中', '低'])
+
+        const [asc] = await repo.list('isDeleted=false&sort=priority:asc')
+        expect(asc!.taskEntities.map((t) => t.name)).toEqual(['低', '中', '高', '紧急'])
+
+        // 单一来源：序的键必须都在 domain `prioritySNMap` 中（禁另建一份 rank 表）
+        const rank = prioritySNMap as Record<string, number>
+        for (const priority of ['low', 'medium', 'high', 'urgent']) {
+            expect(typeof rank[priority], `prioritySNMap 缺少档位 ${priority}`).toBe('number')
+        }
     })
 
     it('DEF-11/AC2：同优先级保持既有次序（稳定不抖动），全部无值时保持原序', async () => {

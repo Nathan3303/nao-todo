@@ -151,10 +151,10 @@ describe('sortCalendarTasks - 优先级', () => {
         ])
     })
 
-    it('未知优先级权重按 0 处理（与 low 同档；同档回落名称升序）', () => {
+    it('AC4/R2：脏值（unknown-x）与 low 同档；同档回落名称升序', () => {
         const tasks = [
-            makeTask({ id: 'z', priority: 'urgent', name: 'z' }),
-            makeTask({ id: 'a', priority: 'urgent', name: 'a' }),
+            makeTask({ id: 'z', priority: 'unknown-x', name: 'z' }),
+            makeTask({ id: 'a', priority: 'unknown-x', name: 'a' }),
             makeTask({ id: 'h', priority: 'high', name: 'h' })
         ]
         expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'asc' }))).toEqual([
@@ -164,24 +164,57 @@ describe('sortCalendarTasks - 优先级', () => {
         ])
     })
 
-    it('空值与 urgent 与 low **同档**（与列表排序共用「可见值归一」口径，PM 2026-10-25 裁定）', () => {
+    /**
+     * T582 / DEF-84（**红基线**）urgent 从「与 low 同档」升为**最高档**
+     * @description 旧口径（PM 2026-10-25）把 `urgent` 当未知值归 low；T582 后 `urgent` 是第四档。
+     *              空值与脏值仍归 low 同档（R2/R3 不变）⇒ 本用例同时锁两端，避免实现时把兜底也一并挪位。
+     */
+    it('T582/AC3：空值与脏值仍与 low 同档，urgent 为最高档', () => {
         const tasks = [
             makeTask({ id: 'h', priority: 'high', name: 'h' }),
             makeTask({ id: 'low', priority: 'low', name: 'low' }),
             makeTask({ id: 'blank', priority: '', name: 'blank' }),
+            makeTask({ id: 'dirty', priority: 'unknown-x', name: 'dirty' }),
             makeTask({ id: 'urgent', priority: 'urgent', name: 'urgent' })
         ]
-        // 同档 ⇒ 组内回落名称升序（blank < low < urgent）
+        // 同档（blank / dirty / low）⇒ 组内回落名称升序；urgent 最高档恒在前
         expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'asc' }))).toEqual([
             'blank',
+            'dirty',
             'low',
-            'urgent',
-            'h'
+            'h',
+            'urgent'
         ])
         expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'desc' }))).toEqual([
+            'urgent',
             'h',
             'blank',
+            'dirty',
+            'low'
+        ])
+    })
+
+    /**
+     * T582 / AC3（**红基线（T582，DEF-84）**）四档各一条的完整序
+     * @description 降序 紧急 → 高 → 中 → 低，升序反向；rank 仍走 domain `prioritySNMap`（单一来源，R1）。
+     */
+    it('T582/AC3（红基线，DEF-84）：四档各一条 ⇒ 紧急 → 高 → 中 → 低', () => {
+        const tasks = [
+            makeTask({ id: 'mid', priority: 'medium', name: '中' }),
+            makeTask({ id: 'low', priority: 'low', name: '低' }),
+            makeTask({ id: 'urgent', priority: 'urgent', name: '紧急' }),
+            makeTask({ id: 'high', priority: 'high', name: '高' })
+        ]
+        expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'desc' }))).toEqual([
+            'urgent',
+            'high',
+            'mid',
+            'low'
+        ])
+        expect(ids(sortCalendarTasks(tasks, { field: 'priority', order: 'asc' }))).toEqual([
             'low',
+            'mid',
+            'high',
             'urgent'
         ])
     })
