@@ -66,6 +66,7 @@
 | 2026-10-26 | 番茄「专注记录」页手机适配（`T548`：窄屏改**卡片列表**（同数据源、同筛选/分页）；表格分支零改动 · 首屏统计区 ≤ 视口 1/3 · 分页命中区 ≥40px · 详情抽屉 ≤480px 全宽 + `✕`/`Esc` 双关闭） | Issue `#258`；PRD `docs/prds/2026-10-26-pomodoro-records-mobile.md`；代码 PR `#259`（`aedca274`） | `v1.13.2` |
 | 2026-10-29 | 番茄钟三件套（`T573`–`T576`：通知接提醒设置（免打扰⇒应用内提示，② 早于 ③）· 页签标题 + 桌面托盘 tooltip（单源 `formatPomodoroTitle`、单向通道、复位 `NaoTodo`）· 轮次指示（圆点 + 文字）· **`DEF-111` 修复**（长休时点 off-by-one）) | Issue `#274`；PRD `docs/prds/2026-10-29-pomodoro-notify-title-round.md`；ADR `docs/adr/2026-10-29-tray-tooltip-channel.md`；代码 PR `#275`（`75a7f0c8`） | `v1.13.4` |
 | 2026-10-29 | 番茄轮次语义对齐业界形态（`T580`/`T581`：**`DEF-112`** 修复 —— 静止态圆点实心 = 本周期已完成轮次 + idle 文案分档 · 新增「**重新开始本周期**」独立入口（仅 idle 且已完成>0 · `v-if` 不渲染 · 二次确认 · `resetCycle()` 仅置零轮次）· `role="img"` 只包圆点+文案、入口为兄弟节点原生 button） | Issue `#279`；PRD `docs/prds/2026-10-29-pomodoro-rounds-semantics.md`；缺陷 `DEF-112`；代码 PR `#280`（`6fae0afc`） | `v1.14.0` |
+| `v1.14.1` | 发版提交 **`02da4174`**（root / `apps/web` / `apps/desktop` `1.14.0 → 1.14.1`；`packages/*` 按近批惯例不 bump）；**注解 tag `v1.14.1`**（tag 对象 → peeled `02da4174`）。前置：PRD PR（`feat/287-priority-urgent` 内含 `34e91d36`/`d86abee5`）+ 代码 PR **#288**（`04a1a2ff`）+ 发版 PR **#289**（`02da4174`）。附 `docs/releases/v1.14.1.md` | 2026-10-31 | web + desktop（移动端零改动）：优先级新增第四档「**紧急**」（`DEF-84`）—— 转换层不再把 `urgent` 归 `low` · 选择器四档 · 排序最高档（单一来源 `prioritySNMap`）· 看板列名单派生 · 导出文案 · 日历条/搜索行/搜索筛选栏三处可见面。**无服务端改动**。转办：`DEF-113/114/115` |
 
 ## 发布记录
 
