@@ -65,13 +65,16 @@ describe('parseSearchQuery - URL → 状态', () => {
         expect(state.states).toEqual(['todo', 'done'])
     })
 
-    it('AC9 非法枚举值被忽略（优先级/状态白名单）', () => {
-        expect(parseSearchQuery({ priority: 'urgent' }).priorities).toEqual([])
+    it('AC9 非法枚举值被忽略（优先级/状态白名单；T583 起 `urgent` 为合法第四档）', () => {
+        expect(parseSearchQuery({ priority: 'unknown-x' }).priorities).toEqual([])
         expect(parseSearchQuery({ state: 'doing' }).states).toEqual([])
-        expect(parseSearchQuery({ priority: 'high,urgent', state: 'todo,doing' })).toMatchObject({
-            priorities: ['high'],
-            states: ['todo']
-        })
+        expect(parseSearchQuery({ priority: 'high,unknown-x', state: 'todo,doing' })).toMatchObject(
+            {
+                priorities: ['high'],
+                states: ['todo']
+            }
+        )
+        expect(parseSearchQuery({ priority: 'urgent' }).priorities).toEqual(['urgent'])
     })
 
     it('数组型 q 取首值', () => {

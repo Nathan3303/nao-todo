@@ -1,7 +1,7 @@
 import { computed } from 'vue'
-import { t } from '@nao-todo/shared/locales'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import { type TaskColumnOptions } from '@nao-todo/shared/constants'
-import type { TaskSortFields } from '@nao-todo/domain-task'
+import { TASK_PRIORITIES, type TaskPriority, type TaskSortFields } from '@nao-todo/domain-task'
 
 /**
  * 待办事项状态下拉选项
@@ -14,14 +14,28 @@ export const TaskStateSelectOptions = computed(() => [
 ])
 
 /**
- * 待办事项优先级下拉选项
- * @description UI 表现物，随 locale 变化自动重算
+ * 优先级档位呈现元信息（图标 + 文案键）
+ * @description **档值与顺序以 domain `TASK_PRIORITIES` 为单一来源**（PRD R1）——本表只补「怎么显示」，
+ *              不另写一份枚举（Record 类型 ⇒ 缺档 / 多档由 `vp check` 拦住）。
  */
-export const TaskPrioritySelectOptions = computed(() => [
-    { label: t('task.priority.low'), value: 'low', icon: 'priority-1' },
-    { label: t('task.priority.medium'), value: 'medium', icon: 'priority-2' },
-    { label: t('task.priority.high'), value: 'high', icon: 'priority-3' }
-])
+const TASK_PRIORITY_PRESETS: Record<TaskPriority, { icon: string; labelKey: LocaleKey }> = {
+    low: { icon: 'priority-1', labelKey: 'task.priority.low' },
+    medium: { icon: 'priority-2', labelKey: 'task.priority.medium' },
+    high: { icon: 'priority-3', labelKey: 'task.priority.high' },
+    urgent: { icon: 'warning', labelKey: 'task.priority.urgent' }
+}
+
+/**
+ * 待办事项优先级下拉选项
+ * @description UI 表现物，随 locale 变化自动重算；四档含「紧急」（T582）
+ */
+export const TaskPrioritySelectOptions = computed(() =>
+    TASK_PRIORITIES.map((value) => ({
+        label: t(TASK_PRIORITY_PRESETS[value].labelKey),
+        value,
+        icon: TASK_PRIORITY_PRESETS[value].icon
+    }))
+)
 
 /**
  * 待办事项列标签映射

@@ -452,10 +452,12 @@ export interface LocaleMessages {
     'task.priority.high': string
     'task.priority.medium': string
     'task.priority.low': string
+    'task.priority.urgent': string
     'task.priority.none': string
     'task.priority.short.high': string
     'task.priority.short.medium': string
     'task.priority.short.low': string
+    'task.priority.short.urgent': string
     'task.column.name': string
     'task.column.description': string
     'task.column.state': string

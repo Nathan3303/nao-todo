@@ -421,9 +421,9 @@ export class LocalTaskRepoImpl implements TaskRepository {
                     const field = query.sort.slice(0, sep)
                     const order = query.sort.slice(sep + 1)
                     const dir = order === 'desc' ? -1 : 1
-                    // DEF-11：priority 按**语义序**（高 → 中 → 低）比较，不用字符串字母序。
-                    // 序的单一来源 = domain 既有 `prioritySNMap`；非白名单值（'' / 'urgent' /
-                    // 其它）与 low 同档，与视图转换层 `DEFAULT_TASK_PRIORITY` 的兜底口径一致。
+                    // DEF-11：priority 按**语义序**（紧急 → 高 → 中 → 低）比较，不用字符串字母序。
+                    // 序的单一来源 = domain 既有 `prioritySNMap`；非白名单值（'' / 其它脏值）
+                    // 与 low 同档，与视图转换层 `DEFAULT_TASK_PRIORITY` 的兜底口径一致。
                     // 同档返回 0 ⇒ 交给 Array#sort 的稳定性保持既有次序（不抖动）。
                     const isPrioritySort = field === 'priority'
                     const priorityRank = (value: unknown): number =>

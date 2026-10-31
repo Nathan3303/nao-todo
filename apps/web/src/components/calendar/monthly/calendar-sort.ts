@@ -39,7 +39,8 @@ const CALENDAR_SORT_FIELDS: readonly CalendarSortField[] = [
 
 /**
  * 优先级权重（DEF-11 / PRD R1：序的**单一来源** = domain `prioritySNMap`，与列表排序共用）
- * @description 非白名单值（`''` / `urgent` / 其它）与 `low` 同档（与视图转换层兜底口径一致）。
+ * @description 非白名单值（`''` / 其它脏值）与 `low` 同档（与视图转换层兜底口径一致；`urgent` 自
+ *              T582 起为第四档（最高），不再归 low）。
  *              ⛔ 不得在日历内另写一份 priority → rank 映射（否则两处口径会漂移）。
  */
 const priorityRank = (priority: string): number =>
