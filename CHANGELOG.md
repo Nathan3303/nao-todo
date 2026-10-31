@@ -2,6 +2,22 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.15.1] - 2026-10-31
+
+登录体验收尾批次：**会话结束提示 + 改密后检入文案 + 凭证单点清偿**（`DEF-92/117/119/121/122` 修复 · Issue #297 · PR #298 · PRD `docs/prds/2026-10-31-session-ux-tail.md` · 发版说明 `docs/releases/v1.15.1.md`）：
+
+- **会话结束提示横幅（`DEF-92`，ADR D5）**：新增 `shared/requester/session-end-reason` —— 清凭据前按 JWT `exp` + 服务端码**本地推断类别**（已过期 ⇒ 过期；未过期但 `10041/10042` ⇒ 他处登录；缺失/脏值 ⇒ 通用兜底），`sessionStorage` **只存类别枚举**（按 `USER_SCOPED_STORAGE_KEYS` 登记，登出即清），不落 token / 密码。横幅挂 `presentation-identity/sign-in.vue`（web + desktop 共用）：行内、可关闭、不阻断表单、刷新仍在、关闭不复发；**主动登出不显示**。
+- **跨标签收口**：失效事件由 `session-end` 单点广播 ⇒ 其它标签同步回登录页并显示同一横幅，**接收侧不回广播**（无回环）；同批把「四路复用」注释更正为「3 路发布方 + 1 路广播」。
+- **改密后检入文案（`DEF-119`，方案 A + `T599` 判据改向）**：`check-in.vue` 的 `10022` 分支按**文案**分类 —— token 已过期 ⇒ 过期语义；未过期且首次 ⇒ 「密码可能已在其他设备修改 / 本次登录已过期」；未过期且 **3 秒内**再次冲突 ⇒ 并发文案；**主按钮恒「重新登录」**（不随次数降级，重试降为次要）。新增 `resetCheckInConflictStreak()` 独立复位冲突计数（不复用会把 `inFlight/planned` 归零的 `resetCheckInWindow()`，`T558` 在途 `10041` 延后处置不受影响），检入成功与卸载均复位。zh/en 同步，禁错误码与技术键名。
+- **`F1` 清除点（`DEF-121`）**：`sign-in.vue` 登录成功 + 桌面 `unlock-gate.vue` 登出用户分支补 `clearSessionEndReason()`（**未**放进 `clearSessionCredentials`，失效路径「先写 reason 后清理」顺序保留）。
+- **凭证单点清偿（`DEF-117`）**：`persistence-go/**` **61 处**内联 `Bearer` 拼接改 `authHeaders()`（→ `buildAuthHeaders` 单点）；`preference-sync.ts` 4 处与 `lynx.ts` 1 处 `=== 10041` 改 `isCredentialCode`。`auth-seam-scan` 冻结计数棘轮同步下调 —— `KNOWN_BEARER_CONCAT_SITES` **61 → 0**（`lynx.ts` 保持 1 处并注明待移动端授权）、`KNOWN_CREDENTIAL_LITERAL_COMPARISONS` **5 → 0**；判据正则统一为 `(===|!==|==|!=)\s*1004[12]\b`（旧正则会漏检 `=== 10042`）。
+- **测试洞闭合（`DEF-122`）**：`t596-ac4` 的白名单过滤改「任何非空值必须 ∈ 枚举 ∪ {`1`}」+ 终态断言 `sessionStorage` 整体为空 ⇒ 「主动登出写 `session-ended`」变异由绿转红。
+- **`DEF-116` 本仓规避**：`nue-ui` 1.13.0 的 `nue-link` `route` 形态渲染 `<a>` **无 `href`**（根因 = 模板恒绑 `:href="… ? void 0 : href"` ⇒ `undefined` 覆盖 RouterLink 自算 href）；认证互链 2 处改原生 `router-link`（保留 `nue-link` 主题类 + focus 轮廓），可聚焦与可访问名有用例锁定。**仍受影响**：11 处静态调用点 + `smart-list` 动态面（侧栏导航暂不能 Tab 聚焦 / 中键开新标签，鼠标可用）—— 上游待立单。
+- **门禁**：`vp check` rc=0（1750 文件格式 / 1428 文件 0 lint·型错）· 全仓 **316 文件 / 2698 例 / 0 红** · 五守卫 exit 0 · `webapp build` / `desktop:build` exit 0 · 移动端红线 **0 行** · **9 组变异 + 2 对照**全部按预期转红并还原。
+- **Tag `v1.15.1`** · root / `apps/web` / `apps/desktop` `1.15.0 → 1.15.1`（PATCH）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.15.1.md`。
+- **关闭**：`DEF-92` · `DEF-117` · `DEF-119` · `DEF-121` · `DEF-122`（`DEF-116` 本仓规避，上游待立单）。
+- **转办（本版不含）**：`DEF-123`（会话结束类别清除点收敛为统一登录成功 / 登出钩子，≈0.3 人天，随后续登出面改动批处理）· `DEF-116` 上游单与 11 处规避取舍。
+
 ## [v1.15.0] - 2026-10-31
 
 凭证失效口径收口批次：**登录失效与本地数据解锁收口**（`DEF-90/91/93–96` 修复 · `T589`–`T592` · Issue #291 · PR #293 · PRD `docs/prds/2026-10-31-credential-coherence.md` · ADR `docs/adr/2026-10-31-credential-coherence.md` · 复验报告 `docs/reports/2026-10-31-T591-credential-coherence-verify.md`）：
