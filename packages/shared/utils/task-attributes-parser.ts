@@ -1,9 +1,4 @@
-import {
-    prioritySNMap,
-    prioritySNMapReverse,
-    stateSNMap,
-    stateSNMapReverse
-} from '@nao-todo/domain-task'
+import { prioritySNMapReverse, stateSNMap, stateSNMapReverse } from '@nao-todo/domain-task'
 
 /**
  * 解析任务状态
@@ -32,24 +27,6 @@ export const parseTaskState = (stateString: string): number => {
  */
 export const parseTaskStateBackward = (stateNumber: number): string => {
     return stateSNMapReverse[stateNumber] || 'todo'
-}
-
-/**
- * 解析任务优先级
- * @param priorityString 任务优先级字符串
- * @returns 任务优先级数字
- */
-export const parseTaskPriority = (priorityString: string): number => {
-    switch (priorityString) {
-        case 'low':
-            return prioritySNMap.low
-        case 'medium':
-            return prioritySNMap.medium
-        case 'high':
-            return prioritySNMap.high
-        default:
-            return 0
-    }
 }
 
 /**

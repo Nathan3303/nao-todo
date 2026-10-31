@@ -2,6 +2,7 @@
 import { computed, inject, onMounted, ref, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { PomodoroRecordList } from '@nao-todo/presentation/pomodoro'
+import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
@@ -37,15 +38,15 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="pomodoro-aside">
             <nue-div vertical gap="0.25rem" flex="none">
-                <nue-link icon="ntd-fanqie" theme="route" :route="navRoutes.timer">
+                <nao-router-link icon="ntd-fanqie" :route="navRoutes.timer">
                     番茄专注
-                </nue-link>
-                <nue-link icon="ntd-zzt" theme="route" :route="navRoutes.focus">正计时</nue-link>
-                <nue-link icon="list" theme="route" :route="navRoutes.collection">
+                </nao-router-link>
+                <nao-router-link icon="ntd-zzt" :route="navRoutes.focus">正计时</nao-router-link>
+                <nao-router-link icon="list" :route="navRoutes.collection">
                     常用专注
-                </nue-link>
-                <nue-link icon="history" theme="route" :route="navRoutes.records"
-                    >专注记录</nue-link
+                </nao-router-link>
+                <nao-router-link icon="history" :route="navRoutes.records"
+                    >专注记录</nao-router-link
                 >
             </nue-div>
             <template v-if="isTimerPage">

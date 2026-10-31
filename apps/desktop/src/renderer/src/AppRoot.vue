@@ -9,6 +9,7 @@ import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entr
 import { bootstrapLocalData, withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { clearSessionCredentials, installSessionEnd } from '@/session-end'
+import { onSessionBoundary } from '@nao-todo/shared/requester/session-boundary'
 import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
 import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
@@ -144,6 +145,8 @@ const onSignOut = async (): Promise<void> => {
     if (userId && !(await wipeLocalDataOnSignOut(userId))) return
     // 清认证（原 InitialSyncGate.onSignOut 职责；移至此处保证护栏先于清库）
     clearSessionCredentials()
+    // `DEF-123`：登出属会话边界 ⇒ 会话结束类别与检入冲突计数同样必须清（漏清即重演 `DEF-121` 误报）
+    onSessionBoundary()
     try {
         await safeReplace(router, '/auth/signin', 'app-root:signout-navigation')
     } finally {

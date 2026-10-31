@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { NaoSmartListEmits, NaoSmartListProps } from './types'
 import { computed } from 'vue'
+import { NaoRouterLink } from '../router-link'
 
 defineOptions({ name: 'NaoSmartList' })
 const props = defineProps<NaoSmartListProps>()
@@ -39,12 +40,11 @@ const count = computed(() => props.count ?? props.links?.length)
             @drop="draggable && emit('drop', $event)"
         >
             <slot v-if="count">
-                <nue-link
+                <nao-router-link
                     v-for="link in links"
                     :key="link.id"
                     :route="link.route"
                     :icon="link.icon"
-                    theme="route"
                     :title="link.title"
                     :draggable="draggable"
                     :data-drag-item="draggable"
@@ -56,7 +56,7 @@ const count = computed(() => props.count ?? props.links?.length)
                             <slot name="linkAppend" :link="link"></slot>
                         </nue-div>
                     </template>
-                </nue-link>
+                </nao-router-link>
             </slot>
             <nue-text v-else theme="empty">
                 {{ emptyText ?? '用清单来分类收集、组织和管理你的待办任务' }}

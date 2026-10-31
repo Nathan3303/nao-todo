@@ -3,10 +3,10 @@ import { localSession } from '@nao-todo/infrastructure/src/persistence-local/ses
 import { useUserStore } from '@nao-todo/presentation-identity'
 import {
     SESSION_END_CATEGORIES,
-    clearSessionEndReason,
     writeSessionEndCategory,
     type SessionEndCategory
 } from '@nao-todo/shared/requester/session-end-reason'
+import { onSessionBoundary } from '@nao-todo/shared/requester/session-boundary'
 import { safeReplace, type SafeNavigationRouter } from '@/safe-navigation'
 import { revokeOfflineEntry } from './offline-entry'
 
@@ -110,7 +110,7 @@ export const applyRemoteSignOut = async (
     reason?: SessionEndCategory
 ): Promise<void> => {
     if (reason) writeSessionEndCategory(reason)
-    else clearSessionEndReason()
+    else onSessionBoundary()
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
     useUserStore().clearAuthData()
     localSession.clear()
