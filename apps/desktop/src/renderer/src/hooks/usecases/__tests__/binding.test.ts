@@ -175,7 +175,8 @@ describe('desktop binding - 登录路径明文迁移（AC2）', () => {
         const useCase = decorate()
 
         await expect(useCase.signIn({ password: 'bad' })).resolves.toBe(
-            '本地数据解锁失败，请检查密码'
+            '本地数据无法用当前密码解开，可能是账号密码已在其他设备修改；' +
+                '请重启后在本地数据解锁页用旧密码解锁，或重建本地数据'
         )
         expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()
         expect(consoleError).toHaveBeenCalled()
@@ -260,5 +261,22 @@ describe('desktop binding - AC4 恢复出口 E（明文姿态下解锁失败不�
         // 文案红线：不得把「密钥包裹失效」说成「密码错误」
         expect(String(err)).not.toMatch(/密码错误/)
         expect(consoleError).toHaveBeenCalled()
+    })
+
+    // T590b / L3：未迁移库的失败文案**不得归因「密码错」**（DEF-91 原症状），
+    // 且必须给出可自助的下一步（重启后到本地数据解锁页：旧密码解锁 / 重建）。
+    // 本用例为**新增断言**（不改既有用例），断言文本可沿用。
+    it('未迁移库 + 解锁失败 ⇒ 文案不归因密码错，且给出自救下一步（L3）', async () => {
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        vi.spyOn(console, 'warn').mockImplementation(() => {})
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        const useCase = decorate()
+
+        const err = await useCase.signIn({ password: 'new-password' })
+
+        expect(err).not.toBeNull()
+        const text = String(err)
+        expect(text).not.toMatch(/密码错误|请检查密码|密码有误|密码不正确/)
+        expect(text).toMatch(/旧密码|重建/)
     })
 })

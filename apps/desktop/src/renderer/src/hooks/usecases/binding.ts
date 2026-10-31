@@ -133,7 +133,12 @@ export const useCaseBinding: UseCaseBinding = {
                 const migrated = await isPlaintextMigrationDone(userId)
                 if (!migrated) {
                     console.error('[desktop] 本地数据解锁失败', unlockErr)
-                    return '本地数据解锁失败，请检查密码'
+                    // DEF-91 / L3：不得把「密钥包裹失效」说成「密码错」——
+                    // 用户多半是在其它设备改过账号密码，本地密钥包仍是旧密码包裹。
+                    return (
+                        '本地数据无法用当前密码解开，可能是账号密码已在其他设备修改；' +
+                        '请重启后在本地数据解锁页用旧密码解锁，或重建本地数据'
+                    )
                 }
                 console.warn(
                     '[desktop] 本地密钥包无法用当前密码解开（已迁移明文库）⇒ 降级进入并重建密钥包',
