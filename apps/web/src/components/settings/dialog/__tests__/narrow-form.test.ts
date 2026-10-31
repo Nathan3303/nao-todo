@@ -185,7 +185,7 @@ const dialogSource = (): string => {
 /** 分段件源文本（尺寸/换行契约在件内，调用处不得覆盖） */
 const switchSource = (): string => {
     const modules = import.meta.glob<string>(
-        '/apps/web/src/components/calendar/segmented-switch.vue',
+        '/packages/shared/components/segmented-switch/segmented-switch.vue',
         {
             query: '?raw',
             import: 'default',

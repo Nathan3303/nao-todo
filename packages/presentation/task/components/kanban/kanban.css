@@ -6,6 +6,13 @@
         padding-top: 0;
     }
 
+    /* 顶部工具栏：分组切换靠右（PRD A 规格：看板顶部一行） */
+    > .kanban-toolbar {
+        --nue-header-height: auto;
+        justify-content: flex-end;
+        padding: 0 0 0.5rem;
+    }
+
     > .nue-main {
         overflow: hidden;
         gap: 1rem;

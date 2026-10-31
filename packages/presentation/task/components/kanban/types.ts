@@ -65,6 +65,8 @@ export type TaskKanbanContext = {
 
 export type TaskKanbanColumnProps = {
     category: string
+    /** 分组方式：`state` ⇒ 列 = 状态；`priority` ⇒ 列 = 优先级（PRD AC1b / R2） */
+    groupBy: 'state' | 'priority'
     columns: TaskColumnOptions
     disabled?: boolean
     displayable?: boolean

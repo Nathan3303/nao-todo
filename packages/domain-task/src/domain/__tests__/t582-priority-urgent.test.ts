@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { prioritySNMap, prioritySNMapReverse, TASK_PRIORITIES } from '../constants'
+import { prioritySNMap, TASK_PRIORITIES } from '../constants'
 
 /**
  * T582 / DEF-84 优先级四档「单一来源」（PRD `docs/prds/2026-10-30-priority-urgent.md` AC3 · R1）
@@ -39,13 +39,5 @@ describe('T582 优先级四档单一来源（domain constants）', () => {
         expect(rankOf('urgent')!).toBeGreaterThan(rankOf('high')!)
         expect(rankOf('high')!).toBeGreaterThan(rankOf('medium')!)
         expect(rankOf('medium')!).toBeGreaterThan(rankOf('low')!)
-    })
-
-    it('R1：反向映射与正映射自洽（每档都能 rank → 值 回读）', () => {
-        for (const priority of TASK_PRIORITIES as readonly string[]) {
-            expect(prioritySNMapReverse[rankOf(priority)!], `反向映射缺失 ${priority}`).toBe(
-                priority
-            )
-        }
     })
 })

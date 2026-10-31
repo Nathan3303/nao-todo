@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NueButton, NueButtonGroup } from 'nue-ui'
 import { computed } from 'vue'
 
 /**
@@ -11,7 +12,7 @@ import { computed } from 'vue'
  *  `size='md'`（T521-R2）：段高 = `--nue-box-size-md`（≈40px，满足 DESIGN §3 点击区 ≥40px）；
  *  其余视觉（槽底/滑块/字色/圆角/动效）与 `sm` 逐项一致，调用方不得在自身 CSS 覆盖尺寸。
  */
-defineOptions({ name: 'CalendarSegmentedSwitch' })
+defineOptions({ name: 'SegmentedSwitch' })
 
 const props = withDefaults(
     defineProps<{

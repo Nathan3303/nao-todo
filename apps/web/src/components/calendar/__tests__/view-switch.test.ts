@@ -86,7 +86,7 @@ describe('T445 ① CalendarViewSwitch', () => {
     it('T448：激活色 / 槽底色均用既有 nue-* token，且不再依赖 --cal-*（侧栏在日历令牌组之外）', () => {
         // T512：分段视觉已归 T512 通用件 `segmented-switch.vue`（CSS 归属文件随之迁移）
         const css = Object.values(
-            import.meta.glob('../segmented-switch.vue', {
+            import.meta.glob('/packages/shared/components/segmented-switch/segmented-switch.vue', {
                 query: '?raw',
                 import: 'default',
                 eager: true

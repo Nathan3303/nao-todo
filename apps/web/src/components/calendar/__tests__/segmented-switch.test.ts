@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { nueUI } from '@/nue-ui-register'
-import SegmentedSwitch from '../segmented-switch.vue'
+import { SegmentedSwitch } from '@nao-todo/shared/components/segmented-switch'
 
 /**
  * T512 通用「分段切换」组件契约（纯展示件：modelValue + items 注入，点击上抛 update:modelValue）
@@ -40,7 +40,7 @@ const thumbWidthRatio = (el: HTMLElement): number => {
     return match ? Number.parseFloat(match[1]!) : Number.NaN
 }
 
-describe('T512 CalendarSegmentedSwitch', () => {
+describe('T512 SegmentedSwitch', () => {
     it('N=3：三格等分 + 滑块 0/100%/200% 平移（宽度 = 容器 1/3）', () => {
         const month = mountSeg({ items: THREE, modelValue: 'month' })
         const week = mountSeg({ items: THREE, modelValue: 'week' })
@@ -113,7 +113,7 @@ describe('T512 CalendarSegmentedSwitch', () => {
 
     it('动效降级：既有 nue-* token、180ms 平移 + prefers-reduced-motion 取消过渡；零 --cal-* 引用', () => {
         const css = Object.values(
-            import.meta.glob('../segmented-switch.vue', {
+            import.meta.glob('/packages/shared/components/segmented-switch/segmented-switch.vue', {
                 query: '?raw',
                 import: 'default',
                 eager: true

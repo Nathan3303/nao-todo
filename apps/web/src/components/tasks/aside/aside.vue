@@ -92,11 +92,20 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                 </nao-router-link>
             </nue-div>
             <nue-divider />
-            <!-- 清单区底部：已归档入口 ⇒ 清单管理弹窗 archived tab（PRD §3-3） -->
+            <!-- 清单区底部：已归档入口 ⇒ 清单管理弹窗 archived tab（PRD §3-3）
+                 DEF-124：入口是「点击触发」而非导航 ⇒ 用**原生 button** 复用 `.nue-link--route` 主题
+                 （DOM/类名与 `nao-router-link` 一致 ⇒ 外观零变化），键盘 Tab + Enter 可达。 -->
             <nue-div vertical gap="0.25rem">
-                <nue-link icon="archive" theme="route" @click="openProjectManager('archived')">
-                    {{ t('common.archived') }}
-                </nue-link>
+                <button
+                    type="button"
+                    class="nue-link nue-link--route"
+                    @click="openProjectManager('archived')"
+                >
+                    <nue-icon :hinting="false" name="archive" class="nue-link__icon" />
+                    <nue-text :clamped="1" class="nue-link__content">
+                        {{ t('common.archived') }}
+                    </nue-text>
+                </button>
             </nue-div>
         </nue-div>
     </teleport>
@@ -128,6 +137,12 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 </template>
 
 <style scoped>
+/* 「已归档」入口为原生 button 复用 `.nue-link` 主题 ⇒ 补焦点环（与导航链接同口径） */
+.nue-link:focus-visible {
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
+}
+
 .nue-div--block {
     flex-direction: column;
     gap: 0.5rem;

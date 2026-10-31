@@ -493,6 +493,9 @@ export interface LocaleMessages {
     'task.view.switch': string
     'task.view.table': string
     'task.view.kanban': string
+    'task.kanban.groupByLabel': string
+    'task.kanban.groupByState': string
+    'task.kanban.groupByPriority': string
     'task.view.list': string
     'task.view.operations': string
     'task.view.refetch': string

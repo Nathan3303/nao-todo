@@ -1,9 +1,7 @@
 import { ref } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 
-const useKanbanDragger = (
-    onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void
-) => {
+const useKanbanDragger = (onDrop?: (taskId: TaskViewObject['id'], category: string) => void) => {
     const draggingTodoId = ref<TaskViewObject['id']>('')
 
     const handleRemoveDragOverClass = () => {
@@ -61,7 +59,7 @@ const useKanbanDragger = (
         handleRemoveDragOverClass()
         const element = getTargetNode(event.target as HTMLElement)
         if (!element) return
-        const category = element.dataset.category as TaskViewObject['state']
+        const category = element.dataset.category
         if (!category) return
         const todoId = draggingTodoId.value
         if (todoId && onDrop) {

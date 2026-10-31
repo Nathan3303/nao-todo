@@ -112,7 +112,7 @@
 
 ### 4.5 分段选择（滑块式多选一）—— 实例化组件 `segmented-switch`
 
-> 组件：`apps/web/src/components/calendar/segmented-switch.vue`（**唯一实现 · 单一来源**，T512 自日历「日/月/周」抽出）；测试：`apps/web/src/components/calendar/__tests__/segmented-switch.test.ts`。
+> 组件：`packages/shared/components/segmented-switch/segmented-switch.vue`（**唯一实现 · 单一来源**，T512 自日历「日/月/周」抽出；`T609` 迁至 `shared` 以便跨包复用，内容逐字未改）；测试：`apps/web/src/components/calendar/__tests__/segmented-switch.test.ts`（测试仍在 calendar 目录，`?raw`/挂载指向新路径）。
 
 **适用**：同一维度下 N 个互斥选项的切换（N ≥ 2，常见 2–3，选项短），需「当前项一眼可见」——如日历「月 / 周 / 日」视图切换、「周起始」。
 
@@ -128,7 +128,7 @@
 
 **a11y**：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器 `aria-hidden` 装饰性；键盘 Tab 可达 + focus 可见。
 
-**三个调用方只允许三轴不同**：段数（N）· 宽度策略（`fill`）· **尺寸（`size`）**；其余视觉 / 交互逐项一致（防漂移）。
+**所有调用方（现为 4 个：日历视图切换 / 周起始 / 设置窄屏分类 / 看板分组，`T609` 增）只允许三轴不同**：段数（N）· 宽度策略（`fill`）· **尺寸（`size`）**；其余视觉 / 交互逐项一致（防漂移）。
 
 **`size`（T521 增补）**：`sm`（默认，现状 28px）/ `md`（段高 = `--nue-box-size-md` ≈ 40px，用于满足 §3「点击区 ≥40px」）。⛔ **只允许用于点击区达标**，不得承载配色 / 圆角 / 字体 / 动效等任何其它差异 —— 那类差异一律视为漂移，须回组件内统一定义。**调用方不得在自身 CSS 里覆盖分段件尺寸**（把差异写在调用处 = 漂移）。
 

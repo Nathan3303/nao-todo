@@ -11,7 +11,7 @@ import { useRoute, useRouter } from 'vue-router'
 import useCalendarSmartList from './use-calendar-smart-list'
 import { t } from '@nao-todo/shared/locales'
 import CalendarViewSwitch from '../view-switch.vue'
-import CalendarSegmentedSwitch from '../segmented-switch.vue'
+import { SegmentedSwitch } from '@nao-todo/shared/components/segmented-switch'
 import {
     resolveViewSwitch,
     viewModeOfRouteName,
@@ -73,7 +73,7 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     <nue-text size="var(--nue-text-sm)" class="weekstart-label">
                         {{ t('calendar.weekStart') }}
                     </nue-text>
-                    <calendar-segmented-switch
+                    <segmented-switch
                         :fill="false"
                         :items="weekStartItems"
                         :model-value="weekStart"

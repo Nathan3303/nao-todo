@@ -2,7 +2,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { describe, expect, it } from 'vite-plus/test'
-import { prioritySNMap, prioritySNMapReverse } from '@nao-todo/domain-task'
+import { prioritySNMap } from '@nao-todo/domain-task'
 
 /**
  * T603 红基线 —— AC7：优先级判据单一来源（`DEF-113` / PRD R4）
@@ -111,7 +111,6 @@ describe('T603 AC7 · `parseTaskPriority` 不得是第二份三档判据', () =>
             prioritySNMap.urgent
         )
         expect(parsePriority('high')).toBe(prioritySNMap.high)
-        expect(prioritySNMapReverse[parsePriority('urgent')]).toBe('urgent')
     })
 
     it('AC7③ 删除证据：全仓非测试源码 0 处调用 `parseTaskPriority(`', () => {

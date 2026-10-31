@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
+import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
 import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
 import { NueInfiniteScroll } from 'nue-ui'
 import { inject, onMounted } from 'vue'
@@ -20,7 +21,9 @@ onMounted(() => fetchTasks())
 <template>
     <nue-container class="kanban-column" :class="{ 'kanban-column--disabled': disabled }">
         <nue-header class="kanban-column__header">
-            <task-state-info :state="category" />
+            <!-- 列头随分组方式切换：state ⇒ 状态名；priority ⇒ 优先级档位（PRD AC1b） -->
+            <task-state-info v-if="groupBy === 'state'" :state="category" />
+            <task-priority-info v-else :priority="category" />
             <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-xs)">
                 {{ columnTasks.length }}
             </nue-text>

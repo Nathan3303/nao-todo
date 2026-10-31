@@ -1,6 +1,10 @@
 import { computed, onMounted, onUnmounted, provide, reactive, ref } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
-import { KANBAN_GROUP_BY_NAMES, KANBAN_DEFAULT_GROUP_BY } from './constants'
+import {
+    KANBAN_GROUP_BY_NAMES,
+    KANBAN_DEFAULT_GROUP_BY,
+    normalizeKanbanPriority
+} from './constants'
 import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { type TaskColumnOptions, type GetTasksSortOptions } from '@nao-todo/shared/constants'
@@ -13,32 +17,34 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     // @state 正在更新的任务 ID 集合
     const updatingTaskIds = reactive<Set<TaskViewObject['id']>>(new Set())
 
-    // @method 处理拖拽放下 - 更新任务状态
-    const handleTaskDrop = async (
-        taskId: TaskViewObject['id'],
-        category: TaskViewObject['state']
-    ) => {
+    // @states
+    const states = reactive<TaskKanbanVO>({
+        currentGroupBy: KANBAN_DEFAULT_GROUP_BY,
+        kanbanColumns: KANBAN_GROUP_BY_NAMES[KANBAN_DEFAULT_GROUP_BY] || []
+    })
+
+    // @method 处理拖拽放下 - 按当前分组写对应字段（state ⇒ 状态，priority ⇒ 优先级；R2 绝不交叉写）
+    const handleTaskDrop = async (taskId: TaskViewObject['id'], category: string) => {
         const task = props.tasks.find((t) => t.id === taskId)
-        if (task && task.state !== category) {
-            updatingTaskIds.add(taskId)
-            try {
-                const err = await props.taskUseCase.update(taskId, { state: category })
-                if (err !== null) notifyTaskError('task.updateFailed', err)
-            } finally {
-                updatingTaskIds.delete(taskId)
-            }
+        if (!task) return
+        const byPriority = states.currentGroupBy === 'priority'
+        // 归类后同档 ⇒ 无需写库（脏值卡已在「低」列时拖到「低」也不写）
+        const current = byPriority ? normalizeKanbanPriority(task.priority) : task.state
+        if (current === category) return
+        // 只有真拖拽落列时才写入合法档位（读取归类不写库；R3）
+        const payload = byPriority ? { priority: category } : { state: category }
+        updatingTaskIds.add(taskId)
+        try {
+            const err = await props.taskUseCase.update(taskId, payload)
+            if (err !== null) notifyTaskError('task.updateFailed', err)
+        } finally {
+            updatingTaskIds.delete(taskId)
         }
     }
 
     // @hook 看板拖拽 Hook
     const { handleDragStart, handleDragOver, handleDragEnter, handleDragEnd, handleDrop } =
         useKanbanDragger(handleTaskDrop)
-
-    // @states
-    const states = reactive<TaskKanbanVO>({
-        currentGroupBy: KANBAN_DEFAULT_GROUP_BY,
-        kanbanColumns: KANBAN_GROUP_BY_NAMES[KANBAN_DEFAULT_GROUP_BY] || []
-    })
 
     // @method 获取分组列表
     const getKanbanColumns = (groupBy: 'state' | 'priority' = KANBAN_DEFAULT_GROUP_BY) => {

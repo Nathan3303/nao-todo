@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import type { CalendarViewMode } from '@/components/calendar/use-calendar-host'
-import CalendarSegmentedSwitch from './segmented-switch.vue'
+import { SegmentedSwitch } from '@nao-todo/shared/components/segmented-switch'
 import {
     CALENDAR_VIEW_NAMES,
     isCalendarViewName,
@@ -13,7 +13,7 @@ import {
  * 日历子视图切换器（T445 ①）—— 唯一实现，两态复用（**纯展示件**：当前态 + 切换回调由调用方注入）
  * @description
  *  - `segmented`（默认）：三格分段按钮，落在日历侧边栏顶部（`CalendarAside`，回调 = 路由切换）；
- *    分段视觉/交互由 T512 通用件 `CalendarSegmentedSwitch` 承担（3 段、铺满），本组件只提供段定义与切换语义；
+ *    分段视觉/交互由 T512 通用件 `SegmentedSwitch` 承担（3 段、铺满），本组件只提供段定义与切换语义；
  *  - `compact`：仅「当前视图名 + 下拉三项」，落在各视图内容区头部，**侧栏隐藏时的兜底入口**
  *    （回调 = 该视图上下文既有的 `onGo*`，应用内即路由切换，standalone 自足态亦可切换）。
  *  切换语义（路由真源 / 幂等短路 / taskId·query 透传）由调用方的 `onSwitch` 决定，本组件不直接读路由。
@@ -72,7 +72,7 @@ const onExecute = (id: string): void => {
 
 <template>
     <!-- 分段态：侧边栏顶部（T512 通用分段件：3 段铺满；滑块/选中/hover/动效降级均在件内） -->
-    <calendar-segmented-switch
+    <segmented-switch
         v-if="variant === 'segmented'"
         fill
         :items="segmentedItems"
