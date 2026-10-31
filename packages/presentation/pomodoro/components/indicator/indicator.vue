@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { t } from '@nao-todo/shared/locales'
 import { useIndicator } from './use-indicator'
 import { PomodoroFocusRing } from '../focus-ring'
 
@@ -61,7 +62,12 @@ const {
         </template>
     </nue-tooltip>
     <nue-tooltip v-else content="番茄钟" :placement="tooltipPlacement" size="small">
-        <nao-router-link icon="ntd-fanqie" :route="route" icon-link />
+        <nao-router-link
+            icon="ntd-fanqie"
+            :route="route"
+            :aria-label="t('nav.pomodoro')"
+            icon-link
+        />
     </nue-tooltip>
 </template>
 

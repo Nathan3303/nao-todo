@@ -46,7 +46,12 @@ const avatarSrc = computed(() => getAvatarSrc(profile.value?.avatar || '', userT
                             placement="right-center"
                             size="small"
                         >
-                            <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
+                            <nao-router-link
+                                :icon="rl.icon"
+                                :route="rl.route"
+                                :aria-label="rl.name"
+                                icon-link
+                            />
                         </nue-tooltip>
                     </template>
                 </template>

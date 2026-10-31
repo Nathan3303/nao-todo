@@ -1,8 +1,10 @@
+import type { RouteLocationRaw } from 'vue-router'
+
 export type NaoSmartListLinkVO = {
     id: string
     title: string
     icon?: string
-    route: { name: string; params: Record<string, unknown> } | string
+    route: RouteLocationRaw
     payload?: Record<string, unknown>
 }
 

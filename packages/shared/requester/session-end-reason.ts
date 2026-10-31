@@ -8,7 +8,8 @@
  *              - 原因缺失、脏值、token 不可解析 ⇒ `session-ended`（通用兜底，**不猜**原因，R3）。
  *
  *              **存储**：`sessionStorage`（刷新仍在、关标签即清），值**只存类别枚举** ——
- *              不存 JWT / 不存密码 / 不存用户信息（R5）；用户主动登出 ⇒ `clearSessionEndReason()`。
+ *              不存 JWT / 不存密码 / 不存用户信息（R5）；用户主动登出 ⇒ 由会话边界入口
+ *              `onSessionBoundary()`（`requester/session-boundary.ts`）统一清除（`DEF-123`）。
  *              键按 `local-storage-policy.ts` 的 `USER_SCOPED_SESSION_STORAGE_KEYS` 登记（D2 同口径）。
  *
  * @see docs/adr/2026-10-31-credential-coherence.md（D5 提示形态 · D1 单点判据）
@@ -169,8 +170,10 @@ export const dismissSessionEndBanner = (): void => {
 }
 
 /**
- * 清空会话结束类别（**主动登出**时调用，R3 不误导）
+ * 清空会话结束类别
  * @description 用户自己点的登出不是「失效」⇒ 下次进登录页不得显示上一次的失效横幅。
+ *              ⛔ 仅允许**会话边界统一入口** `onSessionBoundary()` 调用（`DEF-123` 单一清除点）：
+ *              新增登出 / 登录入口请调该入口，不要直接调本原语。
  */
 export const clearSessionEndReason = (): void => {
     const store = sessionStore()
