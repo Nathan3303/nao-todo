@@ -16,8 +16,9 @@ import { describe, expect, it } from 'vite-plus/test'
  * - `packages/shared/requester/**`（**`auth-headers.ts` 唯一实现处**、**`lynx.ts` 例外** 之外）= **0** 处；
  * - `lynx.ts`：**保留 1 处**（Lynx 运行时 token 必填；归零需**移动端授权**）⇒ 本文件守护「不得被顺手
  *   清零/改语义」，并断言棘轮文件仍单列它（防守卫被无声删除）；
- * - 全仓非测试源码：`(===|!==|==|!=) 10041` 字面量比较 = **0** 处（改走 `isCredentialCode` /
- *   `decideSessionEnd`；集合定义 / 数组字面量不计入，口径同棘轮）。
+ * - 全仓非测试源码：`(===|!==|==|!=) 1004[12]` 字面量比较 = **0** 处（改走 `isCredentialCode` /
+ *   `decideSessionEnd`；集合定义 / 数组字面量不计入，口径同棘轮。T600：与棘轮同步覆盖同族
+ *   两个凭证码 `10041` / `10042`）。
  *
  * 状态：**红**（persistence-go 61 处、`=== 10041` 5 处）。
  * 变异易感：清偿时复活任意一处拼接 / 字面量比较 ⇒ 对应断言红。
@@ -112,7 +113,8 @@ const formatRows = (rows: { path: string; hits: number }[]): string =>
 
 const BEARER_TEMPLATE = /Bearer \$\{/
 /** 凭证码「比较」字面量（口径同 `auth-seam-scan.test.ts`：只认比较，不认集合定义） */
-const CREDENTIAL_LITERAL_COMPARISON = /(===|!==|==|!=)\s*10041\b/
+/** T600：与 `auth-seam-scan` 棘轮同口径 —— 覆盖 `10041`/`10042` 两个同族码、含松散比较 */
+const CREDENTIAL_LITERAL_COMPARISON = /(===|!==|==|!=)\s*1004[12]\b/
 
 describe('AC8：`Bearer` 拼接只剩单点（persistence-go 0 处）', () => {
     it('persistence-go/** 内联 `Bearer ${…}` = 0 处（改走 buildAuthHeaders / 统一注入）', () => {
@@ -156,12 +158,12 @@ describe('AC8：`Bearer` 拼接只剩单点（persistence-go 0 处）', () => {
 })
 
 describe('AC8：凭证码字面量比较 = 0 处（改走 isCredentialCode / decideSessionEnd）', () => {
-    it('全仓非测试源码 `=== 10041` 类比较 = 0 处', () => {
+    it('全仓非测试源码 `1004[12]` 类比较 = 0 处（含 `10042` 同族码）', () => {
         const sources = readSources(SCAN_ROOTS)
         const { total, rows } = countCodeOccurrences(sources, CREDENTIAL_LITERAL_COMPARISON)
         expect(
             total,
-            `AC8/DEF-117：仍有 ${total} 处字面量比较（含 lynx.ts 1 处）⇒ 应改 isCredentialCode；现状：${formatRows(rows)}`
+            `AC8/DEF-117：仍有 ${total} 处字面量比较（10041/10042 同族，含 lynx.ts）⇒ 应改 isCredentialCode；现状：${formatRows(rows)}`
         ).toBe(0)
     })
 })

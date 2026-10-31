@@ -284,10 +284,10 @@ describe('AC6/R4 棘轮：Bearer 拼接面冻结（M4b 盲区闭合，新增即�
     })
 })
 
-describe('AC1/R1 棘轮：凭证判据字面量冻结（`=== 10041` 类，新增即红）', () => {
+describe('AC1/R1 棘轮：凭证判据字面量冻结（`1004[12]` 类，新增即红）', () => {
     const sources = readSources(SCAN_ROOTS)
-    // T599：覆盖同族两个凭证码（`10041` / `10042`）；只认比较，不认集合定义（口径同棘轮）
-    const literalComparison = /(===|!==)\s*1004[12]\b/
+    // T599：覆盖同族两个凭证码（`10041` / `10042`）；T600：恢复 `==`/`!=` 宽松比较覆盖（只认比较，不认集合定义）
+    const literalComparison = /(===|!==|==|!=)\s*1004[12]\b/
 
     it(`凭证码比较字面量 = ${KNOWN_CREDENTIAL_LITERAL_COMPARISONS} 处（新增即红；清理后须下调常量）`, () => {
         const { total, rows } = countCodeOccurrences(sources, literalComparison)

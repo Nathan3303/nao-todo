@@ -18,6 +18,10 @@ import {
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { fireAuthExpiry, resetAuthExpiryForTest } from '@nao-todo/shared/requester/auth-expiry'
 import { handleSessionEnd, installSessionEnd } from '@/session-end'
+import {
+    readSessionEndCategory,
+    readVisibleSessionEndCategory
+} from '@nao-todo/shared/requester/session-end-reason'
 
 /**
  * T596 红基线 —— AC1–AC4 / R1 / R5：会话结束原因 ⇒ 登录页顶部横幅（`DEF-92`，ADR D5）
@@ -340,5 +344,36 @@ describe('回归护栏（已绿）：登录页在无 reason 时不显示横幅',
 
         expect(bannerEl(), '无失效事实时不得凭空出现横幅（R3 不误导）').toBeNull()
         expect(bodyText()).toContain('登录')
+    })
+})
+
+describe('T600 / `F1`：登录成功 ⇒ 失效类别被清（重登后不再误报「已过期」）', () => {
+    it('登录成功 ⇒ 类别清空、sessionStorage 零残留、重进登录页无横幅', async () => {
+        localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, EXPIRED_TOKEN)
+        await fireSessionEnd('credential-invalid')
+        await mountSignIn()
+        expect(bannerEl(), '前置：失效后横幅应出现').not.toBeNull()
+        expect(readVisibleSessionEndCategory(), '前置：类别应可读').toBe('expired')
+
+        // 用真实提交路径（`nue-button type=submit` 的 click ⇒ `submit()`）
+        const submit = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '登录'
+        )
+        submit?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(
+            readSessionEndCategory(),
+            '登录成功 = 会话重新建立 ⇒ 上一次失效类别必须清掉（否则重登后再进登录页仍报「登录已过期」）'
+        ).toBeNull()
+        expect(readVisibleSessionEndCategory(), '登录成功后不得再有可展示类别').toBeNull()
+        expect(
+            sessionStorageValues(),
+            '登录成功后 sessionStorage 不得残留类别或「已关闭」标记'
+        ).toEqual([])
+
+        // 模拟「重新进入登录页」：横幅不得复发
+        await remountSignIn()
+        expect(bannerEl(), '重登后再进登录页不得显示上一次失效横幅').toBeNull()
     })
 })

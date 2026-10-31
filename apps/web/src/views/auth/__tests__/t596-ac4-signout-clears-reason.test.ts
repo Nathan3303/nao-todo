@@ -84,10 +84,22 @@ const sessionStorageValues = (): string[] => {
     return values
 }
 
-const reasonValues = (): string[] =>
-    sessionStorageValues().filter((value) =>
-        /expired|signed-in-elsewhere|credential-invalid/.test(value)
-    )
+/**
+ * 白名单口径（T600 / `DEF-122` 加固）
+ * @description 旧实现用 `/expired|signed-in-elsewhere|credential-invalid/` **过滤** ⇒ 写进第三个合法枚举
+ *              `session-ended` 时被过滤掉、断言仍绿（T598 变异 ⑥ 未红即此洞）。
+ *              现改为「**任何**残留值都必须 ∈ 枚举全集 ∪ 关闭标记」⇒ 任何非预期残留都是红的。
+ */
+const ALLOWED_SESSION_VALUES = new Set([
+    'expired',
+    'signed-in-elsewhere',
+    'session-ended',
+    '1' // 横幅「已关闭」标记
+])
+
+/** 只允许类别枚举 + 关闭标记；返回**任何**非预期值（空数组 = 干净） */
+const strayValues = (): string[] =>
+    sessionStorageValues().filter((value) => !ALLOWED_SESSION_VALUES.has(value))
 
 const mountHarness = (): VueWrapper => {
     wrapper = mount(ReasonHarness, {
@@ -129,7 +141,11 @@ describe('AC4：主动退出登录 ⇒ reason 清除', () => {
         localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, makeJwt(nowSeconds() - 3600))
         await handleSessionEnd('expired', { router: { replace: mocks.replace } as never })
         await flushPromises()
-        expect(reasonValues().length, '前置：失效后 reason 应可读').toBeGreaterThan(0)
+        expect(
+            strayValues(),
+            `写 reason 只允许类别枚举；实测：${JSON.stringify(sessionStorageValues())}`
+        ).toEqual([])
+        expect(sessionStorageValues().length, '前置：失效后应有 reason 落盘').toBeGreaterThan(0)
 
         // 重新登录后再主动退出（模拟「失效 → 重登 → 用户自己点退出」）
         localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, makeJwt(nowSeconds() + 3600))
@@ -139,8 +155,14 @@ describe('AC4：主动退出登录 ⇒ reason 清除', () => {
 
         expect(mocks.wipe, '前置：清库护栏放行').toHaveBeenCalledTimes(1)
         expect(mocks.replace, '登出后应回登录页').toHaveBeenCalledWith('/auth/signin')
+        // ① 不允许任何残留（枚举全集 ∪ 关闭标记之外的值也算残留）
         expect(
-            reasonValues(),
+            strayValues(),
+            `主动登出后不得残留任何非预期值；实测：${JSON.stringify(sessionStorageValues())}`
+        ).toEqual([])
+        // ② 终态必须是「零残留」（不靠白名单过滤，任何类别留下来都算错）
+        expect(
+            sessionStorageValues(),
             `主动登出必须清 reason（否则下次登录页误报上一次失效）；实测：${JSON.stringify(sessionStorageValues())}`
         ).toEqual([])
     })
