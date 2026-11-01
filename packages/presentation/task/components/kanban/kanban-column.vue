@@ -2,6 +2,7 @@
 import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
 import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
 import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
+import { t } from '@nao-todo/shared/locales'
 import { NueInfiniteScroll } from 'nue-ui'
 import { inject } from 'vue'
 import TaskKanbanColumnItem from './kanban-column-item.vue'
@@ -38,6 +39,12 @@ const { columnTasks, total, isDone, loadingFirst, loadingMore, error, loadMore }
             trigger-height="2px"
             @load-more="loadMore"
         >
+            <template #disabled>
+                <!-- R-L：`#disabled` 槽渲染「没有更多了」（DOM 可见，不再被 CSS 隐藏） -->
+                <nue-text color="var(--nue-disabled-color)" size="var(--nue-text-xs)">
+                    {{ t('task.kanban.noMore') }}
+                </nue-text>
+            </template>
             <nue-main class="kanban-column__main">
                 <nue-content fill style="overflow: hidden">
                     <!-- 首屏 loading 才整列占位（R-K：触底加载不得替换整列） -->
@@ -46,7 +53,7 @@ const { columnTasks, total, isDone, loadingFirst, loadingMore, error, loadMore }
                     <nue-empty
                         v-else-if="columnTasks.length === 0"
                         theme="no-image"
-                        description="无待办任务"
+                        :description="t('task.noTasksInColumn')"
                     />
                     <task-kanban-column-item
                         v-else
@@ -66,9 +73,3 @@ const { columnTasks, total, isDone, loadingFirst, loadingMore, error, loadMore }
         </nue-infinite-scroll>
     </nue-container>
 </template>
-<style scoped>
-.nue-infinite-scroll-wrapper:deep(.nue-infinite-scroll__disable-bar),
-.nue-infinite-scroll-wrapper:deep(.nue-infinite-scroll__loading-bar) {
-    display: none;
-}
-</style>

@@ -539,6 +539,8 @@ const enUS: LocaleMessages = {
     'task.kanban.groupByLabel': 'Group tasks by',
     'task.kanban.groupByState': 'By status',
     'task.kanban.groupByPriority': 'By priority',
+    // Column paging end-of-list copy (`DEF-126` / PRD R-B)
+    'task.kanban.noMore': 'No more tasks',
     'task.view.list': 'List View',
     'task.view.operations': 'View Operations',
     'task.view.refetch': 'Refresh Data',
