@@ -20,6 +20,7 @@ import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import { defaultColumns, type TaskColumnOptions } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import TaskKanban from '../kanban.vue'
+import { KANBAN_GROUP_BY_KEY } from '../use-kanban-group'
 
 /**
  * T608 看板用例 harness（`DEF-114` / PRD `docs/prds/2026-10-31-kanban-priority-grouping.md`）
@@ -128,20 +129,10 @@ export type KanbanGroupBy = 'state' | 'priority'
 
 /**
  * 分组状态注入键（`T612` 接缝）
- * @description 真实实现 = `../use-kanban-group.ts` 导出的 `KANBAN_GROUP_BY_KEY`。RD 第 1 步
- *              （状态上提）落地前该模块**尚不存在** ⇒ 用 `import.meta.glob({ eager: true })`
- *              软解析：命中则用真键（RD 落地后自动生效），未命中则用本地占位键。
- *              占位键下注入不会生效，切换由 `clickSegment` 的「旧控件」过渡分支承担 ⇒
- *              既有 16 例在搬家前后**都是绿**（`T612` 红基线记账见报告）。
- *              ⚠️ RD 落地后本软解析可简化为静态 import。
+ * @description 真实实现 = `../use-kanban-group.ts` 导出的 `KANBAN_GROUP_BY_KEY`；
+ *              `mountKanban(..., { groupBy })` 通过 `global.provide` 注入，看板与菜单读同一份 ref。
  */
-const KANBAN_GROUP_MODULES = import.meta.glob<{ KANBAN_GROUP_BY_KEY?: symbol }>(
-    '../use-kanban-group.ts',
-    { eager: true }
-)
-export const KANBAN_GROUP_BY_KEY: symbol =
-    Object.values(KANBAN_GROUP_MODULES)[0]?.KANBAN_GROUP_BY_KEY ??
-    Symbol('KANBAN_GROUP_BY_KEY_PLACEHOLDER')
+export { KANBAN_GROUP_BY_KEY }
 
 /** 每个挂载实例的分组 ref（`clickSegment` 需要按 wrapper 找回注入的那一份） */
 const groupByRefs = new WeakMap<VueWrapper, Ref<KanbanGroupBy>>()
@@ -311,11 +302,8 @@ export const selectedState = (node: DOMWrapper<Element>): string | null => {
 }
 
 /**
- * 切换分组（AC1b/AC2/AC3/AC4/AC5 的前置动作，`T612` 接缝）
- * @description 控件搬进菜单后，看板侧用例的等价动作 = 改**注入的那一份 ref**。
- *              **过渡兼容**：RD 第 2 步（删看板内 toolbar）之前，看板状态仍住在自己内部、
- *              注入尚未被读取 ⇒ 若 DOM 内仍有旧分段，顺手点它一次（两条路径都指向同一档）。
- *              RD 第 2 步落地后本分支恒不命中，可随 `t608-ac1a` 作废一并删除。
+ * 切换分组（`T612` 接缝）
+ * @description 控件搬入菜单后，看板侧用例的等价动作 = 改**注入的那一份 ref**（菜单与看板同源）。
  */
 export const clickSegment = async (
     wrapper: VueWrapper,
@@ -323,8 +311,6 @@ export const clickSegment = async (
 ): Promise<void> => {
     const injected = groupByRefs.get(wrapper)
     if (injected) injected.value = groupBy
-    const legacy = findSegment(wrapper, GROUP_BY_LABELS[groupBy])
-    if (legacy) await legacy.trigger('click')
     await flushPromises()
 }
 

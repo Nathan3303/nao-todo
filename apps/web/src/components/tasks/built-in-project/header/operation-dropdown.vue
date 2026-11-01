@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
-import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/presentation/task'
+import {
+    TaskOperationsDropdown,
+    TaskColumnDisplayController,
+    KanbanGroupSwitch
+} from '@nao-todo/presentation/task'
 import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
@@ -50,6 +54,8 @@ onMounted(() => {
                 execute-id="switch-view-to-kanban"
                 :checked="preference.viewType === 'kanban'"
             />
+            <!-- 分组切换：紧贴「看板视图」下方，仅看板视图渲染（不是 v-show）；不引入关闭行为（R-A） -->
+            <kanban-group-switch v-if="preference.viewType === 'kanban'" />
             <inner-dropdown-option
                 icon="list"
                 title="列表视图"
