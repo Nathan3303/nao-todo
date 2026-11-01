@@ -162,6 +162,11 @@
                         flex-wrap: wrap;
                         padding-right: var(--nue-padding-sm);
 
+                        /* DEF-127 兜底：空属性区不吃父级 gap */
+                        &:empty {
+                            display: none;
+                        }
+
                         .nue-div--basic-info {
                             flex: 0 0 auto;
                             font-size: var(--nue-text-xs);

@@ -4,7 +4,6 @@ import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
 import { TaskDateInfo } from '@nao-todo/shared/components/task-date-info'
 import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
 import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
-import { type TaskColumnOptions } from '@nao-todo/shared'
 import { TaskTagBar } from '../../'
 import { computed, inject } from 'vue'
 import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'
@@ -16,18 +15,20 @@ const props = defineProps<TaskKanbanColumnItemProps>()
 const { showTaskDetails, deleteOrRestore, unfinishTask, finishTask, getProjectName } =
     inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)!
 
-const isAttrsNone = computed(() => {
-    if (!props.columns) return true
-    let isNoColumnSelected = true
-    for (const column in props.columns) {
-        if (column === 'description') continue
-        if (props.columns[column as keyof TaskColumnOptions]) {
-            isNoColumnSelected = false
-            break
-        }
-    }
-    return isNoColumnSelected && !props.task.tags.length
-})
+/**
+ * 是否渲染属性区
+ * @description 判据必须与模板 `.todo-card__attrs` 内的 6 个子项**同源**（`DEF-127`）：
+ *              只勾标签 / 其它非属性维度时，属性区会渲染成空盒子并吃掉父级 `gap`。
+ */
+const hasCardAttrs = computed(
+    () =>
+        !!props.columns?.createdAt ||
+        !!props.columns?.updatedAt ||
+        !!props.columns?.endAt ||
+        !!props.columns?.state ||
+        !!props.columns?.priority ||
+        !!props.columns?.project
+)
 
 const isDone = computed(() => props.task.state === 'done')
 
@@ -103,7 +104,7 @@ const handleFinish = () => {
                     small
                 />
             </nue-div>
-            <nue-div v-if="!isAttrsNone" class="todo-card__attrs">
+            <nue-div v-if="hasCardAttrs" class="todo-card__attrs">
                 <task-date-info
                     v-if="columns?.createdAt"
                     :date="task.createdAt"
