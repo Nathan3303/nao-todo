@@ -10,7 +10,9 @@ import { computed } from 'vue'
  *  - 可访问性：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器装饰性 `aria-hidden`。
  *  调用方只允许三轴不同：**段数**、**宽度策略**（fill）、**尺寸**（size，仅用于点击区达标）。
  *  `size='md'`（T521-R2）：段高 = `--nue-box-size-md`（≈40px，满足 DESIGN §3 点击区 ≥40px）；
- *  其余视觉（槽底/滑块/字色/圆角/动效）与 `sm` 逐项一致，调用方不得在自身 CSS 覆盖尺寸。
+ *  `size='inline'`（T615）：段高 = `--nue-box-size-sm`（32px）+ 字号 `--nue-text-xs`（12px），
+ *  用于嵌在下拉菜单等紧凑条纹内（与 `nue-dropdown-item--small` 同档，跟随菜单条目高度）；
+ *  其余视觉（槽底/滑块/字色/圆角/动效）与 `sm`/`md` 逐项一致，调用方不得在自身 CSS 覆盖尺寸。
  */
 defineOptions({ name: 'SegmentedSwitch' })
 
@@ -24,8 +26,13 @@ const props = withDefaults(
         ariaLabel?: string
         /** 宽度策略：铺满容器（100%）vs 宽度自适应（inline-flex） */
         fill?: boolean
-        /** 尺寸：`sm`（默认，现状 28px）/ `md`（点击区 ≈40px；只用于点击区达标） */
-        size?: 'sm' | 'md'
+        /**
+         * 尺寸（仅尺寸轴，不得承载其它差异）：
+         *  - `sm`（默认，段高 ≈28px）
+         *  - `md`（段高 ≈40px；用于满足页面级点击区 ≥40px）
+         *  - `inline`（段高 32px + 字号 12px；嵌入下拉菜单等紧凑条纹，与菜单条目同档）
+         */
+        size?: 'sm' | 'md' | 'inline'
         /** 滑块指示器测试定位 id */
         thumbTestId?: string
     }>(),
@@ -49,7 +56,7 @@ const select = (value: string): void => emit('update:modelValue', value)
 <template>
     <nue-button-group
         class="segmented-toggle"
-        :class="{ 'is-fill': fill, 'is-md': size === 'md' }"
+        :class="{ 'is-fill': fill, 'is-md': size === 'md', 'is-inline': size === 'inline' }"
         role="group"
         :aria-label="ariaLabel"
     >
@@ -144,6 +151,13 @@ const select = (value: string): void => emit('update:modelValue', value)
 /* `size='md'`：仅段高（点击区 ≈40px）；其它视觉一律沿用上方单一来源定义 */
 .segmented-toggle.is-md > .segmented-btn {
     min-height: var(--nue-box-size-md);
+}
+
+/* `size='inline'`（T615）：嵌入菜单等紧凑条纹 ⇒ 段高 + 字号对齐菜单条目（32px / 12px）；
+   仍只用尺寸轴，配色/圆角/动效沿用上方单一来源定义 */
+.segmented-toggle.is-inline > .segmented-btn {
+    min-height: var(--nue-box-size-sm);
+    font-size: var(--nue-text-xs);
 }
 .segmented-toggle > .segmented-btn:not(.is-active):hover {
     background: color-mix(in srgb, var(--nue-primary-text-color) 6%, transparent);

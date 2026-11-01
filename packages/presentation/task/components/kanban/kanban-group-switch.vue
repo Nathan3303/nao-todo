@@ -30,7 +30,7 @@ const handleGroupByChange = (value: string) => {
     <!-- 根元素带 `data-kanban-group-switch`（`T612` 接缝；单根 ⇒ 紧跟「看板视图」条目） -->
     <div data-kanban-group-switch>
         <segmented-switch
-            size="md"
+            size="inline"
             :items="groupByOptions"
             :model-value="groupBy"
             :aria-label="t('task.kanban.groupByLabel')"
