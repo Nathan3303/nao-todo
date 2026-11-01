@@ -12,19 +12,60 @@
  */
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
-import type { VueWrapper } from '@vue/test-utils'
+import type { DOMWrapper, VueWrapper } from '@vue/test-utils'
 import {
     clickSegment,
     columnNodes,
-    controlOf,
     GROUP_BY_LABELS,
     headerText,
     makeTask,
+    MissingImplementationError,
     mountKanban,
-    segmentNode,
-    selectedState,
     stateLabel
 } from './t608-kanban-harness'
+
+// --- 本地副本（`T614` 清理）：这 5 个辅助函数**只**服务本作废文件 ⇒ 已从 harness 移出，
+//     置于此处仍可保证编译 / 类型检查通过（`describe.skip` 不执行，不改任何断言）。
+
+/** 控件候选：文本命中「按状态 / 按优先级」的最深元素 */
+const labelNodes = (wrapper: VueWrapper, label: string): DOMWrapper<Element>[] =>
+    wrapper.findAll('*').filter((n) => (n.text() ?? '').replace(/\s+/g, '').includes(label))
+
+/** 取「分段」的文本节点（最深、文本命中标签的元素） */
+const findSegment = (wrapper: VueWrapper, label: string): DOMWrapper<Element> | null => {
+    const [deepest] = labelNodes(wrapper, label).sort(
+        (a, b) => a.element.querySelectorAll('*').length - b.element.querySelectorAll('*').length
+    )
+    return deepest ?? null
+}
+
+const segmentNode = (wrapper: VueWrapper, label: string): DOMWrapper<Element> => {
+    const node = findSegment(wrapper, label)
+    if (!node) {
+        throw new MissingImplementationError(
+            `[缺实现] 看板内不再有分组切换控件「${label}」（T612：控件已搬入右上角「视图」菜单）`
+        )
+    }
+    return node
+}
+
+const CONTROL_SELECTOR = 'button, [role="tab"], [role="radio"], [aria-pressed]'
+
+/** 文本所属的**可点击控件**（`button` / `role=tab|radio`），纯文本 ⇒ `null` */
+const controlOf = (node: DOMWrapper<Element>): HTMLElement | null =>
+    (node.element.closest(CONTROL_SELECTOR) as HTMLElement | null) ?? null
+
+/** 选中态（`aria-pressed` / `aria-selected`），无该属性 ⇒ `null` */
+const selectedState = (node: DOMWrapper<Element>): string | null => {
+    let cursor: Element | null = node.element
+    while (cursor) {
+        const value =
+            cursor.getAttribute('aria-pressed') ?? cursor.getAttribute('aria-selected') ?? null
+        if (value !== null) return value
+        cursor = cursor.parentElement
+    }
+    return null
+}
 
 /**
  * T608 AC1a —— 看板「分组切换」入口（`DEF-114` · PRD `2026-10-31-kanban-priority-grouping.md`）

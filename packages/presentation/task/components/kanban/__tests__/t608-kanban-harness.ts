@@ -254,52 +254,14 @@ export const dragTaskTo = async (
     await flushPromises()
 }
 
-// --- AC1a：分组切换控件 ---
-
-export const GROUP_BY_LABELS = { state: '按状态', priority: '按优先级' } as const
-
-/** 控件候选：文本命中「按状态 / 按优先级」的最深元素 */
-const labelNodes = (wrapper: VueWrapper, label: string): DOMWrapper<Element>[] =>
-    wrapper.findAll('*').filter((n) => (n.text() ?? '').replace(/\s+/g, '').includes(label))
+// --- AC1a（已作废）：分组切换控件 ---
 
 /**
- * 取「分段」的文本节点（最深、文本命中标签的元素）
- * @throws MissingImplementationError 控件不存在（= AC1a 红基线的「缺能力」形态）
+ * 分段两段文案
+ * @description 唯一仍在用的消费者 = `clickSegment` 的键类型（`t608-ac1a` 内部自带副本，
+ *              该组已整组作废、`describe.skip` 不执行）
  */
-const findSegment = (wrapper: VueWrapper, label: string): DOMWrapper<Element> | null => {
-    const [deepest] = labelNodes(wrapper, label).sort(
-        (a, b) => a.element.querySelectorAll('*').length - b.element.querySelectorAll('*').length
-    )
-    return deepest ?? null
-}
-
-export const segmentNode = (wrapper: VueWrapper, label: string): DOMWrapper<Element> => {
-    const node = findSegment(wrapper, label)
-    if (!node) {
-        throw new MissingImplementationError(
-            `[缺实现] 看板内不再有分组切换控件「${label}」（T612：控件已搬入右上角「视图」菜单）`
-        )
-    }
-    return node
-}
-
-const CONTROL_SELECTOR = 'button, [role="tab"], [role="radio"], [aria-pressed]'
-
-/** 文本所属的**可点击控件**（`button` / `role=tab|radio`），纯文本 ⇒ `null` */
-export const controlOf = (node: DOMWrapper<Element>): HTMLElement | null =>
-    (node.element.closest(CONTROL_SELECTOR) as HTMLElement | null) ?? null
-
-/** 选中态（`aria-pressed` / `aria-selected`），无该属性 ⇒ `null` */
-export const selectedState = (node: DOMWrapper<Element>): string | null => {
-    let cursor: Element | null = node.element
-    while (cursor) {
-        const value =
-            cursor.getAttribute('aria-pressed') ?? cursor.getAttribute('aria-selected') ?? null
-        if (value !== null) return value
-        cursor = cursor.parentElement
-    }
-    return null
-}
+export const GROUP_BY_LABELS = { state: '按状态', priority: '按优先级' } as const
 
 /**
  * 切换分组（`T612` 接缝）
