@@ -2,6 +2,17 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.2] - 2026-11-01
+
+看板列内独立分页（`DEF-126` 修复）：**每列滚到底加载该列下一页（每页 20 条）· 到底显示「没有更多了」· 列头改为该列总数 · 刷新/排序/筛选/分组切换回第 1 页**（Issue #309 · PR #310 · PRD `docs/prds/2026-11-01-kanban-column-paging.md` · ADR `docs/adr/2026-11-01-kanban-column-paging.md` · 发版说明 `docs/releases/v1.16.2.md`）：
+
+- **缺陷**：看板首屏 = **全部列合计 ≤20 条**（adapter 只 `loadFirstPage`；列内 `loadMore` 是空函数、`isDone` 恒真）⇒ 65 条实测「待办 20 / 进行中 0 / 已完成 0」，188 条外推 **≈89% 任务不可见**。起点 `b55dd5b2`（2026-04-14），`git tag --contains` = **58 = 全部 tag** ⇒ 已发布版本从来没有可用的看板分页。
+- **架构**：列内自持 `useTasksLoader`（`use-kanban-column.ts`）+ 父级注册表（`use-kanban-column-paging.ts` / `KANBAN_COLUMN_PAGING_KEY`）；`TaskKanban` 契约 = `getTasksOptions` / `getTask(id)` / `refreshToken` / `newTaskId` + `summaryChange`，**移除 `tasks` prop**，删除 adapter 全局 `taskLoader`（外层改读聚合摘要）。重置单入口 + 分组 `:key` 结构性重建。
+- **语义**：`limit=20` · 列内 `isDone = page*limit >= total` · 筛选**求交** · 拖拽本地增量 + `needsRefill`（不跳条）· 新增任务置顶插入 · 到底文案新增 1 键 `task.kanban.noMore`（并删掉隐藏它的 CSS）。
+- **行为变化（`⚠️` 发版说明已写）**：仓储 `priority` 含 `low` 时纳入白名单外脏值 ⇒ 列表 / 表格按「低」筛选也会带出「优先级为空或非法」的任务（只对 low 放开、不写库）；列头数字改为该列总数。
+- **门禁**：`vp check` rc=0（1802 格式 / 1464 文件 0 error）· 全仓 **344 文件 / 2816 例 / 0 红** · 五守卫 rc=0 · `webapp build` / `desktop:build` rc=0 · 移动端红线 **0 行** · 变异 5/5 按预期红并逐字节还原。
+- **Tag `v1.16.2`** · root / `apps/web` / `apps/desktop` `1.16.1 → 1.16.2`（PATCH）；`packages/*` 按近批惯例不 bump。**无服务端改动**。详见 `docs/releases/v1.16.2.md`。
+
 ## [v1.16.1] - 2026-11-01
 
 看板分组切换入菜单批次：**「按状态 / 按优先级」从看板内容区顶部搬进右上角「视图」菜单（紧贴「看板视图」下方，仅看板视图渲染）+ 控件尺寸与菜单条目齐平**（Issue #306 · PR #307 · PRD `docs/prds/2026-11-01-kanban-group-switch-in-menu.md` · 发版说明 `docs/releases/v1.16.1.md`）：
