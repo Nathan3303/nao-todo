@@ -518,6 +518,8 @@ const zhCN: LocaleMessages = {
     'task.kanban.groupByLabel': '看板分组方式',
     'task.kanban.groupByState': '按状态',
     'task.kanban.groupByPriority': '按优先级',
+    // 列内分页到底文案（`DEF-126` / PRD R-B：用户口径「没有更多了」）
+    'task.kanban.noMore': '没有更多了',
     'task.view.list': '列表视图',
     'task.view.operations': '视图操作',
     'task.view.refetch': '重新获取数据',

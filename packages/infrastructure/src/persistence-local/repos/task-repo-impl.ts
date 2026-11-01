@@ -2,6 +2,7 @@ import type { Pagination } from '@nao-todo/shared/types/pagination'
 import {
     CreateTaskValueObject,
     prioritySNMap,
+    TASK_PRIORITIES,
     TaskEntity,
     TaskRepository,
     UpdateTaskValueObject
@@ -386,7 +387,18 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (query.priority) {
                 // priority 支持逗号分隔多值（与 state 一致，如 'high,urgent'）
                 const priorities = query.priority.split(',').filter(Boolean)
-                records = records.filter((r) => priorities.includes(r.priority))
+                records = records.filter((r) => {
+                    if (priorities.includes(r.priority)) return true
+                    // R-J（PRD `2026-11-01-kanban-column-paging` D1）：含 `low` 时把 `prioritySNMap`
+                    // 白名单外的**脏值**（null / '' / 未知串）也归入 low —— 看板「低」列按列查库后
+                    // 脏值否则会消失（`t608-ac4` 回归）。⚠️ 有意行为变化：列表 / 表格按「低」筛选
+                    // 也会带出脏值（更正确，已记入 `v1.16.2` 发版说明「请留意」）。
+                    // 读取归类 ≠ 写回归一：库中原值不动，只有真拖拽落列时才写入合法档位。
+                    return (
+                        priorities.includes('low') &&
+                        !(TASK_PRIORITIES as readonly string[]).includes(r.priority)
+                    )
+                })
             }
             if (query.projectId) records = records.filter((r) => r.projectId === query.projectId)
             // 未传 parentTaskId 时默认只查顶层任务（parentTaskId 为空），

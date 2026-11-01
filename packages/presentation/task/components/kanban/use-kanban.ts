@@ -1,7 +1,8 @@
-import { computed, onMounted, onUnmounted, provide, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, provide, reactive, ref, watch } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
 import { useKanbanGroup } from './use-kanban-group'
 import { KANBAN_GROUP_BY_NAMES, normalizeKanbanPriority } from './constants'
+import { KANBAN_COLUMN_PAGING_KEY, useKanbanColumnPaging } from './use-kanban-column-paging'
 import type { TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { type TaskColumnOptions, type GetTasksSortOptions } from '@nao-todo/shared/constants'
@@ -20,20 +21,35 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     // @computed 看板列集合（唯一来源 = `KANBAN_GROUP_BY_NAMES`，随分组状态派生）
     const kanbanColumns = computed(() => KANBAN_GROUP_BY_NAMES[groupBy.value] || [])
 
+    // @hook 列注册表：列内分页的唯一编排入口（ADR 决策 1）
+    const paging = useKanbanColumnPaging()
+
+    /**
+     * 任务所属列（当前分组维度下的列名）
+     * @description 与写路径同源（R-F）：`state` 分组用 `state`、`priority` 分组用 `priority`（脏值归「低」）
+     */
+    const categoryOf = (task: TaskViewObject): string =>
+        groupBy.value === 'priority' ? normalizeKanbanPriority(task.priority) : task.state
+
     // @method 处理拖拽放下 - 按当前分组写对应字段（state ⇒ 状态，priority ⇒ 优先级；R2 绝不交叉写）
     const handleTaskDrop = async (taskId: TaskViewObject['id'], category: string) => {
-        const task = props.tasks.find((t) => t.id === taskId)
+        const task = props.getTask(taskId)
         if (!task) return
         const byPriority = groupBy.value === 'priority'
+        const current = categoryOf(task)
         // 归类后同档 ⇒ 无需写库（脏值卡已在「低」列时拖到「低」也不写）
-        const current = byPriority ? normalizeKanbanPriority(task.priority) : task.state
         if (current === category) return
         // 只有真拖拽落列时才写入合法档位（读取归类不写库；R3）
         const payload = byPriority ? { priority: category } : { state: category }
         updatingTaskIds.add(taskId)
         try {
             const err = await props.taskUseCase.update(taskId, payload)
-            if (err !== null) notifyTaskError('task.updateFailed', err)
+            if (err !== null) {
+                notifyTaskError('task.updateFailed', err)
+                return
+            }
+            // 写成功后只做本地增量（R-M）：源列 -1 且待补拉、目标列置顶 +1 ⇒ 不重查、不塌页
+            paging.moveTask(taskId, current, category)
         } finally {
             updatingTaskIds.delete(taskId)
         }
@@ -48,6 +64,36 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     const { run: startRefreshKeyIncrement, stop: stopRefreshKeyIncrement } = useMinuteTask(
         () => (refreshKey.value += 1)
     )
+
+    // @watch 重置规则（R-C）：刷新 / 筛选变化 / 排序变化 ⇒ 各列回第 1 页
+    watch(
+        () => props.refreshToken,
+        () => void paging.resetAll()
+    )
+    watch(
+        () => props.getTasksOptions,
+        () => void paging.resetAll(),
+        { deep: true }
+    )
+    watch(
+        () => props.sortOptions,
+        () => void paging.resetAll(),
+        { deep: true }
+    )
+
+    // @watch 新增任务（`AddNewTaskId`）：只向目标列置顶插入（保页，R-M/D2）
+    watch(
+        () => props.newTaskId,
+        (taskId) => {
+            if (!taskId) return
+            const task = props.getTask(taskId)
+            if (!task) return
+            paging.insertTask(categoryOf(task), taskId)
+        }
+    )
+
+    // @watch 列内分页聚合摘要 ⇒ 外层空态 / 错误态判据（R-N）
+    watch(paging.summary, (summary) => emit('summaryChange', summary), { immediate: true })
 
     // @method 显示任务详情
     const showTaskDetails = (taskId: TaskViewObject['id']) => {
@@ -129,8 +175,15 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         updateSortOptions,
         clearSortOptions,
         updatingTaskIds: computed(() => updatingTaskIds),
-        refreshKey
+        refreshKey,
+        taskUseCase: props.taskUseCase,
+        getTasksOptions: computed(() => props.getTasksOptions),
+        getTask: props.getTask,
+        paging
     })
+
+    // @provide 列注册表（与 context 分开注入：列只关心分页编排，ADR 决策 1）
+    provide(KANBAN_COLUMN_PAGING_KEY, paging)
 
     // @returns
     return {

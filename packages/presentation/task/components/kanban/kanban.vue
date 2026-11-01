@@ -23,13 +23,16 @@ const {
     <nue-container id="TodoKanbanContainer">
         <nue-main>
             <nue-content fill>
+                <!--
+                    `:key` 必须含 `groupBy`（ADR 决策 3）：分组切换靠**结构性重建**重置各列游标，
+                    而不是再加第三个 watch（否则旧列会先拿新分组字段查一次空转查询）
+                -->
                 <task-kanban-column
                     v-for="groupName in kanbanColumns"
-                    :key="groupName"
+                    :key="`${groupBy}:${groupName}`"
                     :category="groupName"
                     :group-by="groupBy"
                     :columns="columns"
-                    :tasks="tasks"
                     :data-category="groupName"
                     data-droppable="true"
                     @dragend="handleDragEnd"

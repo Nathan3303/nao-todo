@@ -9,7 +9,9 @@ import {
     dragTaskTo,
     makeTask,
     mountKanban,
-    taskIdsIn
+    settle,
+    taskIdsIn,
+    tasksInStore
 } from './t608-kanban-harness'
 
 /**
@@ -53,8 +55,7 @@ const mountDirtyFixture = () => {
     return h
 }
 
-const tasksOf = (w: VueWrapper): TaskViewObject[] =>
-    (w.props() as unknown as { tasks: TaskViewObject[] }).tasks
+const tasksOf = (w: VueWrapper): TaskViewObject[] => tasksInStore(w)
 
 const priorityOf = (w: VueWrapper, taskId: string): unknown =>
     tasksOf(w).find((t) => t.id === taskId)?.priority
@@ -121,12 +122,13 @@ describe('T608 AC4 · 空值/脏值优先级：读取归类到「低」，原值
         expect(priorityOf(h.wrapper, 't-empty')).toBe('')
     })
 
-    it('AC4⑤ 「低」列在三档脏值之外仍只收 low（不误收 medium）', () => {
+    it('AC4⑤ 「低」列在三档脏值之外仍只收 low（不误收 medium）', async () => {
         const h = mountKanban([
             makeTask({ id: 't-low', state: 'todo', priority: 'low' }),
             makeTask({ id: 't-medium', state: 'todo', priority: 'medium' })
         ])
         wrapper = h.wrapper
+        await settle()
         // 默认状态分组：两卡同列（对照基线，证 fixture 无副作用）
         expect(taskIdsIn(columnNode(h.wrapper, 'todo')).sort()).toEqual(['t-low', 't-medium'])
         expect(columnNodes(h.wrapper)).toHaveLength(3)
