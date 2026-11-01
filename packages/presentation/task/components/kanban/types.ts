@@ -30,6 +30,11 @@ export type TaskKanbanProps = {
      * @description 递增 ⇒ 各列回第 1 页（R-C）；与 `refreshKey`（分钟级卡片重渲染）无关
      */
     refreshToken: number
+    /**
+     * 新增任务 ID（`AddNewTaskId` ⇒ 换新值）
+     * @description 只向目标列**置顶插入**（保页），不重查整板（R-M/D2）
+     */
+    newTaskId?: TaskViewObject['id']
 }
 
 export type TaskKanbanEmits = {

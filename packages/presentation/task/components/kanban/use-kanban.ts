@@ -44,7 +44,12 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         updatingTaskIds.add(taskId)
         try {
             const err = await props.taskUseCase.update(taskId, payload)
-            if (err !== null) notifyTaskError('task.updateFailed', err)
+            if (err !== null) {
+                notifyTaskError('task.updateFailed', err)
+                return
+            }
+            // 写成功后只做本地增量（R-M）：源列 -1 且待补拉、目标列置顶 +1 ⇒ 不重查、不塌页
+            paging.moveTask(taskId, current, category)
         } finally {
             updatingTaskIds.delete(taskId)
         }
@@ -74,6 +79,17 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         () => props.sortOptions,
         () => void paging.resetAll(),
         { deep: true }
+    )
+
+    // @watch 新增任务（`AddNewTaskId`）：只向目标列置顶插入（保页，R-M/D2）
+    watch(
+        () => props.newTaskId,
+        (taskId) => {
+            if (!taskId) return
+            const task = props.getTask(taskId)
+            if (!task) return
+            paging.insertTask(categoryOf(task), taskId)
+        }
     )
 
     // @watch 列内分页聚合摘要 ⇒ 外层空态 / 错误态判据（R-N）

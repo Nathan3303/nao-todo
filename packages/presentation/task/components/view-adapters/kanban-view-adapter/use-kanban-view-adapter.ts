@@ -11,7 +11,7 @@ import type { KanbanColumnSummary } from '../../kanban/use-kanban-column-paging'
  *              **删除**全局 `taskLoader` —— 分页下沉到列内（每列自持 loader）。
  *              本层不再承担 loading / 数据装载，只承担三件事：
  *                ① 把页面契约（筛选 / 排序 / 取任务 / 刷新计数 / 新增任务 ID）转交看板；
- *                ② 把 `RefreshData` 全局事件翻译成看板的**命令**（递增 `refreshToken`）；
+ *                ② 把 `RefreshData` / `AddNewTaskId` 两个全局事件翻译成看板的**命令**；
  *                ③ 收看板的**聚合摘要**（`summaryChange`）给外层 `loading-error` 判空 / 判错（R-N）。
  * @param props 看板视图适配器 props
  */
@@ -24,6 +24,9 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
 
     /** 刷新计数：递增 ⇒ 各列回第 1 页（`RefreshData`） */
     const refreshToken = ref(0)
+
+    /** 新增任务 ID：换值 ⇒ 看板只向目标列置顶插入（保页） */
+    const newTaskId = ref<TaskViewObject['id'] | undefined>(undefined)
 
     /** 列内聚合摘要（外层空态 / 错误态判据，R-N） */
     const summary = ref<KanbanColumnSummary>({ settled: false, total: 0, firstError: '' })
@@ -78,17 +81,25 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         refreshToken.value += 1
     }
 
+    /** `AddNewTaskId` ⇒ 交给看板做「目标列置顶插入」 */
+    const handleAddNewTaskId = (taskId: TaskViewObject['id']) => {
+        newTaskId.value = taskId
+    }
+
     onMounted(() => {
         props.subscriber.subscribe('RefreshData', handleRefreshData)
+        props.subscriber.subscribe('AddNewTaskId', handleAddNewTaskId)
     })
 
     onUnmounted(() => {
         props.subscriber.unsubscribe('RefreshData', handleRefreshData)
+        props.subscriber.unsubscribe('AddNewTaskId', handleAddNewTaskId)
     })
 
     return {
         sortOptions,
         refreshToken,
+        newTaskId,
         getTask,
         empty,
         error,

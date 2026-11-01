@@ -26,6 +26,10 @@ export type KanbanColumnState = Omit<KanbanColumnSummary, 'settled'> & { settled
 /** 列句柄（父级可发起的编排动作；不含任何分页游标读写） */
 export type KanbanColumnHandle = {
     category: string
+    /** 新增任务置顶插入（`AddNewTaskId`，R-M/D2） */
+    insertTask: (taskId: string) => void
+    /** 拖走一条：移出 + 标 `needsRefill`（R-M/D3） */
+    removeTask: (taskId: string) => void
     /** 回到第 1 页（RefreshData / 筛选 / 排序，R-C） */
     reset: () => Promise<void>
 }
@@ -35,6 +39,10 @@ export type KanbanColumnPaging = {
     unregister: (handle: KanbanColumnHandle) => void
     /** 各列回到第 1 页 */
     resetAll: () => Promise<void>
+    /** 跨列拖拽的本地增量（源列 -1 且待补拉、目标列置顶 +1） */
+    moveTask: (taskId: string, from: string, to: string) => void
+    /** 新增任务：只向目标列置顶插入（保页） */
+    insertTask: (category: string, taskId: string) => void
     /** 列内上报摘要 */
     report: (category: string, state: KanbanColumnState) => void
     summary: ComputedRef<KanbanColumnSummary>
@@ -107,7 +115,16 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
         await Promise.all([...handles.values()].map((handle) => handle.reset()))
     }
 
-    return { register, unregister, resetAll, report, summary }
+    const moveTask = (taskId: string, from: string, to: string) => {
+        handles.get(from)?.removeTask(taskId)
+        handles.get(to)?.insertTask(taskId)
+    }
+
+    const insertTask = (category: string, taskId: string) => {
+        handles.get(category)?.insertTask(taskId)
+    }
+
+    return { register, unregister, resetAll, moveTask, insertTask, report, summary }
 }
 
 /** 列注册表注入键（ADR 决策 1：唯一编排入口） */

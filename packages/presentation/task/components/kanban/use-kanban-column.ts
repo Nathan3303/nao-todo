@@ -43,6 +43,9 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
     // @state 列内任务加载器（每列一份，游标互不影响 —— AC2 列间隔离）
     const loader = useTasksLoader(taskUseCase)
 
+    // @state 源列被拖走一条 ⇒ 下次触底先补回已加载区间的尾部（偏移分页会跳过 1 条，R-M/D3）
+    const needsRefill = ref(false)
+
     // @state 首屏是否已收敛（外层聚合摘要判据，R-N）
     const loadedOnce = ref(false)
 
@@ -77,6 +80,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
      * @description 求交为空 ⇒ 清空并列头归 0，且**不发请求**（R-I / AC11）
      */
     const loadFirstPage = async () => {
+        needsRefill.value = false
         loader.states.pagination.page = 1
         if (queryOptions.value === null) {
             loader.states.taskIds = new Set<TaskViewObject['id']>()
@@ -99,9 +103,35 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
         const options = queryOptions.value
         if (options === null) return
         if (loader.states.disabled) return
+        if (needsRefill.value) {
+            needsRefill.value = false
+            if (loader.states.pagination.page > 1) await loader.loadAndPush(options)
+            return
+        }
         if (isDone.value) return
         loader.states.pagination.page += 1
         await loader.loadAndPush(options)
+    }
+
+    /**
+     * 新增任务：目标列**置顶插入**并 `total + 1`（保页，R-M/D2）
+     * @description 不重查 ⇒ 用户已滚的多页不会塌回第 1 页
+     */
+    const insertTask = (taskId: TaskViewObject['id']) => {
+        if (loader.states.taskIds.has(taskId)) return
+        loader.states.taskIds = new Set([taskId, ...loader.states.taskIds])
+        loader.states.pagination.total += 1
+    }
+
+    /**
+     * 拖走一条：移出并 `total - 1`
+     * @description 已加载区间内被移走 ⇒ 标 `needsRefill`（偏移分页否则会跳过 1 条，R-M/D3）
+     */
+    const removeTask = (taskId: TaskViewObject['id']) => {
+        const wasLoaded = loader.states.taskIds.has(taskId)
+        loader.states.taskIds.delete(taskId)
+        loader.states.pagination.total = Math.max(0, loader.states.pagination.total - 1)
+        if (wasLoaded) needsRefill.value = true
     }
 
     /**
@@ -113,7 +143,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
     }
 
     // @handle 注册到父级注册表（唯一编排入口，ADR 决策 1）
-    const handle = { category: props.category, reset }
+    const handle = { category: props.category, insertTask, removeTask, reset }
     paging.register(handle)
 
     // @effect 上报列摘要（外层空态 / 错误态判据，R-N）
