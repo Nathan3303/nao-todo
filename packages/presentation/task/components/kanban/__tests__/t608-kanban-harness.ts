@@ -14,6 +14,7 @@ import {
     NueSeparator,
     NueText
 } from 'nue-ui'
+import { ref, type Ref } from 'vue'
 import { vi } from 'vite-plus/test'
 import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import { defaultColumns, type TaskColumnOptions } from '@nao-todo/shared/constants'
@@ -27,9 +28,12 @@ import TaskKanban from '../kanban.vue'
  *              用 `$route.params.taskId` 标记激活卡片）⇒ 断言落在**用户可见的列头文本 / 列内容 /
  *              仓储 `update` 入参**，不依赖 RD 内部实现形状（除下方「接缝假设」）。
  *
- * **接缝假设（PM `T608` 裁定 A 规格）**：
- *   ① 分组切换入口在 `TaskKanban` 内部（看板容器顶部一行）——若实现移到
- *      `view-adapters/kanban-view-adapter.vue`，须先与 QA 对齐接缝，否则 AC1a/AC1b 会「假红」；
+ * **接缝（`T612` 已改；PM `T608` 原 A 规格的①已被取代）**：
+ *   ① 分组状态**不再**住在 `TaskKanban` 内部，而是经注入键 `KANBAN_GROUP_BY_KEY`
+ *      （实现单点 `../use-kanban-group.ts`，ADR `2026-11-01-kanban-group-state-hoisting.md`）
+ *      由 `mountKanban(..., { groupBy })` 通过 `global.provide` 注入；控件本体搬到
+ *      右上角「视图」菜单（`apps/web/src/components/tasks/<三处清单>` 下的 `header/operation-dropdown.vue`）
+ *      ⇒ 看板侧用例**不再**点看板内的分段（`t608-ac1a` 整组作废，见该文件头）；
  *   ② 列元素仍带 `data-category`（拖拽 `getTargetNode` 的既有依赖，见 `use-kanban-dragger.ts`）；
  *   ③ 列头容器仍为 `.kanban-column__header`（现有类名，本次只改其**内容**）；
  *   ④ 卡片元素仍带 `data-taskid`（现有 `data-taskId` 绑定）。
@@ -120,22 +124,50 @@ export const makeTask = (overrides: Partial<TaskViewObject> & { id: string }): T
 
 export type UpdateCall = { taskId: string; payload: Record<string, unknown> }
 
+export type KanbanGroupBy = 'state' | 'priority'
+
+/**
+ * 分组状态注入键（`T612` 接缝）
+ * @description 真实实现 = `../use-kanban-group.ts` 导出的 `KANBAN_GROUP_BY_KEY`。RD 第 1 步
+ *              （状态上提）落地前该模块**尚不存在** ⇒ 用 `import.meta.glob({ eager: true })`
+ *              软解析：命中则用真键（RD 落地后自动生效），未命中则用本地占位键。
+ *              占位键下注入不会生效，切换由 `clickSegment` 的「旧控件」过渡分支承担 ⇒
+ *              既有 16 例在搬家前后**都是绿**（`T612` 红基线记账见报告）。
+ *              ⚠️ RD 落地后本软解析可简化为静态 import。
+ */
+const KANBAN_GROUP_MODULES = import.meta.glob<{ KANBAN_GROUP_BY_KEY?: symbol }>(
+    '../use-kanban-group.ts',
+    { eager: true }
+)
+export const KANBAN_GROUP_BY_KEY: symbol =
+    Object.values(KANBAN_GROUP_MODULES)[0]?.KANBAN_GROUP_BY_KEY ??
+    Symbol('KANBAN_GROUP_BY_KEY_PLACEHOLDER')
+
+/** 每个挂载实例的分组 ref（`clickSegment` 需要按 wrapper 找回注入的那一份） */
+const groupByRefs = new WeakMap<VueWrapper, Ref<KanbanGroupBy>>()
+
 export type KanbanHarness = {
     wrapper: VueWrapper
     /** 仓储 `update` 的 spy（**AC2/AC3/AC4 的判据落点**：抓实际写入参数） */
     update: ReturnType<typeof vi.fn>
     calls: () => UpdateCall[]
+    /** 注入给看板的分组状态（单一来源；看板与菜单读同一份 ref） */
+    groupBy: Ref<KanbanGroupBy>
 }
 
 /**
  * 挂载真实看板
  * @param tasks 初始任务（也是「库中原值」的替身：断言未被改写的依据）
  * @param updateResult `taskUseCase.update` 的返回码（`null` = 成功；错误码 = 离线/只读等失败路径）
+ * @param options `groupBy` = 注入的初始分组（默认 `state`，与 `KANBAN_DEFAULT_GROUP_BY` 一致）；
+ *                该注入需 RD 第 1 步（状态上提）后才生效
  */
 export const mountKanban = (
     tasks: TaskViewObject[],
-    updateResult: string | null = null
+    updateResult: string | null = null,
+    options: { groupBy?: KanbanGroupBy } = {}
 ): KanbanHarness => {
+    const groupBy = ref<KanbanGroupBy>(options.groupBy ?? 'state')
     const update = vi.fn(async (taskId: string, payload: Record<string, unknown>) => {
         void taskId
         void payload
@@ -155,9 +187,12 @@ export const mountKanban = (
         },
         global: {
             components: NUE_COMPONENTS,
-            mocks: { $route: { params: {} } }
+            mocks: { $route: { params: {} } },
+            provide: { [KANBAN_GROUP_BY_KEY]: groupBy }
         }
     })
+
+    groupByRefs.set(wrapper, groupBy)
 
     const calls = (): UpdateCall[] =>
         update.mock.calls.map(([taskId, payload]) => ({
@@ -165,7 +200,7 @@ export const mountKanban = (
             payload: payload as Record<string, unknown>
         }))
 
-    return { wrapper, update, calls: calls as KanbanHarness['calls'] }
+    return { wrapper, update, calls: calls as KanbanHarness['calls'], groupBy }
 }
 
 /** 全部列元素（列根 = 拖拽落点，带 `data-category`） */
@@ -240,16 +275,21 @@ const labelNodes = (wrapper: VueWrapper, label: string): DOMWrapper<Element>[] =
  * 取「分段」的文本节点（最深、文本命中标签的元素）
  * @throws MissingImplementationError 控件不存在（= AC1a 红基线的「缺能力」形态）
  */
-export const segmentNode = (wrapper: VueWrapper, label: string): DOMWrapper<Element> => {
+const findSegment = (wrapper: VueWrapper, label: string): DOMWrapper<Element> | null => {
     const [deepest] = labelNodes(wrapper, label).sort(
         (a, b) => a.element.querySelectorAll('*').length - b.element.querySelectorAll('*').length
     )
-    if (!deepest) {
+    return deepest ?? null
+}
+
+export const segmentNode = (wrapper: VueWrapper, label: string): DOMWrapper<Element> => {
+    const node = findSegment(wrapper, label)
+    if (!node) {
         throw new MissingImplementationError(
-            `[缺实现] 看板未渲染分组切换控件「${label}」（PM A 规格：看板顶部两段切换）`
+            `[缺实现] 看板内不再有分组切换控件「${label}」（T612：控件已搬入右上角「视图」菜单）`
         )
     }
-    return deepest
+    return node
 }
 
 const CONTROL_SELECTOR = 'button, [role="tab"], [role="radio"], [aria-pressed]'
@@ -270,13 +310,21 @@ export const selectedState = (node: DOMWrapper<Element>): string | null => {
     return null
 }
 
-/** 点击某个分段（AC1b 的前置动作） */
+/**
+ * 切换分组（AC1b/AC2/AC3/AC4/AC5 的前置动作，`T612` 接缝）
+ * @description 控件搬进菜单后，看板侧用例的等价动作 = 改**注入的那一份 ref**。
+ *              **过渡兼容**：RD 第 2 步（删看板内 toolbar）之前，看板状态仍住在自己内部、
+ *              注入尚未被读取 ⇒ 若 DOM 内仍有旧分段，顺手点它一次（两条路径都指向同一档）。
+ *              RD 第 2 步落地后本分支恒不命中，可随 `t608-ac1a` 作废一并删除。
+ */
 export const clickSegment = async (
     wrapper: VueWrapper,
     groupBy: keyof typeof GROUP_BY_LABELS
 ): Promise<void> => {
-    const node = segmentNode(wrapper, GROUP_BY_LABELS[groupBy])
-    await node.trigger('click')
+    const injected = groupByRefs.get(wrapper)
+    if (injected) injected.value = groupBy
+    const legacy = findSegment(wrapper, GROUP_BY_LABELS[groupBy])
+    if (legacy) await legacy.trigger('click')
     await flushPromises()
 }
 

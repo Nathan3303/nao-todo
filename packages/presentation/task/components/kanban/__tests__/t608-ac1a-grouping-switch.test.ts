@@ -1,3 +1,15 @@
+/**
+ * ⛔ **本文件整组作废（`T612`，2026-11-01；不删除、不修改断言）**
+ *
+ * 作废原因：本组断言的是「分组入口在**看板内容区顶部**」；而 `T612`（PRD
+ * `docs/prds/2026-11-01-kanban-group-switch-in-menu.md` AC3）要求**原位置完全移除**、
+ * 控件搬入右上角「视图」菜单 ⇒ 方向相反，不可「改绿」。取代用例：
+ * `apps/web/src/components/tasks/__tests__/t612-kanban-group-menu.test.ts`（菜单侧 AC1/AC2/AC4/
+ * AC6/AC7）与 `t612-ac5-payload-keys.test.ts`（载荷键集合）。
+ *
+ * 断言原文**逐字保留**在下方（`describe.skip` 不执行）——「作废 ≠ 删断言」，记账见 `T612` 回执
+ * 与 PR 说明（本任务只提测试文件，不另建报告文档）。
+ */
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { VueWrapper } from '@vue/test-utils'
@@ -52,7 +64,7 @@ const mountWith = () => {
     return harness
 }
 
-describe('T608 AC1a · 分组切换入口存在且语义可辨识', () => {
+describe.skip('【T612 作废】T608 AC1a · 分组切换入口存在且语义可辨识（看板内旧位置）', () => {
     it('AC1a① 两段文案「按状态」/「按优先级」均渲染，且都在可点击控件内并带选中态语义', () => {
         const { wrapper: w } = mountWith()
 
