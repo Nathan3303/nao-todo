@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.1] - 2026-11-01
+
+看板分组切换入菜单批次：**「按状态 / 按优先级」从看板内容区顶部搬进右上角「视图」菜单（紧贴「看板视图」下方，仅看板视图渲染）+ 控件尺寸与菜单条目齐平**（Issue #306 · PR #307 · PRD `docs/prds/2026-11-01-kanban-group-switch-in-menu.md` · 发版说明 `docs/releases/v1.16.1.md`）：
+
+- **控件搬家（AC1–AC4）**：三处清单页（内置清单 / 普通清单 / 标签页）的「视图切换」块内、「看板视图」条目正下方各 1 行 `<kanban-group-switch v-if="preference.viewType === 'kanban'" />`（**`v-if` 不是 `v-show`**，非看板视图下 DOM 不存在）；`kanban.vue` 的 `nue-header.kanban-toolbar` 整块与 `kanban.css` 对应死样式同批删除。
+- **状态上提（R-D 单一来源）**：新增 `packages/presentation/task/components/kanban/use-kanban-group.ts`（`KANBAN_GROUP_BY_KEY` / `provideKanbanGroup` / `useKanbanGroup`，缺 Provider 时开发态 `console.error` + 本地回退）；三处页面视图组合式各 provide 1 次；`TaskKanban` 不加 prop，列组件与拖拽写路径零改动（载荷键集合仍 `{priority}` / `{state}` 各自唯一）。**不持久化不变**（R7/R-C）。
+- **菜单内尺寸档（R-H）**：`SegmentedSwitch` 新增 `size="inline"`（段高 `--nue-box-size-sm` = 32px，与 `nue-dropdown-item--small` 同档；字号实测 `sm`/`md`/`inline` 均为 `--nue-text-xs` = 12px ⇒ 与旧档差异仅段高）；`DESIGN.md §4.5` 记第三档、`§3` 记「菜单内嵌控件跟随条目高度」例外；`sm`/`md` 既有样式逐字未动。
+- **焦点归还**：`TaskOperationsDropdown` 单点实现（`@open` 记 `document.activeElement`、`@close` 回焦 + `isConnected` 保护）。
+- **门禁**：`vp check` rc=0（1783 格式 / 1449 文件 0 error）· 全仓 **331 文件 / 2775 例 / 0 红** · 五守卫 rc=0 · `webapp build` / `desktop:build` rc=0 · 移动端红线 **0 行** · 变异 3 处按预期红并还原。
+- **用例**：新增 15 例（菜单侧 13 + 载荷键 2）+ AC3/AC10 各 3 例；`t608-ac1a` **6 例整组作废**（断言原文保留，非删除）。
+- **Tag `v1.16.1`** · root / `apps/web` / `apps/desktop` `1.16.0 → 1.16.1`（PATCH）；`packages/*` 按近批惯例不单独 bump。**无服务端改动**。详见 `docs/releases/v1.16.1.md`。
+
 ## [v1.16.0] - 2026-10-31
 
 看板按优先级分组批次：**看板可按优先级分组并拖拽改优先级 + 「已归档」入口键盘可达**（`DEF-114/124/125` 修复 · Issue #303 · PR #304 · PRD `docs/prds/2026-10-31-kanban-priority-grouping.md` · 发版说明 `docs/releases/v1.16.0.md`）：
