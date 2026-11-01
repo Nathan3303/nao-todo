@@ -189,7 +189,25 @@ $ pnpm exec vp test --run .../t614-ac3-kanban-toolbar-absent.test.ts .../t614-ac
 
 新增后看板目录：`Test Files 7 passed | 1 skipped (8)` · `Tests 23 passed | 6 skipped (29)`。
 
-## 八、结论与遗留
+## 八、受影响面定位（三段阶梯）
+
+① **原生入口 `codegraph_explore`**（`kanban-group-switch` / `use-kanban-group` / `provideKanbanGroup` / `useKanbanGroup` / `use-kanban` / `handleTaskDrop` / `kanbanColumns`）—— 返回的 verbatim 源码与下方读码结论逐行一致（`kanban-group-switch.vue:24-26` 只写 ref、`use-kanban-group.ts:21-25` 唯一 `provide`、`use-kanban.ts:18/27/32` 注入 + 判据 + 载荷二选一）。
+
+② **CLI `codegraph affected`**（本单源码触点 5 个文件）：
+
+```text
+use-kanban-group.ts / kanban-group-switch.vue / project/header/operation-dropdown.vue
+  → t612-kanban-group-menu.test.ts · t614-ac10-empty-kanban-menu.test.ts
+  → 另：built-in-project.test.ts（provideKanbanGroup 的 caller 侧）· t608-kanban-harness.ts
+kanban.vue / use-kanban.ts
+  → t608-kanban-harness.ts（⇒ 经 harness 覆盖 t608-ac1b/ac2-ac3/ac4/ac5、t612-ac5、t614-ac3）
+```
+
+③ **`grep -rn` + 行段**：`grep -rn "segmentNode\|controlOf\|selectedState\|findSegment\|labelNodes"`（清理前引用清点）· `grep -rn "provideKanbanGroup\|KANBAN_GROUP_BY_KEY" apps packages`（provide 点清点）· `grep -rn "localStorage\|sessionStorage\|UpdatePreference"`（零持久化）· `grep -rn "kanban-group-switch" apps/web/src/components/tasks/*/header/operation-dropdown.vue`（三处 `v-if`）。
+
+**受影响的自动化面全部已跑且绿**：`t612-kanban-group-menu`（13）· `t612-ac5-payload-keys`（2）· `t608-ac1b/ac2-ac3/ac4/ac5`（16）· `t614-ac3`（3）· `t614-ac10`（3）· `built-in-project.test.ts`（在全仓 331 文件 / 0 红内）。
+
+## 九、结论与遗留
 
 - **AC1–AC6、AC8（结构面）、AC10（自动化面）**：自动化已覆盖并全绿。
 - **AC7（菜单手感）/ AC8（真机键盘）/ AC9（暗色 + 320px 窄屏）**：视觉 / 真机体感类，按项目分工**交用户人工走查**，清单见 `docs/reports/306-user-acceptance.md`（不做浏览器自动化）。
