@@ -61,7 +61,6 @@ describe('T620 AC13 · 拖走一条后继续触底：不跳条、不重复', () 
         // 前置：已加载 3 页（60 条）
         await scrollToBottom(h.wrapper, 'todo')
         await scrollToBottom(h.wrapper, 'todo')
-        await scrollToBottom(h.wrapper, 'todo')
         const loadedBefore = taskIdsIn(columnNode(h.wrapper, 'todo'))
         expect(loadedBefore, '前置：源列已加载 3 页').toHaveLength(60)
         expect(loadedBefore, '前置：被拖走的任务在已加载区间内').toContain(MOVED_ID)
