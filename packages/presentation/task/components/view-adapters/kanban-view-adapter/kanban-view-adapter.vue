@@ -11,7 +11,17 @@ import { notifyTaskError } from '../../../utils/error-message'
 defineOptions({ name: 'KanbanViewAdapter' })
 const props = defineProps<KanbanViewAdapterProps>()
 
-const { tasks, loading, sortOptions, error, noTaskError, handleRetry } = useKanbanViewAdapter(props)
+const {
+    sortOptions,
+    refreshToken,
+    newTaskId,
+    getTask,
+    empty,
+    error,
+    noTaskError,
+    handleSummaryChange,
+    handleRetry
+} = useKanbanViewAdapter(props)
 
 // 看板内联写操作：断网时仓储返回错误码（不 reject）⇒ 必须显式提示，避免静默丢失
 const handleDeleteTask = async (taskId: string) => {
@@ -39,12 +49,17 @@ const handleUnfinishTask = async (taskId: string) => {
     <nue-container id="TasksMainKanbanContainer">
         <nue-main>
             <nue-content fill style="overflow: auto">
+                <!--
+                    外层只保留「整页空 / 整页错」，判据 = 列内聚合摘要（R-N）：
+                    `empty = settled && total===0`、`error = settled && total===0 && firstError`；
+                    loading 恒 false —— 列内各自 loading（分页下沉后外层不再有全局 loader）
+                -->
                 <loading-error
-                    :loading="loading"
-                    :error="!!error"
+                    :loading="false"
+                    :error="error"
                     error-image-size="6rem"
                     :error-image-src="assetUrl('/images/error.webp')"
-                    :empty="!error && !tasks.length && !!noTaskError"
+                    :empty="empty"
                     :empty-image-src="noTaskError?.image || assetUrl('/images/notaskhere.webp')"
                     :empty-image-size="noTaskError?.imageSize || '6rem'"
                 >
@@ -80,8 +95,11 @@ const handleUnfinishTask = async (taskId: string) => {
                         :project-name-getter="getProjectName"
                         :sort-options="sortOptions"
                         :tags="tags"
-                        :tasks="tasks"
+                        :get-tasks-options="getTasksOptions"
+                        :get-task="getTask"
+                        :refresh-token="refreshToken"
                         :task-use-case="taskUseCase"
+                        @summary-change="handleSummaryChange"
                         @clear-sort-options="clearSortOptions"
                         @show-task-details="showTaskDetails"
                         @delete-task="handleDeleteTask"
