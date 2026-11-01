@@ -5,12 +5,13 @@
 
 ## 前置：用哪个构建看
 
-- **本批未发版**（属 `v1.16.1` 候选）⇒ 看 **本地 dev 服务器**（PM 2026-11-01 已在需求分支启动）。
-- **走查地址**：**`http://localhost:5173`** —— tmux 窗口 `webdev`（`Development:4`）内运行 `pnpm webapp dev`，API 指向**生产** `https://todobe.nathanao.space/api`（生产 CORS 白名单已含 `http://localhost:5173`，已实测 `access-control-allow-origin` 回显正确）。用你的正常账号登录即可，数据即真实数据。
-- ⚠️ **该模式连生产数据**：清单里第 1–14 项都是**只读/纯本地状态**（切分组不写库、不写偏好），不会改数据；若你顺手拖了看板卡片，那是真写库（本单未改拖拽逻辑）。
-- ⛔ **不再用 Vercel 分支预览**：实测 `302 → Vercel Authentication` 登录墙，打不开（用户 2026-11-01 定：走查一律本地）。
+- **本批未发版**（属 `v1.16.1` 候选）⇒ 看 **本地 dev 服务器**（PM 2026-11-01 已按「本地 dev ↔ 本地后端」口径启动）。
+- **走查地址**：**`http://localhost:5173`**（tmux 窗口 `webdev`，`Development:4`）· **API = 本地后端 `http://localhost:3302/api`**（`.env.development` 默认，未覆盖）· 本地后端 CORS 已放行该 origin（实测 `Access-Control-Allow-Origin: http://localhost:5173`，`/api/ping` 200）。
+- **⚠️ 需先重新登录一次**：本轮为修 SEC-02 轮换了本地 `JWT_SECRET` ⇒ 本地栈既有会话全部失效（正常现象，非缺陷）。
+- **本地库现有数据**（只读核过）：`users` 8 · `projects` 12 · `tasks` **188** ⇒ 看板各列都有卡，够走查。
+- 想临时看**生产数据**的观感：用 Vercel 分支预览（预览链才指生产 API），但预览受 Vercel Authentication 保护，需登录该账号；**本清单按本地口径执行**。
 - 桌面端观感若要一起看：`pnpm run desktop:build` 后再 `apps/desktop/node_modules/.bin/electron-builder --dir`（只 `desktop:build` 产出的是 `out/` 中间产物，不是可运行包）。
-- 数据前提：看板需要有任务才有列内容；空看板一项（第 13 项）请**新建一个空清单**或临时筛到无任务。
+- 数据前提：空看板一项（第 13 项）请**新建一个空清单**。
 
 ## 一、入口与形态（AC1 / AC2 / AC3 / AC4）
 
