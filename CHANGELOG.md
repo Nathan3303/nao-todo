@@ -2,6 +2,15 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.3] - 2026-11-01
+
+看板卡片属性区空占位修复（`DEF-127`）：**属性区无任何内容可渲染时整块不渲染**，不再白吃父级 `gap: .5rem` ⇒ 卡片底部不再多出空白（Issue #312 · PR #313 · 发版说明 `docs/releases/v1.16.3.md`）：
+
+- **根因**：`kanban-column-item.vue` 的 `isAttrsNone` 遍历**全部** `TaskColumnOptions` 键（仅跳过 `description`）并挂 `!tags.length`；而 `todo-card__attrs` 只渲染 **6 个子项**（`createdAt`/`updatedAt`/`endAt`/`state`/`priority`/`project`）⇒ 勾「标签」或任一非属性维度时渲染空容器。
+- **修法**：删除 `isAttrsNone` → 新增 `hasCardAttrs` computed（与 6 子项**同源**）；`kanban.css` 补 `&:empty { display: none }` 兜底。
+- **验证**：新增 5 例（AC1–AC5，含**源码守卫**）；红基线实测（还原旧实现）AC1/AC2/AC5 三红、AC3/AC4 绿；看板目录 **59 passed / 6 skipped / 0 红**；`vp check` 0 error；三守卫 exit 0；移动端 0 行；用户目视通过。
+- **Tag `v1.16.3`** · root / `apps/web` / `apps/desktop` `1.16.2 → 1.16.3`（PATCH）；`packages/*` 按近批惯例不 bump。**无服务端改动**。
+
 ## [v1.16.2] - 2026-11-01
 
 看板列内独立分页（`DEF-126` 修复）：**每列滚到底加载该列下一页（每页 20 条）· 到底显示「没有更多了」· 列头改为该列总数 · 刷新/排序/筛选/分组切换回第 1 页**（Issue #309 · PR #310 · PRD `docs/prds/2026-11-01-kanban-column-paging.md` · ADR `docs/adr/2026-11-01-kanban-column-paging.md` · 发版说明 `docs/releases/v1.16.2.md`）：
