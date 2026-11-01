@@ -40,7 +40,11 @@ vi.mock('@/hooks', () => ({
     useTaskUseCase: () => ({})
 }))
 
-vi.mock('@nao-todo/presentation/task', () => ({ useTasksStore: () => ({}) }))
+// `provideKanbanGroup`：T613 页面层新增的分组状态 Provider（本用例不涉及分组语义，仅保持导出面完整）
+vi.mock('@nao-todo/presentation/task', () => ({
+    useTasksStore: () => ({}),
+    provideKanbanGroup: () => ({ value: 'state' })
+}))
 
 vi.mock('@nao-todo/presentation/built-in-project', () => ({
     BuiltInProjectHandler: class {

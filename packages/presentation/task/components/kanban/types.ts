@@ -6,11 +6,6 @@ import type { ComputedRef, Ref } from 'vue'
  * Task Kanban
  */
 
-export type TaskKanbanVO = {
-    currentGroupBy: 'state' | 'priority'
-    kanbanColumns: string[]
-}
-
 export type TaskKanbanProps = {
     tags: TaskTagViewObject[]
     tasks: TaskViewObject[]

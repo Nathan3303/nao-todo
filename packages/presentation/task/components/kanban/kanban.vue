@@ -3,7 +3,7 @@ import TaskKanbanColumn from './kanban-column.vue'
 import useKanban from './use-kanban'
 import type { TaskKanbanProps, TaskKanbanEmits } from './types'
 import './kanban.css'
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { SegmentedSwitch } from '@nao-todo/shared/components/segmented-switch'
 import { t } from '@nao-todo/shared/locales'
 
@@ -12,8 +12,8 @@ const props = defineProps<TaskKanbanProps>()
 const emit = defineEmits<TaskKanbanEmits>()
 
 const {
-    states,
-    getKanbanColumns,
+    groupBy,
+    kanbanColumns,
     handleDragStart,
     handleDragOver,
     handleDragEnter,
@@ -29,10 +29,8 @@ const groupByOptions = computed(() => [
 
 // @method 切换分组（单一来源件 `SegmentedSwitch` 只上抛段值 ⇒ 此处收窄回分组枚举）
 const handleGroupByChange = (value: string) => {
-    if (value === 'state' || value === 'priority') getKanbanColumns(value)
+    if (value === 'state' || value === 'priority') groupBy.value = value
 }
-
-onMounted(() => getKanbanColumns())
 </script>
 
 <template>
@@ -43,7 +41,7 @@ onMounted(() => getKanbanColumns())
                 :fill="false"
                 size="md"
                 :items="groupByOptions"
-                :model-value="states.currentGroupBy"
+                :model-value="groupBy"
                 :aria-label="t('task.kanban.groupByLabel')"
                 @update:model-value="handleGroupByChange"
             />
@@ -51,10 +49,10 @@ onMounted(() => getKanbanColumns())
         <nue-main>
             <nue-content fill>
                 <task-kanban-column
-                    v-for="groupName in states.kanbanColumns"
+                    v-for="groupName in kanbanColumns"
                     :key="groupName"
                     :category="groupName"
-                    :group-by="states.currentGroupBy"
+                    :group-by="groupBy"
                     :columns="columns"
                     :tasks="tasks"
                     :data-category="groupName"

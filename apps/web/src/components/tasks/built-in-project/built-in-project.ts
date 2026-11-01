@@ -1,5 +1,5 @@
 import { useBuiltInProjectUseCase, useTaskUseCase } from '@/hooks'
-import { useTasksStore } from '@nao-todo/presentation/task'
+import { provideKanbanGroup, useTasksStore } from '@nao-todo/presentation/task'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import {
     BuiltInProjectHandler,
@@ -122,6 +122,9 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         }
         appDialogManager.open(TASK_CREATOR_DIALOG_KEY, builtInProject.value.createTaskOptions)
     }
+
+    // @provide 看板分组状态（单一来源；菜单与看板读同一份 ref）
+    provideKanbanGroup()
 
     // @provide 提供 Project View 上下文
     provide(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {

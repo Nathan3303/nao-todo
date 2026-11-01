@@ -1,11 +1,8 @@
 import { computed, onMounted, onUnmounted, provide, reactive, ref } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
-import {
-    KANBAN_GROUP_BY_NAMES,
-    KANBAN_DEFAULT_GROUP_BY,
-    normalizeKanbanPriority
-} from './constants'
-import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
+import { useKanbanGroup } from './use-kanban-group'
+import { KANBAN_GROUP_BY_NAMES, normalizeKanbanPriority } from './constants'
+import type { TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { type TaskColumnOptions, type GetTasksSortOptions } from '@nao-todo/shared/constants'
 import { useMinuteTask } from '@nao-todo/shared/hooks'
@@ -17,17 +14,17 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     // @state 正在更新的任务 ID 集合
     const updatingTaskIds = reactive<Set<TaskViewObject['id']>>(new Set())
 
-    // @states
-    const states = reactive<TaskKanbanVO>({
-        currentGroupBy: KANBAN_DEFAULT_GROUP_BY,
-        kanbanColumns: KANBAN_GROUP_BY_NAMES[KANBAN_DEFAULT_GROUP_BY] || []
-    })
+    // @states 分组状态由页面 Provider 供给（单一来源；不持久化 —— PRD R7/R-C）
+    const groupBy = useKanbanGroup()
+
+    // @computed 看板列集合（唯一来源 = `KANBAN_GROUP_BY_NAMES`，随分组状态派生）
+    const kanbanColumns = computed(() => KANBAN_GROUP_BY_NAMES[groupBy.value] || [])
 
     // @method 处理拖拽放下 - 按当前分组写对应字段（state ⇒ 状态，priority ⇒ 优先级；R2 绝不交叉写）
     const handleTaskDrop = async (taskId: TaskViewObject['id'], category: string) => {
         const task = props.tasks.find((t) => t.id === taskId)
         if (!task) return
-        const byPriority = states.currentGroupBy === 'priority'
+        const byPriority = groupBy.value === 'priority'
         // 归类后同档 ⇒ 无需写库（脏值卡已在「低」列时拖到「低」也不写）
         const current = byPriority ? normalizeKanbanPriority(task.priority) : task.state
         if (current === category) return
@@ -45,14 +42,6 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     // @hook 看板拖拽 Hook
     const { handleDragStart, handleDragOver, handleDragEnter, handleDragEnd, handleDrop } =
         useKanbanDragger(handleTaskDrop)
-
-    // @method 获取分组列表
-    const getKanbanColumns = (groupBy: 'state' | 'priority' = KANBAN_DEFAULT_GROUP_BY) => {
-        // 更新分组方式
-        states.currentGroupBy = groupBy
-        // 获取分组列表
-        states.kanbanColumns = KANBAN_GROUP_BY_NAMES[groupBy] || []
-    }
 
     // @hook 刷新 key
     const refreshKey = ref(1)
@@ -145,8 +134,8 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
 
     // @returns
     return {
-        states,
-        getKanbanColumns,
+        groupBy,
+        kanbanColumns,
         // 看板拖拽 Hooks
         handleDragStart,
         handleDragOver,
