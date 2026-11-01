@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { VueWrapper } from '@vue/test-utils'
-import type { TaskViewObject } from '@nao-todo/domain-task'
 import { t } from '@nao-todo/shared/locales'
 import { cardNode, clickSegment, dragTaskTo, makeTask, mountKanban } from './t608-kanban-harness'
 
@@ -73,10 +72,8 @@ describe('T608 AC5 · 离线/只读拖拽：有可见提示、无假成功、不
             cardNode(h.wrapper, 't-todo').classes(),
             `卡片 class 实测 = ${JSON.stringify(cardNode(h.wrapper, 't-todo').classes())}`
         ).not.toContain('todo-card--updating')
-        // ④ 无乐观写入：props 里的 state 仍是原值
-        expect((h.wrapper.props() as unknown as { tasks: TaskViewObject[] }).tasks[0]!.state).toBe(
-            'todo'
-        )
+        // ④ 无乐观写入：本地库里的 state 仍是原值（`T620` 接缝：`props.tasks` 退役 ⇒ 读仓库）
+        expect(h.db()[0]!.state).toBe('todo')
         // ⑤ 失败后仍可再次尝试（未并发放开的证据）
         await dragTaskTo(h.wrapper, 't-todo', 'done')
         expect(h.update, '失败后再次拖拽仍应发起写请求').toHaveBeenCalledTimes(2)

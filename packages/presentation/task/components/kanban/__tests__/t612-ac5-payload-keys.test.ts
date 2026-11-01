@@ -6,6 +6,7 @@ import {
     dragTaskTo,
     makeTask,
     mountKanban,
+    settle,
     taskIdsIn,
     columnNode
 } from './t608-kanban-harness'
@@ -46,6 +47,7 @@ describe('T612 AC5 · 注入分组下的拖拽载荷键集合（不放宽）', (
             { groupBy: 'priority' }
         )
         wrapper = h.wrapper
+        await settle()
 
         // 先证「注入生效」：列集合已是优先级四档（否则下方「写 priority」可能只是碰巧）
         expect(
@@ -74,6 +76,7 @@ describe('T612 AC5 · 注入分组下的拖拽载荷键集合（不放宽）', (
             { groupBy: 'state' }
         )
         wrapper = h.wrapper
+        await settle()
 
         expect(
             columnNodes(h.wrapper).map((n) => n.attributes('data-category')),

@@ -10,6 +10,7 @@ import {
     makeTask,
     mountKanban,
     priorityLabel,
+    settle,
     stateLabel,
     taskIdsIn
 } from './t608-kanban-harness'
@@ -100,8 +101,9 @@ describe('T608 AC1b · 优先分组：4 列 + 列头为优先级 + 内容按优�
         })
     })
 
-    it('AC1b④ 默认按状态分组：3 列 + 列头状态名 + 同状态合列（回归护栏）', () => {
+    it('AC1b④ 默认按状态分组：3 列 + 列头状态名 + 同状态合列（回归护栏）', async () => {
         const { wrapper: w } = mountPriorityFixture()
+        await settle()
 
         expect(columnNodes(w).map((n) => n.attributes('data-category'))).toEqual([
             'todo',
