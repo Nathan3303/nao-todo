@@ -1,7 +1,7 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectUseCase, useTaskUseCase } from '@/hooks'
-import { useTasksStore } from '@nao-todo/presentation/task'
+import { provideKanbanGroup, useTasksStore } from '@nao-todo/presentation/task'
 import type { ProjectViewProps } from './types'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
@@ -106,6 +106,9 @@ const useProjectView = (props: ProjectViewProps) => {
             projectId: props.projectId
         })
     }
+
+    // @provide 看板分组状态（单一来源；菜单与看板读同一份 ref）
+    provideKanbanGroup()
 
     // @provide 提供 Project View 上下文
     provide(PROJECT_VIEW_CONTEXT_KEY, {

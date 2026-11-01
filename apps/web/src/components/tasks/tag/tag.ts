@@ -1,5 +1,5 @@
 import { useTagUseCase, useTaskUseCase } from '@/hooks'
-import { useTasksStore } from '@nao-todo/presentation/task'
+import { provideKanbanGroup, useTasksStore } from '@nao-todo/presentation/task'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
 import { useUserStore } from '@nao-todo/presentation-identity'
@@ -101,6 +101,9 @@ const useTagView = (props: TagViewProps) => {
     const showTaskCreator = () => {
         appDialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
     }
+
+    // @provide 看板分组状态（单一来源；菜单与看板读同一份 ref）
+    provideKanbanGroup()
 
     // @provide 提供 Tag View 上下文
     provide(TAG_VIEW_CONTEXT_KEY, {
