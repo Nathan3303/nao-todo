@@ -5,6 +5,7 @@
 - 输入：PRD `docs/prds/2026-11-02-nue-ui-1.15.3-upgrade.md`（AC1–AC15 · R-A…R-L）· 架构评审 `docs/reports/T628-nue-ui-1153-arch-review.md` · ADR `docs/adr/2026-11-02-nue-ui-upgrade-and-workaround-retire.md`（已接受）
 - RD 交付：`7d96dbb7`(S1) · `23ff7af5`(S2) · `a0a013b7`(S3) · `7169ee7f`(S4) · `e337a3de`(AC14)
 - 本单形态：**不采信 RD 回执**，逐条自验；**未改任何产品代码**，只新增 3 个测试文件 + 2 份文档（第 4 个用例复核后判定与既有覆盖重复，已撤除，见 §4 M4）
+- 环境（复验机）：Node **v24.22.1** · pnpm **11.18.0** · vite-plus **v0.2.6**（vitest **4.1.10** / rolldown **1.2.0** / oxfmt **0.60.0** / oxlint **1.75.0**）· `TZ = Asia/Shanghai`（UTC+8）· 依赖实测 `nue-ui 1.15.3` / `nue-ui-theme-shadlike 0.13.30`（根与 `apps/desktop` 各一）· 复验日期 2026-11-02
 
 ## §0 结论
 
