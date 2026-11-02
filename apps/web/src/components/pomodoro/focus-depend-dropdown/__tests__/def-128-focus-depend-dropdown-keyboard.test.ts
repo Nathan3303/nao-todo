@@ -23,6 +23,11 @@ import FocusDependDropdown from '../focus-depend-dropdown.vue'
  * （真实浏览器里 Enter/Space 触发的就是这个原生 click 语义）锁死。
  *
  * 挂载方式：真实组件 + 真实 `nue-*`（只替换注入上下文里的用例/订阅者等外部依赖）。
+ *
+ * ⚠️ **覆盖边界**：本组是**裸挂载组件**（不传 `#default` 插槽）⇒ 只覆盖**默认插槽回退路径**；
+ *    真实页面 `components/pomodoro/index.vue` 会**覆写插槽**（`<template #default="{ open }">`），
+ *    那条路径见页面级用例 `apps/web/src/components/pomodoro/__tests__/def-128-pomodoro-page-trigger.test.ts`
+ *    （T636 复验：真实页面曾因覆写插槽仍渲染 SPAN 而缺陷未修好）。
  */
 
 const makeContext = () => {
