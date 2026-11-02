@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { NueLink } from 'nue-ui'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { AppSettingsDialog } from '@/components/settings/dialog'
 import { t } from '@nao-todo/shared/locales'
@@ -83,12 +83,12 @@ const { setGearButton, openSettings } = useSettingsEntry()
                         </template>
                         <template v-else>
                             <!-- R5（用户裁定）：去掉 tooltip 包裹；可访问名走 aria-label -->
-                            <nao-router-link
+                            <nue-link
                                 :key="idx"
                                 :icon="rl.icon"
                                 :route="rl.route"
                                 :aria-label="rl.name"
-                                icon-link
+                                :theme="{ route: true, 'route-icon': true }"
                             />
                         </template>
                     </template>

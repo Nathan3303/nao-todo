@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vite-plus/test'
 /**
  * T630 S2（`DEF-116` 规避回收配套）：`.nue-link` 焦点环集中到项目主题层
  * @description 上游 `nue-ui` 1.15.3 的 `nue-link` 无任何 `:focus-visible` 规则
- *              （shadlike / glass 两套主题 `link.css` 均 0 命中）⇒ 回退 `NaoRouterLink`
- *              包装件后若不补，键盘用户会丢失焦点环（违反 R-C「可访问性只增不减」）。
+ *              （shadlike / glass 两套主题 `link.css` 均 0 命中）⇒ 回退包装件后若不补，键盘用户会丢失焦点环（违反 R-C「可访问性只增不减」）。
  *              落点固定为 `apps/web/src/themes/link.css`（`@/themes` 同时被 web 与
  *              desktop renderer 引入 ⇒ 一处覆盖两端），禁止每处调用点各写一份。
  *
