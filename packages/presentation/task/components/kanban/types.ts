@@ -33,6 +33,22 @@ export type TaskKanbanProps = {
     /**
      * 新增任务 ID（`AddNewTaskId` ⇒ 换新值）
      * @description 只向目标列**置顶插入**（保页），不重查整板（R-M/D2）
+     *
+     * **语义 = 命令通道（`T628` 追认 · C-1）**：换值 ⇒ 执行一次「向对应列置顶插入」。
+     * ⛔ 禁止 `update:newTaskId` 回写、禁止当状态/缓存读、禁止参与渲染。
+     *
+     * **前提与边界**
+     * - **C-2 唯一性**：每次新增的任务 id 必须唯一。若将来出现同值重复下发（撤销后重建 /
+     *   离线重放），`watch` 不触发 ⇒ 命令丢失，届时须改为 `{ id, seq }` 或单调 token。
+     * - **C-3 先写后广播**：广播前 `getTask(id)` 必须可取（先写 store 再广播），
+     *   否则消费侧（`use-kanban`）会静默丢弃该命令。
+     * - **C-4 非第二数据源**：列内数据唯一来源 = loader + 本地增量（`paging.insertTask`），
+     *   本 prop 不承载列数据。
+     *
+     * 溯源：`v1.16.2` 实施增量 → `T628`（2026-11-02）arch 追认
+     * （`docs/reports/T628-nue-ui-1153-arch-review.md` §6；
+     * `docs/adr/2026-11-02-nue-ui-upgrade-and-workaround-retire.md` 决策 4；
+     * `docs/adr/2026-11-01-kanban-column-paging.md` 决策 2）
      */
     newTaskId?: TaskViewObject['id']
 }

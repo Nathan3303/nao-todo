@@ -10,7 +10,7 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { NueLink } from 'nue-ui'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
@@ -24,14 +24,14 @@ import TasksAside from '../../tasks/aside/aside.vue'
 /**
  * T603 红基线 —— 导航可访问性规避（`DEF-116` / PRD `2026-10-31-nav-a11y-and-cleanup` AC1/AC3/AC4）
  *
- * 现状（`nue-ui@1.13.0`）：`nue-link` 的 `route` 形态渲染 `<a class="nue-link">` **无 `href`**
- * ⇒ 键盘 Tab / 中键新标签 / 读屏链接语义全部失效（鼠标点击仍可导航）。
+ * 上游 `nue-ui#108` 已修（`1.15.3`）：`nue-link` 的 `route` 形态渲染带 `href` 的 `<a>`
+ * ⇒ 本用例锁「route 形态可达性」，回归即红（历史红基线见 PRD `2026-10-31-nav-a11y-and-cleanup`）。
  *
- * 纪律（PRD R2）：**必须真实挂载**（真实 router + 真实 `nue-link` / `NaoRouterLink`）；
+ * 纪律（PRD R2）：**必须真实挂载**（真实 router + 真实 `nue-link`）；
  * 禁止用 stub 证明框架行为。样式只做结构断言（主题类名存在），像素级留给用户走查（R5）。
  *
- * 状态：**红**（AC1/AC3 全部红；AC4 的「无 `to="[object Object]"`」当前为绿）。
- * 变异易感：把任一调用点改回 `nue-link route=…` ⇒ 对应 AC1 断言红。
+ * 状态：**绿**（依赖升级后 AC1/AC3/AC4 全部成立）。
+ * 变异易感：把任一调用点的 `theme` 写错（空格分项 / 漏 `route-icon`）⇒ 对应 AC1 类名断言红。
  */
 
 const stub = { template: '<div />' }
@@ -159,7 +159,8 @@ const mountAppAside = async () => {
     return { wrapper, router }
 }
 
-const mountNaoRouterLink = async () => {
+/** 真实 `nue-link` 的 route 形态（字符串 route + 对象 route）：类名只能由 `theme` 产生（R-H） */
+const mountNueLink = async () => {
     const router = buildRouter()
     await router.push('/tasks')
     await router.isReady()
@@ -167,8 +168,12 @@ const mountNaoRouterLink = async () => {
     const Host = defineComponent({
         setup: () => () =>
             h('div', [
-                h(NaoRouterLink, { route: '/tasks', icon: 'ntd-logo1', iconLink: true }),
-                h(NaoRouterLink, { route: objectRoute, icon: 'list' })
+                h(NueLink, {
+                    route: '/tasks',
+                    icon: 'ntd-logo1',
+                    theme: { route: true, 'route-icon': true }
+                }),
+                h(NueLink, { route: objectRoute, icon: 'list', theme: 'route' })
             ])
     })
     const wrapper = track(mount(Host, { global: { plugins: [router] } }))
@@ -280,8 +285,8 @@ describe('T603 AC1 · 静态调用点渲染的 <a> 均有非空 href = router.re
         ).toEqual([...expected])
     })
 
-    it('AC1② `NaoRouterLink` 包装（字符串 route + 对象 route）均透传出 href', async () => {
-        const { wrapper, router, objectRoute } = await mountNaoRouterLink()
+    it('AC1② `nue-link` route 形态（字符串 route + 对象 route）均渲染出 href', async () => {
+        const { wrapper, router, objectRoute } = await mountNueLink()
         const expected = [
             (router.resolve('/tasks') as unknown as { href: string }).href,
             (router.resolve(objectRoute) as unknown as { href: string }).href
@@ -289,7 +294,7 @@ describe('T603 AC1 · 静态调用点渲染的 <a> 均有非空 href = router.re
 
         expect(
             hrefs(wrapper),
-            `NaoRouterLink 锚点实测：${JSON.stringify(describeAnchors(wrapper))}`
+            `nue-link 锚点实测：${JSON.stringify(describeAnchors(wrapper))}`
         ).toEqual(expected)
         // R5 结构证据：主题类必须保留（外观由类名承载，像素级交用户走查）
         const [first, second] = anchors(wrapper)
@@ -416,9 +421,9 @@ describe('T603 AC4 · 负向（无 to="[object Object]" 残留 + 点击仍走 SP
         expectNoLegacyTo('AppAside', wrapper)
     })
 
-    it('AC4①b NaoRouterLink 无 `to` 属性残留、无 `[object Object]`', async () => {
-        const { wrapper } = await mountNaoRouterLink()
-        expectNoLegacyTo('NaoRouterLink', wrapper)
+    it('AC4①b nue-link 无 `to` 属性残留、无 `[object Object]`', async () => {
+        const { wrapper } = await mountNueLink()
+        expectNoLegacyTo('nue-link', wrapper)
     })
 
     it('AC4①c PomodoroAside 无 `to` 属性残留、无 `[object Object]`', async () => {

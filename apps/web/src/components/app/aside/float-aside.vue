@@ -3,7 +3,7 @@ import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { getAvatarSrc } from '@nao-todo/shared/utils/avatar'
-import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { NueLink } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 
@@ -57,11 +57,11 @@ const visible = computed({
                                 placement="right-center"
                                 size="small"
                             >
-                                <nao-router-link
+                                <nue-link
                                     :icon="rl.icon"
                                     :route="rl.route"
                                     :aria-label="rl.name"
-                                    icon-link
+                                    :theme="{ route: true, 'route-icon': true }"
                                 />
                             </nue-tooltip>
                         </template>

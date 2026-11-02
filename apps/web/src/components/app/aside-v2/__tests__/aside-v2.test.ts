@@ -75,7 +75,7 @@ const mountAside = (): VueWrapper => {
                 'nue-tooltip': NueTooltip
             },
             stubs: {
-                'nao-router-link': { template: '<a class="stub-nav-link" />' }
+                'nue-link': { template: '<a class="stub-nav-link" />' }
             }
         }
     })

@@ -32,7 +32,9 @@ import { defineComponent } from 'vue'
  *   `docs/reports/**` 里有 DEF-116 报告，且含「受影响页面」清单与「规避结论」。
  *   否则缺陷既没修也没结论 ⇒ 红。
  *
- * 状态：**红**（当前 `<a class="nue-link">` 无 href、不可聚焦，且无 DEF-116 核查报告）。
+ * 状态：**红基线已转绿**（`nue-ui` 1.15.3 起 `nue-link` 的 route 形态带 `href`）。
+ * 本批口径（`T631` S4）：认证互链仍是原生 `<router-link class="nue-link">`，**不回收**（R-L 挂账，到期 2026-12-31）；
+ * 本用例锁定的是「互链有可访问名 + 可聚焦 + href 指向对应认证页」的现状，断言不随版本改动。
  * 变异易感：删掉链接文本 ⇒ 可访问名红；把 `href` 换成死的 `/auth/xxx` ⇒ 目标断言红。
  */
 

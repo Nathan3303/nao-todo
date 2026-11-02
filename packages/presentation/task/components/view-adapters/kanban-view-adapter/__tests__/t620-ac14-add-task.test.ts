@@ -38,6 +38,11 @@ const makeTodoTasks = (count: number): TaskViewObject[] =>
         makeTask({ id: `todo-${pad(index + 1)}`, state: 'todo', priority: 'medium' })
     )
 
+/**
+ * 命令通道口径（`T628` 追认 · C-1…C-4）：本组用例锁 **C-3 前提**（创建链路先写 store 再广播
+ * `AddNewTaskId`，故广播时 `getTask(id)` 必可取）与命令通道语义（换值 ⇒ 一次置顶插入）。
+ * ⛔ 不许把本组改用例来适配「同值重复下发」（C-2 边界），也不许引入 `update:newTaskId`。
+ */
 describe('T620 AC14 · 新增任务置顶插入且保留已加载页', () => {
     it('AC14① 目标列已加载 2 页 ⇒ 新增任务出现在该列首位，total +1，已加载条数不减', async () => {
         const h = mountKanbanAdapter([

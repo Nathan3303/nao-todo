@@ -9,7 +9,7 @@ import {
 } from '@nao-todo/shared/constants'
 import dayjs from 'dayjs'
 import { t } from '@nao-todo/shared/locales'
-import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { NueLink } from 'nue-ui'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useAside } from './use-aside'
 
@@ -45,11 +45,12 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
             <nue-div vertical gap="0.25rem">
-                <nao-router-link
+                <nue-link
                     v-for="link in builtInProjectLinks.slice(0, 5)"
                     :key="link.id"
                     :icon="link.icon"
                     :route="{ name: 'tasks-built-in-project', params: { projectId: link.id } }"
+                    theme="route"
                 >
                     {{ link.title }}
                     <template #append>
@@ -57,7 +58,7 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                             {{ link.id === 'today' ? dayjs().format('M月D日') : '' }}
                         </nue-text>
                     </template>
-                </nao-router-link>
+                </nue-link>
             </nue-div>
             <nue-divider />
             <nue-collapse
@@ -82,19 +83,20 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
             </nue-collapse>
             <nue-divider />
             <nue-div vertical gap="0.25rem">
-                <nao-router-link
+                <nue-link
                     v-for="link in builtInProjectLinks.slice(5, builtInProjectLinks.length)"
                     :key="link.id"
                     :icon="link.icon"
                     :route="{ name: 'tasks-built-in-project', params: { projectId: link.id } }"
+                    theme="route"
                 >
                     {{ link.title }}
-                </nao-router-link>
+                </nue-link>
             </nue-div>
             <nue-divider />
             <!-- 清单区底部：已归档入口 ⇒ 清单管理弹窗 archived tab（PRD §3-3）
                  DEF-124：入口是「点击触发」而非导航 ⇒ 用**原生 button** 复用 `.nue-link--route` 主题
-                 （DOM/类名与 `nao-router-link` 一致 ⇒ 外观零变化），键盘 Tab + Enter 可达。 -->
+                 （DOM/类名与 `nue-link` 的 route 形态一致 ⇒ 外观零变化），键盘 Tab + Enter 可达。 -->
             <nue-div vertical gap="0.25rem">
                 <button
                     type="button"

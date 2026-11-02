@@ -265,18 +265,14 @@ const isChecked = (list: string[], id: string) => list.includes(id)
         </div>
 
         <!-- P2：包含已归档（默认关；开 ⇒ 结果纳入归档任务）
-             注：NueSwitch 忽略默认插槽 ⇒ 文字用右侧兄弟元素；role/aria-checked/tabindex
-             与 Enter·Space、点文字切换均由本组件补齐（⛔ 不改 nue-ui 组件本身） -->
+             注：nue-ui 1.15.3 起 NueSwitch 自带默认插槽 / role / aria-checked / 键盘激活
+             ⇒ 本组件只保留文案与点文字切换（⛔ 不改 nue-ui 组件本身） -->
         <div class="search-filter-bar__archived">
             <nue-switch
                 :model-value="includeArchived"
                 size="small"
-                role="switch"
-                :aria-checked="includeArchived"
-                tabindex="0"
+                :aria-label="t('search.includeArchived')"
                 @update:model-value="(value: boolean) => emit('toggleArchived', value)"
-                @keydown.enter.prevent="emit('toggleArchived', !includeArchived)"
-                @keydown.space.prevent="emit('toggleArchived', !includeArchived)"
             />
             <span
                 class="search-filter-bar__archived-label"

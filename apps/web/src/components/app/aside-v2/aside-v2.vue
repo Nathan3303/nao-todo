@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppAsideV2 } from './use-aside'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
+import { NueLink } from 'nue-ui'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { AppSettingsDialog } from '@/components/settings/dialog'
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
@@ -84,11 +84,11 @@ defineExpose({ switchDisplayAside })
                             placement="right-center"
                             size="small"
                         >
-                            <nao-router-link
+                            <nue-link
                                 :icon="rl.icon"
                                 :route="rl.route"
                                 :aria-label="rl.name"
-                                icon-link
+                                :theme="{ route: true, 'route-icon': true }"
                             />
                         </nue-tooltip>
                     </template>

@@ -244,14 +244,14 @@ importers:
         specifier: ^5.1.11
         version: 5.1.16
       nue-ui:
-        specifier: 1.13.0
-        version: 1.13.0(vue@3.5.41(typescript@5.4.5))
+        specifier: 1.15.3
+        version: 1.15.3(vue@3.5.41(typescript@5.4.5))
       nue-ui-iconfont:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.28
-        version: 0.13.28
+        specifier: 0.13.30
+        version: 0.13.30
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -398,14 +398,14 @@ importers:
         specifier: workspace:*
         version: link:../web
       nue-ui:
-        specifier: 1.13.0
-        version: 1.13.0(vue@3.5.41(typescript@5.4.5))
+        specifier: 1.15.3
+        version: 1.15.3(vue@3.5.41(typescript@5.4.5))
       nue-ui-iconfont:
         specifier: 0.2.6
         version: 0.2.6
       nue-ui-theme-shadlike:
-        specifier: 0.13.28
-        version: 0.13.28
+        specifier: 0.13.30
+        version: 0.13.30
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.4.5)(vue@3.5.41(typescript@5.4.5))
@@ -5190,11 +5190,11 @@ packages:
       unplugin-vue-components: ^0.27.0
       vue: ^3.5.0
 
-  nue-ui-theme-shadlike@0.13.28:
-    resolution: {integrity: sha512-SXyYAUnvUFV9Qk/VTcEmFo1B8y29ZdpI+wAy2+nU9UgnonaB/B6oVFPTcRICu8uQa/CP8aK7eeQ/dQgAfvRBhg==}
+  nue-ui-theme-shadlike@0.13.30:
+    resolution: {integrity: sha512-yOiEzcHAhZXT+YvFxw6tjGoiN4JOAxcKne+fu5nWlQvIdbzKh+dT62FxfNWsj9PJriXZqFgxn1JKt6Rxk6KpZg==}
 
-  nue-ui@1.13.0:
-    resolution: {integrity: sha512-izkhaNFszxBKrLO+kqCWLazZbQrNwyb9Mf9dl5RxeY/wAInBU9uWsBs5uPl9yreTvHcd0x3WFBjIiZE+b8ZKNA==}
+  nue-ui@1.15.3:
+    resolution: {integrity: sha512-PxhP56y+1Zsf87NPXajZyIj1+9pQ+IaDKSEA2EW9koSWW8yfPRi/Bs9jHkeQi4+xVLHopBgV6yB6pmh1juYOqw==}
     peerDependencies:
       vue: ^3.5.18
 
@@ -11489,9 +11489,9 @@ snapshots:
       unplugin-vue-components: 0.27.5(@babel/parser@7.29.8)(rollup@4.63.0)(supports-color@10.2.2)(vue@3.5.41(typescript@5.4.5))
       vue: 3.5.41(typescript@5.4.5)
 
-  nue-ui-theme-shadlike@0.13.28: {}
+  nue-ui-theme-shadlike@0.13.30: {}
 
-  nue-ui@1.13.0(vue@3.5.41(typescript@5.4.5)):
+  nue-ui@1.15.3(vue@3.5.41(typescript@5.4.5)):
     dependencies:
       vue: 3.5.41(typescript@5.4.5)
 

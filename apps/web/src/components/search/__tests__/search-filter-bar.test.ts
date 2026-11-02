@@ -130,15 +130,24 @@ describe('T505 ② 归档开关可见标签与无障碍', () => {
         ).toBe('true')
     })
 
+    /**
+     * 上游 `NueSwitch` 是**有状态 toggle**（内部 `ref` + `watch(modelValue)`）：连续两次按键之间
+     * 若不回写 prop，内部状态会来回翻转 ⇒ 第 2 次上抛值是 `false`。故本用例按**真实受控用法**
+     * 驱动（`setProps` 模拟父级回写），断言锁的是「一次按键恰好一次上抛」的逐次对应关系。
+     * @description 反向变异：把任一自建 `@keydown.enter` 加回组件 ⇒ 该次按键上抛两次、索引错位 ⇒ 本用例必红。
+     */
     it('Enter / Space 可切换，点文字也可切换（均上抛 toggleArchived）', async () => {
         mountBar({ includeArchived: false })
         const sw = wrapper!.find('.search-filter-bar__archived [role="switch"]')
         await sw.trigger('keydown', { key: 'Enter' })
         expect(wrapper!.emitted('toggleArchived')?.[0]).toEqual([true])
+        await wrapper!.setProps({ includeArchived: true })
         await sw.trigger('keydown', { key: ' ' })
-        expect(wrapper!.emitted('toggleArchived')?.[1]).toEqual([true])
+        expect(wrapper!.emitted('toggleArchived')?.[1]).toEqual([false])
+        await wrapper!.setProps({ includeArchived: false })
         await wrapper!.find('.search-filter-bar__archived-label').trigger('click')
         expect(wrapper!.emitted('toggleArchived')?.[2]).toEqual([true])
+        expect(wrapper!.emitted('toggleArchived')).toHaveLength(3)
     })
 })
 

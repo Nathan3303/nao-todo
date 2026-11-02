@@ -127,7 +127,7 @@ const mountAdapter = (responsiveFlag: { value: number }): VueWrapper => {
                 'nue-text': layoutStub,
                 'nue-icon': layoutStub,
                 'nue-tooltip': layoutStub,
-                'nao-router-link': { template: '<a class="stub-nav-link" />' }
+                'nue-link': { template: '<a class="stub-nav-link" />' }
             }
         }
     })

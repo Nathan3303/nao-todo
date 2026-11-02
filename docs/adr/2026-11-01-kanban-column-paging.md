@@ -13,7 +13,7 @@
 ## 决策
 
 1. 数据面：每列自持 `useTasksLoader`（`kanban/use-kanban-column.ts`）；`TaskKanban` 提供**列注册表**（`kanban/use-kanban-column-paging.ts`，`KANBAN_COLUMN_PAGING_KEY`）作为唯一编排入口（reset / 拖拽增量 / 新增任务）。
-2. 契约：`TaskKanban` 增 `getTasksOptions` / `getTask(id)` / `refreshToken` / **`newTaskId`（`T621` 实施增量：命令通道，PM 2026-11-01 裁定接受 · 待 arch 追认）** + emit `summaryChange`；**移除 `tasks` prop**（D5）；删除 `kanban-view-adapter` 的全局 `taskLoader`，外层 `loading-error` 只保留「整页空 / 整页错」，判据为聚合摘要（`settled && total === 0`），外层不再承担 loading。
+2. 契约：`TaskKanban` 增 `getTasksOptions` / `getTask(id)` / `refreshToken` / **`newTaskId`（`T621` 实施增量：命令通道，PM 2026-11-01 裁定接受 · **arch 2026-11-02 追认：有条件接受**，条件 C-1…C-4 见 `docs/adr/2026-11-02-nue-ui-upgrade-and-workaround-retire.md` 决策 4）** + emit `summaryChange`；**移除 `tasks` prop**（D5）；删除 `kanban-view-adapter` 的全局 `taskLoader`，外层 `loading-error` 只保留「整页空 / 整页错」，判据为聚合摘要（`settled && total === 0`），外层不再承担 loading。
 3. 重置：`use-kanban.ts` 一处 `resetAllColumns()`，来源 = `refreshToken`（`RefreshData`）+ `getTasksOptions` 深监听；分组切换用 `:key="\`${groupBy}:${groupName}\`"` **结构性重置**，不加第三个 watch。
 4. 一致性：拖拽成功后只做**本地增量**（目标列插 id + `total+1`、源列 `total−1`，源列置 `needsRefill` 于下次触底补回已加载区间）；`AddNewTaskId` 只向目标列**插入置顶** + `total+1`（D2）。
 5. 分页语义：`limit=20`；列内 `isDone = page*limit >= total`；列头数字 = `pagination.total`；到底文案新增 1 个 i18n 键 `task.kanban.noMore`。

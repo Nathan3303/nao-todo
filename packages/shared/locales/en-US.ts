@@ -496,6 +496,7 @@ const enUS: LocaleMessages = {
 
     // Task
     'task.reminder.title': 'Task Reminder',
+    'task.reminder.enabled': 'Enable reminder',
     'task.state.todo': 'To Do',
     'task.state.inProgress': 'In Progress',
     'task.state.done': 'Done',
@@ -780,6 +781,8 @@ const enUS: LocaleMessages = {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': 'Failed to save focus record: {error}',
+    'pomodoro.timerSetting.autoStartNextFocusSession': 'Start the next focus session automatically',
+    'pomodoro.timerSetting.autoRest': 'Automatic breaks',
     'pomodoro.title.focus': 'Focus',
     'pomodoro.title.break': 'Break',
     'pomodoro.title.longBreak': 'Long break',

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@nao-todo/shared/locales'
 import useTaskRemindSetter from './use-task-remind-setter'
 import {
     TASK_REMIND_REPEAT_MAP,
@@ -32,8 +33,13 @@ const {
         <nue-text theme="title">提醒</nue-text>
         <!-- 提醒开关 -->
         <nue-div theme="row">
-            <nue-text>启用提醒</nue-text>
-            <nue-switch v-model="vo.enabled" size="small" style="--nue-switch-height: 1rem" />
+            <nue-text>{{ t('task.reminder.enabled') }}</nue-text>
+            <nue-switch
+                v-model="vo.enabled"
+                size="small"
+                style="--nue-switch-height: 1rem"
+                :aria-label="t('task.reminder.enabled')"
+            />
         </nue-div>
         <template v-if="vo.enabled">
             <!-- 提醒时间 -->
