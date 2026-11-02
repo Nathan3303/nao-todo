@@ -2,6 +2,11 @@
     font-size: inherit;
 }
 
+.nue-link:focus-visible {
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
+}
+
 .nue-link.nue-link--route {
     &:is(.nue-link--route-icon) {
         --nue-link-color: var(--nue-primary-color-400);
