@@ -2,6 +2,19 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.4] - 2026-11-02
+
+组件库 `nue-ui` **`1.13.0 → 1.15.3`** + 主题 `0.13.28 → 0.13.30`，并**回收本仓为绕过 `DEF-116` 自建的 `NaoRouterLink` 规避**（PR #316 · squash `8e4cbc85` · PRD `docs/prds/2026-11-02-nue-ui-1.15.3-upgrade.md` · ADR `docs/adr/2026-11-02-nue-ui-upgrade-and-workaround-retire.md` · 发版说明 `docs/releases/v1.16.4.md`）：
+
+- **上游三单已修**（`nue-ui#108` 链接 `href` / `#109` 头像错误态复位 / `#110` 开关默认插槽，`v1.15.3`）：本仓删 `packages/shared/components/router-link/` 与导出面，11 处模板调用点 + `smart-list` 动态面回 `<nue-link route>`；图标型入口用对象语法 `:theme="{ route: true, 'route-icon': true }"`（`parseTheme` 按逗号切分；`iconLink`/`size` 在 `nue-link` 上不存在/未实现），并加严断言 `nue-link--route-icon` 类存在。
+- **回退暴露的上游缺口**：`nue-link` 无 `:focus-visible`（两主题 `link.css` 0 命中）⇒ 焦点环单点补在 `apps/web/src/themes/link.css`（Web + desktop 共用；`?raw` 源级断言 + 产物 CSS 复核 + 走查）。
+- **跨版本行为面**：`1.14.0` a11y（`switch` 补 `role`/`aria-checked`/键盘）⇒ 拆除本仓 5 处**自建 a11y**（否则一次按键双触发；`search-filter-bar` 用例改「真实受控用法」，仍锁逐次索引 + 每次恰好 1 次上抛 + `toHaveLength(3)`）；另 3 处无名开关补 `aria-label`（新增 3 个 i18n 键，zh/en/types 齐备）；`nue-select`/`nue-date-picker` 清除键**去嵌套**（DOM 变化，本仓零处依赖旧结构）+ 新增 2 例覆盖；面板 trigger 补 `width:100%`（`fit-content` 包含块）。
+- **日期口径**：`1.15.2` 起 date-only 一律 `00:00`（仅兜底分支；空值仍取现在）⇒ 本仓 4 处 `datetime` 取值链恒为完整 ISO，**用户可感知行为不变**（3 组 emit 快照锁定）。
+- **修复**：`DEF-129`（用户走查发现：日期选择器清除键压日历图标 —— 本仓 `padding` 简写打掉主题为清除键预留的 `padding-right`；拆长写 + 按 `size="small"` 恢复主题同式 + 源级守卫 4 例，回退即 3 红）。
+- **验证**：全仓 **350 文件 / 2842 例 / 0 红**（升级前基线 345 / 2821 / 0）· `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行 · 变异 4/4 全杀 · 体积六项 <1%（最紧 CSS +0.96%）· 用户视觉走查 **8/8 通过**。
+- **登记待修**：`DEF-130`（`records/filter-panel.vue` 的 `clearabl` 拼写 ⇒ 清除键从未渲染，既有缺陷）· `DEF-128`（`focus-depend-dropdown` 两处点击型链接无 `href`）· `R-L` 身份页互链仍用原生链接（挂账到期 2026-12-31）。
+- **Tag `v1.16.4`** · root / `apps/web` / `apps/desktop` `1.16.3 → 1.16.4`（PATCH）；`packages/*` 按近批惯例不 bump。**无服务端改动**。
+
 ## 机制变更（无版本号） - 2026-11-02
 
 **nao 机制包升级 `@nathan33/nao-skill` `0.20.1 → 0.21.1`**（`M20261102-nao-skill-0211`）：仅机制包与版本标记，**无源码 / 测试 / 构建配置变化**。执行链路：`pi install -l --approve npm:@nathan33/nao-skill@0.21.1`（改 `.pi/settings.json` pin + 物化 `.pi/npm`，`found 0 vulnerabilities`）→ `nao-skill init . --verbose`（幂等，**`shim same`**，转发入口零变更）→ `.agents/.nao-version` 写为 `0.21.1`。**体检**：`check: OK · roles=6 · files=50 · layout=main-row2` + 第二行 `✓ codegraph 齐备`（`files=50` 与前版同值 —— 本版**无新增 / 删除机制文件**）。**跨越的三版上游变化（均无破坏性变更）**：① **`0.20.4`** —— `ensure` 拉起后**立即返回**（实测 60.5s → 0.6s），成功时**新增一行就绪提示**（提示用 `status` 看在线状态；其余输出行不变）；同版把「**计数类数字必须一条命令自证**」写进 PM 清单 **43 → 44 项**（PM 卡 **v31**）。② **`0.21.0`（MINOR）** —— 新增 **`ensure --card <项目内 .agents/prompts/x.md> [--as <后缀>]`**：项目自有角色卡与 6 个常驻角色**同等托管**（进舰队布局 · 出现在 `status` · 可 `close` 回收）；卡限 `<项目>/.agents/prompts/<名字>.md`（普通 `.md`、≤256 KiB），名字须 `^[a-z0-9][a-z0-9_-]*$`、≤32 字符且**不得与常驻角色撞名或抢前缀**（`qa-*` / `nao-*` / `subagent-*` 被拒），`--as` **只改后缀**、`--card`/`--as` 是**目标级修饰符**（绑定其后第一个目标，混批校验不过则一个 pane 都不建）；卡被删 / 改名后会话进 `status` 的「角色未识别」节。③ **`0.21.1`** —— `status` 的 **pane 工作目录**判据修正（快照字段读序把 `pane_id` 当会话名 ⇒ 该路此前从未生效）：**名册（intercom）抖动时按 pane cwd 判归属**，本仓会话照常给 `close` 命令，两路都拿不到才保守显示「归属不可判定」；名册可用时输出与上版**逐字等价**。**未变**：`.agents/roles.yaml`（上游零改动）· 机制文件数 **50** · `.agents/scripts/nao-fleet.sh` shim 文本一致。**生效注意**：角色卡 / 清单 / skills 为**启动期注入、不热更** ⇒ 新纪律在下次 `ensure` / 会话重开时进上下文；生效前按 `AGENTS.md`「机制能力指针」与 `docs/tasks-state.md` 执行。上游发版说明：`docs/releases/v0.20.4.md` / `v0.21.0.md` / `v0.21.1.md`（上游仓，本仓不复制）。
