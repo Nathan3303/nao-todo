@@ -187,7 +187,7 @@
 
 > 细则见 `$NAO_SKILLS/.agents/skills/github-flow.md`（`$NAO_SKILLS` = **机制包根**，nao-skill 0.12.0 起；非项目根）；本区只记**运行时**状态。
 
-- **维护型批次（nao 机制升级，`M20261102-nao-skill-0211`，2026-11-02，**在制（Draft PR 待合并）**）**：分支 `nao/M20261102-nao-skill-0211`（自 `origin/main@78e02f17` + 3 条待并台账提交，BR5 随本 PR 进 main）· pin `0.20.1 → 0.21.1` · 执行 = `rd-infra` · PR **#PRNUM**（Draft；合并后回填 squash 提交号）
+- **维护型批次（nao 机制升级，`M20261102-nao-skill-0211`，2026-11-02，**在制（Draft PR 待合并）**）**：分支 `nao/M20261102-nao-skill-0211`（自 `origin/main@78e02f17` + 3 条待并台账提交，BR5 随本 PR 进 main）· pin `0.20.1 → 0.21.1` · 执行 = `rd-infra` · PR **#315**（Draft；合并后回填 squash 提交号）
 - **维护型批次（nao 机制升级，`M20261031-nao-skill-0201`，2026-10-31，**在制（PR 待合并）**）**：分支 `chore/nao-skill-0.20.1`（自 `origin/main`）· pin `0.20.0 → 0.20.1` · 执行 = `rd-infra` · PR **#292**（待合并；合并后回填 squash 提交号）
 - **维护型批次（nao 机制升级，`M20261029-nao-skill-0200`，2026-10-29，**已闭环**）**：PR **#273 已 MERGED**（`nao/m20261029-nao-skill-0200` → squash **`82a4c4e8`**）· pin `0.19.2 → 0.20.0` · CI `check` 46s / `test` 2m51s 均 pass · main 上恰好 1 条、无 `wip()`、远端分支已删（PM 独立复核：`ad5846f0..origin/main` 仅 1 条 · `gh api` ref 404）· 执行 = PM（升级 + 文档）/ `rd-infra`（合并，`ensure` 拉起后已回收）· ⚠️ **SSH 22 端口超时复现**（`git fetch` 失败）⇒ 推送/fetch 走 HTTPS 替代（`git -c url."https://github.com/".insteadOf="git@github.com:" -c credential.helper='!gh auth git-credential'`），**remote 配置未改**（仍 SSH）· 本条闭环留痕待随下批文档 PR 落账
 - **维护型批次（nao 机制升级，`M20261028-nao-skill-0192`，2026-10-28，**已闭环**）**：PR **#271 已 MERGED**（`nao/m20261028-nao-skill-0.19.2` → squash **`dd844b13`**）· 闭环 PR = `nao/m20261028-close` · pin `0.18.4 → 0.19.2` · CI `check` 50s / `test` 3m51s 均 pass · main 上恰好 1 条、无 `wip()`、远端分支已删 · 执行 = `rd-infra`（合并）/ PM（升级 + 文档）
