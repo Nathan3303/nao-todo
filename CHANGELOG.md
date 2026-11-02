@@ -2,6 +2,10 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## 机制变更（无版本号） - 2026-11-02
+
+**nao 机制包升级 `@nathan33/nao-skill` `0.20.1 → 0.21.1`**（`M20261102-nao-skill-0211`）：仅机制包与版本标记，**无源码 / 测试 / 构建配置变化**。执行链路：`pi install -l --approve npm:@nathan33/nao-skill@0.21.1`（改 `.pi/settings.json` pin + 物化 `.pi/npm`，`found 0 vulnerabilities`）→ `nao-skill init . --verbose`（幂等，**`shim same`**，转发入口零变更）→ `.agents/.nao-version` 写为 `0.21.1`。**体检**：`check: OK · roles=6 · files=50 · layout=main-row2` + 第二行 `✓ codegraph 齐备`（`files=50` 与前版同值 —— 本版**无新增 / 删除机制文件**）。**跨越的三版上游变化（均无破坏性变更）**：① **`0.20.4`** —— `ensure` 拉起后**立即返回**（实测 60.5s → 0.6s），成功时**新增一行就绪提示**（提示用 `status` 看在线状态；其余输出行不变）；同版把「**计数类数字必须一条命令自证**」写进 PM 清单 **43 → 44 项**（PM 卡 **v31**）。② **`0.21.0`（MINOR）** —— 新增 **`ensure --card <项目内 .agents/prompts/x.md> [--as <后缀>]`**：项目自有角色卡与 6 个常驻角色**同等托管**（进舰队布局 · 出现在 `status` · 可 `close` 回收）；卡限 `<项目>/.agents/prompts/<名字>.md`（普通 `.md`、≤256 KiB），名字须 `^[a-z0-9][a-z0-9_-]*$`、≤32 字符且**不得与常驻角色撞名或抢前缀**（`qa-*` / `nao-*` / `subagent-*` 被拒），`--as` **只改后缀**、`--card`/`--as` 是**目标级修饰符**（绑定其后第一个目标，混批校验不过则一个 pane 都不建）；卡被删 / 改名后会话进 `status` 的「角色未识别」节。③ **`0.21.1`** —— `status` 的 **pane 工作目录**判据修正（快照字段读序把 `pane_id` 当会话名 ⇒ 该路此前从未生效）：**名册（intercom）抖动时按 pane cwd 判归属**，本仓会话照常给 `close` 命令，两路都拿不到才保守显示「归属不可判定」；名册可用时输出与上版**逐字等价**。**未变**：`.agents/roles.yaml`（上游零改动）· 机制文件数 **50** · `.agents/scripts/nao-fleet.sh` shim 文本一致。**生效注意**：角色卡 / 清单 / skills 为**启动期注入、不热更** ⇒ 新纪律在下次 `ensure` / 会话重开时进上下文；生效前按 `AGENTS.md`「机制能力指针」与 `docs/tasks-state.md` 执行。上游发版说明：`docs/releases/v0.20.4.md` / `v0.21.0.md` / `v0.21.1.md`（上游仓，本仓不复制）。
+
 ## [v1.16.3] - 2026-11-01
 
 看板卡片属性区空占位修复（`DEF-127`）：**属性区无任何内容可渲染时整块不渲染**，不再白吃父级 `gap: .5rem` ⇒ 卡片底部不再多出空白（Issue #312 · PR #313 · 发版说明 `docs/releases/v1.16.3.md`）：
