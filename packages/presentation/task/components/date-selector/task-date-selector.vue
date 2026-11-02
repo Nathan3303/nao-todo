@@ -208,7 +208,19 @@ const handleCancel = () => {
                 width: 100%;
                 border: none;
                 box-shadow: none;
-                padding: 0 var(--nue-padding-xs);
+                padding-block: 0;
+                padding-left: var(--nue-padding-xs);
+                padding-right: var(--nue-padding-xs);
+            }
+
+            /* nue-ui 1.15.0 起清除键为与按钮同级的绝对定位按钮（__clear 靠 right 定位），
+               主题靠 `.nue-date-picker__trigger--clearable .nue-button` 的 padding-right
+               为该位置预留空间；上面若用 padding 简写会把这份预留一并清掉 ⇒ 日历图标右移，
+               正好被清除键压住（DEF-129）。此处按 size="small" 显式恢复主题同式。 */
+            .nue-date-picker__trigger--small.nue-date-picker__trigger--clearable .nue-button {
+                padding-right: calc(
+                    var(--nue-padding-xs) + var(--nue-gap-sm) + 1.025 * var(--nue-text-xs)
+                );
             }
         }
     }
