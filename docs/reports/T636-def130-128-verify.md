@@ -199,3 +199,10 @@
 | `docs/reports/M20261102-def130-128-user-acceptance.md` | 用户走查清单（可勾选，含已知不报项）    |
 
 > 说明：RD 新增的 2 个测试文件（`def-128-…-keyboard.test.ts` 7 例 / `def-130-filter-panel-clearable.test.ts` 2 例）属 RD 交付，不计入本单新增；本单对其**只评估、未改动**。
+
+## §7 方法与口径备注
+
+- **定位走三段阶梯（无回退）**：① `codegraph_explore`（`focus-depend-dropdown` / `handleClearDepend` / `currentDependName` / `usePomodoroPage` / `dependLabel` 的源码与调用关系，确认 `handleSelectPreset(null) → sessionStore.clearPomodoroSelection()` 路径）→ ② 全仓 `grep -rn` 清点调用点（`PomodoroFocusDependDropdown` 用法、跨行解析 `<nue-link>` 标签）→ ③ `read` 行段读关键文件。
+- **计数单源**：本仓**不存在** `tests/README.md`「计数可见」文件 ⇒ §2/§3 的文件数与例数全部取自**实跑输出** + `git diff` / `git ls-tree` 对账，**不以最大编号推断**。
+- **数据面**：本单探针全部是 jsdom 内存挂载（构造数据：`模板A/模板B`、`深度工作`），**无数据库写入** ⇒ 无「回滚清单 / 孤儿扫描」面。
+- **流程**：未开 PR、未合并、**未改 remote 配置**；push 走 HTTPS + `gh auth git-credential`（SSH:22 实测 `Connection timed out`）⇒ 分支 `nao/M20261102-def130-128`。
