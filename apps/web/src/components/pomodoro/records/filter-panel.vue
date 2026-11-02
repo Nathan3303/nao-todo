@@ -64,7 +64,7 @@ const handleReset = () => emit('reset')
                 <nue-select
                     v-model="localFilters.pomodoroId"
                     placeholder="全部"
-                    clearabl
+                    clearable
                     size="small"
                 >
                     <nue-select-option value="" label="全部" />
