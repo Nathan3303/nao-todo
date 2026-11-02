@@ -105,7 +105,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 ## nao 舰队接入（2026-09-21）
 
 > 只写「在哪里」；角色级/团队级内容不复制到此处，留在 `$NAO_SKILLS/.agents/`。
-> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**（当前 **0.20.1**）。
+> **形态（2026-10-08 起，nao-skill 0.12.0）**：机制**不再铺进项目** —— 单一事实来源 = npm 包 `@nathan33/nao-skill` 内的 `$NAO_SKILLS/.agents/`（`$NAO_SKILLS` = **机制包根**，不是项目根，由项目内转发入口解析注入）；项目内 `.agents/` 只剩转发入口与项目自有 skill。**pin 版本见 `.pi/settings.json`**（当前 **0.21.1**）。
 > **运行前提（0.19.0 起，破坏性）**：`ensure` / `status` / `close` **只接受 tmux 会话内**且 **`pi ≥ 1.4.0`**（非 tmux ⇒ `exit 3` + 一行提示 `tmux new -s nao`，不建 session/pane）；旧的终端窗口 / `--background` / screen 多宿主阶梯已删除（ADR `2026-10-27-strict-tmux-pi`）。旧版用 `--background` / screen 拉起的会话 `status` 看不到、`close` 收不回 ⇒ 先 `screen -ls` 手工清一次。
 
 ### 角色与流程（指针）
@@ -113,6 +113,8 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - 角色清单（单一事实来源）：`$NAO_SKILLS/.agents/roles.yaml`（pm / arch-designer / rd-fe / rd-be / qa / **rd-infra**）—— **共 6 个角色**；`rd-infra` 别名 `infra`，为舰队 v0.9.0 新增的「工程基座」角色（卡 `$NAO_SKILLS/.agents/prompts/infra-engineer.md` · 清单 `$NAO_SKILLS/.agents/checklists/rd-infra.md`）
 - 角色卡 `$NAO_SKILLS/.agents/prompts/<role>.md`｜公共规范 `$NAO_SKILLS/.agents/common/`｜交付核对清单 `$NAO_SKILLS/.agents/checklists/`｜按需技能 `$NAO_SKILLS/.agents/skills/`｜模板 `$NAO_SKILLS/.agents/templates/`
 - 舰队拉起与自检（**经项目内转发入口 / shim** —— 0.12.0 起 `.agents/scripts/nao-fleet.sh` 是 shim，自动定位机制包内真身）：`bash .agents/scripts/nao-fleet.sh check | status | ensure <role>`；`status` 在本机**不可靠**（pi 进程 argv 被清空，`pgrep --name` 恒失配）→ 在线判定以 `intercom list` 为准
+- **机制能力指针（`0.20.4`–`0.21.1` 增补；本段只写「在哪」，细则看上游发版说明）**：① **`ensure --card <项目内 .agents/prompts/x.md> [--as <后缀>]`（`0.21.0`，MINOR）** —— 项目自有角色卡与 6 个常驻角色**同等托管**（进舰队布局 · 出现在 `status` · 可 `close` 回收）；卡限 `<项目>/.agents/prompts/<名字>.md`（普通 `.md`、≤256 KiB），名字须 `^[a-z0-9][a-z0-9_-]*$`、≤32 字符，且**不得与常驻角色撞名或抢前缀**（`qa-*` / `nao-*` / `subagent-*` 被拒），`--as` **只改后缀**；卡被删 / 改名后会话进 `status` 的「角色未识别」节（该节不给回收命令）；用法见 `$NAO_SKILLS/.agents/skills/nao-fleet/SKILL.md` ② **`ensure` 拉起后立即返回（`0.20.4`，实测 60.5s → 0.6s）**，成功时**新增一行就绪提示**（提示用 `status` 看在线状态；其余输出行内容与顺序不变）③ **`status` 归属判定改用 pane 工作目录（`0.21.1`）** —— 名册（intercom）抖动时本仓会话照常判定并给 `close` 命令，两路都拿不到才显示「归属不可判定」⇒ 上条「`status` 不可靠」只指**在线判定**，**在线仍以 `intercom list` 为准**
+- **角色卡 / 清单版本（pin `0.21.1` 注入）**：PM 卡 **v31** · `checklists/pm.md` **红线 34 / 清单 44**（`0.20.4` 起新增「**计数类数字必须用一条命令自证**」）· QA 卡 **v16**（`checklists/qa.md` 红线 14 / 清单 18）。**计数自证口径**：`files=` 读 `fleet check` 输出 · 用例数读 `tests/README.md`「计数可见」（`run.sh --list | tail -n +2 | wc -l`，**不得以最大编号推断**）· 清单项数用 awk 统计 `^- \[ \]` 行（本项目 2026-11-01 实测 34 / 44 / 14 / 18，与各卡卡尾一致）
 - **tmux 布局开关（舰队 v0.9.0+，`ensure` 用；多会话不再被挤成多列）**：`NAO_TMUX_LAYOUT=main-row2|main-col|grid`（默认 `main-row2`）· `NAO_TMUX_MIN_PANE_WIDTH=<10..80>`（最小非主 pane 列宽，默认 30；低于则自动回退）· `NAO_TMUX_MAIN_WIDTH=<10..90>`（主 pane 宽度百分比，默认 35）。**窄窗口下自动降级（不中断）** ⇒ 用 `NAO_TMUX_LAYOUT=main-col` 可让后续会话在右列**纵向堆叠**（原「挤成 4 列」问题的解）
 - 运行时任务状态（PM 维护）：`docs/tasks-state.md`；需求与决策留痕：`docs/prds/`、`docs/adr/`；**缺陷池（单一登记源，PM 维护）：`docs/reports/defect-pool.md`**
 - **任务完成协议（0.18.6 起）**：`$NAO_SKILLS/.agents/skills/task-completion.md` —— DoD 四类 / 维护型补充判据（**`exit 0` ≠ 完成**：`npm audit` 与 `install-scripts` 须各自决策）/ 遗留项**三出口**（关闭 · 接受含到期日 · 转办；零遗留显式写「无」）/ 分级复盘；回执新增 **`遗留：`** 字段（模板 `$NAO_SKILLS/.agents/checklists/comm-templates.md`）
