@@ -198,6 +198,12 @@ const handleCancel = () => {
             width: 100%;
             box-sizing: border-box;
 
+            /* nue-ui 1.15.0 起触发器外包一层 width: fit-content 的 __trigger
+               ⇒ 内层按钮的 width:100% 会收缩为内容宽；此处把包含块拉满整行 */
+            > .nue-date-picker__trigger {
+                width: 100%;
+            }
+
             .nue-button {
                 width: 100%;
                 border: none;

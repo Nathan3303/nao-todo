@@ -453,6 +453,7 @@ export interface LocaleMessages {
 
     // Task
     'task.reminder.title': string
+    'task.reminder.enabled': string
     'task.state.todo': string
     'task.state.inProgress': string
     'task.state.done': string
@@ -729,6 +730,8 @@ export interface LocaleMessages {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': string
+    'pomodoro.timerSetting.autoStartNextFocusSession': string
+    'pomodoro.timerSetting.autoRest': string
     'pomodoro.title.focus': string
     'pomodoro.title.break': string
     'pomodoro.title.longBreak': string

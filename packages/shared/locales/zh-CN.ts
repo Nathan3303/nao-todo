@@ -475,6 +475,7 @@ const zhCN: LocaleMessages = {
 
     // Task
     'task.reminder.title': '任务提醒',
+    'task.reminder.enabled': '启用提醒',
     'task.state.todo': '待办',
     'task.state.inProgress': '正在进行',
     'task.state.done': '已完成',
@@ -754,6 +755,8 @@ const zhCN: LocaleMessages = {
 
     // Pomodoro
     'pomodoro.recordSaveFailed': '专注记录保存失败：{error}',
+    'pomodoro.timerSetting.autoStartNextFocusSession': '自动开始下一轮专注',
+    'pomodoro.timerSetting.autoRest': '自动休息',
     'pomodoro.title.focus': '专注',
     'pomodoro.title.break': '休息',
     'pomodoro.title.longBreak': '长休息',

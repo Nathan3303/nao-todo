@@ -144,14 +144,9 @@ const quitApp = (): void => {
                 <nue-switch
                     :model-value="settings.notify"
                     size="small"
-                    role="switch"
-                    :aria-checked="settings.notify"
                     :aria-label="t(notifyItem.labelKey)"
                     :disabled="notifyItem.disabled"
-                    tabindex="0"
                     @update:model-value="(value: boolean) => setNotify(value)"
-                    @keydown.enter.prevent="setNotify(!settings.notify)"
-                    @keydown.space.prevent="setNotify(!settings.notify)"
                 />
             </div>
 
@@ -166,14 +161,9 @@ const quitApp = (): void => {
                 <nue-switch
                     :model-value="settings.sound"
                     size="small"
-                    role="switch"
-                    :aria-checked="settings.sound"
                     :aria-label="t(soundItem.labelKey)"
                     :disabled="soundItem.disabled"
-                    tabindex="0"
                     @update:model-value="(value: boolean) => setSound(value)"
-                    @keydown.enter.prevent="setSound(!settings.sound)"
-                    @keydown.space.prevent="setSound(!settings.sound)"
                 />
             </div>
 
@@ -184,12 +174,7 @@ const quitApp = (): void => {
                     <nue-switch
                         v-model="quietEnabled"
                         size="small"
-                        role="switch"
-                        :aria-checked="quietEnabled"
                         :aria-label="t('settings.reminder.quietHours')"
-                        tabindex="0"
-                        @keydown.enter.prevent="quietEnabled = !quietEnabled"
-                        @keydown.space.prevent="quietEnabled = !quietEnabled"
                     />
                 </div>
                 <div v-if="quietEnabled" class="sd-quiet-hours">
@@ -256,13 +241,8 @@ const quitApp = (): void => {
                 <nue-switch
                     :model-value="autostartOn"
                     size="small"
-                    role="switch"
-                    :aria-checked="autostartOn"
                     :aria-label="t('settings.reminder.desktop.autostart')"
-                    tabindex="0"
                     @update:model-value="(value: boolean) => toggleAutostart(value)"
-                    @keydown.enter.prevent="toggleAutostart(!autostartOn)"
-                    @keydown.space.prevent="toggleAutostart(!autostartOn)"
                 />
             </div>
 

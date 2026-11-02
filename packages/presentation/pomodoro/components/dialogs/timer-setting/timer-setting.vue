@@ -5,6 +5,7 @@ import {
 } from '@nao-todo/shared/components/dialog-wrapper'
 import { DialogManager } from '@nao-todo/shared/hooks'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { onMounted, ref } from 'vue'
 import { useTimerSettingDialog } from './use-timer-setting'
 
@@ -121,12 +122,18 @@ onMounted(() => {
                 <nue-divider />
                 <nue-div align="center" justify="space-between">
                     <nue-div vertical gap="0">
-                        <nue-text size="sm">自动开始下一轮专注</nue-text>
+                        <nue-text size="sm">{{
+                            t('pomodoro.timerSetting.autoStartNextFocusSession')
+                        }}</nue-text>
                         <nue-text size="xs" color="var(--nue-primary-color-500)">
                             休息结束后自动开始下一轮专注计时
                         </nue-text>
                     </nue-div>
-                    <nue-switch v-model="form.autoStartNextFocusSession" size="small" />
+                    <nue-switch
+                        v-model="form.autoStartNextFocusSession"
+                        size="small"
+                        :aria-label="t('pomodoro.timerSetting.autoStartNextFocusSession')"
+                    />
                 </nue-div>
                 <nue-div align="center" justify="space-between">
                     <nue-div vertical gap="0">
@@ -148,12 +155,16 @@ onMounted(() => {
                 </nue-div>
                 <nue-div align="center" justify="space-between">
                     <nue-div vertical gap="0">
-                        <nue-text size="sm">自动休息</nue-text>
+                        <nue-text size="sm">{{ t('pomodoro.timerSetting.autoRest') }}</nue-text>
                         <nue-text size="xs" color="var(--nue-primary-color-500)">
                             专注结束后自动进入休息阶段
                         </nue-text>
                     </nue-div>
-                    <nue-switch v-model="form.autoRest" size="small" />
+                    <nue-switch
+                        v-model="form.autoRest"
+                        size="small"
+                        :aria-label="t('pomodoro.timerSetting.autoRest')"
+                    />
                 </nue-div>
             </nue-div>
         </template>
