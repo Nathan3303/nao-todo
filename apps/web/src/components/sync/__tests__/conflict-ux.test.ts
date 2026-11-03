@@ -82,6 +82,7 @@ type MockConflictUx = {
     loading: Ref<boolean>
     error: Ref<string | null>
     comparison: Ref<ConflictComparison | null>
+    titles: Ref<Record<string, { name: string | null; parentTaskName: string | null }>>
     retryFailed: Ref<boolean>
     refresh: ReturnType<typeof vi.fn>
     compare: ReturnType<typeof vi.fn>
@@ -125,6 +126,7 @@ vi.mock('@/hooks', async () => {
         loading: ref(false),
         error: ref(null),
         comparison: ref(null),
+        titles: ref({}),
         retryFailed: ref(false),
         refresh: vi.fn(async () => {}),
         compare: vi.fn(async () => {}),
@@ -159,6 +161,7 @@ const resetConflict = (): void => {
     c.loading.value = false
     c.error.value = null
     c.comparison.value = null
+    c.titles.value = {}
     c.retryFailed.value = false
 }
 
@@ -319,6 +322,8 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
 
         // 左栏：仅对象名称行（无类型/时间）；点击行 ⇒ 展示详情
         const item = conflictItem()
+        // DEF-134：左栏标题来自**当前行**（`ux.titles`），不再回退败方快照
+        conflict().titles.value = { 'tasks:t1': { name: '本地标题', parentTaskName: null } }
         conflict().items.value = [item]
         await nextTick()
         const itemButton = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
@@ -376,10 +381,15 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
         expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.retryFailed'])
     })
 
-    it('T332：分组标题在无标题时优雅降级（entityId ⇒ 本地化 kind），不出现空白/undefined', async () => {
+    it('DEF-134：无标题来源 ⇒ 表名 + 短 ID（⛔ 不再落裸 entityId / 空白）', async () => {
         await openConflictList(2)
         conflict().items.value = [
-            conflictItem({ id: 'a', loser: null, entityId: 't-9' }),
+            conflictItem({
+                id: 'a',
+                loser: null,
+                entityId: '0f2b9c1d-7a55-4c0e-9f00-6f6f6f6f6f6f',
+                table: 'taskComments'
+            }),
             conflictItem({ id: 'b', loser: null, entityId: '', kind: 'conflict' })
         ]
         await nextTick()
@@ -387,8 +397,10 @@ describe('面 ③ 冲突 UX 交互（T165/W3 · ADR §9.2.1 / §9.2.2）', () =>
             document.querySelectorAll<HTMLElement>('.conflict-list__entry')
         ).map((el) => el.textContent ?? '')
         expect(heads).toHaveLength(2)
-        expect(heads[0]).toContain('t-9')
-        expect(heads[1]).toContain(messages['zh-CN']['sync.conflict.kind.conflict'])
+        expect(heads[0]).toContain(messages['zh-CN']['sync.conflict.table.taskComments'])
+        expect(heads[0]).toContain('0f2b9c1d')
+        expect(heads[0]).not.toContain('0f2b9c1d-7a55-4c0e-9f00-6f6f6f6f6f6f')
+        expect(heads[1]).toContain(messages['zh-CN']['sync.conflict.table.tasks'])
         for (const head of heads) {
             expect(head).not.toContain('undefined')
             expect(head.replace(/\s/g, '')).not.toBe('')
@@ -486,6 +498,7 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
 
     it('左栏只保留「对象名称」（无冲突类型/时间）', async () => {
         await openConflictList(1)
+        conflict().titles.value = { 'tasks:t1': { name: '本地标题', parentTaskName: null } }
         conflict().items.value = [conflictItem()]
         await nextTick()
         const entry = document.querySelector<HTMLElement>('.conflict-list__entry')
@@ -519,7 +532,7 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
         expect(text).toContain(messages['zh-CN']['sync.conflict.metaAt'])
     })
 
-    it('技术字段始终显示（无开关）且排在普通字段之后（轻分隔 + 次要样式）', async () => {
+    it('DEF-134：技术字段默认折叠，点「显示技术信息」后出现在普通字段之后（次要样式）', async () => {
         await openConflictList(1)
         conflict().items.value = [conflictItem()]
         conflict().comparison.value = {
@@ -533,20 +546,35 @@ describe('T339 第二轮反馈（分割线 / 左栏精简 / 技术字段常显�
             ]
         }
         await nextTick()
-        // 开关已移除
-        expect(document.querySelector('.conflict-list__tech-toggle')).toBeFalsy()
-        const allRows = Array.from(document.querySelectorAll('.conflict-list__diff'))
-            .map((el) => el.textContent ?? '')
-            .join('|')
-        // 字段名为可读标签（非 raw 技术名）
-        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.name'])
-        expect(allRows).toContain(messages['zh-CN']['sync.conflict.field.updatedAt'])
-        expect(allRows).not.toContain('updatedAt')
-        // 技术字段段落排在普通字段之后
-        const text = dialogText()
-        expect(text).toContain(messages['zh-CN']['sync.conflict.technicalSection'])
-        expect(text.indexOf(messages['zh-CN']['sync.conflict.field.updatedAt'])).toBeGreaterThan(
-            text.indexOf(messages['zh-CN']['sync.conflict.technicalSection'])
+
+        const rowTexts = (): string =>
+            Array.from(document.querySelectorAll('.conflict-list__diff-row'))
+                .map((el) => el.textContent ?? '')
+                .join('|')
+
+        // 默认折叠：主对比区只有业务字段（技术字段不参与）
+        expect(rowTexts()).toContain(messages['zh-CN']['sync.conflict.field.name'])
+        expect(rowTexts()).not.toContain(messages['zh-CN']['sync.conflict.field.updatedAt'])
+        const toggle = document.querySelector<HTMLButtonElement>('.conflict-list__tech-toggle')
+        expect(toggle).toBeTruthy()
+        expect(toggle?.getAttribute('aria-expanded')).toBe('false')
+        expect(toggle?.textContent).toContain(messages['zh-CN']['sync.conflict.showTechnical'])
+
+        // 展开 ⇒ 技术字段出现在普通字段之后，且被标为次要（is-technical）
+        toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await nextTick()
+        expect(rowTexts()).toContain(messages['zh-CN']['sync.conflict.field.updatedAt'])
+        expect(rowTexts()).not.toContain('updatedAt')
+        const rows = Array.from(document.querySelectorAll<HTMLElement>('.conflict-list__diff-row'))
+        expect(rows.at(-1)?.classList.contains('is-technical')).toBe(true)
+        expect(rows.at(-1)?.textContent).toContain(
+            messages['zh-CN']['sync.conflict.field.updatedAt']
+        )
+        expect(
+            document.querySelector('.conflict-list__tech-toggle')?.getAttribute('aria-expanded')
+        ).toBe('true')
+        expect(document.querySelector('.conflict-list__tech-toggle')?.textContent).toContain(
+            messages['zh-CN']['sync.conflict.hideTechnical']
         )
     })
 })
@@ -596,7 +624,7 @@ describe('T342 三态（LoadingError） + 左栏对象行', () => {
         }
         await nextTick()
         expect(dialogText()).toContain(messages['zh-CN']['sync.conflict.noFieldDiff'])
-        expect(document.querySelectorAll('.conflict-list__diff')).toHaveLength(0)
+        expect(document.querySelectorAll('.conflict-list__diff-row')).toHaveLength(0)
     })
 
     it('T346：1 个对象 3 条记录 ⇒ 标题与行数均按对象数（1），右栏展示 3 条记录 + 全部类型', async () => {
@@ -685,9 +713,8 @@ describe('T347 修复（对比度 / 深色 token / 焦点归还 / 空态图 / �
     it('② 深色技术卡片走主题 token（无写死亮色 #efefef）', () => {
         const src = conflictListSource().replace(/\r/g, '')
         expect(src).not.toContain('#efefef')
-        expect(src).toContain(
-            '.conflict-list__diff.is-technical {\n    background-color: var(--nue-primary-color-100);'
-        )
+        expect(src).toContain('.conflict-list__diff-row.is-technical .conflict-list__field-name,')
+        expect(src).toContain('color: var(--nue-secondary-text-color);')
     })
 
     it('④ 空态图统一 assetUrl（无 /public 404 路径 / 无未绑定占位符）', () => {
@@ -861,5 +888,217 @@ describe('DEF-133 详情面板值可读性（不渲染裸 ID / 裸枚举 / 空�
         expect(text).toContain(messages['zh-CN']['task.state.done'])
         // 空数组 ⇒「未设置」（不得空白）
         expect(text).toContain(messages['zh-CN']['sync.conflict.value.unset'])
+    })
+})
+
+describe('DEF-134 冲突面板可读性（Git diff 左右对照 / 左栏标题 / 窄屏堆叠）', () => {
+    /** 挂载并选中一个对象（右栏渲染） */
+    const selectWith = async (
+        item: ConflictListItem,
+        comparison: ConflictComparison
+    ): Promise<void> => {
+        conflict().items.value = [item]
+        conflict().titles.value = {}
+        conflict().comparison.value = comparison
+        await nextTick()
+    }
+
+    const rows = (): HTMLElement[] =>
+        Array.from(document.querySelectorAll<HTMLElement>('.conflict-list__diff-row'))
+
+    const sidesOf = (el: Element): string[] =>
+        Array.from(el.querySelectorAll<HTMLElement>('[data-side]')).map(
+            (node) => node.dataset.side ?? ''
+        )
+
+    it('① 固定表头（我的修改 / 云端最新）+ 每行三列（字段 / 左值 / 右值）⇒ 结构对齐', async () => {
+        await openConflictList(1)
+        await selectWith(conflictItem(), {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '旧', state: 'todo' },
+            current: { name: '新', state: 'done' },
+            diffs: [
+                { field: 'name', loser: '旧', current: '新' },
+                { field: 'state', loser: 'todo', current: 'done' }
+            ]
+        })
+
+        const head = document.querySelector<HTMLElement>('.conflict-list__compare-head')
+        expect(head).toBeTruthy()
+        // 表头 = 字段列（空）+ 两侧固定表头；文案可读
+        expect(sidesOf(head!)).toEqual(['label', 'loser', 'current'])
+        expect(head?.textContent).toContain(messages['zh-CN']['sync.conflict.loserLabel'])
+        expect(head?.textContent).toContain(messages['zh-CN']['sync.conflict.currentLabel'])
+
+        const list = rows()
+        expect(list).toHaveLength(2)
+        for (const row of list) {
+            // 每行同样三段（字段标签 + 左值 + 右值）⇒ 与表头逐列对齐
+            expect(sidesOf(row)).toEqual(['label', 'loser', 'current'])
+        }
+        // 行高 ≥40px（DESIGN §3 点击区底线）+ 表头 sticky（CSS 契约）
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).toContain('grid-template-columns: min(8rem, 28%) minmax(0, 1fr) minmax(0, 1fr)')
+        expect(src).toContain('min-height: var(--nue-box-size-md);')
+        expect(src).toContain('position: sticky;')
+        expect(src).toContain('top: 0;')
+    })
+
+    it('② 三态各自有符号 + 文案（不只看 class，颜色只作强化）', async () => {
+        await openConflictList(1)
+        await selectWith(conflictItem(), {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '旧', state: 'todo', priority: 1 },
+            current: { name: null, state: 'done', priority: null },
+            diffs: [
+                // 仅左有值 ⇒ 云端已无
+                { field: 'priority', loser: 1, current: null },
+                // 仅右有值 ⇒ 云端新增
+                { field: 'name', loser: null, current: '新' },
+                // 两侧不同 ⇒ 已修改
+                { field: 'state', loser: 'todo', current: 'done' }
+            ]
+        })
+
+        const byField = (label: string): HTMLElement => {
+            const found = rows().find((row) => row.textContent?.includes(label))
+            expect(found, label).toBeTruthy()
+            return found as HTMLElement
+        }
+
+        const removed = byField(messages['zh-CN']['sync.conflict.field.priority'])
+        expect(removed.textContent).toContain('−')
+        expect(removed.textContent).toContain(messages['zh-CN']['sync.conflict.fieldRemoved'])
+        expect(removed.classList.contains('is-removed')).toBe(true)
+
+        const added = byField(messages['zh-CN']['sync.conflict.field.name'])
+        expect(added.textContent).toContain('+')
+        expect(added.textContent).toContain(messages['zh-CN']['sync.conflict.fieldAdded'])
+        expect(added.classList.contains('is-added')).toBe(true)
+
+        const changed = byField(messages['zh-CN']['sync.conflict.field.state'])
+        expect(changed.textContent).toContain('~')
+        expect(changed.textContent).toContain(messages['zh-CN']['sync.conflict.fieldChanged'])
+        expect(changed.classList.contains('is-changed')).toBe(true)
+
+        // 三态文案必须去色后仍可辨（互异且非空）
+        const labels = [
+            messages['zh-CN']['sync.conflict.fieldAdded'],
+            messages['zh-CN']['sync.conflict.fieldRemoved'],
+            messages['zh-CN']['sync.conflict.fieldChanged']
+        ]
+        expect(new Set(labels).size).toBe(3)
+        for (const label of labels) expect(label.trim()).not.toBe('')
+    })
+
+    it('③ 左栏显式 text-align: left（根因）+ 长文本单行省略 + title 提示 + 条目高 ≥40px', async () => {
+        await openConflictList(1)
+        const longTitle = '这是一个很长很长的冲突对象名称'.repeat(6)
+        conflict().titles.value = { 'tasks:t1': { name: longTitle, parentTaskName: null } }
+        conflict().items.value = [conflictItem()]
+        await nextTick()
+
+        const entry = document.querySelector<HTMLButtonElement>('.conflict-list__entry')
+        expect(entry?.getAttribute('title')).toBe(longTitle)
+        expect(entry?.querySelector('.conflict-list__entry-text')?.textContent).toBe(longTitle)
+
+        // 源级断言：`<button>` 默认居中 ⇒ 必须显式左对齐；长文本单行省略；条目高 ≥40px
+        const src = conflictListSource().replace(/\r/g, '')
+        const entryRule = src.slice(
+            src.indexOf('.conflict-list__entry {'),
+            src.indexOf('.conflict-list__entry:hover')
+        )
+        expect(entryRule).toContain('text-align: left;')
+        expect(entryRule).toContain('min-height: var(--nue-box-size-md);')
+        const entryTextRule = src.slice(
+            src.indexOf('.conflict-list__entry-text {'),
+            src.indexOf('.conflict-list__entry:hover')
+        )
+        expect(entryTextRule).toContain('text-overflow: ellipsis;')
+        expect(entryTextRule).toContain('white-space: nowrap;')
+    })
+
+    it('④ 标题解析：评论 / 检查项「父任务名 · 摘要」；快照无 name 时**不落裸记录 ID**', async () => {
+        await openConflictList(2)
+        const commentId = '0f2b9c1d-7a55-4c0e-9f00-6f6f6f6f6f6f'
+        const checkItemId = 'b7e4a2f9-1111-2222-3333-444444444444'
+        // 败方快照只存差异字段（无 name）—— 走查「只显示记录 ID」的现场
+        conflict().titles.value = {
+            [`taskComments:${commentId}`]: { name: '晚点再说', parentTaskName: '写周报' },
+            [`taskCheckItems:${checkItemId}`]: { name: '买牛奶', parentTaskName: '写周报' }
+        }
+        conflict().items.value = [
+            conflictItem({
+                id: 'a',
+                kind: 'stale',
+                table: 'taskComments',
+                entityId: commentId,
+                loser: { content: '晚点再说' }
+            }),
+            conflictItem({
+                id: 'b',
+                kind: 'stale',
+                table: 'taskCheckItems',
+                entityId: checkItemId,
+                loser: { isDone: true }
+            })
+        ]
+        await nextTick()
+
+        const heads = Array.from(
+            document.querySelectorAll<HTMLElement>('.conflict-list__entry')
+        ).map((el) => el.textContent?.trim() ?? '')
+        expect(heads[0]).toBe('写周报 · 晚点再说')
+        expect(heads[1]).toBe('写周报 · 买牛奶')
+        for (const head of heads) {
+            // 红基线：旧实现（快照回退）会显示整串 entityId ⇒ 必红
+            expect(head).not.toContain(commentId)
+            expect(head).not.toContain(checkItemId)
+        }
+    })
+
+    it('④-2 标题来源缺失 ⇒ 表名 + 短 ID（≤8），绝不裸 ID', async () => {
+        await openConflictList(1)
+        const entityId = '0f2b9c1d-7a55-4c0e-9f00-6f6f6f6f6f6f'
+        conflict().items.value = [
+            conflictItem({ id: 'a', table: 'taskComments', entityId, loser: null })
+        ]
+        await nextTick()
+        const head =
+            document.querySelector<HTMLElement>('.conflict-list__entry')?.textContent?.trim() ?? ''
+        expect(head).toBe(`${messages['zh-CN']['sync.conflict.table.taskComments']} · 0f2b9c1d`)
+        expect(head).not.toContain(entityId)
+    })
+
+    it('⑥ ≤720px 上下堆叠（不隐藏任一侧），>720px 仍为左右两列', async () => {
+        const { styleTextOf, parseCssRules, effectiveValue } =
+            await import('@/components/pomodoro/records/__tests__/records-responsive-harness')
+        const rules = parseCssRules(styleTextOf(conflictListSource()))
+        const row = '.conflict-list__diff-row'
+        const wide = effectiveValue(rules, row, 'grid-template-columns', 721)
+        const narrow = effectiveValue(rules, row, 'grid-template-columns', 720)
+        expect(wide).toBe('min(8rem, 28%) minmax(0, 1fr) minmax(0, 1fr)')
+        // 吸顶表头的祖先不得成为滚动容器（`overflow: hidden` 会让 sticky 静默失效）
+        expect(effectiveValue(rules, '.conflict-list__compare', 'overflow', 1280)).toBeNull()
+        expect(narrow).toBe('minmax(0, 1fr)')
+        // 堆叠时格内来源标签出现（宽屏由表头承载），且分隔符号出现
+        expect(effectiveValue(rules, '.conflict-list__cell-side', 'display', 720)).toBe('block')
+        expect(effectiveValue(rules, '.conflict-list__stack-sep', 'display', 720)).toBe('flex')
+        expect(effectiveValue(rules, '.conflict-list__stack-sep', 'display', 721)).toBe('none')
+
+        // DOM：两侧格子始终都在（不因窄屏隐藏任一侧）
+        await openConflictList(1)
+        await selectWith(conflictItem(), {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '旧' },
+            current: { name: '新' },
+            diffs: [{ field: 'name', loser: '旧', current: '新' }]
+        })
+        const first = rows()[0]!
+        expect(first.querySelector('[data-side="loser"]')?.textContent).toContain('旧')
+        expect(first.querySelector('[data-side="current"]')?.textContent).toContain('新')
     })
 })

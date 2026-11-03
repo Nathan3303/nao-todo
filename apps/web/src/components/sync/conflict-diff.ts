@@ -97,19 +97,6 @@ export const groupConflictItems = (items: ConflictListItem[]): ConflictGroup[] =
     return [...groups.values()]
 }
 
-/**
- * 分组 / 条目标题：优先实体可读名（`name` / `title`）⇒ `entityId` ⇒ `fallback`。
- * **保证返回非空字符串**（不得空白 / `undefined` / `null`），取不到时优雅降级。
- * @description `fallback` 由调用方给出（组件传「本地化 kind 标签 ⇒ 未知对象」）⇒ 不产生空白标题。
- */
-export const conflictTitleOf = (item: ConflictListItem, fallback: string): string => {
-    const loser = item.loser ?? {}
-    const title = loser.name ?? loser.title
-    if (typeof title === 'string' && title.trim()) return title.trim()
-    if (item.entityId.trim()) return item.entityId
-    return fallback
-}
-
 /** 值 → 展示文本（`null`/`undefined` ⇒ `—`；对象 ⇒ JSON） */
 export const formatFieldValue = (value: unknown): string => {
     if (value === null || value === undefined) return '—'

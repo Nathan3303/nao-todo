@@ -8,7 +8,6 @@ import {
     DIFF_LABEL_KEY,
     DIFF_SYMBOL,
     classifyFieldDiff,
-    conflictTitleOf,
     formatFieldValue,
     groupConflictItems,
     isLongValue,
@@ -123,46 +122,6 @@ describe('T332 conflict-diff 纯函数', () => {
 
         it('空列表 ⇒ 空分组', () => {
             expect(groupConflictItems([])).toEqual([])
-        })
-    })
-
-    describe('标题优雅降级（不得空白 / undefined）', () => {
-        it('name 优先，其次 title', () => {
-            expect(conflictTitleOf(item({ loser: { name: '名字' } }), '未知对象')).toBe('名字')
-            expect(conflictTitleOf(item({ loser: { title: '标题' } }), '未知对象')).toBe('标题')
-        })
-
-        it('无 loser（快照缺失）⇒ 回退 entityId', () => {
-            expect(conflictTitleOf(item({ loser: null, entityId: 't-9' }), '未知对象')).toBe('t-9')
-        })
-
-        it('entityId 空 ⇒ 回退 fallback（组件传本地化 kind / 未知对象）', () => {
-            expect(conflictTitleOf(item({ loser: null, entityId: '' }), '版本不匹配')).toBe(
-                '版本不匹配'
-            )
-            expect(conflictTitleOf(item({ loser: null, entityId: '' }), '未知对象')).toBe(
-                '未知对象'
-            )
-        })
-
-        it('全空 ⇒ 兜底文案；且永不空白/undefined', () => {
-            const title = conflictTitleOf(
-                item({
-                    loser: null,
-                    entityId: '',
-                    kind: '' as unknown as ConflictListItem['kind']
-                }),
-                '未知对象'
-            )
-            expect(title).toBe('未知对象')
-            expect(title).not.toBe('')
-            expect(title).not.toBeUndefined()
-        })
-
-        it('name 为空白串 ⇒ 不采用，回退 entityId', () => {
-            expect(
-                conflictTitleOf(item({ loser: { name: '   ' }, entityId: 't-9' }), '未知对象')
-            ).toBe('t-9')
         })
     })
 

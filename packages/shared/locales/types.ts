@@ -65,12 +65,12 @@ export interface LocaleMessages {
     'sync.conflict.foldEvicted': string
     'sync.conflict.empty': string
     'sync.conflict.loading': string
-    'sync.conflict.unknownObject': string
     'sync.conflict.selectHint': string
     'sync.conflict.loadFailed': string
     'sync.conflict.noFieldDiff': string
     'sync.conflict.objectInfo': string
-    'sync.conflict.technicalSection': string
+    'sync.conflict.showTechnical': string
+    'sync.conflict.hideTechnical': string
     'sync.conflict.metaTable': string
     'sync.conflict.metaEntityId': string
     'sync.conflict.metaEntryId': string

@@ -10,6 +10,9 @@
  *                图形（色条）≥3；绿色系小文本/符号用 `-100`、红/橙文本用 `-90`）；
  *              - 技术字段**始终显示**但为**次要样式**（次要色 / 更小字号 / 排在普通字段之后 + 轻分隔）；
  *              - 覆盖类动作给**安全提示**，主按钮「保留我的修改」突出、次按钮弱化。
+ *              - DEF-134：右栏差异区改为 **Git diff 式左右对照**（固定表头 + 行对齐 + 三态三重冗余；
+ *                ≤720px 上下堆叠）；技术字段默认**折叠**进「显示技术信息」；左栏标题优先**当前行**
+ *                可读名（评论 / 检查项带父任务名），⛔ 不再回退败方快照（那是「只显示记录 ID」的根因）。
  *              四态齐备（加载/空/错误/成功）；⛔ 不改恢复动作 / 合并语义 / 计数。
  */
 import { computed, onMounted, ref } from 'vue'
@@ -26,13 +29,13 @@ import {
     DIFF_LABEL_KEY,
     DIFF_SYMBOL,
     classifyFieldDiff,
-    conflictTitleOf,
     groupConflictItems,
     isLongValue,
     splitTechnicalDiffs,
     type ConflictGroup,
     type FieldDiffKind
 } from './conflict-diff'
+import { conflictObjectTitle, recordTitleName } from './conflict-title'
 import {
     formatConflictValue,
     isUnsetValue,
@@ -53,6 +56,7 @@ const {
     loading,
     error,
     comparison,
+    titles,
     retryFailed,
     keepServerPending,
     keepServerFailed,
@@ -68,6 +72,9 @@ onMounted(() => {
 
 /** 长值展开态 */
 const expandedValues = ref<Record<string, boolean>>({})
+
+/** 技术字段展开态（DEF-134：默认折叠 —— DESIGN §4.7） */
+const technicalOpen = ref(false)
 
 /** 复制状态（按钮文案反馈；A3 手动处理） */
 const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
@@ -103,10 +110,22 @@ const timeOf = (iso: string | undefined): string => {
 
 const groups = computed<ConflictGroup[]>(() => groupConflictItems(items.value))
 
-/** 组头 = 对象名称（降级链：name/title → entityId → 本地化 kind → 未知对象；不空白/undefined） */
-const groupTitle = (group: ConflictGroup): string => {
-    const item = group.items[0]!
-    return conflictTitleOf(item, kindLabel(item.kind) || t('sync.conflict.unknownObject'))
+/** 组头 = 对象名称（当前行可读名 ⇒ 「父任务名 · 摘要」⇒ 表名 + 短 ID；⛔ 不用败方快照回退） */
+const titleOf = (group: ConflictGroup): string => {
+    const base = titles.value[group.key]
+    const current = comparison.value
+    // 选中对象优先用**这次对比取到的当前行**（与右栏同源，避免标题与详情不同步）
+    const source =
+        current &&
+        current.table === group.table &&
+        current.entityId === group.entityId &&
+        current.current
+            ? {
+                  name: recordTitleName(group.table, current.current),
+                  parentTaskName: base?.parentTaskName ?? null
+              }
+            : base
+    return conflictObjectTitle(group, source, tableLabel)
 }
 
 /** 选中对象（按实体判定 ⇒ 同一对象仅一行高亮，避免「全 active」） */
@@ -118,6 +137,7 @@ const selectGroup = (group: ConflictGroup): void => {
     const item = group.items[group.items.length - 1]
     if (item) {
         copyState.value = 'idle'
+        technicalOpen.value = false
         void compare(item)
     }
 }
@@ -133,6 +153,8 @@ interface DiffRow {
     /** DEF-133：空值 ⇒「未设置」弱化展示（不空白） */
     loserUnset: boolean
     currentUnset: boolean
+    /** DEF-134：技术字段（默认折叠，展开后次要样式） */
+    technical: boolean
 }
 
 /** 值格式化所需的解析器（store 查询经 `useConflictUx` 注入；缺省 ⇒ 安全回退） */
@@ -141,7 +163,7 @@ const valueResolvers = computed<ConflictValueResolvers>(() => ({
     projectName: props.ux.resolveProjectName
 }))
 
-const toRow = (diff: ConflictFieldDiff): DiffRow => {
+const toRow = (diff: ConflictFieldDiff, technical: boolean): DiffRow => {
     const kind = classifyFieldDiff(diff)
     return {
         field: diff.field,
@@ -152,15 +174,26 @@ const toRow = (diff: ConflictFieldDiff): DiffRow => {
         loserText: formatConflictValue(diff.field, diff.loser, valueResolvers.value),
         currentText: formatConflictValue(diff.field, diff.current, valueResolvers.value),
         loserUnset: isUnsetValue(diff.loser),
-        currentUnset: isUnsetValue(diff.current)
+        currentUnset: isUnsetValue(diff.current),
+        technical
     }
 }
 
-/** 技术字段**始终显示**，但拆到普通字段之后（次要段落） */
+/** 技术字段默认折叠（DESIGN §4.7）；拆到普通字段之后（次要段落） */
 const diffGroups = computed(() => {
     const { normal, technical } = splitTechnicalDiffs(comparison.value?.diffs ?? [])
-    return { normal: normal.map(toRow), technical: technical.map(toRow) }
+    return {
+        normal: normal.map((diff) => toRow(diff, false)),
+        technical: technical.map((diff) => toRow(diff, true))
+    }
 })
+
+/** 实际渲染的行：普通字段 + （展开时）技术字段 */
+const visibleRows = computed<DiffRow[]>(() =>
+    technicalOpen.value
+        ? [...diffGroups.value.normal, ...diffGroups.value.technical]
+        : diffGroups.value.normal
+)
 
 /** 是否有字段差异（无 ⇒ 走 LoadingError 空态） */
 const hasFieldDiff = computed(
@@ -176,9 +209,6 @@ const toggleValue = (field: string, side: 'loser' | 'current'): void => {
     const key = valueKey(field, side)
     expandedValues.value[key] = !valueExpanded(field, side)
 }
-
-const isTruncated = (text: string, field: string, side: 'loser' | 'current'): boolean =>
-    isLongValue(text) && !valueExpanded(field, side)
 
 /** 右侧「对象信息」取该实体的最新条目（与 `compareConflict` 的最新条目同口径） */
 const activeItem = computed<ConflictListItem | null>(() => {
@@ -306,9 +336,10 @@ const currentSideLabel = computed(() =>
                             class="conflict-list__entry"
                             :class="{ 'is-active': isGroupActive(group) }"
                             :aria-selected="isGroupActive(group)"
+                            :title="titleOf(group)"
                             @click="selectGroup(group)"
                         >
-                            {{ groupTitle(group) }}
+                            <span class="conflict-list__entry-text">{{ titleOf(group) }}</span>
                         </button>
                     </li>
                 </ul>
@@ -372,7 +403,7 @@ const currentSideLabel = computed(() =>
                     </dl>
                 </nue-div>
 
-                <!-- 差异详情：逐字段卡片（无表头/网格）；无字段差异 ⇒ LoadingError 空态 -->
+                <!-- 差异详情：Git diff 式左右对照（DEF-134 / DESIGN §4.7）；无字段差异 ⇒ LoadingError 空态 -->
                 <section class="conflict-list__section">
                     <nue-text size="xs" class="conflict-list__section-title">
                         {{ t('sync.conflict.compareTitle') }}
@@ -386,129 +417,135 @@ const currentSideLabel = computed(() =>
                         :empty-message="t('sync.conflict.noFieldDiff')"
                         :empty-image-src="assetUrl('/images/todo.webp')"
                     />
-                    <ul v-else class="conflict-list__diffs">
-                        <li
-                            v-for="row in diffGroups.normal"
-                            :key="row.field"
-                            class="conflict-list__diff"
-                            :class="`is-${row.kind}`"
-                        >
-                            <div class="conflict-list__diff-top">
-                                <span class="conflict-list__symbol" :class="`is-${row.kind}`">
-                                    {{ row.symbol }}
-                                </span>
-                                <span class="conflict-list__field-name">{{ row.humanLabel }}</span>
-                                <span class="conflict-list__state-label" :class="`is-${row.kind}`">
-                                    {{ row.label }}
-                                </span>
-                            </div>
-                            <div class="conflict-list__value-row">
-                                <span class="conflict-list__value-source">
+                    <template v-else>
+                        <div class="conflict-list__compare">
+                            <!-- 固定表头（sticky）：左「我的修改」/ 右「云端最新」 -->
+                            <div class="conflict-list__compare-head">
+                                <span data-side="label" aria-hidden="true"></span>
+                                <span class="conflict-list__compare-side" data-side="loser">
                                     {{ loserSideLabel }}
                                 </span>
-                                <nue-text size="xs" class="conflict-list__value is-loser">
-                                    <span
-                                        class="conflict-list__text"
-                                        :class="{
-                                            'is-truncated': isTruncated(
-                                                row.loserText,
-                                                row.field,
-                                                'loser'
-                                            ),
-                                            'is-unset': row.loserUnset
-                                        }"
-                                        >{{ row.loserText }}</span
-                                    >
-                                    <button
-                                        v-if="isLongValue(row.loserText)"
-                                        class="conflict-list__value-toggle"
-                                        @click="toggleValue(row.field, 'loser')"
-                                    >
-                                        {{
-                                            valueExpanded(row.field, 'loser')
-                                                ? t('sync.conflict.collapse')
-                                                : t('sync.conflict.expand')
-                                        }}
-                                    </button>
-                                </nue-text>
-                            </div>
-                            <div class="conflict-list__value-row">
-                                <span class="conflict-list__value-source">
+                                <span class="conflict-list__compare-side" data-side="current">
                                     {{ currentSideLabel }}
                                 </span>
-                                <nue-text size="xs" class="conflict-list__value is-current">
-                                    <span
-                                        class="conflict-list__text"
-                                        :class="{
-                                            'is-truncated': isTruncated(
-                                                row.currentText,
-                                                row.field,
-                                                'current'
-                                            ),
-                                            'is-unset': row.currentUnset
-                                        }"
-                                        >{{ row.currentText }}</span
-                                    >
-                                    <button
-                                        v-if="isLongValue(row.currentText)"
-                                        class="conflict-list__value-toggle"
-                                        @click="toggleValue(row.field, 'current')"
-                                    >
-                                        {{
-                                            valueExpanded(row.field, 'current')
-                                                ? t('sync.conflict.collapse')
-                                                : t('sync.conflict.expand')
-                                        }}
-                                    </button>
-                                </nue-text>
                             </div>
-                        </li>
-                        <!-- 技术字段：始终显示，但次要段落（轻分隔 + 次要色 / 更小字号） -->
-                        <template v-if="diffGroups.technical.length > 0">
-                            <li class="conflict-list__diff-sep">
-                                {{ t('sync.conflict.technicalSection') }}
-                            </li>
-                            <li
-                                v-for="row in diffGroups.technical"
-                                :key="row.field"
-                                class="conflict-list__diff is-technical"
-                                :class="`is-${row.kind}`"
-                            >
-                                <div class="conflict-list__diff-top">
-                                    <span class="conflict-list__symbol" :class="`is-${row.kind}`">
-                                        {{ row.symbol }}
-                                    </span>
-                                    <span class="conflict-list__field-name">
-                                        {{ row.humanLabel }}
-                                    </span>
-                                </div>
-                                <div class="conflict-list__value-row">
-                                    <span class="conflict-list__value-source">
-                                        {{ loserSideLabel }}
-                                    </span>
-                                    <nue-text size="xs" class="conflict-list__value is-loser">
+                            <ul class="conflict-list__diff-list">
+                                <li
+                                    v-for="row in visibleRows"
+                                    :key="row.field"
+                                    class="conflict-list__diff-row"
+                                    :class="[`is-${row.kind}`, { 'is-technical': row.technical }]"
+                                >
+                                    <!-- 行首：字段标签 + 三态（符号 + 文字，不单靠颜色） -->
+                                    <div class="conflict-list__diff-label" data-side="label">
+                                        <span
+                                            class="conflict-list__symbol"
+                                            :class="`is-${row.kind}`"
+                                            aria-hidden="true"
+                                        >
+                                            {{ row.symbol }}
+                                        </span>
+                                        <span class="conflict-list__field-name">
+                                            {{ row.humanLabel }}
+                                        </span>
+                                        <span
+                                            class="conflict-list__state-label"
+                                            :class="`is-${row.kind}`"
+                                        >
+                                            {{ row.label }}
+                                        </span>
+                                    </div>
+                                    <!-- 左格：我的修改（败方快照） -->
+                                    <div
+                                        class="conflict-list__diff-cell is-loser"
+                                        data-side="loser"
+                                    >
+                                        <span class="conflict-list__cell-side">
+                                            {{ loserSideLabel }}
+                                        </span>
                                         <span
                                             class="conflict-list__text"
-                                            :class="{ 'is-unset': row.loserUnset }"
+                                            :class="{
+                                                'is-expanded': valueExpanded(row.field, 'loser'),
+                                                'is-unset': row.loserUnset
+                                            }"
+                                            :title="
+                                                valueExpanded(row.field, 'loser')
+                                                    ? undefined
+                                                    : row.loserText
+                                            "
                                             >{{ row.loserText }}</span
                                         >
-                                    </nue-text>
-                                </div>
-                                <div class="conflict-list__value-row">
-                                    <span class="conflict-list__value-source">
-                                        {{ currentSideLabel }}
-                                    </span>
-                                    <nue-text size="xs" class="conflict-list__value is-current">
+                                        <button
+                                            v-if="isLongValue(row.loserText)"
+                                            class="conflict-list__value-toggle"
+                                            :aria-expanded="valueExpanded(row.field, 'loser')"
+                                            @click="toggleValue(row.field, 'loser')"
+                                        >
+                                            {{
+                                                valueExpanded(row.field, 'loser')
+                                                    ? t('sync.conflict.collapse')
+                                                    : t('sync.conflict.expand')
+                                            }}
+                                        </button>
+                                    </div>
+                                    <!-- 窄屏堆叠时的两侧分隔符号（宽屏隐藏） -->
+                                    <span class="conflict-list__stack-sep" aria-hidden="true"
+                                        >↓</span
+                                    >
+                                    <!-- 右格：云端最新（本地当前行） -->
+                                    <div
+                                        class="conflict-list__diff-cell is-current"
+                                        data-side="current"
+                                    >
+                                        <span class="conflict-list__cell-side">
+                                            {{ currentSideLabel }}
+                                        </span>
                                         <span
                                             class="conflict-list__text"
-                                            :class="{ 'is-unset': row.currentUnset }"
+                                            :class="{
+                                                'is-expanded': valueExpanded(row.field, 'current'),
+                                                'is-unset': row.currentUnset
+                                            }"
+                                            :title="
+                                                valueExpanded(row.field, 'current')
+                                                    ? undefined
+                                                    : row.currentText
+                                            "
                                             >{{ row.currentText }}</span
                                         >
-                                    </nue-text>
-                                </div>
-                            </li>
-                        </template>
-                    </ul>
+                                        <button
+                                            v-if="isLongValue(row.currentText)"
+                                            class="conflict-list__value-toggle"
+                                            :aria-expanded="valueExpanded(row.field, 'current')"
+                                            @click="toggleValue(row.field, 'current')"
+                                        >
+                                            {{
+                                                valueExpanded(row.field, 'current')
+                                                    ? t('sync.conflict.collapse')
+                                                    : t('sync.conflict.expand')
+                                            }}
+                                        </button>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- 技术字段（时间戳 / 版本 / ID 等）：默认折叠，不参与主对比区 -->
+                        <button
+                            v-if="diffGroups.technical.length > 0"
+                            type="button"
+                            class="conflict-list__tech-toggle"
+                            :aria-expanded="technicalOpen"
+                            @click="technicalOpen = !technicalOpen"
+                        >
+                            {{
+                                technicalOpen
+                                    ? t('sync.conflict.hideTechnical')
+                                    : t('sync.conflict.showTechnical')
+                            }}
+                            <span aria-hidden="true">{{ technicalOpen ? '▾' : '▸' }}</span>
+                        </button>
+                    </template>
                 </section>
 
                 <!-- T643 / A3：本批不可自动恢复的条目 ⇒ 可见说明 + 内容可复制（不承诺一键重建） -->
@@ -623,31 +660,31 @@ const currentSideLabel = computed(() =>
     list-style: none;
 }
 
-/* 差异详情：横向排版（卡片流式并行，非 flex column） */
-.conflict-list__diffs {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: var(--nue-gap-xs);
-    margin: var(--nue-padding-2xs) 0;
-    padding: 0;
-    list-style: none;
-}
-
+/* 左栏对象行：显式左对齐（`<button>` 默认居中 —— DEF-134 走查原话②）；条目高 ≥40px */
 .conflict-list__entry {
     display: flex;
     align-items: center;
     width: 100%;
-    height: var(--nue-box-size-md);
-    padding: var(--nue-padding-sm);
+    min-height: var(--nue-box-size-md);
+    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
     gap: var(--nue-gap-xs);
     font-size: var(--nue-text-xs);
+    text-align: left;
     border: none;
     border-radius: var(--nue-primary-radius);
     background: none;
     color: var(--nue-primary-text-color);
     transition: background ease-in var(--nue-animation-duration-xshort);
+}
+
+/* 长文本单行省略（完整标题在 `title` 提示） */
+.conflict-list__entry-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .conflict-list__entry:hover {
@@ -701,37 +738,127 @@ const currentSideLabel = computed(() =>
     overflow-wrap: anywhere;
 }
 
-/* 逐字段卡片：圆角 + 留白 + 状态色条（无表头/网格；横向流式） */
-.conflict-list__diff {
+/* 差异对照（DEF-134 / DESIGN §4.7）：Git diff 式左右两列；表头 sticky、行高 ≥40px */
+.conflict-list__compare {
     display: flex;
     flex-direction: column;
-    flex: 1 1 240px;
     min-width: 0;
-    gap: var(--nue-gap-2xs);
-    padding: var(--nue-gap-xs) var(--nue-gap-sm);
+    margin: var(--nue-padding-2xs) 0;
+    border: 1px solid var(--nue-border-color);
     border-radius: var(--nue-primary-radius);
-    border-left: 3px solid transparent;
+    /* ⛔ 不可用 `overflow: hidden`：会把手头变成滚动容器 ⇒ sticky 表头失效（拖回不再吸顶） */
+}
+
+/* 表头与数据行共用同一列轨道 ⇒ 逐字段对齐（字段标签 min(8rem, 28%) + 两侧等宽） */
+.conflict-list__compare-head,
+.conflict-list__diff-row {
+    display: grid;
+    grid-template-columns: min(8rem, 28%) minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--nue-gap-xs);
+    align-items: start;
+}
+
+.conflict-list__compare-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
+    border-bottom: 1px solid var(--nue-border-color);
+    border-radius: var(--nue-primary-radius) var(--nue-primary-radius) 0 0;
+    background-color: var(--nue-primary-color-100);
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+    font-weight: var(--nue-font-weight-medium, 500);
+}
+
+.conflict-list__diff-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.conflict-list__diff-row {
+    min-height: var(--nue-box-size-md);
+    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
+    border-bottom: 1px solid var(--nue-border-color);
+}
+
+.conflict-list__diff-row:last-child {
+    border-bottom: none;
+}
+
+.conflict-list__diff-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--nue-gap-2xs);
+    min-width: 0;
+    padding-block: var(--nue-padding-2xs);
+}
+
+/* 值格：宽屏只靠表头指明两侧 ⇒ 格内来源标签隐藏（堆叠时再显） */
+.conflict-list__diff-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-gap-2xs);
+    min-width: 0;
+    min-height: var(--nue-box-size-sm);
+    padding: var(--nue-padding-2xs) var(--nue-gap-xs);
+    border: 1px solid transparent;
+    border-radius: var(--nue-radius-sm);
+}
+
+.conflict-list__cell-side {
+    display: none;
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+}
+
+/* 窄屏堆叠符：宽屏不占列 */
+.conflict-list__stack-sep {
+    display: none;
+    color: var(--nue-secondary-text-color);
+    font-size: var(--nue-text-2xs);
+}
+
+/* 三态：颜色只作**强化**（行首列同时有符号 + 文字标签） */
+.conflict-list__diff-row.is-removed .conflict-list__diff-cell.is-loser {
+    border-color: var(--nue-error-color-80);
+    background-color: var(--nue-error-color-10);
+}
+
+.conflict-list__diff-row.is-added .conflict-list__diff-cell.is-current {
+    border-color: var(--nue-success-color-80);
+    background-color: var(--nue-success-color-10);
+}
+
+.conflict-list__diff-row.is-changed .conflict-list__diff-cell {
+    border-color: var(--nue-warning-color-80);
     background-color: var(--nue-primary-color-100);
 }
 
-.conflict-list__diff.is-added {
-    border-left-color: var(--nue-success-color-80);
-}
+/* 窄屏（≤720px）：同字段上下堆叠（先我的修改、后云端最新，不隐藏任一侧） */
+@media (max-width: 720px) {
+    .conflict-list__compare-head {
+        display: none;
+    }
 
-.conflict-list__diff.is-removed {
-    border-left-color: var(--nue-error-color-80);
-}
+    .conflict-list__diff-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--nue-gap-2xs);
+    }
 
-.conflict-list__diff.is-changed {
-    border-left-color: var(--nue-warning-color-80);
-}
+    .conflict-list__cell-side {
+        display: block;
+    }
 
-.conflict-list__diff-top {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: var(--nue-gap-2xs);
-    min-width: 0;
+    .conflict-list__stack-sep {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .conflict-list__field-name {
@@ -778,58 +905,45 @@ const currentSideLabel = computed(() =>
     color: var(--nue-warning-color-90);
 }
 
-/* 值行：来源标签 + 值（逐行，避免表头/网格） */
-.conflict-list__value-row {
-    display: grid;
-    grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
-    gap: var(--nue-gap-xs);
-    align-items: baseline;
-}
+/* 值行：来源标签 + 值（宽屏由表头承载来源，堆叠时由格内标签承载） */
 
-.conflict-list__value-source {
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-}
-
-.conflict-list__value {
-    display: flex;
-    align-items: baseline;
-    gap: var(--nue-gap-2xs);
+.conflict-list__text {
     min-width: 0;
+    color: var(--nue-primary-text-color);
+    font-size: var(--nue-text-xs);
+    line-height: 1.6;
+    /* 默认 1 行省略（长值 + 「展开」；完整值在 title 提示里） */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 展开后：保留滚动上限，不撑爆对话框 */
+.conflict-list__text.is-expanded {
+    max-height: 7.5rem;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
 /* 来源层级：我的修改 = secondary，云端最新 = primary + medium */
-.conflict-list__value.is-loser {
+.conflict-list__diff-cell.is-loser .conflict-list__text {
     color: var(--nue-secondary-text-color);
 }
 
-.conflict-list__value.is-current {
+.conflict-list__diff-cell.is-current .conflict-list__text {
     color: var(--nue-primary-text-color);
     font-weight: var(--nue-font-weight-medium, 500);
 }
 
-.conflict-list__text {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-    line-height: 1.6;
-}
-
-.conflict-list__text.is-truncated {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-}
-
 /* DEF-133：空值（「未设置」）弱化，不空白 */
-.conflict-list__text.is-unset {
+.conflict-list__diff-cell .conflict-list__text.is-unset {
     color: var(--nue-secondary-text-color);
     font-style: italic;
 }
 
 .conflict-list__value-toggle {
-    flex: none;
+    align-self: flex-start;
     padding: 0;
     border: none;
     background: none;
@@ -838,23 +952,34 @@ const currentSideLabel = computed(() =>
     font-size: var(--nue-text-2xs);
 }
 
-/* 技术字段：始终显示但次要（更小字号 + 次要色；保留状态色条以不丢三态） */
-.conflict-list__diff-sep {
-    flex-basis: 100%;
-    padding-top: var(--nue-gap-xs);
-    border-top: 1px solid var(--nue-border-color);
+/* 技术字段：默认折叠；展开后次要样式（更小字号 + 次要色），不抢主对比区 */
+.conflict-list__tech-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: var(--nue-gap-2xs);
+    min-height: var(--nue-box-size-md);
+    padding: 0 var(--nue-gap-sm);
+    border: 1px solid var(--nue-border-color);
+    border-radius: var(--nue-primary-radius);
+    background: none;
     color: var(--nue-secondary-text-color);
     font-size: var(--nue-text-2xs);
+    cursor: pointer;
 }
 
-.conflict-list__diff.is-technical {
+.conflict-list__tech-toggle:hover {
     background-color: var(--nue-primary-color-100);
-    padding: var(--nue-gap-xs) var(--nue-gap-sm);
 }
 
-.conflict-list__diff.is-technical .conflict-list__field-name,
-.conflict-list__diff.is-technical .conflict-list__value,
-.conflict-list__diff.is-technical .conflict-list__value.is-current {
+.conflict-list__tech-toggle:focus-visible {
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
+}
+
+.conflict-list__diff-row.is-technical .conflict-list__field-name,
+.conflict-list__diff-row.is-technical .conflict-list__text,
+.conflict-list__diff-row.is-technical .conflict-list__diff-cell.is-current .conflict-list__text {
     color: var(--nue-secondary-text-color);
     font-size: var(--nue-text-2xs);
     font-weight: 400;

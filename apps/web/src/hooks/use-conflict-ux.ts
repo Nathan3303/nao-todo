@@ -10,6 +10,8 @@ import { ref, type Ref } from 'vue'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { findConflictEntity } from '@nao-todo/infrastructure/src/persistence-sync/conflict-entity-registry'
+import { collectConflictTitles, type ConflictTitleMap } from '@/components/sync/conflict-title'
 import {
     compareConflict,
     listConflicts,
@@ -27,6 +29,8 @@ export interface ConflictUx {
     loading: Ref<boolean>
     error: Ref<string | null>
     comparison: Ref<ConflictComparison | null>
+    /** DEF-134：左栏标题来源（`table:entityId` ⇒ 当前行可读名 + 父任务名；见 `conflict-title.ts`） */
+    titles: Ref<ConflictTitleMap>
     /** 动作 B 显式失败（无映射/无快照）⇒ 供 UI 提示，不静默 */
     retryFailed: Ref<boolean>
     /** 动作 A 两态（A2）：旧服务端 ⇒ 「将在下次同步后生效」（不得假装成功） */
@@ -52,16 +56,39 @@ export const useConflictUx = (): ConflictUx => {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const comparison = ref<ConflictComparison | null>(null)
+    const titles = ref<ConflictTitleMap>({})
     const retryFailed = ref(false)
     const keepServerPending = ref(false)
     const keepServerFailed = ref(false)
 
     const currentUserId = (): string => localSession.getCurrentUserId() ?? ''
 
+    /** 标题解析的并发令牌（刷新重入时丢弃旧结果，避免串台） */
+    let titleRun = 0
+
+    /**
+     * 解析左栏标题（DEF-134）
+     * @description 数据面只读（与 `compareConflict` 的 `current` 同一转换链）；失败即降级，不影响列表渲染。
+     *              异步补齐 ⇒ 不阻塞列表首帧（先出行，标题随后替换）。
+     */
+    const resolveTitles = async (list: ConflictListItem[], run: number): Promise<void> => {
+        const resolved = await collectConflictTitles(list, {
+            getCurrent: async (table, entityId) => {
+                const config = findConflictEntity(table)
+                if (!config) return null
+                const record = await config.getRecord(entityId)
+                return record ? await config.recordToEntity(record) : null
+            }
+        })
+        if (run !== titleRun) return
+        titles.value = resolved
+    }
+
     const refresh = async (): Promise<void> => {
         const userId = currentUserId()
         if (!userId) {
             items.value = []
+            titles.value = {}
             folded.value = false
             foldedReason.value = null
             return
@@ -73,6 +100,8 @@ export const useConflictUx = (): ConflictUx => {
             items.value = result.items
             folded.value = result.folded
             foldedReason.value = result.foldedReason
+            titleRun += 1
+            void resolveTitles(result.items, titleRun)
         } catch (err) {
             error.value = err instanceof Error ? err.message : String(err)
         } finally {
@@ -124,6 +153,7 @@ export const useConflictUx = (): ConflictUx => {
         loading,
         error,
         comparison,
+        titles,
         retryFailed,
         keepServerPending,
         keepServerFailed,
