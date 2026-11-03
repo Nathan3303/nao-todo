@@ -155,7 +155,7 @@ const enUS: LocaleMessages = {
     'sync.conflict.copyLoser': 'Copy my changes',
     'sync.conflict.copySuccess': 'Copied',
     'sync.conflict.copyFailed': 'Copy failed. Please select the text and copy it manually.',
-    'sync.conflict.pullLocalWinsLoserLabel': 'Cloud version not kept',
+    'sync.conflict.pullLocalWinsLoserLabel': 'Cloud version at the time',
     'sync.conflict.pullLocalWinsCurrentLabel': 'My current version',
     'sync.conflict.close': 'Close',
     'sync.conflict.table.projects': 'Projects',

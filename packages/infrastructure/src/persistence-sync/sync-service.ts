@@ -49,7 +49,7 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './sync-normalize'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
-import { appendConflict, countConflicts } from './conflict-journal'
+import { appendConflict, countConflicts, valuesEqual } from './conflict-journal'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -102,20 +102,6 @@ const SNAPSHOT_IGNORED_FIELDS: ReadonlySet<string> = new Set([
     'syncedServerUpdatedAt',
     'revision'
 ])
-
-/** 全等比较（数组/对象按 JSON；`null`/`undefined` 互相等价） */
-const sameSnapshotValue = (left: unknown, right: unknown): boolean => {
-    const emptyish = (value: unknown): boolean => value === null || value === undefined
-    if (emptyish(left) && emptyish(right)) return true
-    if (left === right) return true
-    if (typeof left !== 'object' || typeof right !== 'object') return false
-    if (emptyish(left) || emptyish(right)) return false
-    try {
-        return JSON.stringify(left) === JSON.stringify(right)
-    } catch {
-        return false
-    }
-}
 
 /**
  * 收集箱本地哨兵（单一口径：数据面一律字面 `'inbox'`；ADR `2026-09-24-project-archive.md` §15.1 / Q4）
@@ -686,7 +672,9 @@ export class SyncService {
         const diffFields: string[] = []
         for (const field of new Set([...Object.keys(remote), ...Object.keys(local)])) {
             if (SNAPSHOT_IGNORED_FIELDS.has(field)) continue
-            if (sameSnapshotValue(remote[field], local[field])) continue
+            // DEF-135：判等口径**唯一**（空值哨兵 `null`/`undefined`/`''`/`[]` 归一）⇒
+            //   与读侧 `diffFields` 同一函数，避免「写侧记了差异、读侧判相等」
+            if (valuesEqual(remote[field], local[field])) continue
             diffFields.push(field)
         }
         // 逐字段 diff 为空 ⇒ 不是一次「会丢数据的裁决」⇒ 不记账

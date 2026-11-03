@@ -798,16 +798,14 @@ const currentSideLabel = computed(() =>
     padding-block: var(--nue-padding-2xs);
 }
 
-/* 值格：宽屏只靠表头指明两侧 ⇒ 格内来源标签隐藏（堆叠时再显） */
+/* 值格：宽屏只靠表头指明两侧 ⇒ 格内来源标签隐藏（堆叠时再显）
+   DEF-135：值一律**纯文本**（无边框 / 底色 / 圆角 / 内边距的盒感），仅保留列轨道与行高 */
 .conflict-list__diff-cell {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-2xs);
     min-width: 0;
     min-height: var(--nue-box-size-sm);
-    padding: var(--nue-padding-2xs) var(--nue-gap-xs);
-    border: 1px solid transparent;
-    border-radius: var(--nue-radius-sm);
 }
 
 .conflict-list__cell-side {
@@ -823,20 +821,14 @@ const currentSideLabel = computed(() =>
     font-size: var(--nue-text-2xs);
 }
 
-/* 三态：颜色只作**强化**（行首列同时有符号 + 文字标签） */
-.conflict-list__diff-row.is-removed .conflict-list__diff-cell.is-loser {
-    border-color: var(--nue-error-color-80);
-    background-color: var(--nue-error-color-10);
+/* 三态：颜色只作**强化**（行首列同时有符号 + 文字标签），且只染**文字色**（值不加框 / 底色）
+   对比度按白底（DESIGN §2）：error -90 = 8.97 · success -100 = 5.67 ⇒ 文本 ≥4.5 ✓ */
+.conflict-list__diff-row.is-removed .conflict-list__diff-cell.is-loser .conflict-list__text {
+    color: var(--nue-error-color-90);
 }
 
-.conflict-list__diff-row.is-added .conflict-list__diff-cell.is-current {
-    border-color: var(--nue-success-color-80);
-    background-color: var(--nue-success-color-10);
-}
-
-.conflict-list__diff-row.is-changed .conflict-list__diff-cell {
-    border-color: var(--nue-warning-color-80);
-    background-color: var(--nue-primary-color-100);
+.conflict-list__diff-row.is-added .conflict-list__diff-cell.is-current .conflict-list__text {
+    color: var(--nue-success-color-100);
 }
 
 /* 窄屏（≤720px）：同字段上下堆叠（先我的修改、后云端最新，不隐藏任一侧） */
@@ -905,8 +897,9 @@ const currentSideLabel = computed(() =>
     color: var(--nue-warning-color-90);
 }
 
-/* 值行：来源标签 + 值（宽屏由表头承载来源，堆叠时由格内标签承载） */
-
+/* 值行：来源标签 + 值（宽屏由表头承载来源，堆叠时由格内标签承载）
+   `is-loser` / `is-current` 之间**不再用颜色/字重区分**——DESIGN §4.7：两侧都有值时
+   「两侧值用常规正文色」（差异由符号 + 文案承载，三态才染文字色） */
 .conflict-list__text {
     min-width: 0;
     color: var(--nue-primary-text-color);
@@ -924,16 +917,6 @@ const currentSideLabel = computed(() =>
     overflow-y: auto;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
-}
-
-/* 来源层级：我的修改 = secondary，云端最新 = primary + medium */
-.conflict-list__diff-cell.is-loser .conflict-list__text {
-    color: var(--nue-secondary-text-color);
-}
-
-.conflict-list__diff-cell.is-current .conflict-list__text {
-    color: var(--nue-primary-text-color);
-    font-weight: var(--nue-font-weight-medium, 500);
 }
 
 /* DEF-133：空值（「未设置」）弱化，不空白 */
@@ -978,8 +961,7 @@ const currentSideLabel = computed(() =>
 }
 
 .conflict-list__diff-row.is-technical .conflict-list__field-name,
-.conflict-list__diff-row.is-technical .conflict-list__text,
-.conflict-list__diff-row.is-technical .conflict-list__diff-cell.is-current .conflict-list__text {
+.conflict-list__diff-row.is-technical .conflict-list__text {
     color: var(--nue-secondary-text-color);
     font-size: var(--nue-text-2xs);
     font-weight: 400;

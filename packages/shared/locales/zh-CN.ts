@@ -147,7 +147,7 @@ const zhCN: LocaleMessages = {
     'sync.conflict.copyLoser': '复制我的修改',
     'sync.conflict.copySuccess': '已复制',
     'sync.conflict.copyFailed': '复制失败，请手动选择文本复制',
-    'sync.conflict.pullLocalWinsLoserLabel': '云端未保留的版本',
+    'sync.conflict.pullLocalWinsLoserLabel': '云端当时的版本',
     'sync.conflict.pullLocalWinsCurrentLabel': '我的当前版本',
     'sync.conflict.close': '关闭',
     'sync.conflict.table.projects': '项目',

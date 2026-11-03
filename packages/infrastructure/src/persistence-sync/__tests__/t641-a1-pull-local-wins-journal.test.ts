@@ -253,6 +253,34 @@ describe('T641 / A1 拉取「本地胜」记账', () => {
         expect(occurrences).toBe(2)
     })
 
+    it('DEF-135 写入侧判等归一：远端 `""` vs 本地 `null` 不算差异 ⇒ 不记账（禁「写侧记差异、读侧判相等」）', async () => {
+        const local = await makeTask('同名任务')
+        const id = local.id
+        await markLocalQueueLater(id)
+
+        // 除「空值哨兵的写法」外与本地逐字段一致：远端归档/星标写 `''`，本地为 `null`
+        const remote: RawRecord = {
+            ...remoteTaskFrom(local, { updatedAt: REMOTE_TS }),
+            archivedAt: '',
+            starMarkAt: ''
+        }
+        const service = new SyncService(
+            mockRequester((url) =>
+                url === '/sync/pull'
+                    ? pullEnvelope({ tasks: { ...EMPTY_TABLE, items: [remote], total: 1 } })
+                    : { data: {} }
+            )
+        )
+
+        await service.pullAll()
+
+        // 归一后逐字段 diff 为空 ⇒ 不是一次「会丢数据的裁决」⇒ 不记账
+        expect(await loadConflictJournal(USER_ID)).toHaveLength(0)
+        // 既有行为不回退：本地胜仍收敛 base、队列项保留
+        expect(await baseOf(id)).toBe(REMOTE_TS)
+        expect(await syncTracker.countDirty(USER_ID)).toBe(1)
+    })
+
     it('AC1 墓碑特例（硬约束）：远端为墓碑 ⇒ 墓碑生效 + 出队 + 不复活 + journal 本地内容', async () => {
         const local = await makeTask('本地名')
         const id = local.id

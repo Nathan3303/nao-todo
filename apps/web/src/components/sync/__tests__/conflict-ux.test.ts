@@ -1102,3 +1102,134 @@ describe('DEF-134 冲突面板可读性（Git diff 左右对照 / 左栏标题 /
         expect(first.querySelector('[data-side="current"]')?.textContent).toContain('新')
     })
 })
+describe('DEF-135 详情值纯文本（去框）+ pull-local-wins 表头文案', () => {
+    /** 挂载并带一条差异（右栏渲染可比对行） */
+    const renderDiff = async (): Promise<void> => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem()]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '旧', state: 'todo', priority: 1 },
+            current: { name: '新', state: 'done', priority: null },
+            diffs: [
+                { field: 'priority', loser: 1, current: null },
+                { field: 'name', loser: null, current: '新' },
+                { field: 'state', loser: 'todo', current: 'done' }
+            ]
+        }
+        await nextTick()
+    }
+
+    it('① 值格无框：无 border / background / border-radius / padding（宽窄屏均如此）', async () => {
+        const { styleTextOf, parseCssRules, effectiveValue } =
+            await import('@/components/pomodoro/records/__tests__/records-responsive-harness')
+        const rules = parseCssRules(styleTextOf(conflictListSource()))
+        // 旧实现的「带边框 + 底色 + 圆角 + 内边距」块状值格（三态还各自染色）
+        const cells = [
+            '.conflict-list__diff-cell',
+            '.conflict-list__diff-cell.is-loser',
+            '.conflict-list__diff-cell.is-current'
+        ]
+        for (const width of [1280, 720]) {
+            for (const cell of cells) {
+                for (const prop of [
+                    'border',
+                    'border-radius',
+                    'background',
+                    'background-color',
+                    'padding'
+                ]) {
+                    expect(
+                        effectiveValue(rules, cell, prop, width),
+                        `${cell}@${width} ${prop}`
+                    ).toBeNull()
+                }
+            }
+        }
+        // 三态不得再给值格上色块（红基线：is-removed ↔ error-80/10、is-added ↔ success-80/10、
+        // is-changed ↔ warning-80 + primary-100）
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).not.toMatch(/^[.:][^\n]*\{[^}]*-color-10\)/m)
+        expect(src).not.toMatch(/is-changed[^{]*\{[^}]*--nue-warning-color-80/)
+        // 仅保留行高与列轨道（对齐不被破坏）
+        const row = '.conflict-list__diff-row'
+        expect(effectiveValue(rules, row, 'grid-template-columns', 1280)).toBe(
+            'min(8rem, 28%) minmax(0, 1fr) minmax(0, 1fr)'
+        )
+        expect(effectiveValue(rules, row, 'min-height', 1280)).toBe('var(--nue-box-size-md)')
+    })
+
+    it('② 三态仍靠「符号 + 文案 + 文字色」承载（去框后不丢可辨性）', async () => {
+        await renderDiff()
+        const rows = (): HTMLElement[] =>
+            Array.from(document.querySelectorAll<HTMLElement>('.conflict-list__diff-row'))
+        const byField = (label: string): HTMLElement => {
+            const found = rows().find((row) => row.textContent?.includes(label))
+            expect(found, label).toBeTruthy()
+            return found as HTMLElement
+        }
+
+        for (const [label, symbol, kind] of [
+            ['sync.conflict.field.priority', '−', 'is-removed'],
+            ['sync.conflict.field.name', '+', 'is-added'],
+            ['sync.conflict.field.state', '~', 'is-changed']
+        ] as const) {
+            const row = byField(messages['zh-CN'][label])
+            expect(row.classList.contains(kind)).toBe(true)
+            expect(row.textContent).toContain(symbol)
+            expect(row.querySelector('.conflict-list__state-label')?.textContent?.trim()).not.toBe(
+                ''
+            )
+        }
+
+        // 文字色随三态（源级契约；对比度按白底：error -90 = 8.97 / success -100 = 5.67）
+        const src = conflictListSource().replace(/\r/g, '')
+        expect(src).toContain(
+            '.conflict-list__diff-row.is-removed .conflict-list__diff-cell.is-loser .conflict-list__text {\n    color: var(--nue-error-color-90);'
+        )
+        expect(src).toContain(
+            '.conflict-list__diff-row.is-added .conflict-list__diff-cell.is-current .conflict-list__text {\n    color: var(--nue-success-color-100);'
+        )
+        // 两侧都有值（changed）⇒ 常规正文色（不再区分两侧颜色 / 字重）
+        expect(src).not.toMatch(/^\.conflict-list__diff-cell\.is-loser \.conflict-list__text \{/m)
+        expect(src).not.toMatch(/^\.conflict-list__diff-cell\.is-current \.conflict-list__text \{/m)
+    })
+
+    it('③ 表头文案：pull-local-wins ⇒「云端当时的版本 / 我的当前版本」；其它 kind 不变', async () => {
+        const zh = messages['zh-CN']
+        // 文案本身（zh/en 各一处，类型齐备）
+        expect(zh['sync.conflict.pullLocalWinsLoserLabel']).toBe('云端当时的版本')
+        expect(zh['sync.conflict.pullLocalWinsCurrentLabel']).toBe('我的当前版本')
+        expect(messages['en-US']['sync.conflict.pullLocalWinsLoserLabel']).toBe(
+            'Cloud version at the time'
+        )
+        // 其余 kind 的两侧标签不动
+        expect(zh['sync.conflict.loserLabel']).toBe('我的修改')
+        expect(zh['sync.conflict.currentLabel']).toBe('云端最新')
+
+        const headText = (): string =>
+            document.querySelector('.conflict-list__compare-head')?.textContent ?? ''
+
+        await openConflictList(1)
+        conflict().items.value = [conflictItem({ kind: 'pull-local-wins' })]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '云端旧名' },
+            current: { name: '本地新名' },
+            diffs: [{ field: 'name', loser: '云端旧名', current: '本地新名' }]
+        }
+        await nextTick()
+        expect(headText()).toContain('云端当时的版本')
+        expect(headText()).toContain('我的当前版本')
+        expect(headText()).not.toContain('云端未保留的版本')
+
+        // 其它 kind（stale）沿用默认标签
+        conflict().items.value = [conflictItem({ kind: 'stale' })]
+        await nextTick()
+        expect(headText()).toContain(zh['sync.conflict.loserLabel'])
+        expect(headText()).toContain(zh['sync.conflict.currentLabel'])
+        expect(headText()).not.toContain('云端当时的版本')
+    })
+})

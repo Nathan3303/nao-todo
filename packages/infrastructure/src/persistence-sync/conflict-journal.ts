@@ -384,10 +384,29 @@ export const listConflicts = async (userId: string): Promise<ConflictListResult>
     }
 }
 
-/** 深比较（数组/对象按 JSON 比较；`undefined`/缺失 视为不相等） */
-const valuesEqual = (a: unknown, b: unknown): boolean => {
+/**
+ * 空值哨兵（`null` / `undefined` / `''` / `[]`）—— 与展示层 `conflict-value-format.ts` 的
+ * `isUnsetValue` **同一口径**（DEF-135：判等与展示不一致 ⇒ 两侧都渲染「未设置」却仍标差异）。
+ * ⛔ `0` 与 `false` **不是**空值。
+ */
+const isEmptySentinel = (value: unknown): boolean =>
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+
+/**
+ * 深比较：**空值哨兵先归一**（`null` ≡ `undefined` ≡ `''` ≡ `[]`），数组/对象再按 JSON 比较
+ *
+ * @description **唯一判等实现**（DEF-135）：读侧 `diffFields` 与写侧
+ *   `sync-service.recordPullLocalWins`（A1 快照字段挑选）**共用本函数**——⛔ 禁第二套口径，
+ *   否则「写侧判差异、读侧判相等」会再次出现「两边都写未设置却标了差异」。
+ */
+export const valuesEqual = (a: unknown, b: unknown): boolean => {
     if (a === b) return true
-    if (a === null || b === null || a === undefined || b === undefined) return false
+    const aEmpty = isEmptySentinel(a)
+    const bEmpty = isEmptySentinel(b)
+    if (aEmpty || bEmpty) return aEmpty && bEmpty
     if (typeof a !== 'object' || typeof b !== 'object') return false
     try {
         return JSON.stringify(a) === JSON.stringify(b)
