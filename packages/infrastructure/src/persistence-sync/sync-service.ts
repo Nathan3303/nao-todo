@@ -47,6 +47,7 @@ import {
 } from '../persistence-go/task/converters'
 import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/pomodoro/converters'
 import { setServerTimeOffset } from './sync-config'
+import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './sync-normalize'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
 import { appendConflict, countConflicts } from './conflict-journal'
 import { syncTracker } from './sync-tracker'
@@ -121,20 +122,8 @@ const sameSnapshotValue = (left: unknown, right: unknown): boolean => {
  * @description 服务端隐式桶以 `userId` 承载（create/update 对 `''` 归一为 `userId`）。
  *              R-5 闭环（T188）在**同步边界**做对称映射：写侧 `'inbox'` → `''`、读侧 `userId` → `'inbox'`；
  *              两端**唯一落点**分别为 `buildTaskPush` / `putPulledRecord`（⛔ 勿在调用点散落映射）。
+ *              ⚠️ 实现已下沉到 `./sync-normalize`，供 pull 与「保留服务端」写回（DEF-132）**共用同一链**。
  */
-const INBOX_PROJECT_ID = 'inbox'
-
-/** 写侧（push 载荷构造）：本地收集箱 `'inbox'` ⇒ 空串（服务端 create/update 归一为 `userId`） */
-const toPushProjectId = (projectId: unknown): unknown =>
-    projectId === INBOX_PROJECT_ID ? '' : projectId
-
-/** 读侧（pull 落库）：服务端隐式桶 `userId` ⇒ 本地字面 `'inbox'` */
-// 空值守门（T193）：仅当两侧都是「非空标量」且相等时才归一 —— `''` 是「无清单」的合法本地表示，
-//   不得归一；也防未来类型漂移（如 `projectId` 缺失时 `String(undefined) === 'undefined'`）导致静默误归一。
-const toLocalProjectId = (projectId: unknown, userId: string): unknown =>
-    projectId != null && projectId !== '' && String(projectId as string) === String(userId)
-        ? INBOX_PROJECT_ID
-        : projectId
 
 /**
  * 构建任务推送记录
@@ -1260,6 +1249,8 @@ export class SyncService {
             // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2；T326 改为 revision 比较，
             // 避免**同毫秒**新写被 `localUpdatedAt` 相等误判为「未变」而误删 —— AC-T325-8）
             const snapshotRevisions = new Map<string, number>()
+            // F-09（D7）：留存本次**实际发出**的载荷（按 `table:id`）—— 供回执判「伪 stale」
+            const pushedRecords = new Map<string, Record<string, unknown>>()
             for (const item of dueQueue) {
                 const config = SYNC_TABLES.find((c) => c.table === item.table)
                 if (!config) {
@@ -1300,6 +1291,7 @@ export class SyncService {
                     .syncedServerUpdatedAt
                 if (baseUpdatedAt) pushRecord.baseUpdatedAt = baseUpdatedAt
                 target.push(pushRecord)
+                pushedRecords.set(`${item.table}:${item.entityId}`, pushRecord)
             }
             if (Object.keys(pushBody).length === 0 && deletions.length === 0) {
                 // 到期项均缺表配置（不可达防御）：必须上报运行错误，否则 syncing 卡死且门读到 null ⇒ 假成功
@@ -1442,6 +1434,22 @@ export class SyncService {
                 }
                 const result = resultByKey.get(key)
                 const outcome = result?.outcome
+                // 服务端当前行（A2 / F-09 additive；旧服务端缺省 ⇒ undefined）
+                const serverCurrent =
+                    result?.serverCurrent && typeof result.serverCurrent === 'object'
+                        ? result.serverCurrent
+                        : undefined
+                // F-09（T644 / D7）：**伪 `stale` 消噪** —— 回执带服务端当前行、且与本次载荷的
+                //   **业务字段（哨兵归一后）等价** ⇒ 实为已生效，判 `applied`：写回 base、出队、
+                //   **不落账**（否则「内容其实没变」的回执会把真冲突淹没）；不等 ⇒ 仍落账（真 stale）。
+                //   ⛔ 删除动作不参与（载荷不在 `pushedRecords` 中，删除裁决不适用）。
+                const pushedRecord = pushedRecords.get(key)
+                const pseudoApplied =
+                    (outcome === 'stale' || outcome === 'noop') &&
+                    serverCurrent !== undefined &&
+                    pushedRecord !== undefined &&
+                    syncPayloadMatchesServer(pushedRecord, serverCurrent)
+                const effectiveOutcome = pseudoApplied ? 'applied' : outcome
                 // T471 / DEF-44：消费 additive `droppedFields`（缺省/空 ⇒ no-op）；仅**白名单外**计入「真·漂移」
                 const unexpectedDroppedFields = pickUnexpectedDroppedFields(
                     result?.droppedFields,
@@ -1467,10 +1475,10 @@ export class SyncService {
                 // §9.1.4：`noop` / `stale` / `conflict` / `skipped` 全部登记（journal + 可见计数），不静默出队
                 //   `noop` / `stale` 带**败方快照**（本地被拒内容）；`conflict` / `skipped` 无快照（仅登记）
                 if (
-                    outcome === 'noop' ||
-                    outcome === 'stale' ||
-                    outcome === 'conflict' ||
-                    outcome === 'skipped'
+                    effectiveOutcome === 'noop' ||
+                    effectiveOutcome === 'stale' ||
+                    effectiveOutcome === 'conflict' ||
+                    effectiveOutcome === 'skipped'
                 ) {
                     const config = SYNC_TABLES.find((c) => c.table === item.table)
                     // A3（F-03）：`conflict`/`skipped` 也留败方内容（含删除动作的本地墓碑行）
@@ -1479,12 +1487,8 @@ export class SyncService {
                         : undefined
                     if (config) {
                         const loser = record ? await config.recordToEntity(record) : {}
-                        const serverCurrent =
-                            result?.serverCurrent && typeof result.serverCurrent === 'object'
-                                ? result.serverCurrent
-                                : undefined
                         const count = await appendConflict(userId, {
-                            kind: outcome === 'noop' ? 'push-noop' : outcome,
+                            kind: effectiveOutcome === 'noop' ? 'push-noop' : effectiveOutcome,
                             table: item.table,
                             entityId: item.entityId,
                             loser,
@@ -1500,7 +1504,9 @@ export class SyncService {
                 // §9.1.6 写回点：`applied`/`noop`/`stale` 以 `result.serverUpdatedAt` 落回该行 base
                 //   （`stale` 时即为库中当前版本，使下次推送以新 base 命中，防 R-20 灾难路径）
                 if (
-                    (outcome === 'applied' || outcome === 'noop' || outcome === 'stale') &&
+                    (effectiveOutcome === 'applied' ||
+                        effectiveOutcome === 'noop' ||
+                        effectiveOutcome === 'stale') &&
                     result?.serverUpdatedAt
                 ) {
                     await this.writeBackSyncBase(item.table, item.entityId, result.serverUpdatedAt)
