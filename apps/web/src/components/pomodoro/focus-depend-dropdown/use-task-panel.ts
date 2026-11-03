@@ -2,7 +2,6 @@ import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
 import { debounce } from '@nao-todo/shared/utils/commons'
-import { GetTasksOptions } from '@nao-todo/shared/constants'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { storeToRefs } from 'pinia'
 import { inject, reactive, watch } from 'vue'
@@ -49,13 +48,16 @@ export const useTaskPanel = () => {
         },
         getTasksOptions: {
             name: '',
+            // DEF-131：本面板用途是「选一个任务来专注」⇒ 列出**全部未完成**任务，
+            // **不得**按截止时间过滤（逾期任务最需要专注；今天 date-only 的任务 endAt=当日 00:00，
+            // 会被 `relativeDate: '-overdue'` 判为已逾期而全部隐藏 ⇒ 用户看到「暂无待办任务」）。
+            // 不要再加回 relativeDate；如需「只看未逾期」请另开筛选视图。
             state: 'todo,in-progress',
             limit: 10,
             isDeleted: false,
             isArchived: false,
             isGivenUp: false,
-            sort: { field: 'priority', order: 'desc' },
-            relativeDate: '-overdue' as GetTasksOptions['relativeDate']
+            sort: { field: 'priority', order: 'desc' }
         }
     })
 
