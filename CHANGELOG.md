@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.17.1] - 2026-11-03
+
+清零批（PR #323 · 发版说明 `docs/releases/v1.17.1.md` · 无 PRD —— 一修一测 + 台账对齐）：
+
+- **`DEF-83`（P3 · a11y）**：窄屏设置面板不再**伪造 tab 语义** —— 面板壳 `:role="isNarrow ? 'group' : 'tabpanel'"` + `:aria-label`（分类名）/ `:aria-labelledby`（仅桌面）；桌面 `tablist`/`tab`/`tabpanel` 语义**逐字不变**。用例 4 例（窄屏 / 切分类 / 桌面 / 窄→桌→窄），红基线 ⇒ 窄屏 3 例红；窄屏悬空 `aria-labelledby` 清点 = 0。
+- **`L5`（P3）**：`def-128-pomodoro-page-trigger.test.ts` 的「组件不得被 stub」反断言**提到 `.element` 之前**（断言强度不变）；实测替身 stub 报「不得被 stub」。
+- **缺陷池销案 3 条**（均附证据指针）：`DEF-29`（上游 `nue-ui#109` 随 **1.15.3** 修复，本仓 `v1.16.4` 起生效；全仓 `:key="src"` 命中 0）· `DEF-73`（上游 `#110` + 1.14.0 a11y；本仓自建 a11y 已在 `v1.16.4` 拆除）· `DEF-64`（`apps/web/src/themes/button.css` **已不存在**，`button-overrides.test.ts:57` 守护「不再保留覆盖」）。
+- **新登记 `DEF-137`（P3，接受）**：VTU `stubs: { X: true }` 会保留组件 `name` ⇒ 反断言对 `true` 桩无效（既有盲区，需另设判据，建议随下批测试卫生）。
+- **门禁**：全仓 **368 文件 +1 跳过 / 2942 例 +6 跳过 / 红 0** · `vp check` 0 error（1846 格式 / 1489 文件）· 五守卫 rc=0 · 移动端红线 0 行 · 定向 `settings`+`pomodoro`+`locales` 20 文件 / 176 例 / 0 红。
+- **跨仓（不随本版发布）**：`nao-todo-server#87` ⇒ `730455d1` —— CI `golangci-lint` 加 `--max-same-issues=0 --max-issues-per-linter=0`（T647 实测旧参数只报 6/9；A/B 自证本地 + CI 双证）。
+- **Tag `v1.17.1`** · root / `apps/web` / `apps/desktop` `1.17.0 → 1.17.1`（PATCH）。
+
 ## [v1.17.0] - 2026-11-03
 
 **数据同步止血批（A 批）**：把「整行后写覆盖」里**静默丢失**的部分改为**可见 / 可对比 / 可恢复**，并补齐三处契约缺口（PR #321 · Issue #320 · PRD `docs/prds/2026-11-03-data-sync-a-batch.md` · ADR `docs/adr/2026-11-03-sync-conflict-journal-crypto.md` · 发版说明 `docs/releases/v1.17.0.md`）：
