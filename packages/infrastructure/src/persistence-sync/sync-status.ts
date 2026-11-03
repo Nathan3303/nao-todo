@@ -77,6 +77,12 @@ export interface SyncStatusState {
     mirrorPulledAt: string | null
     /** 镜像是否因续拉上界被截断（触顶提示；下次完整取尽时清除） */
     mirrorTruncated: boolean
+    /**
+     * 服务端是否支持删除裁决（A4 / T643 能力探测）
+     * @description 删除回执带 `outcome` ⇒ true；老服务端（回执无 `outcome`）⇒ false
+     *              ⇒ **不得**据「没收到 stale」认定已裁决，也不伪造 stale 记录。
+     */
+    deletionOCCSupported: boolean
 }
 
 export class SyncStatus {
@@ -94,7 +100,8 @@ export class SyncStatus {
         credentialFailure: false,
         paused: false,
         mirrorPulledAt: null,
-        mirrorTruncated: false
+        mirrorTruncated: false,
+        deletionOCCSupported: false
     }
 
     private listeners = new Set<() => void>()
@@ -189,6 +196,15 @@ export class SyncStatus {
      */
     setDroppedFieldCount(count: number): void {
         this.set({ droppedFieldCount: count })
+    }
+
+    /**
+     * 落定删除 OCC 能力探测结果（A4 / T643）
+     * @description 仅由 push 在「本次确实推了删除且收到回执」时调用；不参与运行边界重置
+     *              （能力是服务端属性，跨运行保持）。
+     */
+    setDeletionOCCSupported(supported: boolean): void {
+        this.set({ deletionOCCSupported: supported })
     }
 
     /**

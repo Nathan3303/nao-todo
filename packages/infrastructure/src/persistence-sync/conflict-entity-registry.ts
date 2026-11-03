@@ -46,6 +46,8 @@ type EntityRecordConverter = (entity: Record<string, unknown>, userId: string) =
 export interface ConflictEntityConfig {
     /** 表名（= 远程资源名 = journal `table`） */
     table: string
+    /** 原始 Dexie 表（供「业务行 + 队列 + journal」单一事务使用） */
+    rawTable: Table<Record<string, unknown>, string>
     /** 读本地当前行（不存在 ⇒ undefined） */
     getRecord: (id: string) => Promise<Record<string, unknown> | undefined>
     /** 本地行 → 明文实体（只读对比用） */
@@ -68,6 +70,7 @@ const makeConfig = <T extends { id: string }>(
     entityToRecord: EntityRecordConverter
 ): ConflictEntityConfig => ({
     table,
+    rawTable: tableRef as unknown as Table<Record<string, unknown>, string>,
     getRecord: (id) => tableRef.get(id) as Promise<Record<string, unknown> | undefined>,
     recordToEntity,
     entityToRecord,

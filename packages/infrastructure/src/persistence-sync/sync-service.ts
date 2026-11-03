@@ -91,6 +91,32 @@ const buildPush =
     }
 
 /**
+ * A1 差异比较的忽略字段（身份/时间/同步元数据 —— 不属于「业务内容差异」）
+ * @description 判据口径：`updatedAt/syncedServerUpdatedAt/revision`（T640 Q2）
+ */
+const SNAPSHOT_IGNORED_FIELDS: ReadonlySet<string> = new Set([
+    'id',
+    'userId',
+    'updatedAt',
+    'syncedServerUpdatedAt',
+    'revision'
+])
+
+/** 全等比较（数组/对象按 JSON；`null`/`undefined` 互相等价） */
+const sameSnapshotValue = (left: unknown, right: unknown): boolean => {
+    const emptyish = (value: unknown): boolean => value === null || value === undefined
+    if (emptyish(left) && emptyish(right)) return true
+    if (left === right) return true
+    if (typeof left !== 'object' || typeof right !== 'object') return false
+    if (emptyish(left) || emptyish(right)) return false
+    try {
+        return JSON.stringify(left) === JSON.stringify(right)
+    } catch {
+        return false
+    }
+}
+
+/**
  * 收集箱本地哨兵（单一口径：数据面一律字面 `'inbox'`；ADR `2026-09-24-project-archive.md` §15.1 / Q4）
  * @description 服务端隐式桶以 `userId` 承载（create/update 对 `''` 归一为 `userId`）。
  *              R-5 闭环（T188）在**同步边界**做对称映射：写侧 `'inbox'` → `''`、读侧 `userId` → `'inbox'`；
@@ -158,7 +184,6 @@ export const SYNC_TABLES: SyncTableConfig[] = [
         recordToEntity: projectRecordToEntity as unknown as SyncTableConfig['recordToEntity'],
         entityToPush: buildPush([
             'name',
-            'icon',
             'description',
             'archivedAt',
             'deactivedAt',
@@ -174,7 +199,6 @@ export const SYNC_TABLES: SyncTableConfig[] = [
         entityToRecord: tagEntityToRecord as unknown as SyncTableConfig['entityToRecord'],
         recordToEntity: tagRecordToEntity as unknown as SyncTableConfig['recordToEntity'],
         entityToPush: buildPush([
-            'icon',
             'name',
             'description',
             'color',
@@ -280,6 +304,12 @@ interface PushResult {
     outcome?: string
     /** 载荷含、服务端 sync DTO 不承载的 JSON 键（T466 additive；空时服务端省略该键） */
     droppedFields?: string[]
+    /**
+     * 服务端当前行（T643 / A2 additive；sync 条目形状）
+     * @description 仅 `stale`（含删除 stale）返回；供「保留服务端」离线写回 + F-09 判等。
+     *              旧服务端缺省 ⇒ 客户端走「待下次同步生效」两态（不得假装成功）。
+     */
+    serverCurrent?: Record<string, unknown>
 }
 
 /** 单表续拉游标状态（DEF-6）：`updatedAt/cursorId` 为**本轮请求**游标，`lastEnd*` 为上一页**原始**末尾 */
@@ -596,6 +626,17 @@ export class SyncService {
                 : entity
         const record = (await config.entityToRecord(source, userId)) as {
             syncedServerUpdatedAt?: string
+            icon?: unknown
+        }
+        // A6（F-06）：`icon` 已移出同步契约（服务端无列 / 无 DTO）⇒ 拉取**不得**用默认值覆盖本地图标
+        //（本地图标 = 「仅本机」字段；无旧行时用 converter 的本地默认值）
+        if (config.table === 'projects' || config.table === 'tags') {
+            const existing = (await this.tableOf(config).get(String(entity.id))) as
+                | { icon?: unknown }
+                | undefined
+            if (typeof existing?.icon === 'string' && existing.icon !== '') {
+                record.icon = existing.icon
+            }
         }
         const serverUpdatedAt = typeof entity.updatedAt === 'string' ? entity.updatedAt : ''
         if (serverUpdatedAt) record.syncedServerUpdatedAt = serverUpdatedAt
@@ -630,6 +671,49 @@ export class SyncService {
         await this.tableOf(config).update(entityId, {
             syncedServerUpdatedAt: serverUpdatedAt
         })
+    }
+
+    /**
+     * A1（F-01）拉取「本地胜」记账
+     * @description 触发判据（三者同时）：`queued` 存在 · `remoteTs <= localTs` · 逐字段 diff 非空
+     *              （排除 `updatedAt/syncedServerUpdatedAt/revision`）。loser = **远端快照**
+     *              （将被本地覆盖的那一版），**只存 diff 字段 + 身份字段**（R-H：禁整行复制）。
+     *              去重由 `appendConflict` 按 `(table, entityId, kind, winnerUpdatedAt)` 完成。
+     *              ⛔ 墓碑特例不在本方法内（调用方已分流到「远端胜」，否则会确定性复活）。
+     */
+    private async recordPullLocalWins(
+        config: SyncTableConfig,
+        remote: Record<string, unknown>,
+        entityId: string,
+        localUpdatedAt: string,
+        userId: string
+    ): Promise<void> {
+        const remoteUpdatedAt = typeof remote.updatedAt === 'string' ? remote.updatedAt : ''
+        if (!remoteUpdatedAt) return
+        const localRecord = await this.tableOf(config).get(entityId)
+        if (!localRecord) return
+        const local = await config.recordToEntity(localRecord)
+        const loser: Record<string, unknown> = { id: entityId }
+        const diffFields: string[] = []
+        for (const field of new Set([...Object.keys(remote), ...Object.keys(local)])) {
+            if (SNAPSHOT_IGNORED_FIELDS.has(field)) continue
+            if (sameSnapshotValue(remote[field], local[field])) continue
+            diffFields.push(field)
+        }
+        // 逐字段 diff 为空 ⇒ 不是一次「会丢数据的裁决」⇒ 不记账
+        if (diffFields.length === 0) return
+        for (const field of diffFields) {
+            loser[field] = remote[field] === undefined ? null : remote[field]
+        }
+        const count = await appendConflict(userId, {
+            kind: 'pull-local-wins',
+            table: config.table,
+            entityId,
+            loser,
+            winnerUpdatedAt: localUpdatedAt,
+            loserUpdatedAt: remoteUpdatedAt
+        })
+        syncStatus.setConflictCount(count)
     }
 
     /**
@@ -989,9 +1073,42 @@ export class SyncService {
                     await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
+                } else if (
+                    entity.deletedAt !== null &&
+                    entity.deletedAt !== undefined &&
+                    entity.deletedAt !== ''
+                ) {
+                    // A1 墓碑硬约束（T640 Q2）：远端为墓碑时**不得**走本地胜分支 ——
+                    //   否则下一步 push 的 base 恰等于墓碑版本，服务端判 Overwrite 并清 `deleted_at`
+                    //   ⇒ **确定性复活**。改走「远端胜」语义：应用墓碑 + 出队 + 记本地内容。
+                    const localRecord = await this.tableOf(config).get(id)
+                    if (localRecord) {
+                        const loser = await config.recordToEntity(localRecord)
+                        const count = await appendConflict(userId, {
+                            kind: 'remote-wins',
+                            table: config.table,
+                            entityId: id,
+                            loser,
+                            winnerUpdatedAt:
+                                typeof entity.updatedAt === 'string' ? entity.updatedAt : undefined,
+                            loserUpdatedAt: queued.localUpdatedAt
+                        })
+                        syncStatus.setConflictCount(count)
+                    }
+                    await this.putPulledRecord(config, entity, userId)
+                    await syncTracker.removeQueued(config.table, id)
+                    written += 1
                 } else {
                     // T326 / RC-3 / AC-T325-3：本地胜也把 base 收敛到服务端当前版本
                     //（否则 base 恒旧 ⇒ OCC 下下一次 push 必然 stale）。仅改 base：不动业务字段、不出队。
+                    // A1（F-01）：本地胜必须**记账**（loser = 将被覆盖的远端快照，仅 diff 字段 + 身份字段）
+                    await this.recordPullLocalWins(
+                        config,
+                        entity,
+                        id,
+                        queued.localUpdatedAt,
+                        userId
+                    )
                     if (typeof entity.updatedAt === 'string' && entity.updatedAt) {
                         await this.writeBackSyncBase(config.table, id, entity.updatedAt)
                     }
@@ -1138,7 +1255,7 @@ export class SyncService {
             if (dueQueue.length === 0) return
 
             const pushBody: Record<string, Record<string, unknown>[]> = {}
-            const deletions: { table: string; id: string }[] = []
+            const deletions: { table: string; id: string; baseUpdatedAt?: string }[] = []
             // 发送前快照各实体入队 revision：确认后仅当队列项未被推送期间的新修改覆盖才移除，
             // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2；T326 改为 revision 比较，
             // 避免**同毫秒**新写被 `localUpdatedAt` 相等误判为「未变」而误删 —— AC-T325-8）
@@ -1162,7 +1279,14 @@ export class SyncService {
                     continue
                 }
                 if (item.action === 'delete') {
-                    deletions.push({ table: item.table, id: item.entityId })
+                    // A4（F-04）：删除也走 OCC —— 携带该行 per-row base；行已物理缺失 ⇒ 不带（删除优先）
+                    const baseUpdatedAt = (record as { syncedServerUpdatedAt?: string })
+                        .syncedServerUpdatedAt
+                    deletions.push({
+                        table: item.table,
+                        id: item.entityId,
+                        ...(baseUpdatedAt ? { baseUpdatedAt } : {})
+                    })
                     continue
                 }
                 const entity = await config.recordToEntity(record)
@@ -1272,6 +1396,25 @@ export class SyncService {
             // T326 / AC-T325-1：serverTime 在 SyncPushRes 内（`body.data.serverTime`），非 `body.serverTime`
             this.calibrateServerTime(data.data?.serverTime)
             const results = data.data?.results ?? []
+            // A4 能力探测（T640 Q4）：删除回执是否带 `outcome` ⇒ 服务端是否支持删除裁决。
+            //   新客户端 + 老服务端 ⇒ false：**不得**据「没收到 stale」认定已裁决（也不伪造 stale 记录）。
+            const deletionKeys = new Set(
+                dueQueue
+                    .filter((item) => item.action === 'delete')
+                    .map((item) => `${item.table}:${item.entityId}`)
+            )
+            if (deletionKeys.size > 0) {
+                const deletionResults = results.filter((result) =>
+                    deletionKeys.has(`${result.table}:${result.id}`)
+                )
+                if (deletionResults.length > 0) {
+                    syncStatus.setDeletionOCCSupported(
+                        deletionResults.every(
+                            (result) => typeof result.outcome === 'string' && result.outcome !== ''
+                        )
+                    )
+                }
+            }
             const resultByKey = new Map(results.map((r) => [`${r.table}:${r.id}`, r]))
             const pushed = new Set(resultByKey.keys())
             let unconfirmed = false
@@ -1330,14 +1473,16 @@ export class SyncService {
                     outcome === 'skipped'
                 ) {
                     const config = SYNC_TABLES.find((c) => c.table === item.table)
-                    const record =
-                        config && item.action === 'upsert'
-                            ? await this.tableOf(config).get(item.entityId)
-                            : undefined
+                    // A3（F-03）：`conflict`/`skipped` 也留败方内容（含删除动作的本地墓碑行）
+                    const record = config
+                        ? await this.tableOf(config).get(item.entityId)
+                        : undefined
                     if (config) {
-                        const withSnapshot = outcome === 'noop' || outcome === 'stale'
-                        const loser =
-                            withSnapshot && record ? await config.recordToEntity(record) : {}
+                        const loser = record ? await config.recordToEntity(record) : {}
+                        const serverCurrent =
+                            result?.serverCurrent && typeof result.serverCurrent === 'object'
+                                ? result.serverCurrent
+                                : undefined
                         const count = await appendConflict(userId, {
                             kind: outcome === 'noop' ? 'push-noop' : outcome,
                             table: item.table,
@@ -1346,7 +1491,8 @@ export class SyncService {
                             ...(result?.serverUpdatedAt === undefined
                                 ? {}
                                 : { winnerUpdatedAt: result.serverUpdatedAt }),
-                            loserUpdatedAt: item.localUpdatedAt
+                            loserUpdatedAt: item.localUpdatedAt,
+                            ...(serverCurrent === undefined ? {} : { serverCurrent })
                         })
                         syncStatus.setConflictCount(count)
                     }

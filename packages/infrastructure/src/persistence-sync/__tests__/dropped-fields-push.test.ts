@@ -2,11 +2,9 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
-import { CreateProjectValueObject } from '@nao-todo/domain-project'
 import { CreateTaskValueObject } from '@nao-todo/domain-task'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
-import { newLocalProjectRepository } from '../../persistence-local/repos/project-repo-impl'
 import { newLocalTaskRepository } from '../../persistence-local/repos/task-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
@@ -118,6 +116,25 @@ const seedDirtyTask = async (): Promise<string> => {
     return (task as { id: string }).id
 }
 
+/** 直接种入一条待推检查项（不牵连父任务队列） */
+const seedDirtyCheckItem = async (): Promise<string> => {
+    const id = 'ci-t471-whitelist'
+    const at = '2030-01-01T00:00:00.000Z'
+    await localDatabase.taskCheckItems.put({
+        id,
+        userId: USER_ID,
+        taskId: 'task-t471-whitelist',
+        name: await cryptoService.encrypt('白名单检查项'),
+        isDone: false,
+        sortId: 0,
+        createdAt: at,
+        updatedAt: at,
+        deletedAt: null
+    } as never)
+    await syncTracker.markDirty('taskCheckItems', id, 'upsert', at)
+    return id
+}
+
 describe('T471 droppedFields 消费', () => {
     beforeEach(async () => {
         await resetLocalState()
@@ -151,20 +168,16 @@ describe('T471 droppedFields 消费', () => {
         expect(await syncTracker.countDirty()).toBe(0)
     })
 
-    it('② 仅白名单字段（projects.icon）⇒ 零告警、计数归 0、正常出队', async () => {
-        const [project, err] = await newLocalProjectRepository().create(
-            new CreateProjectValueObject('白名单用例清单', 'more2', '')
-        )
-        expect(err).toBeNull()
-        const id = (project as { id: string }).id
+    it('② 仅白名单字段（taskCheckItems.deletedAt）⇒ 零告警、计数归 0、正常出队', async () => {
+        const id = await seedDirtyCheckItem()
         const service = new SyncService(
             requesterForPush([
                 {
-                    table: 'projects',
+                    table: 'taskCheckItems',
                     id,
                     outcome: 'applied',
                     serverUpdatedAt: '2031-01-01T00:00:00.000Z',
-                    droppedFields: ['icon']
+                    droppedFields: ['deletedAt']
                 }
             ])
         )

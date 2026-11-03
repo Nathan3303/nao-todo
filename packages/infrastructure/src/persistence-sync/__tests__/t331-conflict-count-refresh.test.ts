@@ -68,8 +68,13 @@ const syncCountFromJournal = async (): Promise<void> => {
     syncStatus.setConflictCount(await countConflicts(USER_ID))
 }
 
-const seedStale = (entityId: string, name: string) =>
-    appendConflict(USER_ID, { kind: 'stale', table: 'tasks', entityId, loser: { name } })
+/**
+ * 种子：**可仅清条目**的冲突类型（`remote-wins`）
+ * @description T643 / A2 后 `stale` 的「保留服务端」需真写回（缺 `serverCurrent` ⇒ 待下次同步生效），
+ *              本文件只验证**计数同源刷新**，故用语义不变的 `remote-wins` 作种子。
+ */
+const seedConflictEntry = (entityId: string, name: string) =>
+    appendConflict(USER_ID, { kind: 'remote-wins', table: 'tasks', entityId, loser: { name } })
 
 describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     beforeEach(async () => {
@@ -77,8 +82,8 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('「保留服务端版本」处理后计数 −1（改前红：滞留原值）', async () => {
-        await seedStale('t1', '本地甲')
-        await seedStale('t2', '本地乙')
+        await seedConflictEntry('t1', '本地甲')
+        await seedConflictEntry('t2', '本地乙')
         await syncCountFromJournal()
         expect(syncStatus.get().conflictCount).toBe(2)
 
@@ -128,8 +133,8 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('全部处理 ⇒ 计数归零（徽标隐藏条件）', async () => {
-        await seedStale('t1', '甲')
-        await seedStale('t2', '乙')
+        await seedConflictEntry('t1', '甲')
+        await seedConflictEntry('t2', '乙')
         await syncCountFromJournal()
 
         await resolveConflictKeepServer(USER_ID, 'tasks', 't1')
@@ -138,8 +143,8 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('计数与列表始终同源（处理后两者相等）', async () => {
-        await seedStale('t1', '甲')
-        await seedStale('t2', '乙')
+        await seedConflictEntry('t1', '甲')
+        await seedConflictEntry('t2', '乙')
         await syncCountFromJournal()
         await resolveConflictKeepServer(USER_ID, 'tasks', 't1')
         const list = await listConflicts(USER_ID)
@@ -148,9 +153,9 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('T346：同一对象多条记录 ⇒ 计数为 1（对象数 ≠ 条目数）', async () => {
-        await seedStale('t1', '甲')
-        await seedStale('t1', '乙')
-        await seedStale('t1', '丙')
+        await seedConflictEntry('t1', '甲')
+        await seedConflictEntry('t1', '乙')
+        await seedConflictEntry('t1', '丙')
         await syncCountFromJournal()
 
         expect(await countConflicts(USER_ID)).toBe(1)
@@ -160,9 +165,9 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('T346：处理一个多记录对象 ⇒ 计数 −1（不是 −N）', async () => {
-        await seedStale('t1', '甲')
-        await seedStale('t1', '乙')
-        await seedStale('t2', '丙')
+        await seedConflictEntry('t1', '甲')
+        await seedConflictEntry('t1', '乙')
+        await seedConflictEntry('t2', '丙')
         await syncCountFromJournal()
         expect(syncStatus.get().conflictCount).toBe(2)
 
@@ -174,8 +179,8 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('T346：重启后按对象数恢复（同一对象多条记录 ⇒ 1）', async () => {
-        await seedStale('t1', '甲')
-        await seedStale('t1', '乙')
+        await seedConflictEntry('t1', '甲')
+        await seedConflictEntry('t1', '乙')
         syncStatus.setConflictCount(999)
         const service = new SyncService(dummyRequester)
         await service.restoreConflictCount()
@@ -184,7 +189,7 @@ describe('T331 冲突计数随处理刷新（与 journal 同源）', () => {
     })
 
     it('重启后计数与 journal 一致（restoreConflictCount 回归守护）', async () => {
-        await seedStale('t1', '甲')
+        await seedConflictEntry('t1', '甲')
         // 模拟冷启动内存态偏差
         syncStatus.setConflictCount(999)
         const service = new SyncService(dummyRequester)
