@@ -375,6 +375,7 @@ DecideUpsert(existingCreated, existingUpdated, voCreated, voUpdated, baseUpdated
 
 - **比较口径**：瞬时比较（同 F3 的 UTC ms 口径），容忍格式差异（`+08:00`/`Z`/毫秒精度）。
 - **`stale` 回执必须带 `ServerUpdatedAt`**（供客户端 rebase：拉取该行 → 以新 base 重推或入 journal）。
+    - **r6（T643 / A 批）**：`stale` 另带 additive `serverCurrent`（sync 条目形状）⇒ 客户端可**离线**真写回（§9.2.2 动作 A）；**墓碑特例**：pull 的「本地胜」分支**不得**用于远端墓碑（否则下一步 push base 恰等于墓碑版本 ⇒ 确定性复活）⇒ 必须走「远端胜」（应用墓碑 + 出队 + 记录本地内容）。
 
 **9.1.4 `Outcome` 表达（复用 2A 机制；**新增 additive 值 `stale`**）**
 
@@ -409,17 +410,20 @@ DecideUpsert(existingCreated, existingUpdated, voCreated, voUpdated, baseUpdated
 **9.2.1 落点**
 
 - **入口**：同步状态面板新增「冲突 N」行（**已存在** `syncStatus.conflictCount`，F6）⇒ 点击打开**冲突列表**（弹层）。
-- **列表**：每条 = 表名（本地化）· 实体标题（取 `loser` 快照的 `name`/`title`，缺省 `entityId`）· 时间（`at`）· 类型（`remote-wins` / `push-noop` / **`stale`**）。
+- **列表**：每条 = 表名（本地化）· 实体标题（取 `loser` 快照的 `name`/`title`，缺省 `entityId`）· 时间（`at`）· 类型（`remote-wins` / `push-noop` / **`stale`** / `conflict` / `skipped` / **`pull-local-wins`**）。
+    - **r6（T643 / A 批）**：新增 kind **`pull-local-wins`**（pull 本地胜记账；loser = **远端**快照，仅 diff 字段 + 身份字段）；**⛔ 禁止复用 `remote-wins`**（否则「以我的版本重试」会把对手内容当我方重推）。`conflict` / `skipped` 补败方快照（仅详情/导出可见，列表语义不变），面板给可见说明 + 内容可复制。
 - **对比（只读）**：**败方快照**（journal）vs **当前实体**（本地表当前行 = 胜方）。**字段级差异仅展示，不做自动合并**（见 §9.2.2 边界）。
 - **组件落点**：复用两端共用的同步状态面板（`apps/web/src/components/sync/sync-status-bar.vue`，desktop 经 `@` 引用）+ 新增冲突弹层；**不新增全局入口**。
 
 **9.2.2 恢复语义（**只提供「用户显式选择」两种动作**）**
 
-| 动作                          | 语义                                                                                                                                            | 边界                                      |
-| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------- |
-| **A. 保留服务端版本**（默认） | 删除该 journal 条（本地已是胜方）⇒ 无副作用                                                                                                     | 不重推、不覆盖                            |
-| **B. 以我的版本重试**         | 把 `loser` 快照**作为一次新的本地写**写回本地表（`updatedAt` = **服务端校准 now**，`markDirty`）⇒ 下轮 push 以**新 base**（当前服务端版本）推送 | 若仍不匹配 ⇒ **再次 journal**（不死循环） |
-| ❌ 自动合并 / 字段级挑选      | ——                                                                                                                                              | **不做**（与「服务端给出确定结论」冲突）  |
+| 动作                          | 语义                                        | 边界           |
+| :---------------------------- | :------------------------------------------ | :------------- |
+| **A. 保留服务端版本**（默认） | 删除该 journal 条（本地已是胜方）⇒ 无副作用 | 不重推、不覆盖 |
+
+> **r6（T643 / A 批，`F-02`）**：`stale` 的动作 A **不再只删条目** —— 必须**真写回**（`serverCurrent` → 本地行 + 新 base + 清队列/条目，**单 Dexie 事务**；base **只前进**）。四例外：①本地有新编辑 ②删除中 ③解密失败（fail-soft）④快照已过期。旧服务端（无 `serverCurrent`）⇒ `pendingNextSync`（「将在下次同步后生效」，**不得假装成功**）。`remote-wins` / `push-noop` 语义**不变**（仅清条目）。
+> | **B. 以我的版本重试** | 把 `loser` 快照**作为一次新的本地写**写回本地表（`updatedAt` = **服务端校准 now**，`markDirty`）⇒ 下轮 push 以**新 base**（当前服务端版本）推送 | 若仍不匹配 ⇒ **再次 journal**（不死循环） |
+> | ❌ 自动合并 / 字段级挑选 | —— | **不做**（与「服务端给出确定结论」冲突） |
 
 **9.2.3 与 PRD「服务端给出确定结论」的边界（哪些冲突**不**自动解、如何可见）**
 
@@ -430,6 +434,7 @@ DecideUpsert(existingCreated, existingUpdated, voCreated, voUpdated, baseUpdated
 - **登出/清库**：journal 随 `meta` 清除（既有 `clearConflictJournal` + 清库范围含 `meta`）⇒ 无跨会话残留。
 
 **9.2.4 R-15（上限张力）**：`CONFLICT_JOURNAL_LIMIT = 50` 环形淘汰 ⇒ **丢最旧败方快照** ⇒ 与「不丢数据」有张力。**r5 落地（DP-2B-5）**：上限 **50 → 200**；淘汰以 `conflictJournalEvictedCount`（非索引字段）累计 + UI **折叠信号**（`folded` / `foldedReason ∈ {'limit','evicted'}`，**两者同真 ⇒ `evicted` 优先**）⇒ **不新增存储机制**；**不做**无限保留（已知局限，同 R-14/R-15b）。
+**r6（T643 / A 批）**：上限**保持 200**；淘汰改按**优先级**（`conflict` 保留位 > `stale/noop/remote-wins/skipped` > `pull-local-wins`，同级取最旧）——防伪 `stale` / 拉取本地胜把真冲突挤掉；`pull-local-wins` 按 `(table, entityId, kind, winnerUpdatedAt)` **去重 + `occurrences`**；文本快照 >512 字符截断并带 `truncated` + `truncatedFields` 双标记。
 
 ### 9.3 ③ 多标签 push 协调（R-3）
 
@@ -530,10 +535,12 @@ DecideUpsert(existingCreated, existingUpdated, voCreated, voUpdated, baseUpdated
 | N3  | **服务端单调 `version` 列 / DB 迁移**                     | 用 `updated_at` 作令牌已足够（§9.1.1）；避免 DB 迁移（R-14 登记）                                       |
 | N4  | **SharedWorker / BroadcastChannel / leader 选举**         | `navigator.locks` 已充分且已验证（§9.3）                                                                |
 | N5  | **删除（`deletions`）纳入 OCC**                           | 保持现行软删语义；登记 R-15b                                                                            |
-| N6  | **自动合并 / 静默重试覆盖**                               | 违「不丢数据 / 可观测」（PS-14）                                                                        |
-| N7  | **迁移优化（全仓测试拆分）**                              | §9.5：无对象 + T119 已证伪全仓 wall 收益                                                                |
-| N8  | **移动端任何改动**                                        | 项目红线                                                                                                |
-| N9  | **偏好面入业务 `syncQueue`**                              | PS-1/PS-10（合成主键不兼容批量 upsert）                                                                 |
+
+> **r6（T643 / A 批，`F-04`）解除 N5 的「不做」**：`deletions` 逐条携带 additive `baseUpdatedAt`（服务端按同一 OCC 语义判定；**缺省 ⇒ 逐字现状「删除优先」**）。客户端侧已落地：载荷带 base、`stale` 回执记账（含本地内容）+ 保留本地行 + 出队 + base 写回、能力探测 `syncStatus.deletionOCCSupported`（回执无 `outcome` ⇒ 旧服务端 ⇒ 不据「没收到 stale」认定已裁决）。服务端属 `nao-todo-server#86`（另一仓）。
+> | N6 | **自动合并 / 静默重试覆盖** | 违「不丢数据 / 可观测」（PS-14） |
+> | N7 | **迁移优化（全仓测试拆分）** | §9.5：无对象 + T119 已证伪全仓 wall 收益 |
+> | N8 | **移动端任何改动** | 项目红线 |
+> | N9 | **偏好面入业务 `syncQueue`** | PS-1/PS-10（合成主键不兼容批量 upsert） |
 
 ### 9.9 连带同步清单（S 项 + Owner）
 
