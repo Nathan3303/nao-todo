@@ -17,10 +17,6 @@
 
 /** 表 → 已知「客户端在发、服务端 sync DTO 不承载」的字段集（集中常量，单一事实源） */
 export const KNOWN_UNSUPPORTED_PUSH_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
-    /** `icon` 无 DTO 承载（`DEF-47` / `DEF-107`：服务端无该列）；`sortId` 自服务端 `f494f9e`（`F-06`）起已承载 */
-    projects: new Set(['icon']),
-    /** `icon` 无 DTO 承载（`DEF-47` 同族：`CreateTagReq` 亦无）；`sortId` 自服务端 `f494f9e`（`F-06`）起已承载 */
-    tags: new Set(['icon']),
     /** `totalDuration` 无 DTO 承载（历史字段，服务端只存 `duration`） */
     pomodoros: new Set(['totalDuration']),
     /** `attachments` / `isTopUp` 自服务端 `7c8f483`（`F-06`）起已入 sync DTO；`deletedAt` 无承载（删除走独立 `deletions`） */

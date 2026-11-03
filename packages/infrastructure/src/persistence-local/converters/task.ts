@@ -111,7 +111,8 @@ export const taskCheckItemRecordToEntity = async (
 
 /**
  * TaskCommentEntity → TaskCommentRecord
- * @description content/nickname/avatar 敏感字段加密存储，attachments 为明文 string[]
+ * @description content/nickname/avatar 敏感字段加密存储，attachments 为明文 string[]；
+ *              `attachments` 允许 `null`（服务端可返 `null`，DEF-132 同族）⇒ 归为空数组后再展开。
  */
 export const taskCommentEntityToRecord = async (
     entity: TaskCommentEntity,
@@ -121,7 +122,7 @@ export const taskCommentEntityToRecord = async (
     userId,
     taskId: entity.taskId,
     content: await cryptoService.encrypt(entity.content),
-    attachments: [...entity.attachments],
+    attachments: [...(entity.attachments ?? [])],
     isTopUp: entity.isTopUp,
     avatar: await cryptoService.encrypt(entity.avatar),
     nickname: await cryptoService.encrypt(entity.nickname),

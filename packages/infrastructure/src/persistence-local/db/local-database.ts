@@ -217,8 +217,11 @@ export interface MetaRecord {
  *              满足「不得静默覆盖丢数据」硬约束。纯追加、有界（环形淘汰）⇒ 不 bump Dexie version / 不加索引。
  */
 export interface ConflictJournalEntry {
-    /** 冲突类型：远端胜（pull 覆盖本地未推修改）/ 服务端 no-op / OCC base 不匹配 / ID 碰撞 / 服务端忽略 */
-    kind: 'remote-wins' | 'push-noop' | 'stale' | 'conflict' | 'skipped'
+    /**
+     * 冲突类型：远端胜（pull 覆盖本地未推修改）/ 服务端 no-op / OCC base 不匹配 / ID 碰撞 / 服务端忽略 /
+     * 拉取本地胜（远端版本被本地待推修改覆盖，T643 / A1）
+     */
+    kind: 'remote-wins' | 'push-noop' | 'stale' | 'conflict' | 'skipped' | 'pull-local-wins'
     /** 业务表名（如 'tasks'） */
     table: string
     /** 实体 id */
@@ -229,6 +232,18 @@ export interface ConflictJournalEntry {
     winnerUpdatedAt?: string
     /** 败方本地 updatedAt */
     loserUpdatedAt?: string
+    /**
+     * 服务端当前行快照（sync 条目形状；T643 / A2）
+     * @description 仅 `stale` 回执携带 additive `serverCurrent` 时落库，供用户稍后点「保留服务端」时
+     *              **离线**写回本地（无额外往返）。旧服务端无该字段 ⇒ 动作走「下次同步后生效」两态。
+     */
+    serverCurrent?: Record<string, unknown>
+    /** 同一裁决重复出现次数（T643 / A1 去重：仅 `pull-local-wins` 累加） */
+    occurrences?: number
+    /** 败方快照是否发生过文本截断（T643 / A3；R-H：>512 字符截断并标记） */
+    truncated?: boolean
+    /** 被截断的字段名（T643 / A3；`truncated === true` 时非空） */
+    truncatedFields?: string[]
     /** 记账时间（ISO） */
     at: string
 }

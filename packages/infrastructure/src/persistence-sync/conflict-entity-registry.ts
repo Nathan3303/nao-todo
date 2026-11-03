@@ -36,9 +36,19 @@ import {
     pomodoroRecordItemToEntity,
     pomodoroRecordToEntity
 } from '../persistence-local/converters/pomodoro'
+import { projectRes2Entity } from '../persistence-go/project/converters'
+import { tagRes2Entity } from '../persistence-go/tag/converters'
+import {
+    taskCheckItemRes2Entity,
+    taskCommentRes2Entity,
+    taskRes2TaskEntity
+} from '../persistence-go/task/converters'
+import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/pomodoro/converters'
 
 /** 本地 record → domain 实体（解密明文；与 `sync-service` 记账 loser 同口径） */
 type RecordEntityConverter = (record: Record<string, unknown>) => Promise<Record<string, unknown>>
+/** 远程 res（sync 条目形状）→ domain 实体（明文；**与 pull 同一条归一链**） */
+type ResEntityConverter = (res: Record<string, unknown>) => { id: string; updatedAt: string }
 /** domain 实体（或同形明文快照）→ 本地 record（加密落库） */
 type EntityRecordConverter = (entity: Record<string, unknown>, userId: string) => Promise<unknown>
 
@@ -46,8 +56,17 @@ type EntityRecordConverter = (entity: Record<string, unknown>, userId: string) =
 export interface ConflictEntityConfig {
     /** 表名（= 远程资源名 = journal `table`） */
     table: string
+    /** 原始 Dexie 表（供「业务行 + 队列 + journal」单一事务使用） */
+    rawTable: Table<Record<string, unknown>, string>
     /** 读本地当前行（不存在 ⇒ undefined） */
     getRecord: (id: string) => Promise<Record<string, unknown> | undefined>
+    /**
+     * 服务端行（sync 条目形状）→ 明文实体
+     * @description **必须与 pull 同一套**（`SYNC_TABLES.resToEntity`）：服务端行的空值哨兵
+     *              （`null` 数组 / `''` 空串）在实体边界归一，否则 `entityToRecord` 的数组展开会抛错
+     *              （DEF-132）。与 `SYNC_TABLES` 的一致性由 `conflict-entity-registry.test.ts` 守护。
+     */
+    resToEntity: ResEntityConverter
     /** 本地行 → 明文实体（只读对比用） */
     recordToEntity: RecordEntityConverter
     /** 明文快照 → 本地行（重试用） */
@@ -64,11 +83,14 @@ export interface ConflictEntityConfig {
 const makeConfig = <T extends { id: string }>(
     table: string,
     tableRef: Table<T, string>,
+    resToEntity: ResEntityConverter,
     recordToEntity: RecordEntityConverter,
     entityToRecord: EntityRecordConverter
 ): ConflictEntityConfig => ({
     table,
+    rawTable: tableRef as unknown as Table<Record<string, unknown>, string>,
     getRecord: (id) => tableRef.get(id) as Promise<Record<string, unknown> | undefined>,
+    resToEntity,
     recordToEntity,
     entityToRecord,
     putRecord: (record) => putWithSyncBase(tableRef, record as T),
@@ -81,42 +103,49 @@ export const CONFLICT_ENTITY_TABLES: ConflictEntityConfig[] = [
     makeConfig(
         'projects',
         localDatabase.projects,
+        projectRes2Entity as unknown as ResEntityConverter,
         projectRecordToEntity as unknown as RecordEntityConverter,
         projectEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'tags',
         localDatabase.tags,
+        tagRes2Entity as unknown as ResEntityConverter,
         tagRecordToEntity as unknown as RecordEntityConverter,
         tagEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'tasks',
         localDatabase.tasks,
+        taskRes2TaskEntity as unknown as ResEntityConverter,
         taskRecordToEntity as unknown as RecordEntityConverter,
         taskEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'taskCheckItems',
         localDatabase.taskCheckItems,
+        taskCheckItemRes2Entity as unknown as ResEntityConverter,
         taskCheckItemRecordToEntity as unknown as RecordEntityConverter,
         taskCheckItemEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'taskComments',
         localDatabase.taskComments,
+        taskCommentRes2Entity as unknown as ResEntityConverter,
         taskCommentRecordToEntity as unknown as RecordEntityConverter,
         taskCommentEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'pomodoros',
         localDatabase.pomodoros,
+        pomodoroRes2Entity as unknown as ResEntityConverter,
         pomodoroRecordToEntity as unknown as RecordEntityConverter,
         pomodoroEntityToRecord as unknown as EntityRecordConverter
     ),
     makeConfig(
         'pomodoroRecords',
         localDatabase.pomodoroRecords,
+        pomodoroRecordRes2Entity as unknown as ResEntityConverter,
         pomodoroRecordItemToEntity as unknown as RecordEntityConverter,
         pomodoroRecordEntityToItem as unknown as EntityRecordConverter
     )

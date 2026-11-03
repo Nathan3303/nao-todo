@@ -85,6 +85,7 @@ vi.mock('@/hooks', async () => {
         loading: ref(false),
         error: ref(null),
         comparison: ref(null),
+        titles: ref({}),
         retryFailed: ref(false),
         refresh: vi.fn(async () => {}),
         compare: vi.fn(async () => {}),

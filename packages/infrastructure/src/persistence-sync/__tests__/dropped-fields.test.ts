@@ -126,9 +126,13 @@ describe('T471 挑拣助手', () => {
     it('非白名单字段被挑出；去重 + 字典序', () => {
         expect(pickUnexpectedDroppedFields(['someNewField'], 'tasks')).toEqual(['someNewField'])
         expect(pickUnexpectedDroppedFields(['b', 'a', 'b'], 'tasks')).toEqual(['a', 'b'])
-        // projects 的 icon 属白名单 ⇒ 只剩真·漂移字段（`sortId` 自服务端 `f494f9e` 起已承载，不再白名单）
+        // A6：`projects.icon` 已移出同步契约 ⇒ 不再进白名单
         expect(pickUnexpectedDroppedFields(['icon', 'someNewField', 'sortId'], 'projects')).toEqual(
-            ['someNewField', 'sortId']
+            ['icon', 'someNewField', 'sortId']
+        )
+        // 仍有「已确认仅本机」字段的表：白名单内的不入真·漂移
+        expect(pickUnexpectedDroppedFields(['totalDuration', 'someNewField'], 'pomodoros')).toEqual(
+            ['someNewField']
         )
     })
 
@@ -141,7 +145,9 @@ describe('T471 挑拣助手', () => {
     })
 
     it('白名单命中判定（含未知表 ⇒ 非已知）', () => {
-        expect(isKnownUnsupportedPushField('projects', 'icon')).toBe(true)
+        // A6：`icon` 已移出同步契约（不再推送）⇒ 非「已知不支持」
+        expect(isKnownUnsupportedPushField('projects', 'icon')).toBe(false)
+        expect(isKnownUnsupportedPushField('pomodoros', 'totalDuration')).toBe(true)
         expect(isKnownUnsupportedPushField('projects', 'sortId')).toBe(false)
         expect(isKnownUnsupportedPushField('taskCheckItems', 'deletedAt')).toBe(true)
         expect(isKnownUnsupportedPushField('projects', 'name')).toBe(false)

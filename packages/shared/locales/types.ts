@@ -65,12 +65,11 @@ export interface LocaleMessages {
     'sync.conflict.foldEvicted': string
     'sync.conflict.empty': string
     'sync.conflict.loading': string
-    'sync.conflict.unknownObject': string
     'sync.conflict.selectHint': string
     'sync.conflict.loadFailed': string
     'sync.conflict.noFieldDiff': string
     'sync.conflict.objectInfo': string
-    'sync.conflict.technicalSection': string
+    'sync.conflict.fieldColumn': string
     'sync.conflict.metaTable': string
     'sync.conflict.metaEntityId': string
     'sync.conflict.metaEntryId': string
@@ -137,6 +136,14 @@ export interface LocaleMessages {
     'sync.conflict.keepServer': string
     'sync.conflict.retryLocal': string
     'sync.conflict.retryFailed': string
+    'sync.conflict.keepServerPending': string
+    'sync.conflict.keepServerFailed': string
+    'sync.conflict.manualRecoveryHint': string
+    'sync.conflict.copyLoser': string
+    'sync.conflict.copySuccess': string
+    'sync.conflict.copyFailed': string
+    'sync.conflict.pullLocalWinsLoserLabel': string
+    'sync.conflict.pullLocalWinsCurrentLabel': string
     'sync.conflict.close': string
     'sync.conflict.table.projects': string
     'sync.conflict.table.tags': string
@@ -150,6 +157,28 @@ export interface LocaleMessages {
     'sync.conflict.kind.stale': string
     'sync.conflict.kind.conflict': string
     'sync.conflict.kind.skipped': string
+    'sync.conflict.kind.pull-local-wins': string
+
+    // 冲突值展示（DEF-133）
+    'sync.conflict.value.unset': string
+    'sync.conflict.value.yes': string
+    'sync.conflict.value.no': string
+    'sync.conflict.value.unknownTag': string
+    'sync.conflict.value.unknownProject': string
+    'sync.conflict.value.inbox': string
+    'sync.conflict.value.noProject': string
+    'sync.conflict.value.listSeparator': string
+    'sync.conflict.value.remindRepeat.none': string
+    'sync.conflict.value.remindRepeat.daily': string
+    'sync.conflict.value.remindRepeat.weekly': string
+    'sync.conflict.value.remindRepeat.monthly': string
+    'sync.conflict.value.weekday.mon': string
+    'sync.conflict.value.weekday.tue': string
+    'sync.conflict.value.weekday.wed': string
+    'sync.conflict.value.weekday.thu': string
+    'sync.conflict.value.weekday.fri': string
+    'sync.conflict.value.weekday.sat': string
+    'sync.conflict.value.weekday.sun': string
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
