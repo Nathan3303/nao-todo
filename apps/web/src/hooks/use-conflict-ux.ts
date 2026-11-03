@@ -14,7 +14,8 @@ import {
     resolveConflictKeepServer,
     resolveConflictRetryLocal,
     type ConflictComparison,
-    type ConflictListItem
+    type ConflictListItem,
+    type ConflictResolutionResult
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 
 export interface ConflictUx {
@@ -26,9 +27,13 @@ export interface ConflictUx {
     comparison: Ref<ConflictComparison | null>
     /** 动作 B 显式失败（无映射/无快照）⇒ 供 UI 提示，不静默 */
     retryFailed: Ref<boolean>
+    /** 动作 A 两态（A2）：旧服务端 ⇒ 「将在下次同步后生效」（不得假装成功） */
+    keepServerPending: Ref<boolean>
+    /** 动作 A 失败（新编辑 / 快照过期 / 解密失败 / 不支持）⇒ 可见失败，条目保留 */
+    keepServerFailed: Ref<boolean>
     refresh: () => Promise<void>
     compare: (item: ConflictListItem) => Promise<void>
-    keepServer: (item: ConflictListItem) => Promise<void>
+    keepServer: (item: ConflictListItem) => Promise<ConflictResolutionResult>
     retryLocal: (item: ConflictListItem) => Promise<void>
 }
 
@@ -40,6 +45,8 @@ export const useConflictUx = (): ConflictUx => {
     const error = ref<string | null>(null)
     const comparison = ref<ConflictComparison | null>(null)
     const retryFailed = ref(false)
+    const keepServerPending = ref(false)
+    const keepServerFailed = ref(false)
 
     const currentUserId = (): string => localSession.getCurrentUserId() ?? ''
 
@@ -72,13 +79,21 @@ export const useConflictUx = (): ConflictUx => {
         comparison.value = await compareConflict(userId, item.table, item.entityId)
     }
 
-    const keepServer = async (item: ConflictListItem): Promise<void> => {
+    const keepServer = async (item: ConflictListItem): Promise<ConflictResolutionResult> => {
         const userId = currentUserId()
-        if (!userId) return
+        if (!userId) return { ok: false, remaining: 0 }
         retryFailed.value = false
-        await resolveConflictKeepServer(userId, item.table, item.entityId)
-        comparison.value = null
-        await refresh()
+        keepServerPending.value = false
+        keepServerFailed.value = false
+        const result = await resolveConflictKeepServer(userId, item.table, item.entityId)
+        // A2 两态：待下次同步 / 失败（条目保留 ⇒ 不静默）
+        keepServerPending.value = result.pendingNextSync === true
+        keepServerFailed.value = !result.ok && !keepServerPending.value
+        if (result.ok) {
+            comparison.value = null
+            await refresh()
+        }
+        return result
     }
 
     const retryLocal = async (item: ConflictListItem): Promise<void> => {
@@ -102,6 +117,8 @@ export const useConflictUx = (): ConflictUx => {
         error,
         comparison,
         retryFailed,
+        keepServerPending,
+        keepServerFailed,
         refresh,
         compare,
         keepServer,

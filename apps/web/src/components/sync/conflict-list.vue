@@ -50,6 +50,8 @@ const {
     error,
     comparison,
     retryFailed,
+    keepServerPending,
+    keepServerFailed,
     refresh,
     compare,
     keepServer,
@@ -62,6 +64,9 @@ onMounted(() => {
 
 /** 长值展开态 */
 const expandedValues = ref<Record<string, boolean>>({})
+
+/** 复制状态（按钮文案反馈；A3 手动处理） */
+const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
 
 const TABLE_KEYS: Record<string, LocaleKey> = {
     projects: 'sync.conflict.table.projects',
@@ -78,7 +83,8 @@ const KIND_KEYS: Record<string, LocaleKey> = {
     'push-noop': 'sync.conflict.kind.push-noop',
     stale: 'sync.conflict.kind.stale',
     conflict: 'sync.conflict.kind.conflict',
-    skipped: 'sync.conflict.kind.skipped'
+    skipped: 'sync.conflict.kind.skipped',
+    'pull-local-wins': 'sync.conflict.kind.pull-local-wins'
 }
 
 const tableLabel = (table: string): string => (TABLE_KEYS[table] ? t(TABLE_KEYS[table]!) : table)
@@ -106,7 +112,10 @@ const isGroupActive = (group: ConflictGroup): boolean =>
 /** 点击对象行 ⇒ 直接展示该对象的最新冲突详情（`compareConflict` 亦取最新条目） */
 const selectGroup = (group: ConflictGroup): void => {
     const item = group.items[group.items.length - 1]
-    if (item) void compare(item)
+    if (item) {
+        copyState.value = 'idle'
+        void compare(item)
+    }
 }
 
 interface DiffRow {
@@ -194,6 +203,52 @@ const runKeepServer = (): void => {
 const runRetryLocal = (): void => {
     if (activeItem.value) void retryLocal(activeItem.value)
 }
+
+/**
+ * 手动处理提示（T643 / A3）：`conflict` / `skipped` 本批**不可自动恢复**（「重新生成 ID」属 `A3b`）
+ * @description 面板给可见说明 + 可复制内容，不承诺一键重建
+ */
+const needsManualRecovery = computed(() => {
+    const kind = activeItem.value?.kind
+    return kind === 'conflict' || kind === 'skipped'
+})
+
+/** 复制状态（按钮文案反馈） */
+const copyLoserLabel = computed(() => {
+    if (copyState.value === 'copied') return t('sync.conflict.copySuccess')
+    if (copyState.value === 'failed') return t('sync.conflict.copyFailed')
+    return t('sync.conflict.copyLoser')
+})
+
+/** 复制败方（我的修改）内容 —— 本机剪贴板，不发网络（R-H） */
+const copyLoser = async (): Promise<void> => {
+    copyState.value = 'idle'
+    const text = JSON.stringify(comparison.value?.loser ?? {}, null, 2)
+    const clipboard = typeof navigator === 'undefined' ? undefined : navigator.clipboard
+    if (!clipboard?.writeText) {
+        copyState.value = 'failed'
+        return
+    }
+    try {
+        await clipboard.writeText(text)
+        copyState.value = 'copied'
+    } catch {
+        copyState.value = 'failed'
+    }
+}
+
+/** A1 `pull-local-wins`：败方是**云端**版本、当前行是**我的**版本 ⇒ 两侧标签不能沿用默认语义 */
+const isPullLocalWins = computed(() => activeItem.value?.kind === 'pull-local-wins')
+const loserSideLabel = computed(() =>
+    isPullLocalWins.value
+        ? t('sync.conflict.pullLocalWinsLoserLabel')
+        : t('sync.conflict.loserLabel')
+)
+const currentSideLabel = computed(() =>
+    isPullLocalWins.value
+        ? t('sync.conflict.pullLocalWinsCurrentLabel')
+        : t('sync.conflict.currentLabel')
+)
 </script>
 
 <template>
@@ -334,7 +389,7 @@ const runRetryLocal = (): void => {
                             </div>
                             <div class="conflict-list__value-row">
                                 <span class="conflict-list__value-source">
-                                    {{ t('sync.conflict.loserLabel') }}
+                                    {{ loserSideLabel }}
                                 </span>
                                 <nue-text size="xs" class="conflict-list__value is-loser">
                                     <span
@@ -363,7 +418,7 @@ const runRetryLocal = (): void => {
                             </div>
                             <div class="conflict-list__value-row">
                                 <span class="conflict-list__value-source">
-                                    {{ t('sync.conflict.currentLabel') }}
+                                    {{ currentSideLabel }}
                                 </span>
                                 <nue-text size="xs" class="conflict-list__value is-current">
                                     <span
@@ -412,7 +467,7 @@ const runRetryLocal = (): void => {
                                 </div>
                                 <div class="conflict-list__value-row">
                                     <span class="conflict-list__value-source">
-                                        {{ t('sync.conflict.loserLabel') }}
+                                        {{ loserSideLabel }}
                                     </span>
                                     <nue-text size="xs" class="conflict-list__value is-loser">
                                         <span class="conflict-list__text">{{ row.loserText }}</span>
@@ -420,7 +475,7 @@ const runRetryLocal = (): void => {
                                 </div>
                                 <div class="conflict-list__value-row">
                                     <span class="conflict-list__value-source">
-                                        {{ t('sync.conflict.currentLabel') }}
+                                        {{ currentSideLabel }}
                                     </span>
                                     <nue-text size="xs" class="conflict-list__value is-current">
                                         <span class="conflict-list__text">{{
@@ -432,6 +487,24 @@ const runRetryLocal = (): void => {
                         </template>
                     </ul>
                 </section>
+
+                <!-- T643 / A3：本批不可自动恢复的条目 ⇒ 可见说明 + 内容可复制（不承诺一键重建） -->
+                <div v-if="needsManualRecovery" class="conflict-list__manual">
+                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                        {{ t('sync.conflict.manualRecoveryHint') }}
+                    </nue-text>
+                    <nue-button theme="pure,small" @click="copyLoser">
+                        {{ copyLoserLabel }}
+                    </nue-button>
+                </div>
+
+                <!-- T643 / A2：「保留服务端」两态（失败 / 待下次同步）⇒ 不静默、不假装成功 -->
+                <nue-text v-if="keepServerPending" size="xs" color="var(--nue-warning-color-90)">
+                    {{ t('sync.conflict.keepServerPending') }}
+                </nue-text>
+                <nue-text v-if="keepServerFailed" size="xs" color="var(--nue-error-color-90)">
+                    {{ t('sync.conflict.keepServerFailed') }}
+                </nue-text>
 
                 <nue-text v-if="retryFailed" size="xs" color="var(--nue-error-color-90)">
                     {{ t('sync.conflict.retryFailed') }}
@@ -760,6 +833,17 @@ const runRetryLocal = (): void => {
 
 .conflict-list__safety {
     color: var(--nue-secondary-text-color);
+}
+
+.conflict-list__manual {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--nue-gap-sm);
+    padding: var(--nue-gap-xs) var(--nue-gap-sm);
+    border-radius: var(--nue-border-radius-sm);
+    background-color: var(--nue-primary-color-100);
 }
 
 .conflict-list__actions {

@@ -141,6 +141,14 @@ const zhCN: LocaleMessages = {
     'sync.conflict.keepServer': '用云端的',
     'sync.conflict.retryLocal': '保留我的修改',
     'sync.conflict.retryFailed': '暂时无法保留：该类型不支持',
+    'sync.conflict.keepServerPending': '将在下次同步后生效',
+    'sync.conflict.keepServerFailed': '暂时无法使用云端版本，请稍后重试',
+    'sync.conflict.manualRecoveryHint': '这类冲突无法自动恢复，可以复制下面的内容自行处理。',
+    'sync.conflict.copyLoser': '复制我的修改',
+    'sync.conflict.copySuccess': '已复制',
+    'sync.conflict.copyFailed': '复制失败，请手动选择文本复制',
+    'sync.conflict.pullLocalWinsLoserLabel': '云端未保留的版本',
+    'sync.conflict.pullLocalWinsCurrentLabel': '我的当前版本',
     'sync.conflict.close': '关闭',
     'sync.conflict.table.projects': '项目',
     'sync.conflict.table.tags': '标签',
@@ -154,6 +162,7 @@ const zhCN: LocaleMessages = {
     'sync.conflict.kind.stale': '云端有更新，需要你选择',
     'sync.conflict.kind.conflict': '数据标识冲突',
     'sync.conflict.kind.skipped': '云端未处理',
+    'sync.conflict.kind.pull-local-wins': '我的修改已覆盖云端',
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': '离线',

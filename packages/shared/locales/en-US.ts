@@ -147,6 +147,16 @@ const enUS: LocaleMessages = {
     'sync.conflict.keepServer': 'Use cloud version',
     'sync.conflict.retryLocal': 'Keep my changes',
     'sync.conflict.retryFailed': 'Cannot keep it: this type is not supported',
+    'sync.conflict.keepServerPending': 'This will take effect after the next sync',
+    'sync.conflict.keepServerFailed':
+        'Cannot use the cloud version right now. Please try again later.',
+    'sync.conflict.manualRecoveryHint':
+        'This kind of conflict cannot be restored automatically. You can copy the content below and handle it manually.',
+    'sync.conflict.copyLoser': 'Copy my changes',
+    'sync.conflict.copySuccess': 'Copied',
+    'sync.conflict.copyFailed': 'Copy failed. Please select the text and copy it manually.',
+    'sync.conflict.pullLocalWinsLoserLabel': 'Cloud version not kept',
+    'sync.conflict.pullLocalWinsCurrentLabel': 'My current version',
     'sync.conflict.close': 'Close',
     'sync.conflict.table.projects': 'Projects',
     'sync.conflict.table.tags': 'Tags',
@@ -160,6 +170,7 @@ const enUS: LocaleMessages = {
     'sync.conflict.kind.stale': 'Cloud has updates; please choose',
     'sync.conflict.kind.conflict': 'Data ID conflict',
     'sync.conflict.kind.skipped': 'Cloud skipped it',
+    'sync.conflict.kind.pull-local-wins': 'Your changes replaced the cloud version',
 
     // Offline identity / gates (SHELL-03)
     'identity.offline': 'Offline',

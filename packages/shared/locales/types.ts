@@ -137,6 +137,14 @@ export interface LocaleMessages {
     'sync.conflict.keepServer': string
     'sync.conflict.retryLocal': string
     'sync.conflict.retryFailed': string
+    'sync.conflict.keepServerPending': string
+    'sync.conflict.keepServerFailed': string
+    'sync.conflict.manualRecoveryHint': string
+    'sync.conflict.copyLoser': string
+    'sync.conflict.copySuccess': string
+    'sync.conflict.copyFailed': string
+    'sync.conflict.pullLocalWinsLoserLabel': string
+    'sync.conflict.pullLocalWinsCurrentLabel': string
     'sync.conflict.close': string
     'sync.conflict.table.projects': string
     'sync.conflict.table.tags': string
@@ -150,6 +158,7 @@ export interface LocaleMessages {
     'sync.conflict.kind.stale': string
     'sync.conflict.kind.conflict': string
     'sync.conflict.kind.skipped': string
+    'sync.conflict.kind.pull-local-wins': string
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
