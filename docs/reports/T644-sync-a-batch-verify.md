@@ -1,6 +1,6 @@
 # T644 数据同步 A 批（`A1`/`A2`/`A3`/`A4`/`A6` + `AC7`/`AC9`）轮次 2 独立复验报告
 
-- 状态：**有条件通过**（26 红逐条转绿 · 断言未被放宽 · 4 处变异均被捕获 · **新增 1 个 P1 跨仓真形状缺陷**）
+- 状态：**轮次 3 终验通过（可合）** —— 26 红逐条转绿 · 断言未放宽 · 4 变异全捕获 · **轮次 2 的 P1（DEF-132）已修复并 7 表真 JSON 复核** · 全仓门禁 9 项全绿（见 §9）
 - 日期：2026-11-03 · Owner：qa（`T644`）· 需求：`T320` A 批
 - 口径：**只读复验**（未改产品代码、未改 RD 用例）；新增用例仅 `F-09` 与「真服务端形状」红基线
 - 基线：客户端 `feat/320-data-sync-a-batch` @ **`9a2c1fa5`**（RD 实现 `72a70855` 数据面 / `565f7924` UI 文案 / `9a2c1fa5` 文档）；我写的口径基线 = `dc7ace4b`
@@ -204,3 +204,100 @@ t644-f09-pseudo-stale-equality.test.ts → 1 file / 2 tests / 1 failed · 1 pass
 pnpm exec vp check → rc=0（1481 files，0 warning/lint/type error）
 pnpm run guard:test-location → rc=0（356 受检，批前 354，+2）
 ```
+
+---
+
+# 轮次 3 终验（T646，2026-11-03）
+
+- 基线：客户端 `feat/320-data-sync-a-batch` @ **`fbd24883`**（RD 返工 `b272d16b` 归一链 · `fbd24883` F-09）；服务端 `feat/320-sync-delete-occ` @ `fe273fc`
+- 结论：**通过，建议可合**（前置：服务端 PR #86 先合并/发布，符合 PRD 发布顺序；UI 走查由用户按清单执行，不阻塞合并）
+
+## 9.1 转绿核（逐条，自己跑）
+
+| 目标                                                  | 结果                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| `t644-a2-real-server-shape.test.ts`                   | **2/2 绿**（轮次 2 的 2 红已转）                                   |
+| `t644-f09-pseudo-stale-equality.test.ts`              | **2/2 绿**（伪 stale 转绿 + 真 stale 护栏仍绿）                    |
+| `t644-a2-comment-null-attachments.test.ts`（RD 新增） | **1/1 绿**                                                         |
+| `t641-*` 7 文件                                       | **31/31 仍绿**                                                     |
+| `conflict-entity-registry.test.ts`                    | **2/2 绿**（RD 新增 1 条「转换器 ≡ SYNC_TABLES」断言，属**加强**） |
+
+**断言未被放宽**：`git diff dc7ace4b..fbd24883 -- '*__tests__*'` 命中 3 改 + 3 新（`t644-*`）；`git diff 59dd5726..HEAD -- '*__tests__*'` 只有 RD 新增的 `t644-a2-comment-null-attachments.test.ts` 与 `conflict-entity-registry.test.ts`（+1 用例，无删减）——**我的 `t641-*` / `t644-*` 文件零改动**。
+
+**归一链真共用**（非第二套实现）：
+
+- `sync-normalize.ts` 是唯一实现；`conflict-journal.ts` 引入 `toLocalProjectId`（写回桶映射），`sync-service.ts` 引入 `toLocalProjectId / toPushProjectId / syncPayloadMatchesServer`（F-09 判等 / pull 映射）——同一模块、同一 `sameSyncValue`；
+- 写回链 = `config.resToEntity(entry.serverCurrent)` → （tasks 桶映射）→ `entityToRecord`，与 pull `applyPullBatch` 的 `resToEntity → entityToRecord` **同一条链**；
+- 注册表新增 `resToEntity` 并新增**同一函数身份**断言（防漂移）。全仓 grep：`sameSyncValue` 仅 1 处定义、1 处调用点（`syncPayloadMatchesServer`）。
+
+## 9.2 变异复跑（4/4 必红，逐字节还原）
+
+| #   | 变异                                               | 目标用例          | 结果                                                                                                                                 | sha1 复原                            |
+| --- | -------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| M1  | 写回跳过 `resToEntity`（直喂 raw `serverCurrent`） | `t646-all-tables` | **3 红**（tasks/projects/tags；tasks 为 `null` 数组导致的 fail-soft 拒绝落库）                                                       | `conflict-journal.ts` `93706e06…` ✅ |
+| M2  | `sameSyncValue` 不归一哨兵（raw 相等）             | `t644-f09`        | **1 红**（伪 stale 又落账）                                                                                                          | `sync-normalize.ts` `f844c9da…` ✅   |
+| M3  | `taskCommentEntityToRecord` 去掉 `?? []`           | `t646-all-tables` | **1 红**（转换器边界 `TypeError`）；注：仅靠 RD 的评论端到端用例**不会**红（`resToEntity` 已归一），故本轮补了转换器边界用例，见 9.3 | `converters/task.ts` `0ec1de57…` ✅  |
+| M4  | A1 去墓碑特判                                      | `t641-a1`         | **1 红**（kind 变 `pull-local-wins`）                                                                                                | `sync-service.ts` `3b6c0e69…` ✅     |
+
+## 9.3 跨仓真形状（终验，非 mock）
+
+服务端真 JSON 由 `go run` 直接调 `controllers.SyncController.Push` 生成（7 表各一条 `stale` + `serverCurrent`），三种空值形态齐全：
+
+| 表              | `serverCurrent` 真实空值形态                                                         |
+| --------------- | ------------------------------------------------------------------------------------ |
+| tasks           | `remindWeekdays: null`、`tags: []`、`remindAt/remindRepeat/remindTime/deletedAt: ''` |
+| taskCheckItems  | `deletedAt/description: ''`                                                          |
+| taskComments    | **`attachments: null`**、`avatar/nickname: ''`                                       |
+| projects        | `archivedAt/deactivedAt/deletedAt: ''`                                               |
+| tags            | `deletedAt/description: ''`                                                          |
+| pomodoros       | `archivedAt/deletedAt: ''`                                                           |
+| pomodoroRecords | `deletedAt/startAt/endAt/taskId/taskName: ''`                                        |
+
+- 新增 `t646-a2-all-tables-real-shape.test.ts`：**7 表逐一**用上述真 JSON 驱动「保留服务端」写回 ⇒ **7/7 不抛错**、落库正确、base 写回、条目清除；另含 1 条**转换器边界**用例（`attachments: null ⇒ []`，用于杀死 M3）。
+- 该文件 **8/8 绿**；服务端契约测试（`TestSyncPushServerCurrent*` / `TestSyncDeletion_BaseUpdatedAtOmitempty` / `TestSyncPushDeletion_RealTimestampAndOCC`）实跑 **ok**（go1.27.3）。
+
+## 9.4 批末全仓门禁（9 项，精确数字）
+
+| 门禁                                                                       | 结果                                                                                                |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ① `pnpm exec vp check`                                                     | **rc=0**（1484 文件，0 warning / lint / type error；格式全通过）                                    |
+| ② 全仓 `NODE_OPTIONS=--no-experimental-webstorage pnpm exec vp test --run` | **rc=0** —— **366 文件（365 通过 + 1 跳过）/ 2907 例（2901 通过 + 6 跳过）/ 0 红**；耗时 210.1s     |
+| ③ `guard:ddd`                                                              | rc=0                                                                                                |
+| ④ `guard:gate-pathspec`                                                    | rc=0                                                                                                |
+| ⑤ `guard:barrel-imports`                                                   | rc=0                                                                                                |
+| ⑥ `guard:mobile-imports`                                                   | rc=0（72 源文件）                                                                                   |
+| ⑦ `guard:test-location`                                                    | rc=0（358 受检 + 8 移动端白名单）                                                                   |
+| ⑧ `pnpm exec vp run webapp build`                                          | **rc=0**（14.38s）                                                                                  |
+| ⑨ `pnpm run desktop:build`                                                 | **rc=0**（16.14s；⚠️ 仅 electron-vite build，未产出 `electron-builder --dir` 可运行包，按派单范围） |
+| 移动端红线                                                                 | `git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**                      |
+
+**基线对比（重要更正）**：派单给的批前基线 `351 文件 / 2846 例` **与当前 main 不符**。我在 `main f29e4a54` 建独立 worktree（`pnpm install --frozen-lockfile --offline`）实跑：**355 文件 / 2862 例 / 0 红**（354 通过 + 1 跳过文件；2856 通过 + 6 跳过例）。⇒ 增量按**实测 main** 计：
+
+| 增量 | 数字                   | 拆解                                                                  |
+| ---- | ---------------------- | --------------------------------------------------------------------- |
+| 文件 | **+11**（355 → 366）   | `t641-*` 7 + `t644-*` 3 + `t646-*` 1（registry 为改文件，非新增）     |
+| 例   | **+45**（2862 → 2907） | `t641-*` 31 + `t644-*` 5 + `t646-*` 8 + `conflict-entity-registry` +1 |
+| 跳过 | 6 → 6（文件 1 → 1）    | 无变化（既有显式 skip）                                               |
+
+## 9.5 体积 / 性能口径（同型夹具 3 次取中位）
+
+夹具：1 清单 + 1 标签 + 5 任务；push 全量；pull 场景 = 1 条本地待推 + 远端同名行（走本地胜记账）。两个 worktree（main `f29e4a54` 与 HEAD `fbd24883`）跑同一夹具：
+
+| 指标                                   | main（批前） | HEAD（本批） | 差值                |
+| -------------------------------------- | ------------ | ------------ | ------------------- |
+| `pushAll` 中位（3 次）                 | 12.531 ms    | 12.576 ms    | **+0.36%**（<5%）   |
+| `pullAll`（本地胜 + 记账）中位（3 次） | 9.318 ms     | 9.667 ms     | **+3.75%**（<5%）   |
+| 单次 push 载荷字节（同一夹具）         | 2360 B       | 2332 B       | **−28 B（−1.19%）** |
+
+- 载荷下降来源 = `A6` 移出 `icon`：清单行 −`"icon":"more2"`、标签行 −`"icon":"tag"`，其余表 0 变化。
+- ⚠️ 口径边界：jsdom + fake-indexeddb 夹具、各 3 次中位；`pullAll` 的 +0.35 ms 与样本内波动同量级（HEAD 样本 8.2/9.7/12.1 ms），**只能判「未超 5%」，不宜当作精确回归幅度**；未做真实浏览器/网络链路耗时对比。
+
+## 9.6 轮次 3 残余未覆盖项
+
+1. **服务端全量 CI / 真 MySQL 集成**未由我执行（仅跑 3 组契约测试 + 真 JSON dump；服务端集成用例属其仓 CI）。
+2. **客户端 ↔ 真服务端联调**未做（用真 JSON 夹具代替；发布顺序仍以服务端先行）。
+3. **性能**：仅 jsdom 夹具 3 次中位，非真实浏览器/网络；样本少（见 9.5）。
+4. **UI 观感/交互**：用户走查未执行（清单已更新并就绪，见 `320-sync-a-batch-user-acceptance.md`）。
+5. 移动端（红线）不覆盖。
+6. `desktop:build` 未产出可运行包（`electron-builder --dir` 未跑，按派单范围）。
+7. 变异 M1 在 projects/tags 上被「icon 不等于 undefined」用例捕获（而非数组展开），属用例内附带捕获；tasks 的 `null` 数组是主证据。
