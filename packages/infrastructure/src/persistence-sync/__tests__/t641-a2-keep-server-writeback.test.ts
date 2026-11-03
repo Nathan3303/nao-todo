@@ -39,11 +39,11 @@ import { SyncService } from '../sync-service'
  *    ④ 快照已过期（服务端版本已新于 `serverCurrent`）⇒ base 只前进不回退，不得写回旧快照；
  * ③ 旧服务端（回执**无** `serverCurrent`）⇒ UI 两态「将在下次同步后生效」，**不得假装成功**。
  *
- * 期望契约形状（评审 Q3 (i)，实现未落地 ⇒ 红基线）：
+ * **PM 冻结形状（2026-11-03，T641 轮次 1 验收后）**：
  * - push 回执的 `stale` 条目携带 additive `serverCurrent`（sync 条目形状）；
- * - journal 条目持久化 `serverCurrent`（供用户稍后点「保留服务端」时离线写回，无额外往返）；
- * - 动作结果新增「待生效」态（本用例兼容 `pendingNextSync: true` 与 `status: 'pending-next-sync'`
- *   两种候选形状，**形状待实现确认**）。
+ * - journal 条目持久化 `serverCurrent`（`entry.serverCurrent`，写回时从条目取，无额外往返）；
+ * - `resolveConflictKeepServer` 返回 `{ ok: boolean; pendingNextSync?: true; error?: string }`
+ *   （旧服务端 ⇒ `pendingNextSync: true`，**不得** `ok:true` 假装生效）。
  *
  * ⚠️ `remote-wins` / `push-noop` 条目的「仅清条目」语义**不变**（由既有
  *    `conflict-ux-api.test.ts` 守护）；本文件只针对 `stale`（`F-02` 真实路径）。
@@ -172,11 +172,9 @@ const serverCurrentTask = (local: TaskEntity, over: Partial<RawRecord> = {}): Ra
 const serverCurrentOf = (entry: unknown): RawRecord | undefined =>
     (entry as { serverCurrent?: RawRecord }).serverCurrent
 
-/** 动作结果「待下次同步生效」两态（候选形状兼容；**形状待实现确认**） */
-const isPendingNextSync = (result: ConflictResolutionResult): boolean => {
-    const extended = result as unknown as { pendingNextSync?: boolean; status?: string }
-    return extended.pendingNextSync === true || extended.status === 'pending-next-sync'
-}
+/** 动作结果「待下次同步生效」（PM 冻结形状：`pendingNextSync?: true`） */
+const isPendingNextSync = (result: ConflictResolutionResult): boolean =>
+    (result as unknown as { pendingNextSync?: boolean }).pendingNextSync === true
 
 /** 直接追加一条 `stale` journal 条目（带 additive `serverCurrent`） */
 const appendStaleEntry = async (
@@ -445,7 +443,7 @@ describe('T641 / A2 旧服务端降级（回执无 serverCurrent）', () => {
         expect(result.ok).toBe(false)
         expect(
             isPendingNextSync(result),
-            'A2 旧服务端降级需返回「待下次同步生效」态（形状待实现确认）'
+            'A2 旧服务端降级需返回 pendingNextSync: true（PM 冻结形状）'
         ).toBe(true)
         // 未写回本地（本地行仍是我的修改）
         expect((await newLocalTaskRepository().get(id))[0]?.name).toBe('我的名字')

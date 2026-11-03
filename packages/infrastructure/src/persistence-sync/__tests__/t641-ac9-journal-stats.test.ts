@@ -6,20 +6,19 @@ import {
     type ConflictJournalEntry,
     type MetaRecord
 } from '../../persistence-local/db/local-database'
+import { localSession } from '../../persistence-local/session/local-session'
 import { conflictJournalId } from '../conflict-journal'
 
 /**
  * T641 / `AC9`（可观测）用例先行（红基线）—— 冲突记录**可按类型 / 表 / 时段统计并可导出**
  *
- * 契约真源：PRD §六 NFR「可观测」· AC9（「冲突记录必须可按类型 / 表 / 时段统计且能被导出；
- *          默认只在本机统计，不做网络上报」）。
- *
- * ⚠️ **形状待实现确认**：AC9 只规定能力，未冻结函数名/返回形状。本用例先写期望形状：
- * - `summarizeConflicts(userId, { from?, to?, bucket?: 'day' }) =>
- *     { total, byKind, byTable, byPeriod: { period, count }[] }`
- *   （时段口径：`at` 按 **ISO 闭区间**过滤；`period` 桶 = UTC 日 `YYYY-MM-DD`）
- * - `exportConflicts(userId, { from?, to? }) => Promise<string>`，JSON 文本含
- *   `{ total, byKind, byTable, byPeriod, entries }`（本机导出，无网络）。
+ * 契约真源：PRD §六 NFR「可观测」· AC9 · **PM 冻结形状（2026-11-03，T641 轮次 1 验收后）**：
+ * - `summarizeConflicts(range?: { from: string; to: string })` ⇒
+ *   `{ total, byKind: Record<string,number>, byTable: Record<string,number>,
+ *      byDay: Array<{ date: string; count: number }> }`
+ *   （`byDay` 按 **UTC 日桶** `YYYY-MM-DD`；`range` 为 **ISO 闭区间**；用户取自当前会话）
+ * - `exportConflicts()` ⇒ **`ConflictExport` 对象**（**不返回字符串** —— UI 侧自行 `JSON.stringify` 下载）：
+ *   `{ version: 1; exportedAt: string; entries: ConflictJournalEntry[] }`。
  *
  * 现状**红**：两函数均未导出（用**动态 import + typeof 守门**，避免红基线破坏 `vp check` 类型面）。
  */
@@ -67,25 +66,29 @@ const FIXTURE_ENTRIES: ConflictJournalEntry[] = [
     }
 ]
 
-interface ConflictStatsLike {
+/** PM 冻结形状：统计结果 */
+interface ConflictSummaryLike {
     total: number
     byKind: Record<string, number>
     byTable: Record<string, number>
-    byPeriod: { period: string; count: number }[]
+    byDay: { date: string; count: number }[]
 }
 
-interface ConflictStatsOptions {
-    from?: string
-    to?: string
-    bucket?: 'day'
+/** PM 冻结形状：导出对象（**不是字符串**） */
+interface ConflictExportLike {
+    version: 1
+    exportedAt: string
+    entries: ConflictJournalEntry[]
+}
+
+interface ConflictSummaryRange {
+    from: string
+    to: string
 }
 
 interface JournalStatsModule {
-    summarizeConflicts?: (
-        userId: string,
-        options?: ConflictStatsOptions
-    ) => Promise<ConflictStatsLike>
-    exportConflicts?: (userId: string, options?: ConflictStatsOptions) => Promise<string>
+    summarizeConflicts?: (range?: ConflictSummaryRange) => Promise<ConflictSummaryLike>
+    exportConflicts?: () => Promise<ConflictExportLike>
 }
 
 const loadStatsModule = async (): Promise<JournalStatsModule> =>
@@ -104,18 +107,19 @@ describe('T641 / AC9 冲突记录统计与导出', () => {
         await localDatabase.projects.clear()
         await localDatabase.tags.clear()
         await localDatabase.tasks.clear()
+        localSession.setCurrentUserId(USER_ID)
         await seedJournal()
     })
 
-    it('AC9 按类型 / 表 / 时段统计（形状待实现确认）', async () => {
+    it('AC9 按类型 / 表 / 时段统计（PM 冻结形状：byDay · UTC 日桶）', async () => {
         const mod = await loadStatsModule()
         expect(
             typeof mod.summarizeConflicts,
-            'AC9 需要 summarizeConflicts(userId, { from?, to?, bucket? })（形状待实现确认）'
+            'AC9 需要 summarizeConflicts(range?: { from, to })（PM 冻结形状）'
         ).toBe('function')
         if (typeof mod.summarizeConflicts !== 'function') return
 
-        const stats = await mod.summarizeConflicts(USER_ID, { bucket: 'day' })
+        const stats = await mod.summarizeConflicts()
 
         expect(stats.total).toBe(5)
         // 按类型（含本批新 kind）
@@ -128,11 +132,11 @@ describe('T641 / AC9 冲突记录统计与导出', () => {
         })
         // 按表
         expect(stats.byTable).toMatchObject({ tasks: 3, projects: 1, tags: 1 })
-        // 按时段（UTC 日桶；空桶不补零）
-        expect(stats.byPeriod).toEqual([
-            { period: '2026-11-01', count: 2 },
-            { period: '2026-11-02', count: 2 },
-            { period: '2026-11-03', count: 1 }
+        // 按时段（`byDay`；UTC 日桶；空桶不补零）
+        expect(stats.byDay).toEqual([
+            { date: '2026-11-01', count: 2 },
+            { date: '2026-11-02', count: 2 },
+            { date: '2026-11-03', count: 1 }
         ])
     })
 
@@ -143,41 +147,40 @@ describe('T641 / AC9 冲突记录统计与导出', () => {
             return
         }
 
-        const stats = await mod.summarizeConflicts(USER_ID, {
+        const stats = await mod.summarizeConflicts({
             from: '2026-11-02T00:00:00.000Z',
-            to: '2026-11-02T23:59:59.999Z',
-            bucket: 'day'
+            to: '2026-11-02T23:59:59.999Z'
         })
 
         expect(stats.total).toBe(2)
         expect(stats.byKind).toMatchObject({ conflict: 1, 'remote-wins': 1 })
         expect(stats.byTable).toMatchObject({ tasks: 1, projects: 1 })
-        expect(stats.byPeriod).toEqual([{ period: '2026-11-02', count: 2 }])
+        expect(stats.byDay).toEqual([{ date: '2026-11-02', count: 2 }])
     })
 
-    it('AC9 可导出（JSON 文本；含败方内容；本机导出无网络上报）', async () => {
+    it('AC9 可导出：返回 ConflictExport 对象（version/exportedAt/entries，含败方内容；不是字符串）', async () => {
         const mod = await loadStatsModule()
         expect(
             typeof mod.exportConflicts,
-            'AC9 需要 exportConflicts(userId, { from?, to? }) => Promise<string>（形状待实现确认）'
+            'AC9 需要 exportConflicts() => ConflictExport 对象（PM 冻结形状：不由函数返回字符串）'
         ).toBe('function')
         if (typeof mod.exportConflicts !== 'function') return
 
-        const exported = await mod.exportConflicts(USER_ID)
-        expect(typeof exported).toBe('string')
-        const parsed = JSON.parse(exported) as {
-            total?: number
-            entries?: unknown[]
-            byKind?: Record<string, number>
-            byTable?: Record<string, number>
-            byPeriod?: unknown[]
-        }
-        expect(parsed.total).toBe(5)
-        expect(parsed.entries).toHaveLength(5)
-        expect(parsed.byKind).toMatchObject({ 'pull-local-wins': 1 })
-        expect(parsed.byTable).toMatchObject({ tasks: 3 })
-        expect(parsed.byPeriod).toHaveLength(3)
+        const exported = await mod.exportConflicts()
+
+        // ⛔ 不得直接返回字符串（UI 侧自行 JSON.stringify 下载）
+        expect(typeof exported).toBe('object')
+        expect(exported.version).toBe(1)
+        expect(Number.isNaN(Date.parse(exported.exportedAt))).toBe(false)
+        expect(exported.entries).toHaveLength(5)
+        expect(exported.entries.map((entry) => entry.entityId).sort()).toEqual([
+            'g1',
+            'p1',
+            't1',
+            't1',
+            't2'
+        ])
         // 导出必须含**败方内容**（R-B：可恢复线索，而非只留一句文案）
-        expect(exported).toContain('败方-t1')
+        expect(JSON.stringify(exported)).toContain('败方-t1')
     })
 })

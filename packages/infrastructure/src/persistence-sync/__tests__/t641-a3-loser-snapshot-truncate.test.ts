@@ -22,13 +22,13 @@ import { SyncService } from '../sync-service'
  * 覆盖（现状**红**）：
  * ① push 回执 `conflict`（ID 碰撞）⇒ journal `loser` **非空**，含本地被拒内容（字段子集）；
  * ② push 回执 `skipped`（服务端忽略）⇒ 同上；
- * ③ 截断口径：>512 字符文本字段 ⇒ 存储值 ≤512 字符且**带截断标记**；短文本原样保留。
+ * ③ 截断口径：>512 字符文本字段 ⇒ 按 **512 字符**截断（尾不追加省略号）且**两种标记都要有**
+ *    （**PM 冻结形状**：`entry.truncated === true` **且** `entry.truncatedFields: string[]`）；短文本原样保留。
  *
  * 红基线原因（现状）：`sync-service` 的 `withSnapshot = outcome === 'noop' || outcome === 'stale'`
  * ⇒ `conflict` / `skipped` 的 `loser` 恒 `{}`（静默：看不出来自己改了什么）。
  *
- * ⚠️ 形状说明（**待实现确认**）：截断标记本用例兼容 `entry.truncated === true` 与
- *    `entry.truncatedFields: string[]` 两种候选（评审只规定「带 `truncated` 标记」，未定层级）。
+ * 形状来源：**PM 冻结（2026-11-03，T641 轮次 1 验收后）** —— 标记**两者同时要求**，不得只留其一。
  */
 
 const USER_ID = 't641-a3-user'
@@ -131,12 +131,9 @@ const pushWithOutcome = async (id: string, outcome: 'conflict' | 'skipped') => {
     return entries[0]!
 }
 
-/** 截断标记（候选形状兼容；**形状待实现确认**） */
-const hasTruncationMarker = (entry: unknown): boolean => {
-    const extended = entry as { truncated?: unknown; truncatedFields?: unknown }
-    if (extended.truncated === true) return true
-    return Array.isArray(extended.truncatedFields) && extended.truncatedFields.length > 0
-}
+/** 截断标记（PM 冻结形状：`truncated` 布尔 **且** `truncatedFields` 字段名数组） */
+const truncationOf = (entry: unknown): { truncated?: unknown; truncatedFields?: unknown } =>
+    entry as { truncated?: unknown; truncatedFields?: unknown }
 
 describe.each(['conflict', 'skipped'] as const)('T641 / A3 %s 留败方内容', (outcome) => {
     beforeEach(async () => {
@@ -170,7 +167,7 @@ describe('T641 / A3 截断口径（>512 字符）', () => {
         await resetLocalState()
     })
 
-    it('AC3 超长文本 ⇒ 存储值 ≤512 字符且带截断标记（内容保留前缀，不整段丢失）', async () => {
+    it('AC3 超长文本 ⇒ 按 512 字符截断 + truncated/truncatedFields 双标记（内容保留前缀）', async () => {
         const longDescription = '标'.repeat(600)
         const id = await makeTask('长描述任务', longDescription)
 
@@ -178,15 +175,16 @@ describe('T641 / A3 截断口径（>512 字符）', () => {
 
         const stored = (entry.loser as RawRecord).description
         expect(typeof stored).toBe('string')
-        expect((stored as string).length).toBeGreaterThan(0)
-        expect((stored as string).length).toBeLessThanOrEqual(512)
+        // 按 512 字符截断（尾不追加省略号）
+        expect((stored as string).length).toBe(512)
         // 截断不得改变内容前缀（用户仍能认出自己的修改）
         expect(longDescription.startsWith(stored as string)).toBe(true)
-        // 必须**明确标注**已截断（R-H）
-        expect(
-            hasTruncationMarker(entry),
-            'R-H 要求截断文本带 truncated 标记（形状待实现确认）'
-        ).toBe(true)
+        // 必须**明确标注**已截断（R-H / PM 冻结形状：两个标记都要）
+        const markers = truncationOf(entry)
+        expect(markers.truncated, '需要 entry.truncated === true').toBe(true)
+        expect(markers.truncatedFields, '需要 entry.truncatedFields 记录被截断字段').toEqual([
+            'description'
+        ])
     })
 
     it('AC3 ≤512 字符 ⇒ 原样保留，不标截断', async () => {
@@ -196,6 +194,8 @@ describe('T641 / A3 截断口径（>512 字符）', () => {
         const entry = await pushWithOutcome(id, 'skipped')
 
         expect((entry.loser as RawRecord).description).toBe(description)
-        expect(hasTruncationMarker(entry)).toBe(false)
+        const markers = truncationOf(entry)
+        expect(markers.truncated).not.toBe(true)
+        expect(markers.truncatedFields ?? []).toEqual([])
     })
 })
