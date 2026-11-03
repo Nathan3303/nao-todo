@@ -87,6 +87,8 @@ type MockConflictUx = {
     compare: ReturnType<typeof vi.fn>
     keepServer: ReturnType<typeof vi.fn>
     retryLocal: ReturnType<typeof vi.fn>
+    resolveTagName?: (id: string) => string | undefined
+    resolveProjectName?: (id: string) => string | undefined
 }
 
 const hooksMock = vi.hoisted(() => ({
@@ -127,7 +129,9 @@ vi.mock('@/hooks', async () => {
         refresh: vi.fn(async () => {}),
         compare: vi.fn(async () => {}),
         keepServer: vi.fn(async () => {}),
-        retryLocal: vi.fn(async () => {})
+        retryLocal: vi.fn(async () => {}),
+        resolveTagName: () => undefined,
+        resolveProjectName: () => undefined
     }
     hooksMock.status = status
     hooksMock.manualSyncing = manualSyncing
@@ -830,5 +834,32 @@ describe('面 ③ i18n 中英键齐备 / 死键守护（T169）', () => {
             .sort()
         // T338：`sync.conflict.title` 已用作对话框标题 ⇒ 冲突命名空间零死键
         expect(unused).toEqual([])
+    })
+})
+describe('DEF-133 详情面板值可读性（不渲染裸 ID / 裸枚举 / 空白）', () => {
+    it('tags ⇒ 标签名、state ⇒ 中文标签、空值 ⇒「未设置」', async () => {
+        await openConflictList(1)
+        const item = conflictItem()
+        conflict().items.value = [item]
+        conflict().resolveTagName = (id) => (id === 'tag-1' ? '工作' : undefined)
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '标题' },
+            current: { name: '标题' },
+            diffs: [
+                { field: 'tags', loser: ['tag-1'], current: [] },
+                { field: 'state', loser: 'todo', current: 'done' }
+            ]
+        }
+        await nextTick()
+
+        const text = dialogText()
+        expect(text).toContain('工作')
+        expect(text).not.toContain('tag-1')
+        expect(text).toContain(messages['zh-CN']['task.state.todo'])
+        expect(text).toContain(messages['zh-CN']['task.state.done'])
+        // 空数组 ⇒「未设置」（不得空白）
+        expect(text).toContain(messages['zh-CN']['sync.conflict.value.unset'])
     })
 })

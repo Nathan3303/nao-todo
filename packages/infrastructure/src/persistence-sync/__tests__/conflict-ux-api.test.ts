@@ -451,3 +451,58 @@ describe('面 ③ API - ⑤ resolveConflictRetryLocal：写回 + markDirty + 新
         expect(await loadConflictJournal(USER_ID)).toHaveLength(1)
     })
 })
+describe('DEF-133 差异面收敛：只遍历败方快照键集（不产出虚假「新增」字段）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('败方部分快照 + 当前完整实体 ⇒ 只出真正改过的字段（3 → 1）', async () => {
+        const taskId = await createLocalTask('服务端标题')
+        const current = await plaintextSnapshot(taskId)
+        expect(current.checkItemCount).toBeDefined()
+        expect(Object.keys(current).length).toBeGreaterThan(1)
+
+        await appendConflict(USER_ID, {
+            kind: 'stale',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { id: taskId, name: '我的标题' },
+            winnerUpdatedAt: SERVER_BASE
+        })
+
+        const comparison = await compareConflict(USER_ID, 'tasks', taskId)
+        // 修复前：current 独有的 revision / checkItemCount / state… 会全部被判「新增」
+        expect(comparison!.diffs).toHaveLength(1)
+        expect(comparison!.diffs[0]).toMatchObject({
+            field: 'name',
+            loser: '我的标题',
+            current: '服务端标题'
+        })
+        expect(comparison!.diffs.some((diff) => diff.current === null)).toBe(false)
+    })
+
+    it('removed / changed 语义保留：快照有而当前取不到 ⇒ removed；两侧不等 ⇒ changed', async () => {
+        const taskId = await createLocalTask('当前标题')
+        await appendConflict(USER_ID, {
+            kind: 'stale',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { id: taskId, name: '我的标题', ghostField: '仅快照有' },
+            winnerUpdatedAt: SERVER_BASE
+        })
+
+        const comparison = await compareConflict(USER_ID, 'tasks', taskId)
+        const byField = new Map(comparison!.diffs.map((diff) => [diff.field, diff]))
+        expect(comparison!.diffs).toHaveLength(2)
+        expect(byField.get('name')).toEqual({
+            field: 'name',
+            loser: '我的标题',
+            current: '当前标题'
+        })
+        expect(byField.get('ghostField')).toEqual({
+            field: 'ghostField',
+            loser: '仅快照有',
+            current: null
+        })
+    })
+})

@@ -7,6 +7,8 @@
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.2
  */
 import { ref, type Ref } from 'vue'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import {
     compareConflict,
@@ -35,9 +37,15 @@ export interface ConflictUx {
     compare: (item: ConflictListItem) => Promise<void>
     keepServer: (item: ConflictListItem) => Promise<ConflictResolutionResult>
     retryLocal: (item: ConflictListItem) => Promise<void>
+    /** DEF-133：`tags` 字段的标签 ID ⇒ 名称（解析不到 ⇒ undefined ⇒ UI 回退「未知标签」） */
+    resolveTagName: (id: string) => string | undefined
+    /** DEF-133：`projectId` ⇒ 清单名称（解析不到 ⇒ undefined ⇒ UI 回退「未知清单」） */
+    resolveProjectName: (id: string) => string | undefined
 }
 
 export const useConflictUx = (): ConflictUx => {
+    const tagsStore = useTagsStore()
+    const projectsStore = useProjectsStore()
     const items = ref<ConflictListItem[]>([])
     const folded = ref(false)
     const foldedReason = ref<'limit' | 'evicted' | null>(null)
@@ -122,6 +130,8 @@ export const useConflictUx = (): ConflictUx => {
         refresh,
         compare,
         keepServer,
-        retryLocal
+        retryLocal,
+        resolveTagName: (id) => tagsStore.getTag(id)?.name,
+        resolveProjectName: (id) => projectsStore.getProject(id)?.name
     }
 }

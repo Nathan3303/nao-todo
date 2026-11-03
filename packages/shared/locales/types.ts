@@ -160,6 +160,27 @@ export interface LocaleMessages {
     'sync.conflict.kind.skipped': string
     'sync.conflict.kind.pull-local-wins': string
 
+    // 冲突值展示（DEF-133）
+    'sync.conflict.value.unset': string
+    'sync.conflict.value.yes': string
+    'sync.conflict.value.no': string
+    'sync.conflict.value.unknownTag': string
+    'sync.conflict.value.unknownProject': string
+    'sync.conflict.value.inbox': string
+    'sync.conflict.value.noProject': string
+    'sync.conflict.value.listSeparator': string
+    'sync.conflict.value.remindRepeat.none': string
+    'sync.conflict.value.remindRepeat.daily': string
+    'sync.conflict.value.remindRepeat.weekly': string
+    'sync.conflict.value.remindRepeat.monthly': string
+    'sync.conflict.value.weekday.mon': string
+    'sync.conflict.value.weekday.tue': string
+    'sync.conflict.value.weekday.wed': string
+    'sync.conflict.value.weekday.thu': string
+    'sync.conflict.value.weekday.fri': string
+    'sync.conflict.value.weekday.sat': string
+    'sync.conflict.value.weekday.sun': string
+
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
     'identity.offlineName': string

@@ -27,13 +27,17 @@ import {
     DIFF_SYMBOL,
     classifyFieldDiff,
     conflictTitleOf,
-    formatFieldValue,
     groupConflictItems,
     isLongValue,
     splitTechnicalDiffs,
     type ConflictGroup,
     type FieldDiffKind
 } from './conflict-diff'
+import {
+    formatConflictValue,
+    isUnsetValue,
+    type ConflictValueResolvers
+} from './conflict-value-format'
 
 defineOptions({ name: 'ConflictList' })
 
@@ -126,7 +130,16 @@ interface DiffRow {
     humanLabel: string
     loserText: string
     currentText: string
+    /** DEF-133：空值 ⇒「未设置」弱化展示（不空白） */
+    loserUnset: boolean
+    currentUnset: boolean
 }
+
+/** 值格式化所需的解析器（store 查询经 `useConflictUx` 注入；缺省 ⇒ 安全回退） */
+const valueResolvers = computed<ConflictValueResolvers>(() => ({
+    tagName: props.ux.resolveTagName,
+    projectName: props.ux.resolveProjectName
+}))
 
 const toRow = (diff: ConflictFieldDiff): DiffRow => {
     const kind = classifyFieldDiff(diff)
@@ -136,8 +149,10 @@ const toRow = (diff: ConflictFieldDiff): DiffRow => {
         symbol: DIFF_SYMBOL[kind],
         label: t(DIFF_LABEL_KEY[kind]),
         humanLabel: fieldLabel(diff.field),
-        loserText: formatFieldValue(diff.loser),
-        currentText: formatFieldValue(diff.current)
+        loserText: formatConflictValue(diff.field, diff.loser, valueResolvers.value),
+        currentText: formatConflictValue(diff.field, diff.current, valueResolvers.value),
+        loserUnset: isUnsetValue(diff.loser),
+        currentUnset: isUnsetValue(diff.current)
     }
 }
 
@@ -399,7 +414,8 @@ const currentSideLabel = computed(() =>
                                                 row.loserText,
                                                 row.field,
                                                 'loser'
-                                            )
+                                            ),
+                                            'is-unset': row.loserUnset
                                         }"
                                         >{{ row.loserText }}</span
                                     >
@@ -428,7 +444,8 @@ const currentSideLabel = computed(() =>
                                                 row.currentText,
                                                 row.field,
                                                 'current'
-                                            )
+                                            ),
+                                            'is-unset': row.currentUnset
                                         }"
                                         >{{ row.currentText }}</span
                                     >
@@ -470,7 +487,11 @@ const currentSideLabel = computed(() =>
                                         {{ loserSideLabel }}
                                     </span>
                                     <nue-text size="xs" class="conflict-list__value is-loser">
-                                        <span class="conflict-list__text">{{ row.loserText }}</span>
+                                        <span
+                                            class="conflict-list__text"
+                                            :class="{ 'is-unset': row.loserUnset }"
+                                            >{{ row.loserText }}</span
+                                        >
                                     </nue-text>
                                 </div>
                                 <div class="conflict-list__value-row">
@@ -478,9 +499,11 @@ const currentSideLabel = computed(() =>
                                         {{ currentSideLabel }}
                                     </span>
                                     <nue-text size="xs" class="conflict-list__value is-current">
-                                        <span class="conflict-list__text">{{
-                                            row.currentText
-                                        }}</span>
+                                        <span
+                                            class="conflict-list__text"
+                                            :class="{ 'is-unset': row.currentUnset }"
+                                            >{{ row.currentText }}</span
+                                        >
                                     </nue-text>
                                 </div>
                             </li>
@@ -797,6 +820,12 @@ const currentSideLabel = computed(() =>
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
+}
+
+/* DEF-133：空值（「未设置」）弱化，不空白 */
+.conflict-list__text.is-unset {
+    color: var(--nue-secondary-text-color);
+    font-style: italic;
 }
 
 .conflict-list__value-toggle {

@@ -172,6 +172,27 @@ const enUS: LocaleMessages = {
     'sync.conflict.kind.skipped': 'Cloud skipped it',
     'sync.conflict.kind.pull-local-wins': 'Your changes replaced the cloud version',
 
+    // Conflict value display (DEF-133)
+    'sync.conflict.value.unset': 'Not set',
+    'sync.conflict.value.yes': 'Yes',
+    'sync.conflict.value.no': 'No',
+    'sync.conflict.value.unknownTag': 'Unknown tag',
+    'sync.conflict.value.unknownProject': 'Unknown list',
+    'sync.conflict.value.inbox': 'Inbox',
+    'sync.conflict.value.noProject': 'No list selected',
+    'sync.conflict.value.listSeparator': ', ',
+    'sync.conflict.value.remindRepeat.none': 'No repeat',
+    'sync.conflict.value.remindRepeat.daily': 'Daily',
+    'sync.conflict.value.remindRepeat.weekly': 'Weekly',
+    'sync.conflict.value.remindRepeat.monthly': 'Monthly',
+    'sync.conflict.value.weekday.mon': 'Monday',
+    'sync.conflict.value.weekday.tue': 'Tuesday',
+    'sync.conflict.value.weekday.wed': 'Wednesday',
+    'sync.conflict.value.weekday.thu': 'Thursday',
+    'sync.conflict.value.weekday.fri': 'Friday',
+    'sync.conflict.value.weekday.sat': 'Saturday',
+    'sync.conflict.value.weekday.sun': 'Sunday',
+
     // Offline identity / gates (SHELL-03)
     'identity.offline': 'Offline',
     'identity.offlineName': '{name} (offline)',

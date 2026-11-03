@@ -164,6 +164,27 @@ const zhCN: LocaleMessages = {
     'sync.conflict.kind.skipped': '云端未处理',
     'sync.conflict.kind.pull-local-wins': '我的修改已覆盖云端',
 
+    // 冲突值展示（DEF-133）
+    'sync.conflict.value.unset': '未设置',
+    'sync.conflict.value.yes': '是',
+    'sync.conflict.value.no': '否',
+    'sync.conflict.value.unknownTag': '未知标签',
+    'sync.conflict.value.unknownProject': '未知清单',
+    'sync.conflict.value.inbox': '收集箱',
+    'sync.conflict.value.noProject': '未选择清单',
+    'sync.conflict.value.listSeparator': '、',
+    'sync.conflict.value.remindRepeat.none': '不重复',
+    'sync.conflict.value.remindRepeat.daily': '每天',
+    'sync.conflict.value.remindRepeat.weekly': '每周',
+    'sync.conflict.value.remindRepeat.monthly': '每月',
+    'sync.conflict.value.weekday.mon': '周一',
+    'sync.conflict.value.weekday.tue': '周二',
+    'sync.conflict.value.weekday.wed': '周三',
+    'sync.conflict.value.weekday.thu': '周四',
+    'sync.conflict.value.weekday.fri': '周五',
+    'sync.conflict.value.weekday.sat': '周六',
+    'sync.conflict.value.weekday.sun': '周日',
+
     // Offline identity / gates（SHELL-03）
     'identity.offline': '离线',
     'identity.offlineName': '{name}（离线）',

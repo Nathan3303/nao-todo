@@ -396,14 +396,22 @@ const valuesEqual = (a: unknown, b: unknown): boolean => {
     }
 }
 
-/** 逐字段差异（**仅差异**入列；任一侧缺失时以 `null` 呈现） */
+/**
+ * 逐字段差异（**仅差异**入列；任一侧缺失时以 `null` 呈现）
+ *
+ * @description 比较面 = **败方快照的键集**（`Object.keys(loser)`），不是 `loser ∪ current`。
+ *   loser 是**部分快照**（A1/A3 只存 diff 字段 + 身份字段，见 ADR `R-H`），current 是
+ *   `recordToEntity(record)` 的**完整实体** ⇒ 若对两侧键集求并集，只在 current 出现的字段
+ *   会全部被判「新增」（反之「删除」），详情面板因此展示大量**没被改过**的字段（DEF-133）。
+ *   快照定义了「本次比较面」：快照里有、当前行取不到 ⇒ removed；两侧都有且不等 ⇒ changed；
+ *   **不因** current 多出键而产出 added。
+ */
 const diffFields = (
     loser: Record<string, unknown> | null,
     current: Record<string, unknown> | null
 ): ConflictFieldDiff[] => {
-    const fields = new Set([...Object.keys(loser ?? {}), ...Object.keys(current ?? {})])
     const diffs: ConflictFieldDiff[] = []
-    for (const field of fields) {
+    for (const field of Object.keys(loser ?? {})) {
         const loserValue = loser ? (loser[field] ?? null) : null
         const currentValue = current ? (current[field] ?? null) : null
         if (!valuesEqual(loserValue, currentValue)) {
