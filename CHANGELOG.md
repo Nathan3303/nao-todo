@@ -2,6 +2,16 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.16.5] - 2026-11-03
+
+三处小缺陷修复（PR #318 · squash `883934f4` · 发版说明 `docs/releases/v1.16.5.md` · 无 PRD —— 三单均为既有缺陷，其中两单由用户报障）：
+
+- **`DEF-131`（P2，报障）**：番茄专注页「专注依赖 → 任务专注」页签**恒显示「暂无待办任务」**。根因 = `use-task-panel.ts` 的 options 带 `relativeDate: '-overdue'`，本地仓储 `matchRelativeDate` 把 `endAt` 早于**此刻**的未完成任务全排除（今天 date-only = 今日 00:00 亦判逾期）⇒ 未完成任务都带截止日期时恒空。修法 = **移除该过滤**（面板语义 = 列全部未完成任务；逾期任务更需专注），其余条件（`state=todo,in-progress` / `limit=10` / 未删除·未归档·未放弃 / priority desc）不变。**端到端取证**（真浏览器 + 真本地库）：带 `-overdue` 2 条 / 去掉 5 条 / `-today` 3 条；全逾期账号 0 → 3 条复现。**双层回归**：仓储层（4 截止形态 × 3 状态）+ 面板层（真组件真适配器），QA 自做变异回退 ⇒ 3 红。
+- **`DEF-128`（P3）**：番茄专注页两处点击型 `nue-link`（无 `route`/`href`）⇒ 键盘不可达。改原生 `button` 复用 `.nue-link` / `.nue-text--task-select-trigger` 主题类；**首轮只修组件默认插槽**，真实调用点 `pomodoro/index.vue` 用 `#default` 覆写插槽（渲染 SPAN、`tabIndex=-1`）⇒ 由 QA 页面级复验证伪后补修，并把用例**上移到页面级**（真挂 `pomodoro/index.vue`、不 stub 下拉），回退即 3 红。
+- **`DEF-130`（P3）**：`records/filter-panel.vue` 的 `clearable` 被拼成 `clearabl` ⇒ 「专注模板」选择器清除键**从未渲染**；已修正 + 2 例断言。
+- **门禁**：`vp check` 0 error（1822 格式 / 1472 文件）· 全仓 **355 文件 / 2862 例 / 0 红**（`v1.16.4` 推算基线 351 / 2846）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行 · 用户视觉走查 **14/14 通过**。
+- **Tag `v1.16.5`** · root / `apps/web` / `apps/desktop` `1.16.4 → 1.16.5`（PATCH）；`packages/*` 按近批惯例不 bump。**无服务端改动**。
+
 ## [v1.16.4] - 2026-11-02
 
 组件库 `nue-ui` **`1.13.0 → 1.15.3`** + 主题 `0.13.28 → 0.13.30`，并**回收本仓为绕过 `DEF-116` 自建的 `NaoRouterLink` 规避**（PR #316 · squash `8e4cbc85` · PRD `docs/prds/2026-11-02-nue-ui-1.15.3-upgrade.md` · ADR `docs/adr/2026-11-02-nue-ui-upgrade-and-workaround-retire.md` · 发版说明 `docs/releases/v1.16.4.md`）：
