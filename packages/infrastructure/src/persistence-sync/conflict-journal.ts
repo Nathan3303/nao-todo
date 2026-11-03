@@ -17,6 +17,7 @@ import {
 import { localSession } from '../persistence-local/session/local-session'
 import { findConflictEntity } from './conflict-entity-registry'
 import { nowCalibratedIso } from './sync-config'
+import { toLocalProjectId } from './sync-normalize'
 import { syncStatus } from './sync-status'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
@@ -538,10 +539,25 @@ export const resolveConflictKeepServer = async (
             return { ok: false, remaining: before, error: 'snapshot-expired' }
         }
         // 正常路径：服务端行写回本地 + 保留新 base + 清队列/条目（单 Dexie 事务）
-        const record = (await config.entityToRecord({ ...entry.serverCurrent }, userId)) as Record<
-            string,
-            unknown
-        >
+        // A2（DEF-132）：⛔ 不得把 raw `serverCurrent` 直接喂 `entityToRecord` —— 服务端行含
+        //   `null` 数组 / `''` 空串哨兵（真服务端实测：`remindWeekdays: null` / `tags: null`），
+        //   而 `taskEntityToRecord` / `taskCommentEntityToRecord` 会对数组做展开 ⇒ TypeError。
+        //   ⇒ 必须先走**与 pull 同一条归一链**（`resToEntity` → `entityToRecord`）。
+        let record: Record<string, unknown>
+        try {
+            const entity = config.resToEntity(entry.serverCurrent) as unknown as Record<
+                string,
+                unknown
+            >
+            // 与 pull 落库边界一致：服务端隐式桶（`userId`）⇒ 本地字面 `'inbox'`（R-5 / T188）
+            if (table === 'tasks') {
+                entity.projectId = toLocalProjectId(entity.projectId, userId)
+            }
+            record = (await config.entityToRecord(entity, userId)) as Record<string, unknown>
+        } catch {
+            // 例外③：解密/转换失败 ⇒ fail-soft（不改行 + 不清条目 + 可见失败）
+            return { ok: false, remaining: before, error: 'decrypt-failed' }
+        }
         // A6：`icon` 为「仅本机」字段（服务端不承载）⇒ 写回时保留本地图标，不被快照重置
         if (
             (table === 'projects' || table === 'tags') &&
