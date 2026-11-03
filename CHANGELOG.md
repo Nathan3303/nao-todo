@@ -2,6 +2,22 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.17.0] - 2026-11-03
+
+**数据同步止血批（A 批）**：把「整行后写覆盖」里**静默丢失**的部分改为**可见 / 可对比 / 可恢复**，并补齐三处契约缺口（PR #321 · Issue #320 · PRD `docs/prds/2026-11-03-data-sync-a-batch.md` · ADR `docs/adr/2026-11-03-sync-conflict-journal-crypto.md` · 发版说明 `docs/releases/v1.17.0.md`）：
+
+- **`A1`（`F-01`，P0）**：拉取「本地胜」分支落冲突记录（新 kind `pull-local-wins`，loser = 远端快照 + 逐字段 diff）+ 去重/`occurrences` + 淘汰优先级；**墓碑硬约束**（远端为墓碑时不走本地胜，修「确定性复活墓碑」——`F-04` 复活主因）。
+- **`A2`（`F-02`）**：「用云端的」**真写回**（`serverCurrent` → `resToEntity` 归一 → 本地行 + 新 base + 清队列/条目，单事务、base 只前进；四条不写回例外 + UI 失败/待生效两态）。
+- **`A3`（`F-03`）**：`conflict`/`skipped` 补败方内容（512 截断 + `truncated`/`truncatedFields`）。
+- **`A4`（`F-04`）**：`deletions` 带 `baseUpdatedAt` + 服务端删除 OCC 守卫（缺 base 保持删除优先 ⇒ **老客户端逐字不变**）+ **回传库中真实 `updated_at`** + `SyncResult.serverCurrent`（additive，仅 stale/noop）。
+- **`A6`（`F-06`）**：清单/标签 `icon` **移出同步契约**（零 DDL；`push` 载荷 **−1.19%**）。
+- **`F-09`**：伪 stale 判等（`serverCurrent` 与载荷归一后相等 ⇒ `applied`，不落账）。
+- **`AC9`/`AC7`**：冲突记录按类型/表/UTC 日统计可导出；新 kind 用户可读文案（zh/en）。
+- **走查中修复**：`DEF-132`（P1 · 写回不兼容真服务端 `serverCurrent` 形状）· `DEF-133`（虚假字段 + 值可读）· `DEF-134`（Git diff 左右对照）· `DEF-135`（值去框 + 空值判等归一）· `DEF-136`（差异区改 `nue-table` + 技术字段并入）。
+- **验证**：全仓 **368 文件 +1 跳过 / 2938 例 +6 跳过 / 红 0** · `vp check` 0 error（1846 / 1489）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行 · QA 三轮复验 + 变异 4/4 + 7 表真 JSON 写回 · 用户视觉走查全部通过。
+- **跨仓**：`nao-todo-server#86` ⇒ `521b19cb`（已合并，**需部署**后 `A2` 完整生效）。
+- **Tag `v1.17.0`** · root / `apps/web` / `apps/desktop` `1.16.5 → 1.17.0`（MINOR）。
+
 ## [v1.16.5] - 2026-11-03
 
 三处小缺陷修复（PR #318 · squash `883934f4` · 发版说明 `docs/releases/v1.16.5.md` · 无 PRD —— 三单均为既有缺陷，其中两单由用户报障）：
