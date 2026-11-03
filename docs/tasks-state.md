@@ -3,6 +3,8 @@
 > 每次派发 / 回执 / 验收 / 抢占后更新本文件；PM 会话重开（`ensure --force`）后**先读本文件重建状态**再继续调度，不依赖历史消息。
 > 归档后的历史见 `docs/prds/` 与 `docs/adr/`；本文件只记**运行时**任务状态，保持精简（**已终签批次只留一行 + 提交号**）。
 
+- **环境备忘（2026-11-03，非项目代码）**：飞书远程控制已接入 —— `pi-remote-feishu@0.1.6`（全局 pi 包，**bin 不在 PATH**，需用 `~/.pi/agent/npm/node_modules/.bin/pi-remote-feishu`）· 配置 `nao-todo/.pi/feishu.json`（**chmod 600 + 已被 `.gitignore` 忽略**）· 桥接以 `setsid nohup … serve --cwd .` 常驻、日志 `/tmp/feishu.log`（**⛔ 不用 tmux 托管**，同 dev 服务纪律）。**三项踩坑**：① `init` 生成的 `policy.allowUsers: []` **不是「允许所有」而是「谁都不允许」**（`contains()` 只有**未配置**才放行）⇒ 已删除该键、改用 `allowChats` 锁定单个私聊会话；② 默认渲染 `stream-card` 需飞书权限 **`cardkit:card:write`**（缺则 `400/99991672`；**权限改动必须发布版本**才生效）；③ `rendering.mode: "text"` 是**静默执行**（源码注释即如此）⇒ 只出「Pi 已完成」无正文，**不要用它代替卡片**。**本地补丁（升级会覆盖）**：`dist/feishu/channel.js` 的 `normalizeMessage` 未读 SDK 归一字段 **`senderId`** ⇒ 私聊身份恒 `unknown`、会话 key 成 `dm:unknown`；已补 `readString(record,"senderId")` 兜底（备份 `channel.js.orig-backup`），key 变为 `dm:ou_…`。建议给上游 `grin-coder/pi-remote-feishu` 提 Issue（字段名与 SDK 不匹配）。
+
 ## PM 接续快照（会话重开后**先读本区**）
 
 > 本区是 PM 的**悬空状态**（任务状态见下方五栏）。每次重开前更新；重开后逐行回读确认（当前阶段 · 未决决策 · 口头约束）。
