@@ -126,15 +126,17 @@ const describeEl = (el: Element | undefined): string =>
 describe('DEF-128 · 页面级：「专注」触发入口为原生可聚焦 button', () => {
     it('① 真实页面渲染 BUTTON[type=button]（不是 SPAN / 无 href 的 A），tabIndex >= 0', async () => {
         const w = await mountPage()
-        const trigger = triggerOf(w).element
-        const detail = describeEl(trigger)
-
-        expect(trigger, `页面上未找到触发入口：${detail}`).toBeTruthy()
-        // 反断言：被测入口所在的组件必须是**真实**组件（防今后误 stub 掉而“测了个假页面”）
+        // 反断言先行（L5）：被测入口所在的组件必须是**真实**组件（防今后误 stub 掉而“测了个假页面”）。
+        // 必须先于 `.element` 取值 —— 一旦被误 stub，`.element` 会先抛
+        // `Cannot call element on an empty DOMWrapper`，掩盖真实原因（L5）。
         expect(
             w.findComponent({ name: 'PomodoroFocusDependDropdown' }).exists(),
             'PomodoroFocusDependDropdown 不得被 stub'
         ).toBe(true)
+        const trigger = triggerOf(w).element
+        const detail = describeEl(trigger)
+
+        expect(trigger, `页面上未找到触发入口：${detail}`).toBeTruthy()
         expect(trigger.tagName, `应为原生 button：${detail}`).toBe('BUTTON')
         expect(trigger.getAttribute('type'), detail).toBe('button')
         expect((trigger as HTMLElement).tabIndex, detail).toBeGreaterThanOrEqual(0)

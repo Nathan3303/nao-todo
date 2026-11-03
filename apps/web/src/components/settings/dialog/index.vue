@@ -196,15 +196,20 @@ onUnmounted(unbindSettingsDialogHost)
                 </button>
             </div>
             <!-- 右侧 / 下方：当前分类面板（外框定尺，仅本区内部滚动）。
-                 4 个面板壳恒在（`role=tabpanel` + `aria-labelledby` 回指 tab，非当前项 `hidden`），
-                 但**只有当前项渲染内容**（其它类的设置行不得同时存在，AC1/AC7）。 -->
+                 4 个面板壳恒在（非当前项 `hidden`），但**只有当前项渲染内容**
+                 （其它类的设置行不得同时存在，AC1/AC7）。
+                 DEF-83：面板语义**随形态切换、同一时刻只有一套** ——
+                 桌面（真 `tablist`/`tab`）⇒ `role=tabpanel` + `aria-labelledby` 回指 tab id；
+                 窄屏（`segmented-switch`，无 tab 语义）⇒ `role=group` + `aria-label`（分类名），
+                 **不得**留悬空 `aria-labelledby`（窄屏无 tab id ⇒ 读屏拿不到面板名）。 -->
             <div class="sd-panel">
                 <div
                     v-for="category in categories"
                     :id="panelIdOf(category.id)"
                     :key="category.id"
-                    role="tabpanel"
-                    :aria-labelledby="tabIdOf(category.id)"
+                    :role="isNarrow ? 'group' : 'tabpanel'"
+                    :aria-label="isNarrow ? t(category.nameKey) : undefined"
+                    :aria-labelledby="isNarrow ? undefined : tabIdOf(category.id)"
                     :hidden="category.id !== activeCategoryId"
                 >
                     <component

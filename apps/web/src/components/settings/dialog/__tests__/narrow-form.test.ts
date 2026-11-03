@@ -4,7 +4,8 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { nextTick, ref, type Ref } from 'vue'
 import { nueUI } from '@/nue-ui-register'
-import { t } from '@nao-todo/shared/locales'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { responsiveTypes, useResponsiveAside, useResponsiveFlag } from '@nao-todo/shared/hooks'
 import SettingsDialog from '../index.vue'
 import { unbindSettingsDialogHost } from '../state'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
@@ -425,5 +426,210 @@ describe('AC4 T521 守卫（改写后必须保留）', () => {
         // 窄屏 4 段标签文案走 i18n（不得硬编码）
         expect(dialogSource()).not.toMatch(/>\s*(账户|外观|提醒|数据)\s*</)
         expect(t('settings.profile').length).toBeGreaterThan(0)
+    })
+})
+
+/**
+ * DEF-83 · 窄屏不伪造 tab 语义（面板壳按形态切换语义）
+ *
+ * 缺陷：窄屏（≤445px）导航是 `segmented-switch`（`group` + `aria-pressed`，**无** `tablist`/`tab`），
+ * 而 4 个面板壳**无条件**带 `role="tabpanel"` + `aria-labelledby="settings-tab-<id>"` ⇒ 该 id 在窄屏
+ * **不存在**（悬空引用），读屏拿不到面板名。
+ *
+ * 裁定（PM）：**窄屏不伪造 tab 语义** —— 面板壳用 `role="group"` + `aria-label="<分类名>"`，
+ * 不列 `aria-labelledby`；桌面（真 tablist/tab）保持 `tabpanel` + `aria-labelledby` 回指。
+ * **同一时刻只有一套语义**。
+ *
+ * 窄屏驱动走**真实链路**（`ResizeObserver` → `useResponsiveFlag` → `useResponsiveAside` ⇒
+ * 注入的 `isUseFloatAside`），不直接翻 ref —— 契约锚点与生产一致（jsdom 无布局引擎 ⇒
+ * 桩 RO 按回调回报视口宽，同 `T549` 手法 `records-responsive-harness`）。
+ */
+describe('DEF-83 窄屏面板语义（group + aria-label，无悬空 aria-labelledby）', () => {
+    const NAME_KEYS: Record<(typeof CATEGORY_IDS)[number], LocaleKey> = {
+        account: 'settings.ia.account.name',
+        appearance: 'settings.ia.appearance.name',
+        reminder: 'settings.ia.reminder.name',
+        data: 'settings.ia.data.name'
+    }
+
+    let roCallback: ResizeObserverCallback | null = null
+    let sharedFlag: Ref<number> | null = null
+
+    /**
+     * 装 RO 桩并取共享响应式标记（`useResponsiveFlag` 在模块级缓存 observer ⇒ 只装一次、
+     * 否则第二次调用拿到的新 `flag` 不会被任何回调驱动）。
+     */
+    const ensureResponsive = (): Ref<number> => {
+        if (sharedFlag) return sharedFlag
+        vi.stubGlobal(
+            'ResizeObserver',
+            class {
+                constructor(callback: ResizeObserverCallback) {
+                    roCallback = callback
+                }
+                observe(): void {
+                    // jsdom 无布局引擎：观察本身无意义，宽度由 fireWidth 显式回报
+                }
+                unobserve(): void {
+                    // 同上
+                }
+                disconnect(): void {
+                    // 同上
+                }
+            }
+        )
+        sharedFlag = useResponsiveFlag().flag
+        expect(roCallback, 'RO 未被 useResponsiveFlag 注册（链路已被别处抢先建立）').not.toBeNull()
+        return sharedFlag
+    }
+
+    /** 按视口宽回报（等价真机 resize 到该宽度） */
+    const fireWidth = (width: number): void => {
+        expect(roCallback, 'RO 回调未注册').not.toBeNull()
+        roCallback!(
+            [{ contentRect: { width } }] as unknown as ResizeObserverEntry[],
+            {} as ResizeObserver
+        )
+    }
+
+    /** 真实钩子链挂载：`isFloating` 即生产注入的 `isUseFloatAside` */
+    const mountResponsive = (): VueWrapper => {
+        const flag = ensureResponsive()
+        const { isFloating, visible, switchVisible } = useResponsiveAside(
+            flag,
+            responsiveTypes.MOBILE
+        )
+        mocks.syncStatusRef.value = defaultSyncStatus()
+        wrapper = mount(SettingsDialog, {
+            global: {
+                plugins: [createPinia(), nueUI],
+                provide: {
+                    [INDEX_VIEW_CONTEXT_KEY as symbol]: {
+                        appSubscriber: {},
+                        appDialogManager: { open: vi.fn(), close: vi.fn() },
+                        isDisplayAside: visible,
+                        isUseFloatAside: isFloating,
+                        switchDisplayAside: switchVisible
+                    }
+                },
+                components: { 'nue-dialog': NueDialogStub }
+            }
+        })
+        return wrapper
+    }
+
+    /** 悬空 `aria-labelledby` 清点（指向 DOM 内不存在的 id 即缺陷） */
+    const danglingLabelledBy = (view: VueWrapper): string[] => {
+        const root = view.element as unknown as HTMLElement
+        const ids = new Set(Array.from(root.querySelectorAll('[id]')).map((el) => el.id))
+        const missing: string[] = []
+        for (const el of Array.from(root.querySelectorAll('[aria-labelledby]'))) {
+            const tokens = (el.getAttribute('aria-labelledby') ?? '').split(/\s+/).filter(Boolean)
+            for (const token of tokens) {
+                if (!ids.has(token)) missing.push(`${el.tagName.toLowerCase()}#${el.id} → ${token}`)
+            }
+        }
+        return missing
+    }
+
+    it('窄屏（360px）⇒ 无 tab/tablist/tabpanel；4 个面板壳 = group + aria-label，无悬空 aria-labelledby', async () => {
+        const view = mountResponsive()
+        await nextTick()
+        fireWidth(360)
+        await nextTick()
+
+        expect(
+            view.find('.sd-body').classes(),
+            'RO 回报 360px 后未进入窄屏形态（链路未生效）'
+        ).toContain('is-narrow')
+
+        // ① 窄屏不得出现 tab 语义（导航与面板两侧）
+        expect(view.find('[role="tablist"]').exists()).toBe(false)
+        expect(view.find('[role="tab"]').exists()).toBe(false)
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(0)
+
+        // ② 4 个面板壳：group + 分类名，且**不再**列 aria-labelledby
+        const panels = view.findAll('.sd-panel > div')
+        expect(panels).toHaveLength(CATEGORY_IDS.length)
+        for (const [index, category] of CATEGORY_IDS.entries()) {
+            const panel = panels[index]!
+            expect(panel.attributes('id')).toBe(`settings-panel-${category}`)
+            expect(panel.attributes('role'), `${category} 面板窄屏应 role=group`).toBe('group')
+            expect(
+                panel.attributes('aria-labelledby'),
+                `${category} 面板窄屏残留 aria-labelledby（悬空引用）`
+            ).toBeUndefined()
+            expect(panel.attributes('aria-label'), `${category} 面板窄屏缺可访问名`).toBe(
+                t(NAME_KEYS[category])
+            )
+        }
+
+        // ③ 全对话框无悬空 aria-labelledby（不是只查面板壳）
+        expect(danglingLabelledBy(view)).toEqual([])
+    })
+
+    it('窄屏切换分类 ⇒ 语义不变（仍 group），当前面板可访问名随之更新', async () => {
+        const view = mountResponsive()
+        await nextTick()
+        fireWidth(360)
+        await nextTick()
+
+        await view.findAll('.segmented-btn')[2]!.trigger('click')
+        await nextTick()
+
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(0)
+        const current = view.find('#settings-panel-reminder')
+        expect(current.attributes('role')).toBe('group')
+        expect(current.attributes('aria-label')).toBe(t(NAME_KEYS.reminder))
+        expect(current.attributes('hidden')).toBeUndefined()
+        expect(view.find('#settings-panel-account').attributes('hidden')).not.toBeUndefined()
+        expect(danglingLabelledBy(view)).toEqual([])
+    })
+
+    it('桌面（1024px）⇒ tablist/tab/tabpanel 语义完整：aria-controls/aria-labelledby 全部可解析、selected 不变', async () => {
+        const view = mountResponsive()
+        await nextTick()
+        fireWidth(1024)
+        await nextTick()
+
+        expect(view.find('.sd-body').classes()).not.toContain('is-narrow')
+        expect(view.find('[role="tablist"]').exists()).toBe(true)
+
+        const tabs = view.findAll('[role="tab"]')
+        expect(tabs).toHaveLength(CATEGORY_IDS.length)
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(CATEGORY_IDS.length)
+
+        for (const [index, category] of CATEGORY_IDS.entries()) {
+            const tab = tabs[index]!
+            expect(tab.attributes('id')).toBe(`settings-tab-${category}`)
+            expect(tab.attributes('aria-controls')).toBe(`settings-panel-${category}`)
+            expect(tab.attributes('aria-selected')).toBe(category === 'account' ? 'true' : 'false')
+
+            const panel = view.find(`#settings-panel-${category}`)
+            expect(panel.attributes('role')).toBe('tabpanel')
+            expect(panel.attributes('aria-labelledby')).toBe(`settings-tab-${category}`)
+            // 桌面不叠加 aria-label（同一时刻只有一套语义）
+            expect(panel.attributes('aria-label')).toBeUndefined()
+        }
+
+        expect(danglingLabelledBy(view)).toEqual([])
+    })
+
+    it('B：形态来回切换语义不残留（窄 0 → 桌 4 → 窄 0 个 tabpanel）', async () => {
+        const view = mountResponsive()
+        await nextTick()
+
+        fireWidth(360)
+        await nextTick()
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(0)
+
+        fireWidth(1024)
+        await nextTick()
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(4)
+
+        fireWidth(360)
+        await nextTick()
+        expect(view.findAll('[role="tabpanel"]')).toHaveLength(0)
+        expect(view.findAll('[role="group"]').length).toBeGreaterThanOrEqual(CATEGORY_IDS.length)
     })
 })
