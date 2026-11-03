@@ -126,7 +126,11 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
         <!-- 触发元素 -->
         <template #trigger="{ trigger }">
             <slot :open="trigger">
-                <nue-link @click="trigger">专注</nue-link>
+                <!-- DEF-128：无 `route`/`href` 的 `nue-link` 渲染成无 href 的 `<a>` ⇒ 键盘不可达；
+                     改用原生 button 复用 `.nue-link` 主题类（DOM 结构/类名与 `nue-link` 一致） -->
+                <button type="button" class="nue-link" @click="trigger">
+                    <nue-text :clamped="1" class="nue-link__content">专注</nue-text>
+                </button>
             </slot>
         </template>
         <!-- 下拉菜单 -->
@@ -155,9 +159,15 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
                 </nue-text>
                 <nue-text theme="depend-status-name">{{ currentDependName || '未关联' }}</nue-text>
                 <template v-if="currentDependName">
-                    <nue-link theme="depend-status-clear" @click="handleClearDepend">
-                        取消关联
-                    </nue-link>
+                    <!-- DEF-128：同上 ⇒ 原生 button + `theme` 实际产生的类名
+                         （`parseTheme('depend-status-clear','nue-link')` = `nue-link--depend-status-clear`） -->
+                    <button
+                        type="button"
+                        class="nue-link nue-link--depend-status-clear"
+                        @click="handleClearDepend"
+                    >
+                        <nue-text :clamped="1" class="nue-link__content">取消关联</nue-text>
+                    </button>
                 </template>
             </nue-div>
             <!-- 下拉菜单内容 -->
@@ -226,6 +236,16 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
 
 <style src="./index.css" />
 <style scoped>
+/* DEF-128：两处入口为原生 button 复用 `.nue-link` 主题 ⇒ 仅重置浏览器按钮默认样式，
+   不改 `.nue-link` 全局主题规则；焦点环由 `themes/link.css` 的 `.nue-link:focus-visible` 提供 */
+.nue-link {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
 .nue-dropdown-wrapper {
     text-align: center;
 

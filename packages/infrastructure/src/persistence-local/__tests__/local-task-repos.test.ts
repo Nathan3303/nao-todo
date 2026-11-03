@@ -141,6 +141,41 @@ describe('LocalTaskRepoImpl', () => {
         expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['今日到期', '明日到期'])
     })
 
+    it('专注任务选择器口径（state=todo,in-progress 且不带 relativeDate）返回全部未完成任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        // 四种截止形态（逾期 / 今天 date-only（endAt = 当日 00:00）/ 未来 / 无 endAt）× 三种状态
+        const endAts = [
+            ['逾期', dayjs().subtract(1, 'day').toISOString()],
+            ['今天', dayjs().startOf('day').toISOString()],
+            ['未来', dayjs().add(1, 'day').toISOString()],
+            ['无截止', null]
+        ] as const
+        for (const [endLabel, endAt] of endAts) {
+            for (const state of ['todo', 'in-progress', 'done'] as const) {
+                await repo.create(makeTaskVO({ name: `${endLabel}-${state}`, state, endAt }))
+            }
+        }
+
+        // 番茄「任务专注」面板查询串：state=todo,in-progress + 未删除/未归档/未放弃，**不含
+        // relativeDate**（DEF-131：一旦带上 `-overdue`，逾期与今天 date-only 任务全部消失）
+        const [panelShape, err] = await repo.list(
+            'isDeleted=false&isArchived=false&isGivenUp=false&state=todo,in-progress'
+        )
+        expect(err).toBeNull()
+        expect(panelShape!.taskEntities.map((t) => t.name).sort()).toEqual(
+            endAts.flatMap(([endLabel]) => [`${endLabel}-todo`, `${endLabel}-in-progress`]).sort()
+        )
+
+        // 反证：旧口径（带 -overdue）会丢掉已逾期任务，且结果数少于「全部未完成」
+        const [overdue] = await repo.list(
+            'isDeleted=false&isArchived=false&isGivenUp=false&state=todo,in-progress&relativeDate=-overdue'
+        )
+        const overdueNames = overdue!.taskEntities.map((t) => t.name)
+        expect(overdueNames).not.toContain('逾期-todo')
+        expect(overdueNames).not.toContain('逾期-in-progress')
+        expect(overdueNames.length).toBeLessThan(panelShape!.taskEntities.length)
+    })
+
     it('deletedAt 为空串（远程拉取未删记录）时按未删除处理', async () => {
         const repo = new LocalTaskRepoImpl()
         const [task, createErr] = await repo.create(makeTaskVO({ name: '远程任务' }))

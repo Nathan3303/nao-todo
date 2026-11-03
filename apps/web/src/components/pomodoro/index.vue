@@ -64,10 +64,18 @@ const dependLabel = computed(() => {
                         @select-task="handleSelectTask"
                         @clear-task="handleClearTask"
                     >
+                        <!-- DEF-128：调用点覆写插槽 ⇒ 此处也必须用原生 button（`nue-text` 渲染成 SPAN，
+                             Tab 停不到、Enter 无效）；类名 = `parseTheme('task-select-trigger','nue-text')` ⇒
+                             `nue-text--task-select-trigger`，样式仍由同一主题类提供 -->
                         <template #default="{ open }">
-                            <nue-text theme="task-select-trigger" @click="open" title="专注">
+                            <button
+                                type="button"
+                                class="nue-text nue-text--task-select-trigger"
+                                @click="open"
+                                title="专注"
+                            >
                                 {{ dependLabel }}
-                            </nue-text>
+                            </button>
                         </template>
                     </pomodoro-focus-depend-dropdown>
                     <!-- 轮次指示（T576 #3）：纯展示，圆点 + 文字标签 -->
@@ -116,6 +124,21 @@ const dependLabel = computed(() => {
 </template>
 
 <style scoped>
+/* DEF-128：「专注」入口为原生 button（复用 `.nue-text` 主题类）⇒ 只重置浏览器按钮默认样式，
+   不改 `nue-text` 全局/主题规则；焦点环见下方 `:focus-visible`（`.nue-link` 那套不适用本主题） */
+.nue-text--task-select-trigger {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.nue-text--task-select-trigger:focus-visible {
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
+}
+
 /* T451：「今日专注」已移入侧边栏 ⇒ 内容区单列（timer / note），删 today 区与 ≤950px 分支 */
 #Pomodoro > .nue-main .nue-content {
     display: grid;

@@ -1,0 +1,333 @@
+# T636 · `DEF-130` + `DEF-128` + `DEF-131` 三缺陷修复 —— QA 独立复验 + 批末门禁
+
+- 批次：`M20261102-def130-128`（目标 `v1.16.5` · PATCH）· 分支 `nao/M20261102-def130-128`
+- 复验轮次：**轮次 1** HEAD `ae5eea69`（`DEF-130` / `DEF-128`）→ **轮次 2** `cef34753`（`DEF-128` 补修）→ **轮次 3** `6826a1e6`（新并入 `DEF-131`）
+- RD 交付：`050d0287`（`DEF-130` 拼写）· `ae5eea69`（`DEF-128` 下拉键盘可达）· `275a90c6` + `cef34753`（`DEF-128` 调用点补修 + 页面级用例）· **`6826a1e6`（`DEF-131` 任务专注面板移除 `-overdue`）**
+- 本单形态：**不采信 RD 回执，逐条自验**；**未改任何产品代码**、**未改 RD 任何既有断言**，只新增/更新 2 份文档（本报告 + 走查清单）
+- 探针：一次性 **24 例**（轮次 1–3 合计，含 1 个 fake-indexeddb 装载辅助），全绿后**已从工作区删除**（副本留 `/tmp/t636-probes/`，跑完 `git status` 干净）—— 故不影响全仓计数；变异 4 次（M1 轮次 2 / M2 轮次 2 / M1 轮次 3 / 及轮次 2 的反断言洞）均逐字节还原
+- 环境（复验机）：Node **v24.22.1** · pnpm **11.18.0** · vitest **4.1.10** · `nue-ui 1.15.3` / `nue-ui-theme-shadlike 0.13.30` · `TZ = Asia/Shanghai`（CST）· 复验时段 2026-11-02 23:5x – 2026-11-03 01:0x
+
+## §0 结论
+
+**本批 3 个缺陷最终均通过**：`DEF-130` 一次过；`DEF-128` 经**两轮**（轮次 1 发现「触发入口『专注』」在真实页面未生效 → 补修 `275a90c6` + 页面级用例 `cef34753` → 轮次 2 通过，§1.3/§1.7）；**`DEF-131`（新并入）轮次 3 全链路复验通过**（§1.8：真 local repo + fake-indexeddb + 真 adapter 面板层与页面级均列全 8 条未完成任务，变异加回 `-overdue` ⇒ 3 红）。批末门禁 9 项全绿（全仓 **355 文件 / 2862 例 / 0 红**）。
+
+| 项                               | 结论                                                                                                                                                                                                                                                                  |
+| :------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DEF-130` 清除键                 | **✅ 通过**（真挂载：清除键存在/可聚焦/点击回「全部」/再点筛选 emit 为空；`clearabl` 全仓与 DOM 残留均 0）                                                                                                                                                            |
+| `DEF-128`「取消关联」            | **✅ 通过**（真实页面挂载实测 = `BUTTON.nue-link.nue-link--depend-status-clear`，`tabIndex 0`，类名与 `parseTheme` 实跑一致）                                                                                                                                         |
+| `DEF-128`「触发入口『专注』」    | **✅ 通过（轮次 2）** —— 轮次 1 未生效（过程发现，§1.3）；补修后真实页面实测 `BUTTON[type=button]`、`tabIndex 0`、`focus()` 命中、可访问名 = 可见文本「< 深度工作 >」、`click()` 行为不变（§1.7）                                                                     |
+| **`DEF-131`（新并入）**          | **✅ 通过（轮次 3）** —— 任务专注页签不再恒空：面板层与 `/pomodoro/timer` 页面级均渲染**全部 8 条**未完成（逾期/今天 date-only/未来/无截止 × todo/in-progress），已完成与删除/归档/放弃不出现，查询串无 `relativeDate`；变异加回 `-overdue` ⇒ **3 红 / 1 绿**（§1.8） |
+| 口径诚实性（jsdom 不能验 Enter） | **✅ 诚实**（RD 未把 `element.click()` 包装成「已验键盘激活」；我另实测 jsdom 中 Enter/Space 确不激活，§1.4）                                                                                                                                                         |
+| 红基线（我独立复现，非采信 RD）  | **✅ 一致**：`DEF-130` 2/2 红、`DEF-128` 组件级 4 红 / 3 绿（§1.5）；**页面级用例经我变异复核** —— 回退调用点 ⇒ **3 红 / 1 绿**（§1.7 M1） ; **`DEF-131` 变异（加回 `-overdue`）⇒ 3 红 / 1 绿、渲染集退化为 4 条（§1.8）**                                            |
+| 批末门禁 9 项                    | **✅ 全绿**（全仓 **355 文件 / 2862 例 / 0 红**，§3）                                                                                                                                                                                                                 |
+| 基线与差值                       | **✅ 逐条对得上**，但**派单给的基线需订正**：`v1.16.4` 为 **351 / 2846**（非 350 / 2842）—— **该值为「由实跑反推 + 与 tag 内容核对」的推算值，非当日实测**（§2.1）；本批累计 **355 / 2862**（+4 文件 / +16 例，§2）                                                   |
+
+> **过程记录（已修复，保留可追溯）**：轮次 1 的「触发入口未生效」不是文字挑刺 —— 走查项 ② 要求「`Tab` 能停到『专注』上、`Enter` 能打开」，按当时 HEAD 用户必过不了而 CI 全绿，正是本仓 `AGENTS.md`「断言公共组件是否透传须真实挂载、stub/自模板不算证据」所防的静默失败。轮次 2 已补**页面级**用例把这条路径钉住（§1.7）。
+
+## §1 独立复验（逐条实测，不采信回执）
+
+### §1.1 `DEF-130`：「专注模板」选择器清除键
+
+口径：**真实挂载筛选面板**（真 `nue-*`，`attachTo: document.body`），按**筛选项标签文本**定位（不按 `modelValue` 猜），`flushPromises()` 等 `nue-select` 把 `modelValue` 映射成 `selectedOption`。
+
+| #   | 判据                       | 实测                                                                                                                                    | 结论 |
+| :-- | :------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | 源码不再有错拼             | `git grep -n "clearabl" -- apps packages`（排除 `clearable` 误命中）⇒ **0 行**                                                          | ✅   |
+| 2   | 已选模板值 ⇒ 清除键存在    | 该筛选项触发器内 `button[aria-label="清除选择"]` **恰好 1 个**；`tagName=BUTTON`、`type=button`、`class` 含 `nue-select__clear`         | ✅   |
+| 3   | 清除键可聚焦               | `clear.focus()` 后 `document.activeElement === clear`                                                                                   | ✅   |
+| 4   | 点击 ⇒ 值回「全部」        | 触发器文本 由 `模板B` → `全部`；清除键消失；再点「筛选」⇒ `update:filters` 的 `pomodoroId ∈ {'', undefined}`                            | ✅   |
+| 5   | 无属性残留                 | DOM 内正则 `/clearabl(?![e])/` 命中 **0**（注：`clearable` 本身含子串 `clearabl`，故必须用该精确判据）                                  | ✅   |
+| 6   | 清除键位置前提（不压箭头） | 触发器实测类 = `nue-select__trigger nue-select__trigger--clearable nue-select__trigger--small` ⇒ 激活主题预留规则；产物 CSS 实证见 §1.6 | ✅   |
+
+### §1.2 `DEF-128`：「取消关联」为原生 button（生效）
+
+真实组件挂载（真 `nue-*` + 真 Pinia + 注入上下文；仅 `ListViewAdapter` 用替身），并另在**真实页面**复核（§1.3）。
+
+| #   | 判据                     | 实测                                                                                                                                 | 结论 |
+| :-- | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | 元素形态                 | `BUTTON`，`type="button"`                                                                                                            | ✅   |
+| 2   | 类名逐字                 | `className === "nue-link nue-link--depend-status-clear"`                                                                             | ✅   |
+| 3   | 类名非猜测               | 运行期实跑 `parseTheme('depend-status-clear','nue-link')` ⇒ `["nue-link--depend-status-clear"]`（`nue-ui` 导出函数，非读压缩源推断） | ✅   |
+| 4   | 可聚焦 / 可访问名        | `tabIndex = 0`；`focus()` 后 `activeElement` 命中；文本「取消关联」                                                                  | ✅   |
+| 5   | 行为零回归               | `click()` ⇒ `emit('selectPreset', [null])`；任务 Tab 下 ⇒ `emit('clearTask', [[]])`（RD 用例覆盖，我抽查运行期 DOM 为 BUTTON）       | ✅   |
+| 6   | 无 href 的 `<a>`         | 两个 Tab 下挂载级统计 **0 个**                                                                                                       | ✅   |
+| 7   | 同族残留（全仓只读核查） | 脚本解析**整标签**（跨行）后统计：生产代码中 `<nue-link>` 无 `route`/`href`/`to` = **0 处**                                          | ✅   |
+
+### §1.3 【轮次 1 · 过程发现，已修复】`DEF-128`：「触发入口『专注』」在真实页面**未生效**
+
+**事实链**：
+
+1. 组件默认插槽内容确实改成了 `<button type="button" class="nue-link" @click="trigger">`（源码 L131）。
+2. 但**唯一调用点** `apps/web/src/components/pomodoro/index.vue:66-72` 用 `<template #default="{ open }">` **覆写了插槽**：
+
+```text
+<template #default="{ open }">
+    <nue-text theme="task-select-trigger" @click="open" title="专注">{{ dependLabel }}</nue-text>
+</template>
+```
+
+3. 全仓调用点清点：`grep -rn "PomodoroFocusDependDropdown\|pomodoro-focus-depend-dropdown" --include=*.vue apps packages`（排除测试与 `index.ts`）⇒ **仅 `pomodoro/index.vue` 一处**，且该处就是覆写方。
+4. **真实页面挂载**（`components/pomodoro/index.vue` = `routes.ts` 里 `/pomodoro/timer`、`/pomodoro/focus` 的组件；真 Pinia + 真 vue-router(memory) + 真 `nue-*`，仅 stub 计时器/笔记/轮次/头部等无关子件；造「已关联」态 `sessionStore.currentPomodoroName = '深度工作'`）实测：
+
+```json
+{
+    "triggers": [
+        {
+            "tag": "SPAN",
+            "class": "nue-text nue-text--task-select-trigger",
+            "tabIndex": -1,
+            "role": null,
+            "type": null,
+            "text": "< 深度工作 >"
+        }
+    ],
+    "buttonNueLinkCount": 1,
+    "anchorNueLinkCount": 0,
+    "statusButtons": [
+        {
+            "tag": "BUTTON",
+            "class": "nue-link nue-link--depend-status-clear",
+            "tabIndex": 0,
+            "text": "取消关联"
+        }
+    ]
+}
+```
+
+- `triggers` ⇒ **SPAN、`tabIndex = -1`、无 `role`** ⇒ Tab 停不到、Enter 无响应（DEF-128 描述的缺陷在页面上**依然存在**）。
+- `buttonNueLinkCount: 1` 就是「取消关联」（该半边生效）；`anchorNueLinkCount: 0` ⇒ 无 href 的 `<a>` 已清零（**这部分修好了**）。
+- ⇒ **RD 的 7 例用例全部是「裸挂载组件（不传插槽）」**，测到的是用户页面**看不到**的默认插槽分支。按 `AGENTS.md` 前端验证纪律：这类「只证明自己写的模板」的断言不能作为「页面已修」的证据。
+
+**建议修法（交 rd-fe，一行级）**：`pomodoro/index.vue` 的插槽内容改成等价的原生按钮（保留原主题类与 `title`/文案，`@click="open"` 不变）：
+
+```text
+<button type="button" class="nue-text nue-text--task-select-trigger" @click="open" title="专注">
+    {{ dependLabel }}
+</button>
+```
+
+配套：用例改为**调用点级/页面级**挂载（传同一份插槽内容，或直接挂 `pomodoro/index.vue`），否则同类漏测会复发。⚠️ 该按钮的 UA 默认样式重置要沿用本批 `focus-depend-dropdown.vue` 的口径（`background/border/padding/font/cursor`），否则会变成「原生按钮外观」——这正是走查项 ③ 要防的。
+
+> **轮次 2 状态**：rd-fe 已按本节建议补调用点（`275a90c6`）并加页面级用例（`cef34753`）⇒ 本节保留为**过程记录与判据来源**，**最终结论见 §1.7**。
+
+### §1.4 「键盘可达」口径诚实性
+
+- RD 用例头注明写「**jsdom 不实现原生 `<button>` 的 Enter/Space 隐式激活**」，断言只锁四项前提（原生可激活形态 + 可聚焦 + 可访问名 + 未被 disabled 剥夺），激活行为用 `element.click()`；用例标题亦写作「原生 click 语义（真实浏览器 Enter/Space 的激活路径）」。**未出现「jsdom 验过 Enter」的表述** ⇒ 诚实。
+- 我另做反向实测（证明该限制真实存在，而不是 RD 为自己省事）：`focus()` 后派发 `keydown`+`keyup`（`Enter`、`Space`）⇒ `data-visible` **仍为 `false`**（jsdom 无隐式激活）。
+- ⇒ 本批「键盘可达性」= **三证**：① 可聚焦 + `tabIndex ≥ 0`（运行期）② 原生可激活形态 `BUTTON[type=button]`（运行期）③ **用户走查体感**（Tab 可见焦点环 + Enter 生效）。**不得**表述为「已验键盘激活」。第三证对「取消关联」有据；对「触发入口」按 §1.3 = **未达成**。
+
+### §1.5 红基线独立复核（不是采信 RD 自证）
+
+做法：临时把产品文件还原到修复前版本 → 跑 RD 用例 → 记录红数 → `git checkout HEAD --` 还原 → 核对工作区干净。
+
+| 缺陷      | 临时还原                                                                  | RD 用例结果             | 与 RD 自证对照                      |
+| :-------- | :------------------------------------------------------------------------ | :---------------------- | :---------------------------------- |
+| `DEF-130` | `git checkout bd9c885d -- …/records/filter-panel.vue`（`clearabl` 版本）  | **2 failed / 0 passed** | 一致（RD：「2 例全红」）            |
+| `DEF-128` | `git checkout 050d0287 -- …/focus-depend-dropdown.vue`（`nue-link` 版本） | **4 failed / 3 passed** | **逐字一致**（RD：「4 红 / 3 绿」） |
+
+还原核对：`git status --porcelain -- <两个文件>` 为空；dev 服务 HMR 已回放（`/tmp/webdev.log` 最后一条该文件更新为还原时刻）⇒ 无残留。
+
+### §1.6 样式影响面（scoped `.nue-link` 重置会不会误伤）
+
+| 判据                                         | 实测                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 源码内 `.nue-link` 出现次数                  | `class="nue-link"` **×1**（L131）· `class="nue-link nue-link--depend-status-clear"` **×1**（L166）· scoped 规则 `.nue-link {` **×1**（L241）· `.nue-link__content` **×2**（BEM 子元素，**不被** `.nue-link` 选择器命中）。其余均为注释文本                                                                                                                                                                                                        |
+| 挂载级统计（是否误伤其它元素 / 子组件根）    | 页面 DOM 内 `.nue-link` 元素 **恰好 2 个，均 BUTTON**（`["BUTTON.nue-link", "BUTTON.nue-link nue-link--depend-status-clear"]`）                                                                                                                                                                                                                                                                                                                   |
+| scoped 重置的产物形态                        | `apps/web/dist/assets/*.css` ⇒ `.nue-link[data-v-72e349f5]{font:inherit;cursor:pointer;background:0 0;border:0;padding:0}`                                                                                                                                                                                                                                                                                                                        |
+| 焦点环仍命中这两个 button                    | 源级：`apps/web/src/themes/link.css` 有 `.nue-link:focus-visible{outline:2px solid var(--nue-primary-color-600);outline-offset:2px}`；**产物级**：`apps/web/dist/assets/index-DwszXe0z.css` 内含同一规则；选择器为「类 + 伪类」，与标签名无关 ⇒ 对 `button` 同样命中；component scoped 样式**未**设置 `outline`/`appearance`（已断言不含）                                                                                                        |
+| DOM 结构与改前是否等价                       | 直接读 `nue-ui` 的 `NueLink` 实现：其内容槽固定渲染 `NueText{ clamped:1, class:"nue-link__content" }` ⇒ 新结构（`button > nue-text.nue-link__content`）与改前（`a > nue-text.nue-link__content`）**逐字对齐**，差异只剩 root 标签 `a → button`（UA 默认样式由 scoped 重置抹平；`display` 仍由主题 `.nue-link{display:inline-flex}` 提供）                                                                                                         |
+| 字号是否会变                                 | 源级推断：改前 anchor 已被 `themes/link.css` 的 `.nue-link:not(.nue-link--route){font-size:inherit}`（0,2,0）压成「继承值」；改后 scoped `font:inherit`（0,2,0）同样是继承值 ⇒ **等价**。⚠️ 属级联推断，**像素/观感以走查项 ③ 为准**                                                                                                                                                                                                              |
+| 清除键与下拉箭头不重叠（`DEF-129` 同族复查） | 该选择器无本仓 `padding` 简写覆盖（`filter-panel.vue` 全文无 `.nue-button`/`.nue-select` 的 padding 覆盖）；产物 CSS 实证 `.nue-select__trigger--small.nue-select__trigger--clearable .nue-button{padding-right:calc(var(--nue-padding-xs) + var(--nue-gap-sm) + 1.025 * var(--nue-text-xs))}` 生效，而 `.nue-select__clear` 是 `position:absolute; right:calc(padding + 1px); width:calc(1.025 * text)` ⇒ 几何上落在预留槽内；**像素仍待走查 ①** |
+
+### §1.7 【轮次 2 · 最终复验】补修后页面级实测 + 我自己的变异复核
+
+RD 补修：`275a90c6`（调用点 `apps/web/src/components/pomodoro/index.vue` 改原生 `button`）· `cef34753`（页面级用例 4 例）。
+
+**① 页面级挂载复验（我自己的 harness，独立于 RD 用例）**
+
+harness：真挂载 `apps/web/src/components/pomodoro/index.vue`（= `/pomodoro/timer` 路由组件）+ 真 Pinia + memory router + 真 `nue-*`；仅 stub 计时器/正计时/笔记/轮次/头部/`ListViewAdapter`（**不 stub 下拉组件**）；造「已关联」态 `sessionStore.selectPomodoro('p1','深度工作')`。
+
+```json
+{
+    "trigger": [
+        {
+            "tag": "BUTTON",
+            "class": "nue-text nue-text--task-select-trigger",
+            "type": "button",
+            "tabIndex": 0,
+            "role": null,
+            "disabled": false,
+            "text": "< 深度工作 >",
+            "title": "专注"
+        }
+    ],
+    "focusedTag": "BUTTON",
+    "hrefLessAnchors": 0,
+    "dropdownButtons": ["BUTTON.nue-link nue-link--depend-status-clear#0"]
+}
+```
+
+| #   | 判据（PM 派单口径）                                       | 实测                                                                                                                                | 结论 |
+| :-- | :-------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | 触发元素 `tagName === 'BUTTON'`                           | `BUTTON`（唯一一个 `.nue-text--task-select-trigger`）                                                                               | ✅   |
+| 2   | `type="button"`                                           | `button`                                                                                                                            | ✅   |
+| 3   | `tabIndex >= 0`                                           | `0`                                                                                                                                 | ✅   |
+| 4   | `focus()` 后 `activeElement` 命中                         | `document.activeElement.tagName = BUTTON`                                                                                           | ✅   |
+| 5   | 可访问名非空（**可见文本**，不靠 `title`）                | `textContent.trim() = "< 深度工作 >"`（`title="专注"` 仍保留，与改前一致）                                                          | ✅   |
+| 6   | `click()` 行为不变（打开下拉）                            | `data-visible`：`false → true`，且 `#pomodoro-focus-depend-selector` 已渲染；再点一次 `true → false`                                | ✅   |
+| 7   | 页面内无「非 BUTTON 的 `.nue-text--task-select-trigger`」 | 过滤器结果 `[]`                                                                                                                     | ✅   |
+| 8   | 页面内无「无 `href` 的 `<a>`」                            | 挂载级统计 **0**                                                                                                                    | ✅   |
+| 9   | 焦点序（模拟）：入口在可聚焦序列内且先于「取消关联」      | `["< 深度工作 >", …「取消关联」…]`，`indexOf(入口) < indexOf(取消关联)`                                                             | ✅   |
+| 10  | 类名非猜测                                                | 运行期 `parseTheme('task-select-trigger','nue-text')` ⇒ `["nue-text--task-select-trigger"]`（与改前 `nue-text theme=…` 的产物同名） | ✅   |
+
+**② 核 RD 新用例是否真走页面级（并自己打洞）**
+
+| 检查                                                                         | 实测                                                                                                                                                                                                                                                                                                |
+| :--------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 挂的是页面组件而非裸组件                                                     | `import PomodoroPage from '../index.vue'` ⇒ 即 `components/pomodoro/index.vue`                                                                                                                                                                                                                      | ✅                              |
+| 没把下拉组件桩掉                                                             | `stubs` 列表 = `PomodoroHeader / PomodoroTimerComp / PomodoroFocusComp / PomodoroNotesComp / PomodoroRoundsIndicator / ListViewAdapter`，**不含** `PomodoroFocusDependDropdown`（全文件 `grep -n PomodoroFocusDependDropdown` 仅命中 **L135-136 的反断言**，无 stub 声明）                          | ✅                              |
+| 反断言真的存在                                                               | L135-136：`expect(w.findComponent({ name: 'PomodoroFocusDependDropdown' }).exists(), '…不得被 stub').toBe(true)`                                                                                                                                                                                    | ✅ 存在                         |
+| **我做的变异 M1**（回退调用点到 `275a90c6^` 的 `<nue-text>`）                | RD 用例 **3 红 / 1 绿**（① ② ④ 红；③ click 行为例仍绿 —— 属预期：SPAN 仍能点开，行为护栏不该红）；我的独立探针 **3 红 / 1 绿**（P1/P3/P4 红，P2 click 绿）。红因逐字 = `expected 'SPAN' to be 'BUTTON'` / `仍有不可聚焦入口：[{…"tag":"SPAN","tabIndex":-1…}]` / 焦点序列 `["取消关联",…]` 不含入口 | ✅ **咬得住**                   |
+| **我做的变异 M2**（给 RD 用例 stubs 加 `PomodoroFocusDependDropdown: true`） | **3 红 / 1 绿**，但**红因不是反断言**：L129 `triggerOf(w).element` 先抛 `Cannot call element on an empty DOMWrapper` ⇒ L135 的反断言**不可达**。⇒「防 stub」仍有拦截效果（会红），但**给不出它想给的那句信息**                                                                                      | ⚠️ 见 §5 L5（可选改进，非阻塞） |
+
+**③ 外观面（源级 + 产物级）**
+
+- 改前改后**类名与 DOM 内容一致**：`nue-text nue-text--task-select-trigger` + 纯文本（`NueText` 渲染的就是 `<tag class="nue-text …">{{slot}}</tag>`，**没有** `.nue-text__content` 包装层），差异只有 root 标签 `SPAN → BUTTON`。
+- `.nue-text--task-select-trigger` 这个主题类**全仓 `apps/`+`packages/`+主题包内无任何 CSS 规则**（改前亦无，是「空主题类」）⇒ 外观本来就只由 `.nue-text` 基类 + 父级布局决定，改后仍由同一套负责。
+- 产物 CSS（`apps/web/dist/assets/*.css`）实测只新增这两条，且都带 scoped 哈希、不会外溢：`.nue-text--task-select-trigger[data-v-4363a9f9]{font:inherit;cursor:pointer;background:0 0;border:0;padding:0}` · `.nue-text--task-select-trigger[data-v-4363a9f9]:focus-visible{outline:2px solid var(--nue-primary-color-600);outline-offset:2px}`。
+- `display` 差异（span 是 `inline`、button 是 `inline-block`）在本布局下**无实际效果**：父节点 `.nue-dropdown-wrapper` 是块级 + `text-align: center`，两者都按行内级被居中；`.nue-text` 又显式 `padding:0;margin:0`，UA 的按钮内边距/边框/背景由 scoped 重置兜住。
+- ⚠️ 仍属**级联推断**，像素/观感以走查项 ③ 为准（本轮已改为待用户勾选）。
+
+### §1.8 【轮次 3 · DEF-131】「任务专注」页签恒空 —— 全链路复验
+
+来源：用户 2026-11-02 报障；RD `T638` 取证 + `6826a1e6` 修法（`use-task-panel.ts` 移除 `relativeDate`）。
+
+#### ① RD 取证结论 vs 我的核实
+
+| RD 说法                                                                                                          | 我的核实（命令 / 实测）                                                                                                                                                                                 | 判定                                                                                                                                                                                 |
+| :--------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `use-task-panel.ts` 的查询带 `relativeDate: '-overdue'`                                                          | `git show 6826a1e6^:apps/web/src/components/pomodoro/focus-depend-dropdown/use-task-panel.ts` 确有该行；现状已删（`grep relativeDate` 在 `use-task-panel.ts` 只剩注释）                                 | ✅ 成立                                                                                                                                                                              |
+| 本地仓储 `matchRelativeDate` 把 `endAt` 早于**此刻**的任务全排除；今天 date-only（`endAt` = 今日 00:00）也算逾期 | 源码 `case '-overdue': return !d.isBefore(now)`（`task-repo-impl.ts:49-74`）；**变异实测**：加回 `-overdue` 后渲染集 = `{无截止-, 未来-}` 共 4 条，`逾期-` 与**今天-** 全部消失 ⇒ 今天 00:00 确被判逾期 | ✅ 成立                                                                                                                                                                              |
+| （RD 未提及的边界）无 `endAt` 的任务在负向条件下是否也被过滤                                                     | 源码 `if (!d.isValid()) return relativeDate.startsWith('-')` ⇒ **无截止任务不会被 `-overdue` 排除**（变异实测中它们仍然显示）                                                                           | **口径精确化**：所谓「恒空」的真实条件是「用户未完成任务**都有 `endAt` 且都 ≤ 今天**」；若存在无截止任务，旧代码也会显示它们（所以用户看到的是「只有个别无截止任务」，而非必然全空） |
+| 三组数字 `-overdue`=2 / 去掉=5 / `-today`=3（B 账号 6 条）                                                       | **未采纳**（PM 明确不复用 RD 数据）。我用自建数据独立取证：4 种截止形态 × 3 种状态 = 12 条 + 3 条三态排除项                                                                                             | 数字不引用；结论方向一致                                                                                                                                                             |
+| 修法「只移除 `relativeDate`，其余条件不变」                                                                      | diff 逐字核对：只删 `relativeDate` 一行 + `GetTasksOptions` 导入；`state/limit/isDeleted/isArchived/isGivenUp/sort` 全部未动                                                                            | ✅ 成立                                                                                                                                                                              |
+
+#### ② 我的独立探针（4 例全绿；一次性，已从工作区删除）
+
+链路：**真** `LocalTaskRepoImpl`（**fake-indexeddb**，经 `packages/infrastructure/node_modules` 装载，不改 `package.json`/锁文件）→ **真** `TaskDomain` / `TaskUseCase` → **真** pinia `TasksStore` → **真** `list-view-adapter` → **真** `focus-depend-dropdown` / **真** `components/pomodoro/index.vue`；只桩番茄页计时器/笔记/轮次/头部/`ListViewAdapter` 无关项，**不桩被测层**。
+
+| #   | 判据                                                                                                                     | 实测                                                                                                                                                                                                     | 结论 |
+| :-- | :----------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| P1  | 面板层：逾期 / 今天 date-only / 未来 / 无截止 × `todo`/`in-progress` 全部渲染；`done` 与删除/归档/放弃不出现；无空态文案 | 渲染名 **8/8** = `逾期-todo, 逾期-in-progress, 今天-todo, 今天-in-progress, 未来-todo, 未来-in-progress, 无截止-todo, 无截止-in-progress`；`names.length === 8`；`body.textContent` 不含「暂无待办任务」 | ✅   |
+| P2  | 查询串：不含 `relativeDate`；`state` / `limit` / 三态过滤仍在                                                            | 实测（修复后）：`state=todo%2Cin-progress&limit=10&isDeleted=false&isArchived=false&isGivenUp=false&sort=priority%3Adesc&page=1`                                                                         | ✅   |
+| P3  | **页面级**（`/pomodoro/timer` 真实页面）点入口 → 切「任务专注」→ 看到同一批任务                                          | 页面级渲染名 8/8 同上；无空态文案                                                                                                                                                                        | ✅   |
+| P4  | 回归：`limit=10` 仍生效；搜索框仍在                                                                                      | 12 条未完成 ⇒ **只渲染 10 条**；`.nue-div--search-bar input` 存在                                                                                                                                        | ✅   |
+
+#### ③ 变异（我自己做，不采信 RD 红基线）
+
+| 变异             | 内容                                                | 结果                                                                                                                                                                                                                                |
+| :--------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1（轮次 3）** | `use-task-panel.ts` 加回 `relativeDate: '-overdue'` | 探针 **3 红 / 1 绿**（P1 缺「逾期-todo」/ P2 查询串含 `relativeDate` / P3 页面级缺任务；P4 limit 例绿 —— 与本次变异无关，属预期）。**实测渲染集退化为 4 条**：`["无截止-in-progress","无截止-todo","未来-in-progress","未来-todo"]` |
+| 还原             | `cmp` 逐字节一致 + `git status` 空                  | ✅                                                                                                                                                                                                                                  |
+
+#### ④ 回归风险面（PM 指定三项）
+
+| 面                               | 检查                                                                                                                                                                                                                                                                                                                                                           | 结果                                   |
+| :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------- |
+| `state: 'todo,in-progress'`      | P2 查询串 + P1 渲染集（`done` 不出现）                                                                                                                                                                                                                                                                                                                         | ✅ 仍生效                              |
+| `limit: 10`                      | P4：12 条 ⇒ 渲染 10 条                                                                                                                                                                                                                                                                                                                                         | ✅ 仍生效                              |
+| 三态过滤（未删除/未归档/未放弃） | P1：删除/归档/放弃三条均不渲染；P2：查询串三个 flag 齐备                                                                                                                                                                                                                                                                                                       | ✅ 仍生效                              |
+| 其它视图是否被本改动影响         | `grep -rn relativeDate apps packages`（排除测试）⇒ 使用点 = 内置视图 `built-in/project/default.ts`（`today`/`tomorrow`/`week`/`-today`）、`matchRelativeDate` 实现、移动端 `presentation-react/logic/task-filter-core.ts`、类型定义；**`git diff --name-status 03751fb5..HEAD` 未触碰上述任一文件**（本批只改 `use-task-panel.ts` 一处 + 4 个测试 + 3 份文档） | ✅ **零影响（RD 说法成立，已独立核）** |
+| 定向回归                         | `local-task-repos.test.ts`（含 RD 新增 1 例）+ `def-131-…test.ts`（2 例）⇒ **29 例全绿**                                                                                                                                                                                                                                                                       | ✅                                     |
+| 移动端红线                       | `git status --porcelain -- packages/presentation-react apps/mobile` = 0 行；`git diff --name-only 03751fb5..HEAD -- …` = 0 文件                                                                                                                                                                                                                                | ✅（含 `task-filter-core` 未动）       |
+
+## §2 数字基线（含派单基线订正）
+
+| 节点                                                       |    文件 |       例 |    红 | 说明                                                                                           |
+| :--------------------------------------------------------- | ------: | -------: | ----: | :--------------------------------------------------------------------------------------------- |
+| **派单给的基线（`v1.16.4`）**                              |     350 |     2842 |     0 | **实为 T633 复验时点（`0e033e65` + 其 3 个新用例）的数字**，不含 `DEF-129` 的用例              |
+| **`v1.16.4`（tag `03751fb5`）＝ 推算值**（**非当日实测**） | **351** | **2846** |     0 | = 350 + 1 文件 / 2842 + 4 例（推算过程见 §2.1）                                                |
+| **本批轮次 1（`ae5eea69`）—— 我实跑**                      | **353** | **2855** | **0** | = 351 + 2 文件 / 2846 + 9 例                                                                   |
+| **本批轮次 2（`cef34753`，含补修）—— 我实跑**              | **354** | **2859** | **0** | = 353 + 1 文件 / 2855 + 4 例（`DEF-128` 页面级用例）                                           |
+| **本批轮次 3（`6826a1e6`，含 `DEF-131`）—— 我实跑**        | **355** | **2862** | **0** | = 354 + 1 文件 / 2859 + 3 例（`def-131-…test.ts` 2 例 + `local-task-repos.test.ts` 新增 1 例） |
+
+**差值逐条对账**（每条都可复跑）：
+
+1. `350 → 351`（+1 文件）：`git ls-tree -r --name-only 03751fb5 | grep -c def-129` ⇒ **1**；同命令在 `0e033e65` ⇒ **0**。即 `packages/presentation/task/components/date-selector/__tests__/def-129-clearable-padding.test.ts` 是 T633 复验**之后**、squash 合并（`8e4cbc85`）时进入的。
+2. `2842 → 2846`（+4 例）：`pnpm exec vp test --run …/def-129-clearable-padding.test.ts` ⇒ `1 passed (1)` / **4 passed (4)**。
+3. `351 → 353` 与 `2846 → 2855`（**轮次 1 时点**）：`git diff --name-status 03751fb5 ae5eea69 -- '*__tests__*'` ⇒ **只有 2 个新增测试文件**（`DEF-128` / `DEF-130` 各 1），**无修改、无删除**；两个文件单选跑分别 **7 例** / **2 例** ⇒ **+2 文件 / +9 例**，全部对得上。
+4. `353 → 354` 与 `2855 → 2859`（**轮次 2**）：`git diff --name-status ae5eea69 cef34753 -- '*__tests__*'` ⇒ 新增 1 个页面级测试文件（`def-128-pomodoro-page-trigger.test.ts`，4 例）；另一改动是对组件级用例头注 +5 行（无新增/删除用例）。⇒ 轮次 2 累计 **+3 文件 / +13 例** = DEF-130(2) + DEF-128 组件级(7) + DEF-128 页面级(4)。
+5. `354 → 355` 与 `2859 → 2862`（**轮次 3**）：`git diff --name-status cef34753 6826a1e6` ⇒ 新增 1 个测试文件（`def-131-task-panel-all-incomplete.test.ts`，**2 例**）+ 修改 `local-task-repos.test.ts`（**+1 例**）⇒ **+1 文件 / +3 例**。故 `DEF-131` 的「3 例」实际分布 = 2 例面板用例 + 1 例仓储用例。**最终累计 +4 文件 / +16 例**。
+6. 跳过项口径：本批 = 「1 skipped 文件 / 6 skipped 例」，与 `v1.16.4` 基线**相同**（既有跳过项，非本批引入）；红数 0。
+
+### §2.1 PM 派单基线的订正说明（PM 2026-11-02 已认）
+
+> 本节按 PM 2026-11-02 指示撰写：**把订正结论与「实测 / 推算」口径一并写清**，避免后续把推算值当实测引用。
+
+**订正结论**：派单给的 `350 / 2842` 是 **`T633` 复验时点**（HEAD `0e033e65` + 其 3 个新用例）的数字；`v1.16.4` 实际为 **`351 / 2846`**（多出 `def-129-clearable-padding.test.ts` = **1 文件 / 4 例**，随 squash `8e4cbc85` 进入 tag）。本批轮次 1（`ae5eea69`）实跑 **`353 / 2855`**（+2 文件 / +9 例）；补修后轮次 2（`cef34753`）实跑 **`354 / 2859`**（再 +1 文件 / +4 例，页面级用例）；轮次 3（`6826a1e6`，`DEF-131`）实跑 **`355 / 2862`**（再 +1 文件 / +3 例）⇒ **累计 +4 文件 / +16 例**。
+
+**口径（诚实标注）**：
+
+- `351 / 2846` 是 **「由本批实跑 `353 / 2855` 反推 + 与 `v1.16.4` 内容核对」得到的推算值，不是当日对 tag 的实测值**。
+- 反推链：`353 − 2 = 351`、`2855 − 9 = 2846`；减去的 2 文件 / 9 例 = 本批两个新增测试文件（单选跑 **7 例** / **2 例**）。
+- **内容核对**（不是靠标签或记忆）：`def-129-clearable-padding.test.ts` 在 tag 树内（`git ls-tree 03751fb5` 命中 1）、在 T633 复验 HEAD `0e033e65` 树外（同命令 0）；该文件单选跑 = **4 例**。
+- 反推的**唯一隐含假设** = 「`tag → HEAD` 之间没有**改动/删除**测试文件导致例数变化」；已用 `git diff --name-status 03751fb5 HEAD -- '*__tests__*'` **证伪该风险**（结果只有 2 个 `A`，无 `M`/`D`）。
+- **若日后需要「当日实测」口径**：应在独立 worktree 检出 `03751fb5` 后跑一次全仓测试；本批**未做**（改动面仅 2 个组件，且反推链无歧义、与 T633 的 350/2842 互相印证）—— 需要时由 PM 另行指定。
+
+## §3 批末门禁（9 项，精确数字）
+
+| #   | 项目                                | 命令                                                                                           | 结果                                                                                                                                                                                                                                           |
+| :-- | :---------------------------------- | :--------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 格式 + lint + 类型                  | `pnpm exec vp check`                                                                           | **exit 0** —— 最终树（含本单 2 份文档）`All 1822 files are correctly formatted`（12.3s）/ `Found no warnings, lint errors, or type errors in 1472 files`（4.9s）—— 轮次 1 为 1820 / 1470（+1 = `DEF-128` 页面级用例，+1 = `DEF-131` 面板用例） |
+| 2   | 全仓测试（非子目录）                | `NODE_OPTIONS=--no-experimental-webstorage pnpm exec vp test --run`                            | **exit 0** —— **355 文件**（354 passed / 1 skipped）· **2862 例**（2856 passed / 6 skipped）· **红 0** · 195.43s                                                                                                                               |
+| 3   | `guard:ddd`                         | `pnpm run guard:ddd`                                                                           | **exit 0** —— 「domain 包未引用 shared 根桶 / shared 展示层组件 / ResponseDataPagination」                                                                                                                                                     |
+| 4   | `guard:barrel-imports`              | `pnpm run guard:barrel-imports`                                                                | **exit 0** —— 扫描 **1472 文件** · 校验 **1619 条** `@nao-todo` 导入 / **2363 个命名** 均可解析                                                                                                                                                |
+| 5   | `guard:gate-pathspec`               | `pnpm run guard:gate-pathspec`                                                                 | **exit 0** —— 「门禁命令 pathspec 均存在」                                                                                                                                                                                                     |
+| 6   | `guard:mobile-imports`              | `pnpm run guard:mobile-imports`                                                                | **exit 0** —— 移动端 **72 个源文件**，未引用 `persistence-local` / `persistence-sync` / `dexie` / infrastructure 根桶                                                                                                                          |
+| 7   | `guard:test-location`（计入新测试） | `pnpm run guard:test-location`                                                                 | **exit 0** —— **347 个受检测试文件**（`v1.16.4` = **343**，本批 **+4**：DEF-130 1 + DEF-128 组件级 1 + DEF-128 页面级 1 + DEF-131 1；另 8 个移动端白名单未检查）                                                                               |
+| 8   | `webapp build`                      | `pnpm exec vp run webapp build`                                                                | **exit 0**（14.45s）· 产物 `apps/web/dist`（470 文件）                                                                                                                                                                                         |
+| 9   | `desktop:build` + 移动端红线        | `pnpm run desktop:build` · `git status --porcelain -- packages/presentation-react apps/mobile` | build **exit 0**（16.97s，产物 `apps/desktop/out/{main,preload,renderer}`）；红线 **0 行**（另：`git diff --name-only 03751fb5..HEAD -- packages/presentation-react apps/mobile` = **0**）                                                     |
+
+> 门禁口径提醒：以上数字均在**删除全部一次性探针之后**的终态树上测（探针目录已清空，不进入任何计数）；轮次 2 探针 4 例（页面级）+ 轮次 3 探针 4 例（面板/页面/limit），验完即删。
+
+## §4 未覆盖项 / 已知边界（如实申报）
+
+| #   | 项                                                                 | 原因                                                                                                 | 去向                                                                                               |
+| :-- | :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| 1   | **真实浏览器 Tab 序 / Enter 激活**                                 | jsdom 不实现原生 button 的隐式激活（我实测 Enter/Space 派发后下拉仍关闭），也不实现 Tab 键的焦点推进 | 走查项 ②（「取消关联」与触发入口**均已有页面级运行期证据**；仅「Enter/Space 原生激活」需人眼确认） |
+| 2   | **`:focus-visible` 焦点环的视觉可见性**                            | jsdom 不匹配 `:focus-visible`、不做级联计算                                                          | 走查项 ②（源级 + 产物 CSS 已证规则存在且对 button 命中）                                           |
+| 3   | **像素级外观一致性**（字号/颜色/下划线/间距/原生按钮默认外观残留） | jsdom 无布局引擎；项目纪律不做无头浏览器截图对比                                                     | 走查项 ③                                                                                           |
+| 4   | **清除键与下拉箭头的视觉间距**                                     | 同上；已给结构 + 产物 CSS 依据（§1.6）                                                               | 走查项 ①                                                                                           |
+| 5   | ~~`DEF-128`「触发入口」的修复后复验~~ → **已完成（轮次 2，§1.7）** | 补修 `275a90c6` + 页面级用例 `cef34753` 后，页面级挂载 10 项判据全绿                                 | 已关闭；键盘「原生激活」仍走三证 + 走查 ②                                                          |
+| 6   | **`DEF-131` 的视觉面**（任务行密度、滚动到底翻页、搜索框布局）     | jsdom 无布局/滚动引擎；本批只验「列全 + limit + 搜索框存在」                                         | 走查项 ③（新增）                                                                                   |
+| 7   | 桌面端打包产物（`electron-builder --dir`）观感                     | 视觉/真机走查由用户执行；本单只验 `desktop:build` exit 0                                             | 非本批 AC                                                                                          |
+
+## §5 遗留三出口（`task-completion.md` 口径）
+
+| #      | 遗留项                                                                                                                               | 出口                                                                                                                                                              |
+| :----- | :----------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~L1~~ | ~~`DEF-128` 触发入口在真实页面未生效~~ → **✅ 已关闭**（rd-fe `275a90c6` 补调用点 + `cef34753` 页面级用例；我轮次 2 复核通过，§1.7） | **关闭**：页面级实测 `BUTTON[type=button]`/`tabIndex 0`/`focus()` 命中/可访问名可见文本/`click()` 行为不变；变异 M1 3 红证明用例咬得住                            |
+| L2     | 键盘激活（Enter/Space 真实触发）无法自动化                                                                                           | **接受**：三证口径（可聚焦 + 原生形态 + 用户走查）已写入 `DEF-128` 用例头注与本报告；若日后要有自动化，需引入 Playwright（项目当前无 E2E 层）→ 单独立项，不在本批 |
+| L3     | 「类型」选择器未选值时清除键**常显**（`<nue-select-option :value="void 0">` 命中「全部」选项 ⇒ `selectedOption` 存在）               | **接受（含到期日）**：属上游既有行为、点击无副作用（本批只读复核，未改）；已写入走查清单 ④「已知不报项」，待到本轮走查回填后关闭                                  |
+| L4     | 像素级外观 / 焦点环视觉                                                                                                              | **接受（含到期日）**：由走查项 ①②③ 回填后关闭；到期 = 本轮走查完成                                                                                                |
+
+| L5 | **页面级用例的反断言顺序瑕疵**（`cef34753`）：L129 `triggerOf(w).element` 先抛异常 ⇒ L135「不得被 stub」不可达，stub 场景虽红但**报错信息不是它想给的那句** | **转办 → rd-fe（可选、非阻塞）**：把 `findComponent(...).exists()` 反断言提到 `.element` 之前；不影响拦截效果（我 M2 实测仍红） |
+| L6 | **`DEF-131` 的「恒空」条件需精确化**：旧代码在「未完成任务都无 `endAt`」时**不会**过滤（`matchRelativeDate` 对无效日期按负向条件放行）⇒ 真正常态是「只有个别无截止任务可选」或「全空」 | **关闭**：已在本报告 §1.8 ① 精确化，**无代码动作**（修复后此差异不再可见） |
+
+> 无其它遗留：同族「无 `href` 的 `nue-link`」在全仓生产代码中 **0 处**（脚本跨行解析核实）；本单未改产品代码 ⇒ 无回滚面。轮次 2 的补修只改 1 个调用点（`pomodoro/index.vue` 27 行内）⇒ 回滚 = 还原该文件。
+
+## §6 本单新增文件（2 份文档，无代码/无测试）
+
+| 文件                                                   | 用途                                    |
+| :----------------------------------------------------- | :-------------------------------------- |
+| `docs/reports/T636-def130-128-verify.md`               | 本报告（复验 + 门禁 + 差值对账 + 遗留） |
+| `docs/reports/M20261102-def130-128-user-acceptance.md` | 用户走查清单（可勾选，含已知不报项）    |
+
+> 说明：RD 新增的 **4 个**测试文件（`def-128-…-keyboard.test.ts` 7 例（组件级，轮次 2 仅加覆盖边界注释）/ `def-130-filter-panel-clearable.test.ts` 2 例 / **`def-128-pomodoro-page-trigger.test.ts` 4 例（页面级，轮次 2 新增）** / **`def-131-task-panel-all-incomplete.test.ts` 2 例（轮次 3 新增；另在 `local-task-repos.test.ts` 补 1 例）**）属 RD 交付，不计入本单新增；本单对其**只评估、未改动**（变异测试均为临时改动 + 逐字节还原）。
+
+## §7 方法与口径备注
+
+- **定位走三段阶梯（无回退）**：① `codegraph_explore`（`focus-depend-dropdown` / `handleClearDepend` / `currentDependName` / `usePomodoroPage` / `dependLabel` 的源码与调用关系，确认 `handleSelectPreset(null) → sessionStore.clearPomodoroSelection()` 路径）→ ② 全仓 `grep -rn` 清点调用点（`PomodoroFocusDependDropdown` 用法、跨行解析 `<nue-link>` 标签）→ ③ `read` 行段读关键文件。
+- **计数单源**：本仓**不存在** `tests/README.md`「计数可见」文件 ⇒ §2/§3 的文件数与例数全部取自**实跑输出** + `git diff` / `git ls-tree` 对账，**不以最大编号推断**。
+- **数据面**：轮次 1/2 探针是纯 jsdom 内存挂载（无库写入）⇒ 无回滚面；**轮次 3 探针例外**：用 `fake-indexeddb` 建**独立测试库 + 独立用户**（`t636-def131-probe`），只写内存假库（不触真库/生产数据），每个用例 `beforeEach` 清表；fake-indexeddb 经 `packages/infrastructure/node_modules` 装载（**未改 `package.json` / 锁文件**）⇒ 无孤儿扫描面（非真实 DB）。
+- **流程**：未开 PR、未合并、**未改 remote 配置**；push 走 HTTPS + `gh auth git-credential`（SSH:22 实测 `Connection timed out`）⇒ 分支 `nao/M20261102-def130-128`。
