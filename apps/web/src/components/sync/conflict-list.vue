@@ -10,12 +10,14 @@
  *                图形（色条）≥3；绿色系小文本/符号用 `-100`、红/橙文本用 `-90`）；
  *              - 技术字段**始终显示**但为**次要样式**（次要色 / 更小字号 / 排在普通字段之后 + 轻分隔）；
  *              - 覆盖类动作给**安全提示**，主按钮「保留我的修改」突出、次按钮弱化。
- *              - DEF-134：右栏差异区改为 **Git diff 式左右对照**（固定表头 + 行对齐 + 三态三重冗余；
- *                ≤720px 上下堆叠）；技术字段默认**折叠**进「显示技术信息」；左栏标题优先**当前行**
+ *              - DEF-134：右栏差异区改为 **Git diff 式左右对照**（三态三重冗余）；左栏标题优先**当前行**
  *                可读名（评论 / 检查项带父任务名），⛔ 不再回退败方快照（那是「只显示记录 ID」的根因）。
+ *              - DEF-136：差异区改用 **`nue-table`** 三列（字段 / 我的修改 / 云端最新）⇒ 字段名与值**同行同基线**；
+ *                技术字段**并入同一张表**（次要色）不再折叠；≤720px 仍三列（字段列收窄）。
  *              四态齐备（加载/空/错误/成功）；⛔ 不改恢复动作 / 合并语义 / 计数。
  */
 import { computed, onMounted, ref } from 'vue'
+import type { NueTableColumn } from 'nue-ui'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
@@ -72,9 +74,6 @@ onMounted(() => {
 
 /** 长值展开态 */
 const expandedValues = ref<Record<string, boolean>>({})
-
-/** 技术字段展开态（DEF-134：默认折叠 —— DESIGN §4.7） */
-const technicalOpen = ref(false)
 
 /** 复制状态（按钮文案反馈；A3 手动处理） */
 const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
@@ -137,7 +136,6 @@ const selectGroup = (group: ConflictGroup): void => {
     const item = group.items[group.items.length - 1]
     if (item) {
         copyState.value = 'idle'
-        technicalOpen.value = false
         void compare(item)
     }
 }
@@ -153,7 +151,7 @@ interface DiffRow {
     /** DEF-133：空值 ⇒「未设置」弱化展示（不空白） */
     loserUnset: boolean
     currentUnset: boolean
-    /** DEF-134：技术字段（默认折叠，展开后次要样式） */
+    /** DEF-136：技术字段（并入同一张表、排在业务字段之后，仅次要色区分） */
     technical: boolean
 }
 
@@ -179,7 +177,7 @@ const toRow = (diff: ConflictFieldDiff, technical: boolean): DiffRow => {
     }
 }
 
-/** 技术字段默认折叠（DESIGN §4.7）；拆到普通字段之后（次要段落） */
+/** 差异行：业务字段在前、技术字段在后（DEF-136：技术字段并入同一张表，不折叠） */
 const diffGroups = computed(() => {
     const { normal, technical } = splitTechnicalDiffs(comparison.value?.diffs ?? [])
     return {
@@ -188,12 +186,14 @@ const diffGroups = computed(() => {
     }
 })
 
-/** 实际渲染的行：普通字段 + （展开时）技术字段 */
-const visibleRows = computed<DiffRow[]>(() =>
-    technicalOpen.value
-        ? [...diffGroups.value.normal, ...diffGroups.value.technical]
-        : diffGroups.value.normal
-)
+/** 表格行：业务字段 + 技术字段（同一张表，顺序即分组顺序） */
+const diffRows = computed<DiffRow[]>(() => [
+    ...diffGroups.value.normal,
+    ...diffGroups.value.technical
+])
+
+/** `nue-table` 插槽把行声明为 `unknown`（组件不计泛型）⇒ 收敛为本处行类型 */
+const rowOf = (row: unknown): DiffRow => row as DiffRow
 
 /** 是否有字段差异（无 ⇒ 走 LoadingError 空态） */
 const hasFieldDiff = computed(
@@ -294,6 +294,21 @@ const currentSideLabel = computed(() =>
         ? t('sync.conflict.pullLocalWinsCurrentLabel')
         : t('sync.conflict.currentLabel')
 )
+
+/**
+ * 差异表列配置（DEF-136 / DESIGN §4.7）：三列 —— 字段 / 我的修改 / 云端最新
+ * @description 字段列宽由 CSS 变量承载（8rem；≤720px 6rem）⇒ 响应式收窄不必用 `!important`；
+ *              两个值列不设宽 ⇒ `table-layout: fixed` 下等分剩余宽度（等宽契约）。
+ */
+const diffColumns = computed<NueTableColumn[]>(() => [
+    {
+        key: 'field',
+        title: t('sync.conflict.fieldColumn'),
+        width: 'var(--conflict-diff-field-col)'
+    },
+    { key: 'mine', title: loserSideLabel.value },
+    { key: 'theirs', title: currentSideLabel.value }
+])
 </script>
 
 <template>
@@ -418,133 +433,117 @@ const currentSideLabel = computed(() =>
                         :empty-image-src="assetUrl('/images/todo.webp')"
                     />
                     <template v-else>
-                        <div class="conflict-list__compare">
-                            <!-- 固定表头（sticky）：左「我的修改」/ 右「云端最新」 -->
-                            <div class="conflict-list__compare-head">
-                                <span data-side="label" aria-hidden="true"></span>
-                                <span class="conflict-list__compare-side" data-side="loser">
-                                    {{ loserSideLabel }}
-                                </span>
-                                <span class="conflict-list__compare-side" data-side="current">
-                                    {{ currentSideLabel }}
-                                </span>
-                            </div>
-                            <ul class="conflict-list__diff-list">
-                                <li
-                                    v-for="row in visibleRows"
-                                    :key="row.field"
-                                    class="conflict-list__diff-row"
-                                    :class="[`is-${row.kind}`, { 'is-technical': row.technical }]"
-                                >
-                                    <!-- 行首：字段标签 + 三态（符号 + 文字，不单靠颜色） -->
-                                    <div class="conflict-list__diff-label" data-side="label">
-                                        <span
-                                            class="conflict-list__symbol"
-                                            :class="`is-${row.kind}`"
-                                            aria-hidden="true"
-                                        >
-                                            {{ row.symbol }}
-                                        </span>
-                                        <span class="conflict-list__field-name">
-                                            {{ row.humanLabel }}
-                                        </span>
-                                        <span
-                                            class="conflict-list__state-label"
-                                            :class="`is-${row.kind}`"
-                                        >
-                                            {{ row.label }}
-                                        </span>
-                                    </div>
-                                    <!-- 左格：我的修改（败方快照） -->
-                                    <div
-                                        class="conflict-list__diff-cell is-loser"
-                                        data-side="loser"
-                                    >
-                                        <span class="conflict-list__cell-side">
-                                            {{ loserSideLabel }}
-                                        </span>
-                                        <span
-                                            class="conflict-list__text"
-                                            :class="{
-                                                'is-expanded': valueExpanded(row.field, 'loser'),
-                                                'is-unset': row.loserUnset
-                                            }"
-                                            :title="
-                                                valueExpanded(row.field, 'loser')
-                                                    ? undefined
-                                                    : row.loserText
-                                            "
-                                            >{{ row.loserText }}</span
-                                        >
-                                        <button
-                                            v-if="isLongValue(row.loserText)"
-                                            class="conflict-list__value-toggle"
-                                            :aria-expanded="valueExpanded(row.field, 'loser')"
-                                            @click="toggleValue(row.field, 'loser')"
-                                        >
-                                            {{
-                                                valueExpanded(row.field, 'loser')
-                                                    ? t('sync.conflict.collapse')
-                                                    : t('sync.conflict.expand')
-                                            }}
-                                        </button>
-                                    </div>
-                                    <!-- 窄屏堆叠时的两侧分隔符号（宽屏隐藏） -->
-                                    <span class="conflict-list__stack-sep" aria-hidden="true"
-                                        >↓</span
-                                    >
-                                    <!-- 右格：云端最新（本地当前行） -->
-                                    <div
-                                        class="conflict-list__diff-cell is-current"
-                                        data-side="current"
-                                    >
-                                        <span class="conflict-list__cell-side">
-                                            {{ currentSideLabel }}
-                                        </span>
-                                        <span
-                                            class="conflict-list__text"
-                                            :class="{
-                                                'is-expanded': valueExpanded(row.field, 'current'),
-                                                'is-unset': row.currentUnset
-                                            }"
-                                            :title="
-                                                valueExpanded(row.field, 'current')
-                                                    ? undefined
-                                                    : row.currentText
-                                            "
-                                            >{{ row.currentText }}</span
-                                        >
-                                        <button
-                                            v-if="isLongValue(row.currentText)"
-                                            class="conflict-list__value-toggle"
-                                            :aria-expanded="valueExpanded(row.field, 'current')"
-                                            @click="toggleValue(row.field, 'current')"
-                                        >
-                                            {{
-                                                valueExpanded(row.field, 'current')
-                                                    ? t('sync.conflict.collapse')
-                                                    : t('sync.conflict.expand')
-                                            }}
-                                        </button>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                        <!-- 技术字段（时间戳 / 版本 / ID 等）：默认折叠，不参与主对比区 -->
-                        <button
-                            v-if="diffGroups.technical.length > 0"
-                            type="button"
-                            class="conflict-list__tech-toggle"
-                            :aria-expanded="technicalOpen"
-                            @click="technicalOpen = !technicalOpen"
+                        <!-- DEF-136 / DESIGN §4.7：差异区一律用 `nue-table` 三列（字段 / 我的修改 / 云端最新）
+                             ⇒ 字段名与值**同行同基线**；不加框 / 斑马纹 / 排序 / 行点击 / 悬停高亮 -->
+                        <nue-table
+                            class="conflict-list__diff-table"
+                            :columns="diffColumns"
+                            :data="diffRows"
                         >
-                            {{
-                                technicalOpen
-                                    ? t('sync.conflict.hideTechnical')
-                                    : t('sync.conflict.showTechnical')
-                            }}
-                            <span aria-hidden="true">{{ technicalOpen ? '▾' : '▸' }}</span>
-                        </button>
+                            <!-- 字段：三态符号 + 可读标签 + 状态文案（颜色只作强化） -->
+                            <template #cell-field="{ row }">
+                                <span
+                                    class="conflict-list__diff-label"
+                                    :class="[
+                                        `is-${rowOf(row).kind}`,
+                                        { 'is-technical': rowOf(row).technical }
+                                    ]"
+                                    data-side="field"
+                                >
+                                    <span
+                                        class="conflict-list__symbol"
+                                        :class="`is-${rowOf(row).kind}`"
+                                        aria-hidden="true"
+                                        >{{ rowOf(row).symbol }}</span
+                                    >
+                                    <span class="conflict-list__field-name">{{
+                                        rowOf(row).humanLabel
+                                    }}</span>
+                                    <span
+                                        class="conflict-list__state-label"
+                                        :class="`is-${rowOf(row).kind}`"
+                                        >{{ rowOf(row).label }}</span
+                                    >
+                                </span>
+                            </template>
+                            <!-- 我的修改（败方快照）：纯文本，长值省略 + 可展开 -->
+                            <template #cell-mine="{ row }">
+                                <div
+                                    class="conflict-list__diff-cell is-loser"
+                                    :class="[
+                                        `is-${rowOf(row).kind}`,
+                                        { 'is-technical': rowOf(row).technical }
+                                    ]"
+                                    data-side="loser"
+                                >
+                                    <span
+                                        class="conflict-list__text"
+                                        :class="{
+                                            'is-expanded': valueExpanded(rowOf(row).field, 'loser'),
+                                            'is-unset': rowOf(row).loserUnset
+                                        }"
+                                        :title="
+                                            valueExpanded(rowOf(row).field, 'loser')
+                                                ? undefined
+                                                : rowOf(row).loserText
+                                        "
+                                        >{{ rowOf(row).loserText }}</span
+                                    >
+                                    <button
+                                        v-if="isLongValue(rowOf(row).loserText)"
+                                        class="conflict-list__value-toggle"
+                                        :aria-expanded="valueExpanded(rowOf(row).field, 'loser')"
+                                        @click="toggleValue(rowOf(row).field, 'loser')"
+                                    >
+                                        {{
+                                            valueExpanded(rowOf(row).field, 'loser')
+                                                ? t('sync.conflict.collapse')
+                                                : t('sync.conflict.expand')
+                                        }}
+                                    </button>
+                                </div>
+                            </template>
+                            <!-- 云端最新（本地当前行）：纯文本，长值省略 + 可展开 -->
+                            <template #cell-theirs="{ row }">
+                                <div
+                                    class="conflict-list__diff-cell is-current"
+                                    :class="[
+                                        `is-${rowOf(row).kind}`,
+                                        { 'is-technical': rowOf(row).technical }
+                                    ]"
+                                    data-side="current"
+                                >
+                                    <span
+                                        class="conflict-list__text"
+                                        :class="{
+                                            'is-expanded': valueExpanded(
+                                                rowOf(row).field,
+                                                'current'
+                                            ),
+                                            'is-unset': rowOf(row).currentUnset
+                                        }"
+                                        :title="
+                                            valueExpanded(rowOf(row).field, 'current')
+                                                ? undefined
+                                                : rowOf(row).currentText
+                                        "
+                                        >{{ rowOf(row).currentText }}</span
+                                    >
+                                    <button
+                                        v-if="isLongValue(rowOf(row).currentText)"
+                                        class="conflict-list__value-toggle"
+                                        :aria-expanded="valueExpanded(rowOf(row).field, 'current')"
+                                        @click="toggleValue(rowOf(row).field, 'current')"
+                                    >
+                                        {{
+                                            valueExpanded(rowOf(row).field, 'current')
+                                                ? t('sync.conflict.collapse')
+                                                : t('sync.conflict.expand')
+                                        }}
+                                    </button>
+                                </div>
+                            </template>
+                        </nue-table>
                     </template>
                 </section>
 
@@ -738,118 +737,42 @@ const currentSideLabel = computed(() =>
     overflow-wrap: anywhere;
 }
 
-/* 差异对照（DEF-134 / DESIGN §4.7）：Git diff 式左右两列；表头 sticky、行高 ≥40px */
-.conflict-list__compare {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+/* 差异对照（DEF-136 / DESIGN §4.7）：`nue-table` 三列（字段 / 我的修改 / 云端最新）。
+   仅作**对齐容器**：不启用 `--border` / `--striped`、无排序 / 行点击 / 悬停高亮（无管理台气质） */
+.conflict-list__diff-table {
+    /* 字段列宽（两值列由 `table-layout: fixed` 等分剩余宽度）；≤720px 收窄见下方 @media */
+    --conflict-diff-field-col: 8rem;
+    /* ⛔ 主题默认行悬停底色 = 数据表气质 ⇒ 本处关闭（覆写既有 token，不新增色值） */
+    --nue-table-row-hover-bg-color: transparent;
     margin: var(--nue-padding-2xs) 0;
-    border: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius);
-    /* ⛔ 不可用 `overflow: hidden`：会把手头变成滚动容器 ⇒ sticky 表头失效（拖回不再吸顶） */
 }
 
-/* 表头与数据行共用同一列轨道 ⇒ 逐字段对齐（字段标签 min(8rem, 28%) + 两侧等宽） */
-.conflict-list__compare-head,
-.conflict-list__diff-row {
-    display: grid;
-    grid-template-columns: min(8rem, 28%) minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--nue-gap-xs);
-    align-items: start;
+/* 字段名与值**同行同基线**（此前 grid 方案「字段名与值不在一条线上」的根因） */
+.conflict-list__diff-table :deep(.nue-table__cell) {
+    vertical-align: baseline;
 }
 
-.conflict-list__compare-head {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
-    border-bottom: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius) var(--nue-primary-radius) 0 0;
-    background-color: var(--nue-primary-color-100);
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-    font-weight: var(--nue-font-weight-medium, 500);
-}
-
-.conflict-list__diff-list {
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.conflict-list__diff-row {
-    min-height: var(--nue-box-size-md);
-    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
-    border-bottom: 1px solid var(--nue-border-color);
-}
-
-.conflict-list__diff-row:last-child {
-    border-bottom: none;
-}
-
+/* 字段格：三态符号 + 可读标签 + 状态文案（同一行内基线对齐） */
 .conflict-list__diff-label {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: var(--nue-gap-2xs);
     min-width: 0;
-    padding-block: var(--nue-padding-2xs);
 }
 
-/* 值格：宽屏只靠表头指明两侧 ⇒ 格内来源标签隐藏（堆叠时再显）
-   DEF-135：值一律**纯文本**（无边框 / 底色 / 圆角 / 内边距的盒感），仅保留列轨道与行高 */
+/* 值格：DEF-135 纯文本（无边框 / 底色 / 圆角 / 内边距），仅保留列轨道与行高 */
 .conflict-list__diff-cell {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-2xs);
     min-width: 0;
-    min-height: var(--nue-box-size-sm);
 }
 
-.conflict-list__cell-side {
-    display: none;
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-}
-
-/* 窄屏堆叠符：宽屏不占列 */
-.conflict-list__stack-sep {
-    display: none;
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-}
-
-/* 三态：颜色只作**强化**（行首列同时有符号 + 文字标签），且只染**文字色**（值不加框 / 底色）
-   对比度按白底（DESIGN §2）：error -90 = 8.97 · success -100 = 5.67 ⇒ 文本 ≥4.5 ✓ */
-.conflict-list__diff-row.is-removed .conflict-list__diff-cell.is-loser .conflict-list__text {
-    color: var(--nue-error-color-90);
-}
-
-.conflict-list__diff-row.is-added .conflict-list__diff-cell.is-current .conflict-list__text {
-    color: var(--nue-success-color-100);
-}
-
-/* 窄屏（≤720px）：同字段上下堆叠（先我的修改、后云端最新，不隐藏任一侧） */
+/* 窄屏（≤720px）：**仍三列**（字段列收窄 6rem），不改为上下堆叠 —— 表格本身即对齐方案 */
 @media (max-width: 720px) {
-    .conflict-list__compare-head {
-        display: none;
-    }
-
-    .conflict-list__diff-row {
-        grid-template-columns: minmax(0, 1fr);
-        gap: var(--nue-gap-2xs);
-    }
-
-    .conflict-list__cell-side {
-        display: block;
-    }
-
-    .conflict-list__stack-sep {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .conflict-list__diff-table {
+        --conflict-diff-field-col: 6rem;
     }
 }
 
@@ -897,18 +820,28 @@ const currentSideLabel = computed(() =>
     color: var(--nue-warning-color-90);
 }
 
-/* 值行：来源标签 + 值（宽屏由表头承载来源，堆叠时由格内标签承载）
-   `is-loser` / `is-current` 之间**不再用颜色/字重区分**——DESIGN §4.7：两侧都有值时
-   「两侧值用常规正文色」（差异由符号 + 文案承载，三态才染文字色） */
+/* 值行：`is-loser` / `is-current` 之间**不再用颜色/字重区分**——DESIGN §4.7：两侧都有值时
+   「两侧值用常规正文色」（差异由符号 + 文案承载，仅三态才染文字色）
+   默认 1 行省略（长值 + 「展开」；完整值在 `title` 提示里） */
 .conflict-list__text {
+    display: block;
     min-width: 0;
     color: var(--nue-primary-text-color);
     font-size: var(--nue-text-xs);
     line-height: 1.6;
-    /* 默认 1 行省略（长值 + 「展开」；完整值在 title 提示里） */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* 三态：只染**文字色**（值不加框 / 底色）——仅左有值 ⇒ 我的修改用 error（8.97:1）；
+   仅右有值 ⇒ 云端最新用 success（5.67:1）；两侧都有值 ⇒ 常规正文色 ⇒ 文本均 ≥4.5 ✓ */
+.conflict-list__diff-cell.is-removed .conflict-list__text {
+    color: var(--nue-error-color-90);
+}
+
+.conflict-list__diff-cell.is-added .conflict-list__text {
+    color: var(--nue-success-color-100);
 }
 
 /* 展开后：保留滚动上限，不撑爆对话框 */
@@ -935,33 +868,9 @@ const currentSideLabel = computed(() =>
     font-size: var(--nue-text-2xs);
 }
 
-/* 技术字段：默认折叠；展开后次要样式（更小字号 + 次要色），不抢主对比区 */
-.conflict-list__tech-toggle {
-    display: inline-flex;
-    align-self: flex-start;
-    align-items: center;
-    gap: var(--nue-gap-2xs);
-    min-height: var(--nue-box-size-md);
-    padding: 0 var(--nue-gap-sm);
-    border: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius);
-    background: none;
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-2xs);
-    cursor: pointer;
-}
-
-.conflict-list__tech-toggle:hover {
-    background-color: var(--nue-primary-color-100);
-}
-
-.conflict-list__tech-toggle:focus-visible {
-    outline: 2px solid var(--nue-primary-color-600);
-    outline-offset: 2px;
-}
-
-.conflict-list__diff-row.is-technical .conflict-list__field-name,
-.conflict-list__diff-row.is-technical .conflict-list__text {
+/* 技术字段：并入同一张表、排在业务字段之后，仅次要色 + 更小字号区分（不折叠、不抢主对比区） */
+.conflict-list__diff-label.is-technical .conflict-list__field-name,
+.conflict-list__diff-cell.is-technical .conflict-list__text {
     color: var(--nue-secondary-text-color);
     font-size: var(--nue-text-2xs);
     font-weight: 400;

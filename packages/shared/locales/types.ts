@@ -69,8 +69,7 @@ export interface LocaleMessages {
     'sync.conflict.loadFailed': string
     'sync.conflict.noFieldDiff': string
     'sync.conflict.objectInfo': string
-    'sync.conflict.showTechnical': string
-    'sync.conflict.hideTechnical': string
+    'sync.conflict.fieldColumn': string
     'sync.conflict.metaTable': string
     'sync.conflict.metaEntityId': string
     'sync.conflict.metaEntryId': string

@@ -32,6 +32,7 @@ import {
     NueSelectOption,
     NueSeparator,
     NueSwitch,
+    NueTable,
     NueText,
     NueTextarea,
     NueTooltip
@@ -75,6 +76,7 @@ const components = {
     NueSelectOption,
     NueSeparator,
     NueSwitch,
+    NueTable,
     NueText,
     NueTextarea,
     NueTooltip
