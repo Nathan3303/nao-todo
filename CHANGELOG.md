@@ -2,6 +2,17 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.17.2] - 2026-11-04
+
+小单批（PR #325 · 发版说明 `docs/releases/v1.17.2.md`）：
+
+- **`R-L`（到期回收）**：登录/注册互链改回 `<nue-link :route>`（上游 `nue-ui#108` 已在 **1.15.3** 修复）⇒ 真链接（`href` / 可 Tab / 读屏）；**故意不加 `theme="route"`**（该修饰类为 `display:flex` + `height` 的按钮形态，行内互链会拆行，模板已留注释）；删 `auth-link` 局部样式；`t596` 重写 10 例。
+- **`DEF-137`**：页面级用例的反断言改判 `vm.$options.__file`（旧判据对 `stubs: {X:true}` 无效）；红基线 true 桩 ⇒ 必红。
+- **`DEF-24`**：去 `as unknown as` 桥接（改用导出类型）+ 订正头注；「零 `markDirty`」的间接断言实际在 `mirror-fallback.test.ts` ⇒ 改直接判据并探针验证有牙。
+- **`DEF-25`**：网络错误三条归一化文案 + 全集抽到 `packages/shared/requester/network-error-messages.ts`，生产侧与回退判据点统一引用（语义/文案/契约零改动）。
+- **门禁**：全仓 **368 文件 +1 跳过 / 2948 例 +6 跳过 / 红 0** · `vp check` 0 error（1848 / 1490）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行 · 用户视觉走查通过。
+- **Tag `v1.17.2`** · root / `apps/web` / `apps/desktop` `1.17.1 → 1.17.2`（PATCH）。**服务端无改动，无需部署**。
+
 ## [v1.17.1] - 2026-11-03
 
 清零批（PR #323 · 发版说明 `docs/releases/v1.17.1.md` · 无 PRD —— 一修一测 + 台账对齐）：
