@@ -7,8 +7,14 @@
  * - W1 落地后若语义锚点（文案/结构）改名，**只改本文件的 ANCHORS 一处**；探测逻辑与断言无需重写。
  * - 找不到锚点时各检查返回 **SKIP**（不判 FAIL），避免"白跑"或误报。
  *
+ * ⚠️ **DEF-26 语义对齐（2026-11-04）**：「解锁门」已**语义退役**（ADR `2026-09-23-web-offline-*` §5.4 / DEF-23）——
+ * 进入前提**不再依赖密码**（无 JWT / 无密钥包 / 已迁移明文 ⇒ 三条直接放行），密码入口只在**迁移窗口**
+ * （C-51：旧构建 / 未迁移存量库）出现 ⇒ 本文件**不再以 `input[type=password]` 为必需锚点**：
+ * 「本地就绪」改判**真实证据**（壳已渲染 / 初始同步门 / 离线进入·重试 等逃生入口 / 解锁门 ready 态），
+ * 密码门只作**显式标注的兼容回退**（`legacyUnlock*`：旧包照旧可跑，但不得反推现行实现需要密码）。
+ *
  * 判定口径来源：ADR r3 §2 D-5 与附录 A（BC-1…BC-7）+ PM 答复（seq 36：文案锚点、USER_PROFILE_CACHE 键、BC-6 维持单测口径）。
- * W1 落地后需复核一次：① 可解锁态锚点（ANCHORS.unlockable*）；② 门内失败态文案；③ 离线标识呈现位置（解锁门可见小字 / 轨道 title|aria-label）。
+ * W1 落地后需复核一次：① 本地就绪锚点（ANCHORS.ready*，DEF-26 已对齐现行实现）；② 门内失败态文案；③ 离线标识呈现位置（若解锁门可见则小字 / 轨道 title|aria-label）。
  * @see docs/adr/2026-09-10-shell-03-*.md（待归档）
  */
 import { sleep } from '../lib/cdp.mjs'
@@ -25,8 +31,8 @@ const BASELINE = {
     timeoutMs: 5000,
     maxRetry: 2,
     worstCaseGetMs: 15900,
-    /** 门内"可解锁态"上界（BC-1 人工口径：不等待网络即可交互） */
-    unlockableUpperBoundMs: 2000,
+    /** 门内「本地就绪」上界（BC-1 人工口径：不等待网络即可交互） */
+    readyUpperBoundMs: 2000,
     /** 终态上界：网络等待上界 + 渲染余量 */
     terminalUpperBoundMs: 15900 + 1500,
     sources: [
@@ -52,9 +58,33 @@ const ANCHORS = {
      * ⚠️ 轨道 70px **不放可见小字**（只走 title/aria-label）⇒ 不得以"轨道无可见『离线』字样"判缺陷。
      */
     offlineBadgeText: ['离线', 'Offline'],
-    /** 可解锁态判定：可见密码输入框 或 可见「解锁/登录」按钮（W1 落地后用实测快照复核一次） */
-    unlockableSelectors: ['input[type=password]', '.nue-container--unlock-gate', 'button'],
-    unlockableTexts: ['解锁', '登录', 'Sign in'],
+    /**
+     * 「本地就绪」证据（DEF-26：密码门已**语义退役**，ADR §5.4 / DEF-23）
+     * @description 任一命中即成立（均为「不等待网络」的本地事实）：
+     *              ① 壳已渲染（轨道注入点 / 同步状态条轨道按钮 / 齿轮）⇒ 离线可用真形态；
+     *              ② 初始同步门在（「离线进入 / 重试」等逃生入口的宿主）；
+     *              ③ 解锁门容器在（其 ready 态只依赖本地事实，亚秒级）。
+     */
+    readySelectors: [
+        SEL.railHostSlot,
+        SEL.railBtn,
+        SEL.gear,
+        '.nue-container--unlock-gate',
+        '.initial-sync-gate',
+        '.nue-container--initial-sync-gate'
+    ],
+    /** 门内就绪的**可见文案**证据（逃生/状态面；⛔ 不含「解锁/登录」，免得用旧密码门冒充就绪） */
+    readyTexts: ['离线进入', '重试'],
+    /**
+     * 兼容回退（⛔ **不是必需锚点**）：旧构建 / C-51 迁移窗口的密码入口
+     * @description 命中时仍视为「门已就绪」（旧包照旧可跑），但**不得**据此认定现行实现需要密码。
+     *              ⚠️ 两个必须收窄的口径（DEF-26 同类误报）：
+     *              ① 选择器**必须限定在解锁门容器内**（`SEL.unlockPassword`）—— 登录页也有
+     *                 `input[type=password]`，裸选择器会把「未登录」误判成「本地就绪」；
+     *              ② 文案只收「解锁」（解锁门自身的按钮词）—— 不得收「登录 / Sign in」（登录页同样含该词）。
+     */
+    legacyUnlockSelectors: [SEL.unlockPassword],
+    legacyUnlockTexts: ['解锁'],
     // 离线身份（BC-7）
     avatarFallbackIcon: 'user',
     // 壳（BC-5）——与 SHELL-02 相同锚点
@@ -117,6 +147,11 @@ export const PROBE_GATE = `
             const style = getComputedStyle(node)
             return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && !node.disabled
         })
+    const visible = (selector) => [...document.querySelectorAll(selector)].some((node) => {
+        const box = node.getBoundingClientRect()
+        const style = getComputedStyle(node)
+        return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && style.display !== 'none'
+    })
     const app = document.getElementById('app')
     return {
         hash: location.hash,
@@ -132,11 +167,24 @@ export const PROBE_GATE = `
             signOut: has(${JSON.stringify(ANCHORS.signOutText)}),
             offlineBadge: has(${JSON.stringify(ANCHORS.offlineBadgeText)})
         },
-        unlockForm: (() => {
-            const pw = [...document.querySelectorAll(${JSON.stringify(ANCHORS.unlockableSelectors[0])})].find((node) => node.getBoundingClientRect().width > 0)
-            if (pw) return true
+        /** 门内「本地就绪」= 真实证据（DEF-26）或兼容回退（旧构建/迁移窗口的密码门） */
+        localReady: (() => {
+            if (${JSON.stringify(ANCHORS.readySelectors)}.some((selector) => visible(selector))) return true
             const t = (document.body ? document.body.innerText : '') || ''
-            return ${JSON.stringify(ANCHORS.unlockableTexts)}.some((needle) => t.includes(needle))
+            if (${JSON.stringify(ANCHORS.readyTexts)}.some((needle) => t.includes(needle))) return true
+            return ${JSON.stringify(ANCHORS.legacyUnlockSelectors)}.some((selector) => visible(selector))
+                || ${JSON.stringify(ANCHORS.legacyUnlockTexts)}.some((needle) => t.includes(needle))
+        })(),
+        /** 兼容回退证据（仅记录/兼容，**不参与**任何「必需锚点」判定） */
+        legacyUnlockForm: ${JSON.stringify(ANCHORS.legacyUnlockSelectors)}.some((selector) => visible(selector)),
+        /** 就绪证据明细（命中项；仅供排障，判定仍以 localReady/markers 为准） */
+        readyEvidence: (() => {
+            const t = (document.body ? document.body.innerText : '') || ''
+            return {
+                selectors: ${JSON.stringify(ANCHORS.readySelectors)}.filter((selector) => visible(selector)),
+                texts: ${JSON.stringify(ANCHORS.readyTexts)}.filter((needle) => t.includes(needle)),
+                legacySelectors: ${JSON.stringify(ANCHORS.legacyUnlockSelectors)}.filter((selector) => visible(selector))
+            }
         })(),
         /** 离线标识：可见小字（解锁门）或 title/aria-label（轨道 70px）任一命中即成立 */
         offlineBadgeDetailed: (() => {
@@ -168,12 +216,15 @@ async function readGate(cdp) {
     return cdp.json(`(() => { ${PROBE_GATE} })()`)
 }
 
-/** 判定是否进入"显式终态"（成功壳 / 失败态 + 逃生入口 / 可解锁态） */
+/** 判定是否进入"显式终态"（成功壳 / 失败态 + 逃生入口 / 门内就绪态；DEF-26 未改判据口径，只改锚点） */
 function terminalMarkers(gate) {
     const markers = []
-    if (gate.railSlot || gate.railBtn) markers.push('shell-ready')
+    // 壳已渲染 = 离线可用的最强证据（DEF-26：不再要求密码门先出现）
+    const shellReady = gate.railSlot || gate.railBtn
+    if (shellReady) markers.push('shell-ready')
     if (gate.texts.error && gate.texts.retry) markers.push('failed-with-retry')
-    if (gate.unlockForm) markers.push('unlockable')
+    // 「门内就绪」只在壳未渲染时计入（同一终态不重复计数）
+    if (!shellReady && gate.localReady) markers.push('gate-ready')
     return markers
 }
 
@@ -182,7 +233,7 @@ function terminalMarkers(gate) {
  * @param {object} cdp CDP 客户端
  * @param {number} timeoutMs 采样上界
  * @param {{ blockApi?: boolean }} [options] `blockApi:false` ⇒ 不封后端（用于"真实网络 + CDP Fetch 改写"的凭证类失败模拟）
- * @returns {Promise<{ timeline: object[], firstUnlockableMs: number|null, firstTerminalMs: number|null, terminalState: string|null, terminalMarkers: string[], elapsedMs: number }>}
+ * @returns {Promise<{ timeline: object[], firstReadyMs: number|null, firstTerminalMs: number|null, terminalState: string|null, terminalMarkers: string[], elapsedMs: number }>}
  */
 async function coldStartProbe(cdp, timeoutMs = 20000, options = {}) {
     if (options.blockApi !== false) await cdp.blockUrls(API_BLOCK_URLS)
@@ -196,7 +247,7 @@ async function coldStartProbe(cdp, timeoutMs = 20000, options = {}) {
     const started = Date.now()
     const timeline = []
     let lastKey = ''
-    let firstUnlockableMs = null
+    let firstReadyMs = null
     let firstTerminalMs = null
     let terminalState = null
     while (Date.now() - started < timeoutMs) {
@@ -219,7 +270,9 @@ async function coldStartProbe(cdp, timeoutMs = 20000, options = {}) {
             })
             lastKey = key
         }
-        if (firstUnlockableMs === null && gate.unlockForm) firstUnlockableMs = Date.now() - started
+        // 本地就绪（不等待网络）：壳已渲染 或 门内就绪（含兼容回退的旧密码门）
+        if (firstReadyMs === null && (gate.railSlot || gate.railBtn || gate.localReady))
+            firstReadyMs = Date.now() - started
         if (firstTerminalMs === null && markers.length > 0) {
             firstTerminalMs = Date.now() - started
             terminalState = markers.join('+')
@@ -234,7 +287,7 @@ async function coldStartProbe(cdp, timeoutMs = 20000, options = {}) {
     }
     return {
         timeline,
-        firstUnlockableMs,
+        firstReadyMs,
         firstTerminalMs,
         terminalState,
         terminalMarkers: terminalMarkers(await readGate(cdp)),
@@ -265,16 +318,17 @@ async function waitForFailure(cdp, timeoutMs = BASELINE.terminalUpperBoundMs + 2
  * 冷启动（后端不可达）→ 解锁 → 等到失败终态
  * @param {object} cdp CDP 客户端
  * @param {string|undefined} password 本地库密码
- * @returns {Promise<{ probe: object, failure: object, unlockFormSeen: boolean }>}
+ * @returns {Promise<{ probe: object, failure: object, legacyUnlockFormSeen: boolean }>}
  */
 async function coldStartToFailure(cdp, password) {
     const probe = await coldStartProbe(cdp, 12000)
-    const unlockFormSeen = await cdp.evaluate(
+    // 兼容回退（DEF-26）：仅旧构建 / 迁移窗口（C-51）才需要密码；现行实现直接放行
+    const legacyUnlockFormSeen = await cdp.evaluate(
         `return !!document.querySelector('${SEL.unlockPassword}')`
     )
-    if (unlockFormSeen && password) await fillUnlock(cdp, password)
+    if (legacyUnlockFormSeen && password) await fillUnlock(cdp, password)
     const failure = await waitForFailure(cdp)
-    return { probe, failure, unlockFormSeen }
+    return { probe, failure, legacyUnlockFormSeen }
 }
 
 /**
@@ -493,21 +547,26 @@ async function bc1(ctx) {
             '冷启动时间线（100ms 采样，仅变化点）',
             JSON.stringify(probe.timeline)
         )
-        if (probe.firstUnlockableMs === null && probe.firstTerminalMs === null) {
+        info(
+            checks,
+            'BC-1.ready',
+            '本地就绪证据命中项（含兼容回退；仅供排障）',
+            JSON.stringify((await readGate(cdp)).readyEvidence)
+        )
+        if (probe.firstReadyMs === null && probe.firstTerminalMs === null) {
             return skip(
                 checks,
                 'BC-1',
                 '有界终态',
-                `20s 内既未进入可解锁态也未出现任何终态（可能 W1 未落地/锚点不匹配）；timeline=${JSON.stringify(probe.timeline)}`
+                `20s 内既未进入本地就绪态也未出现任何终态（可能锚点不匹配）；timeline=${JSON.stringify(probe.timeline)}`
             )
         }
         expect(
             checks,
             'BC-1.a',
-            `≤${BASELINE.unlockableUpperBoundMs}ms 进入可解锁态（不等待网络）`,
-            probe.firstUnlockableMs !== null &&
-                probe.firstUnlockableMs <= BASELINE.unlockableUpperBoundMs,
-            `实测 ${probe.firstUnlockableMs ?? '未出现'}ms`
+            `≤${BASELINE.readyUpperBoundMs}ms 进入本地就绪态（不等待网络；密码门仅兼容回退）`,
+            probe.firstReadyMs !== null && probe.firstReadyMs <= BASELINE.readyUpperBoundMs,
+            `实测 ${probe.firstReadyMs ?? '未出现'}ms`
         )
         expect(
             checks,
@@ -592,13 +651,13 @@ async function bc3(ctx) {
     const { cdp, password } = ctx
     const checks = []
     try {
-        const { probe, failure, unlockFormSeen } = await coldStartToFailure(cdp, password)
+        const { probe, failure, legacyUnlockFormSeen } = await coldStartToFailure(cdp, password)
         info(checks, 'BC-3.timeline', '冷启动（封锁后端）时间线', JSON.stringify(probe.timeline))
         info(
             checks,
             'BC-3.unlock',
-            '冷启动后是否出现解锁表单（初始同步门需解锁后才跑）',
-            `unlockFormSeen=${unlockFormSeen}`
+            '冷启动后是否出现密码门（兼容回退：旧构建 / 迁移窗口才需要；现行实现直接放行）',
+            `legacyUnlockFormSeen=${legacyUnlockFormSeen}`
         )
         const gate = failure.gate ?? (await readGate(cdp))
         const errorLines = await cdp.evaluate(`
@@ -682,12 +741,14 @@ async function bc5(ctx) {
     const { cdp, password } = ctx
     const checks = []
     try {
-        // 冷启动（封锁后端）→ 本地解锁 → 初始同步门点「离线进入」→ 壳应可见（F-6 回归线）
+        // 冷启动（封锁后端）→ 本地就绪 → 初始同步门点「离线进入」→ 壳应可见（F-6 回归线）
+        // DEF-26：密码门为**兼容回退**（旧构建 / 迁移窗口 C-51），现行实现无需密码
         const probe = await coldStartProbe(cdp, 9000)
-        const unlockFormSeen = await cdp.evaluate(
+        const legacyUnlockFormSeen = await cdp.evaluate(
             `return !!document.querySelector('${SEL.unlockPassword}')`
         )
-        const unlocked = unlockFormSeen && password ? await fillUnlock(cdp, password) : null
+        const unlocked =
+            legacyUnlockFormSeen && password ? await fillUnlock(cdp, password) : null
         // 等门终态（失败态含「离线进入」），再点；点不到则重试（最多 3 次，每次重新查询）
         let enterOffline = false
         for (let attempt = 0; attempt < 3 && !enterOffline; attempt++) {
@@ -710,7 +771,7 @@ async function bc5(ctx) {
             checks,
             'BC-5.info',
             '冷启动 → 解锁 → 离线进入',
-            `unlockFormSeen=${unlockFormSeen} unlockedLeftGate=${unlocked} clickedOfflineEnter=${enterOffline}`
+            `legacyUnlockFormSeen=${legacyUnlockFormSeen} unlockedLeftGate=${unlocked} clickedOfflineEnter=${enterOffline}`
         )
         info(checks, 'BC-5.timeline', '离线冷启动时间线', JSON.stringify(probe.timeline))
         await sleep(2500)
@@ -795,10 +856,11 @@ async function bc5cred(ctx) {
             '时间线（未封后端，仅 Fetch 改写 sync 接口）',
             JSON.stringify(probe.timeline)
         )
-        const unlockFormSeen = await cdp.evaluate(
+        // 兼容回退（DEF-26）：密码门仅旧构建 / 迁移窗口出现
+        const legacyUnlockFormSeen = await cdp.evaluate(
             `return !!document.querySelector('${SEL.unlockPassword}')`
         )
-        if (unlockFormSeen && password) await fillUnlock(cdp, password)
+        if (legacyUnlockFormSeen && password) await fillUnlock(cdp, password)
         let gate = null
         for (let i = 0; i < 40; i++) {
             gate = await readGate(cdp)
@@ -1186,10 +1248,14 @@ function cacheRelatedLogs(logs) {
 export const shell03Offline = {
     id: 'shell-03',
     title: 'SHELL-03 离线可用性（BC-1…BC-7）',
-    /** W1（门/壳）落地前为脚手架：锚点缺失即 SKIP，不产生误报 */
-    pending: 'W1（门/壳重构）落地后按 PM 派发正式运行',
+    /**
+     * 运行口径
+     * @description 脚手架期已结束（W1 门/壳早已落地，锚点按 DEF-26 对齐现行实现）⇒ 不再挂 `pending`。
+     *              锚点缺失的各检查仍返回 **SKIP**（不误报）；bc3/bc4/bc5/bc5cred/bc7 需要
+     *              `NAO_QA_EMAIL/NAO_QA_PASSWORD` + 已登录的本地资料（否则只得到环境性 SKIP/FAIL）。
+     */
     groups: [
-        { id: 'bc1', title: 'BC-1 有界终态（≤2s 可解锁 + 网络上界 + 唯一终态）', run: bc1 },
+        { id: 'bc1', title: 'BC-1 有界终态（≤2s 本地就绪 + 网络上界 + 唯一终态）', run: bc1 },
         { id: 'bc2', title: 'BC-2 无白屏（≥1 可交互 + console 0 warn/error）', run: bc2 },
         { id: 'bc3', title: 'BC-3 失败可见（DEF-SYNC-01 实机回归线）', run: bc3 },
         { id: 'bc4', title: 'BC-4 逃生入口完备（重试/登出/离线进入）', run: bc4 },

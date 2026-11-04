@@ -12,13 +12,16 @@
 | -------- | -------------------------------------------------------------------------------------------------------------------- |
 | Node     | ≥ 22（依赖全局 `WebSocket` / `fetch`）                                                                               |
 | 后端     | `localhost:3302` 存活（`curl localhost:3302/api/ping` → `{"code":200}`）。**后端未起会冷启动白屏（既有缺陷，见下）** |
-| 账号     | 桌面端登录/解锁密码，通过环境变量注入（**不要写进仓库**）                                                            |
+| 账号     | 桌面端登录凭据，通过环境变量注入（**不要写进仓库**）；本地库密码**仅迁移窗口需要**（见下注）                    |
 | 图形会话 | 需要真实显示；窗口必须能置前台（见「环境陷阱」）                                                                     |
 
 ```bash
 export NAO_QA_EMAIL='<本地 dev 测试账号>'
 export NAO_QA_PASSWORD='<该账号密码>'
 ```
+
+> **密码口径（DEF-26 / ADR §5.4）**：本地数据「解锁门」已**语义退役** —— 无 JWT / 无密钥包 / 已迁移明文
+> 三条直接放行，**不要求密码**；`NAO_QA_PASSWORD` 只在**迁移窗口**（旧构建 / 未迁移存量库）与**登录表单**用得到。
 
 ## 快速开始
 
@@ -56,6 +59,28 @@ node scripts/electron-smoke/run.mjs --only smoke-2,d5b
 - `<out>/report.txt`、`<out>/report.json`：逐条 `[PASS|FAIL|INFO] 分组/id 标题 — 证据数值`
 - 截图（仅在实现截图的分组）：`<out>/*.png`
 - 退出码：有 `FAIL` 返回 1，否则 0（可直接接 CI / 脚本门禁）
+
+## 检查集：SHELL-03 离线可用性（`--feature shell-03`）
+
+**保护的契约**：`docs/adr/2026-09-10-shell-03-offline-availability.md`（BC-1…BC-7）。
+
+**前置**：backend `localhost:3302` + dev server `localhost:5173` + 已登录的本地资料（bc3/bc4/bc5/bc5cred/bc7
+需要 `NAO_QA_EMAIL` / `NAO_QA_PASSWORD`；bc1/bc2 仅需能进应用）。
+
+**锚点口径（DEF-26 对齐，2026-11-04）**：「解锁门」已**语义退役**（ADR `2026-09-23-web-offline-*` §5.4 /
+DEF-23）—— 进入前提**不再依赖密码**（无 JWT / 无密钥包 / 已迁移明文均直接放行），密码入口只在
+**迁移窗口**（C-51：旧构建 / 未迁移存量库）出现 ⇒
+
+- 「本地就绪」判定 = **真实证据**（`ANCHORS.readySelectors` / `readyTexts`）：壳已渲染（轨道注入点 /
+  同步轨道按钮 / 齿轮）、初始同步门在、或「离线进入 / 重试」等逃生入口可见（均为不等待网络的本地事实）；
+- `input[type=password]` **不是必需锚点**；仅作**显式标注的兼容回退**（`ANCHORS.legacyUnlockSelectors`
+  = `.nue-container--unlock-gate input[type=password]`，**限定在解锁门容器内** —— 登录页的密码框不得
+  冒充就绪），命中时照旧可跑旧包，但不得据此认定现行实现需要密码；
+- 判定辅助：`BC-1.ready`（INFO）打印命中的就绪证据，便于排障；锚点全不命中 ⇒ **SKIP**（不误报）。
+
+```bash
+node scripts/electron-smoke/run.mjs --launch --feature shell-03 --only bc1,bc2
+```
 
 ## 检查集：日视图「真实命中」抽检（`--feature day-view`）
 

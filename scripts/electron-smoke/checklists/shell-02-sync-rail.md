@@ -12,7 +12,9 @@ pnpm --filter @nao-todo/desktopapp dev --noSandbox --remoteDebuggingPort 9333
 ```
 
 - `--noSandbox`：本机 SUID sandbox helper 权限限制，必须加（否则 `FATAL ... chrome-sandbox` 直接退出）。
-- 测试账号：**凭据不入库** —— 用环境变量 `NAO_QA_EMAIL` / `NAO_QA_PASSWORD` 传入（本机 dev 库自建账号即可，勿把任何口令写入仓库）；桌面端首次进入需在解锁页输入**同一密码**。
+- 测试账号：**凭据不入库** —— 用环境变量 `NAO_QA_EMAIL` / `NAO_QA_PASSWORD` 传入（本机 dev 库自建账号即可，勿把任何口令写入仓库）。
+  密码只在**登录表单**与**迁移窗口**（旧构建 / 未迁移存量库，C-51）用得到：本地数据「解锁门」已
+  **语义退役**（ADR `2026-09-23-web-offline-*` §5.4 / DEF-23），无 JWT / 无密钥包 / 已迁移明文均直接放行。
 - **窗口必须真实可见**：若窗口被完全遮挡/最小化，Chromium 判定 `document.visibilityState === 'hidden'`，
   CSS 关闭动画不推进 → `animationend` 不触发 → 对话框/面板"关不掉"。这是环境陷阱，**不是缺陷**。
   自测前请把 Electron 窗口置于前台。
