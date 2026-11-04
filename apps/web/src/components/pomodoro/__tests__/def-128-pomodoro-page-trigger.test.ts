@@ -111,6 +111,24 @@ const mountPage = async (): Promise<VueWrapper> => {
 /** 页面上的「专注」触发入口（唯一带 `task-select-trigger` 主题类的元素） */
 const triggerOf = (w: VueWrapper) => w.find('.nue-text--task-select-trigger')
 
+/**
+ * 被测入口所在组件的**真实来源文件**（`DEF-137`：反断言改判据）
+ *
+ * @description 原判据 `findComponent({ name }).exists()` 对 `stubs: { X: true }` **仍为 true**
+ *              （VTU 的 `true` 桩保留组件 `name`）⇒ 兜不住误桩，「测了个假页面」照样绿。
+ *              改判**真实组件实例特征**：Vite 编译 SFC 时注入的 `$options.__file` 必须指向真实路径，
+ *              `true` 桩没有 `__file`（undefined）⇒ 误桩必红。
+ *              取值失败（组件缺失 / 被 stub）返回 `''`，由断言给出实测值，不静默通过。
+ */
+const REAL_DROPDOWN_FILE = 'focus-depend-dropdown/focus-depend-dropdown.vue'
+
+const dropdownFileOf = (w: VueWrapper): string => {
+    const vm = w.findComponent({ name: 'PomodoroFocusDependDropdown' }).vm as {
+        $options?: { __file?: string }
+    } | null
+    return vm?.$options?.__file ?? ''
+}
+
 const describeEl = (el: Element | undefined): string =>
     el === undefined
         ? 'null'
@@ -133,6 +151,11 @@ describe('DEF-128 · 页面级：「专注」触发入口为原生可聚焦 butt
             w.findComponent({ name: 'PomodoroFocusDependDropdown' }).exists(),
             'PomodoroFocusDependDropdown 不得被 stub'
         ).toBe(true)
+        const dropdownFile = dropdownFileOf(w)
+        expect(
+            dropdownFile,
+            `PomodoroFocusDependDropdown 必须是真实组件（true 桩没有 $options.__file）；实测 __file=${dropdownFile || '空'}`
+        ).toContain(REAL_DROPDOWN_FILE)
         const trigger = triggerOf(w).element
         const detail = describeEl(trigger)
 
