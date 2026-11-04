@@ -1,5 +1,6 @@
 import type { Requester, RequesterConfig, RequesterOpRtn } from './types'
 import { isCredentialCode } from './credential-codes'
+import { NETWORK_ERROR_MESSAGE } from './network-error-messages'
 
 /**
  * 设备 ID
@@ -83,7 +84,7 @@ export const useLynxRequester = (
                 _retryCount: 0,
                 data: {
                     data: null,
-                    message: '网络错误，请检查您的网络连接',
+                    message: NETWORK_ERROR_MESSAGE,
                     code: 50300
                 }
             }

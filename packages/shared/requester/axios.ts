@@ -18,6 +18,11 @@ let latestLatchReset: AuthExpiredLatchReset | null = null
 
 import { isCredentialCode } from './credential-codes'
 import { resetAuthExpiryLatch } from './auth-expiry'
+import {
+    NETWORK_ERROR_MESSAGE,
+    RATE_LIMIT_ERROR_MESSAGE,
+    TIMEOUT_ERROR_MESSAGE
+} from './network-error-messages'
 
 /**
  * 复位凭证失效登出闸（登录成功后调用；两端共用）
@@ -187,7 +192,7 @@ export default (
                         _retryCount: retryCount,
                         data: {
                             data: null,
-                            message: '请求过于频繁，请稍后再试',
+                            message: RATE_LIMIT_ERROR_MESSAGE,
                             code: 42900
                         }
                     })
@@ -198,7 +203,7 @@ export default (
                         _retryCount: retryCount,
                         data: {
                             data: null,
-                            message: '请求超时，请稍后再试',
+                            message: TIMEOUT_ERROR_MESSAGE,
                             code: 40800
                         }
                     })
@@ -209,7 +214,7 @@ export default (
                         _retryCount: retryCount,
                         data: {
                             data: null,
-                            message: '网络错误，请检查您的网络连接',
+                            message: NETWORK_ERROR_MESSAGE,
                             code: 50300
                         }
                     })

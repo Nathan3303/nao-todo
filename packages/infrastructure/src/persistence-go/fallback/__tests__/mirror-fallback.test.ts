@@ -10,6 +10,7 @@ import { localDatabase } from '../../../persistence-local/db/local-database'
 import { newLocalTaskRepository } from '../../../persistence-local/repos/task-repo-impl'
 import { localSession } from '../../../persistence-local/session/local-session'
 import { SyncStatus } from '../../../persistence-sync/sync-status'
+import { syncTracker } from '../../../persistence-sync/sync-tracker'
 import { TaskRepoImpl } from '../../task/task-repo-impl'
 import { withMirrorFallback } from '../mirror-fallback'
 import { isNormalizedNetworkError } from '../network-failure'
@@ -198,15 +199,19 @@ describe('withMirrorFallback - 边界', () => {
         await expect(repo.list('')).rejects.toThrow('用户凭证验证失败')
     })
 
-    it('写方法一律透传远端（C-59：阶段一数据面不产生 markDirty）', async () => {
+    it('写方法一律透传远端（C-59 / AC10：数据面 `markDirty` 计数为 0）', async () => {
         const mirror = newLocalTaskRepository()
         const mirrorCreate = vi.spyOn(mirror, 'create')
+        // AC10 直接判据（`DEF-24`）：本地写才会 `markDirty` ⇒ 直取 `syncTracker.markDirty` 计数，
+        // 不再用「镜像 `create` 未被调用」作间接代理
+        const markDirty = vi.spyOn(syncTracker, 'markDirty')
         const { remote, create } = makeRemote(new Error('Network Error'))
         const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
 
         await repo.create(makeTaskVO({ name: '写入' }))
         expect(create).toHaveBeenCalledTimes(1)
         expect(mirrorCreate).not.toHaveBeenCalled()
+        expect(markDirty).not.toHaveBeenCalled()
     })
 })
 
