@@ -4,6 +4,8 @@
  *              内存态 + 订阅通知（见 data-sync-plan.md §8 Phase 3）。
  *              运行（run）边界：一次运行 = beginRun → noteRunError* → endRun；
  *              **仅 beginRun 清空错误、仅 endRun 落定状态**（阶段不得清写，见 SHELL-03 ADR D-2）。
+ *              唯一例外（DEF-13）：`pendingCount` 另有**入队侧补充落定**（`settlePendingCount`，
+ *              防抖后读队列）—— 它不是运行边界，只覆盖计数、不触及错误/`syncing`/`lastSyncAt`。
  */
 
 /** 同步阶段（错误归因；运行入口） */
@@ -196,6 +198,19 @@ export class SyncStatus {
      */
     setDroppedFieldCount(count: number): void {
         this.set({ droppedFieldCount: count })
+    }
+
+    /**
+     * 落定待推送数（DEF-13：入队侧的**补充落定**）
+     * @description ⚠️ **这条路径不是运行边界**：不入 `beginRun`/`endRun`，不改 `syncing`/`lastError`/
+     *              `lastSyncAt`/`failedCount`，只覆盖 `pendingCount`。
+     *              与 `endRun({ pendingCount })` **同源同值**（均取 `syncTracker.countDirty`）⇒ 幂等；
+     *              `pendingCount` 仍是单一来源（UI 不得自行数队列）。
+     *              值未变化时不通知订阅（避免入队抖动引起的无谓重渲染）。
+     */
+    settlePendingCount(count: number): void {
+        if (this.state.pendingCount === count) return
+        this.set({ pendingCount: count })
     }
 
     /**
