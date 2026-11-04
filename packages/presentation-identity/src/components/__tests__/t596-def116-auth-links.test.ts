@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /// <reference types="node" />
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
@@ -20,22 +20,28 @@ import {
 import { defineComponent } from 'vue'
 
 /**
- * T596 红基线 —— AC10：`DEF-116` 认证互链「可访问名 + 可聚焦」或「核查结论落盘」
+ * T596 红基线 → T657（R-L）回收：认证互链恢复 `<nue-link :route>`（`DEF-116` 到期项）
  *
- * 背景：`nue-ui` 1.13.0 的 `nue-link route="…"` 渲染 `<a class="nue-link">` **无 `href`**
- * （`T589` 实测：props 正确、DOM 缺 href）⇒ 键盘/读屏拿不到链接语义。
+ * 历史：`nue-ui` 1.13.0 的 `nue-link route="…"` 渲染 `<a class="nue-link">` **无 `href`**
+ * （`T589` 实测：props 正确、DOM 缺 href）⇒ 认证互链一度改原生 `<router-link class="nue-link">` 规避。
+ * 上游 `nue-ui#108` 已随 **1.15.3** 修复（本仓 `v1.16.4` 升级并回退 11 处 + `smart-list`），
+ * 本批（`T657`）回收最后 2 处身份页互链 ⇒ `DEF-116` 家族**全量清零**。
  *
- * 本用例按 PRD §AC10 的**二选一**写（不预设 rd-fe 方案）：
- * - **规避分支**（把互链换成原生 `router-link` / `a[href]`）⇒ 必须满足
- *   ① 有可访问名 ② 可聚焦（有 `href` 或 `tabindex >= 0`）③ `href` 指向对应认证页；
- * - **只登记不改分支**（互链仍是无 `href` 的 `nue-link`）⇒ 必须落**核查结论**：
- *   `docs/reports/**` 里有 DEF-116 报告，且含「受影响页面」清单与「规避结论」。
- *   否则缺陷既没修也没结论 ⇒ 红。
+ * 本用例锁定四条**不可放宽**的事实（真实挂载，真 `nue-link` + 真 memory router）：
+ * ① **组件来源**：互链由真实 `NueLink` 渲染（`router-link` 回退会先红在这里 —— 原生 `router-link`
+ *    同样产出带 `href` 的 `<a>`，只看 href / 焦点是**咬不住**的）；
+ * ② **链接语义**：`<a>` + `href === router.resolve(target).href` + `tabIndex >= 0` + `focus()` 命中 +
+ *    可访问名非空（键盘 Tab / 中键新标签 / 读屏链接语义）；
+ * ③ **SPA 行为**：点击走 `RouterLink` 的拦截（`defaultPrevented === true`）+ 路由真的变化（不是整页跳）；
+ * ④ **外观不变**：`<a>` 类名仍是 `nue-link`（行内文字链），不带 `nue-link--route`
+ *    （后者是 `display:flex; height:var(--nue-box-size-md)` 的导航按钮形态，会把句子拆开）；
+ *    焦点环由 `apps/web/src/themes/link.css` 的 `.nue-link:focus-visible` 单点提供，组件内不自写。
  *
- * 状态：**红基线已转绿**（`nue-ui` 1.15.3 起 `nue-link` 的 route 形态带 `href`）。
- * 本批口径（`T631` S4）：认证互链仍是原生 `<router-link class="nue-link">`，**不回收**（R-L 挂账，到期 2026-12-31）；
- * 本用例锁定的是「互链有可访问名 + 可聚焦 + href 指向对应认证页」的现状，断言不随版本改动。
- * 变异易感：删掉链接文本 ⇒ 可访问名红；把 `href` 换成死的 `/auth/xxx` ⇒ 目标断言红。
+ * 源码级断言（⑤）额外咬住「规避残留」：两个组件文件不得再出现 `router-link` / `auth-link` /
+ * 「DEF-116 规避」注释 —— 否则上游修复后回退的事实会被静默丢失。
+ *
+ * 变异易感：删掉链接文本 ⇒ 可访问名红；把 `route` 换成死的 `href="/auth/xxx"` ⇒ SPA 断言红；
+ * 改回 `<router-link class="nue-link auth-link">` ⇒ ①⑤ 红。
  */
 
 const { default: AuthSignIn } =
@@ -100,27 +106,9 @@ const links = (): HTMLAnchorElement[] => [...document.querySelectorAll<HTMLAncho
 const accessibleName = (el: Element): string =>
     (el.getAttribute('aria-label') ?? el.textContent ?? '').trim()
 
-const isFocusable = (el: HTMLAnchorElement): boolean => {
-    if (el.hasAttribute('href')) return true
-    const tabindex = el.getAttribute('tabindex')
-    return tabindex !== null && Number(tabindex) >= 0
-}
-
-/** `DEF-116` 核查结论是否落盘（**专门报告**，不含缺陷池登记行） */
-const defectReport = (): { found: boolean; file: string; text: string } => {
-    const dir = join(REPO_ROOT, 'docs/reports')
-    const files = readdirSync(dir)
-        .filter((name) => name.endsWith('.md'))
-        // 缺陷池是登记台账（每行都只写「待核」），不是核查结论 ⇒ 必须另有专门报告
-        .filter((name) => /(t596|def-?116)/i.test(name))
-    for (const name of files) {
-        const text = readFileSync(join(dir, name), 'utf8')
-        if (/DEF-116/.test(text) && /受影响|影响页|影响面/i.test(text)) {
-            return { found: true, file: name, text }
-        }
-    }
-    return { found: false, file: '', text: '' }
-}
+/** 组件源码（源码级断言用：`DEF-116` 规避残留不得复活） */
+const sourceOf = (file: string): string =>
+    readFileSync(join(REPO_ROOT, 'packages/presentation-identity/src/components', file), 'utf8')
 
 beforeEach(() => {
     router = makeRouter()
@@ -136,64 +124,101 @@ afterEach(() => {
 describe.each([
     {
         page: 'signin' as const,
+        file: 'sign-in.vue',
         route: '/auth/signin',
         target: '/auth/signup',
         label: '登录页 → 注册'
     },
     {
         page: 'signup' as const,
+        file: 'sign-up.vue',
         route: '/auth/signup',
         target: '/auth/signin',
         label: '注册页 → 登录'
     }
-])('AC10/DEF-116：$label 互链', ({ page, route, target }) => {
-    it('互链有可访问名（不靠颜色/图标传达语义）', async () => {
+])('R-L/DEF-116 回收：$label 互链', ({ page, file, route, target }) => {
+    it('① 互链由真实 `NueLink` 渲染（不是原生 router-link / 裸 a）', async () => {
         await mountAt(page === 'signin' ? AuthSignIn : AuthSignUp, route)
 
         const anchors = links()
-        expect(anchors.length, '认证页互链应仍存在（零丢失）').toBeGreaterThan(0)
-        for (const anchor of anchors) {
-            expect(
-                accessibleName(anchor),
-                `互链缺少可访问名（文本 / aria-label）；DOM：${anchor.outerHTML}`
-            ).not.toBe('')
-        }
+        expect(anchors.length, '认证页互链应仍存在（零丢失）').toBe(1)
+
+        const linkWrapper = wrapper!.findComponent({ name: 'NueLink' })
+        expect(
+            linkWrapper.exists(),
+            `互链必须由真实 nue-link 渲染（否则 DEF-116 规避残留）；DOM：${anchors[0]!.outerHTML}`
+        ).toBe(true)
+        expect(linkWrapper.element, 'nue-link 的根元素应就是该互链 <a>').toBe(anchors[0])
+        expect(anchors[0]!.tagName, '互链应为 <a>（链接语义）').toBe('A')
     })
 
-    it('互链满足「原生 href + 可聚焦」或「DEF-116 核查结论落盘」二选一', async () => {
+    it('② 链接语义：href 指向对应认证页 + 可聚焦 + 可访问名非空', async () => {
         await mountAt(page === 'signin' ? AuthSignIn : AuthSignUp, route)
 
         const anchors = links()
         expect(anchors.length).toBeGreaterThan(0)
-        const nativeLinks = anchors.filter(
-            (anchor) => anchor.hasAttribute('href') && isFocusable(anchor)
-        )
+        const expectedHref = router.resolve(target).href
 
-        if (nativeLinks.length === anchors.length) {
-            // 规避分支：必须真的指向对应认证页（不是空 href / '#')
-            for (const anchor of nativeLinks) {
-                const href = anchor.getAttribute('href') ?? ''
-                expect(href, `href 不得为空 / 占位；DOM：${anchor.outerHTML}`).not.toBe('')
-                expect(href, `href 不得是占位锚点；实测：${href}`).not.toBe('#')
-                expect(
-                    href,
-                    `href 应指向 ${target}（可携带 redirect query）；实测：${href}`
-                ).toContain(target)
-            }
-            return
+        for (const anchor of anchors) {
+            const href = anchor.getAttribute('href') ?? ''
+            expect(href, `href 不得为空 / 占位；DOM：${anchor.outerHTML}`).not.toBe('')
+            expect(href, `href 不得是占位锚点；实测：${href}`).not.toBe('#')
+            expect(href, `href 应等于 router.resolve('${target}').href；实测：${href}`).toBe(
+                expectedHref
+            )
+            expect(
+                accessibleName(anchor),
+                `互链缺少可访问名（文本 / aria-label）；DOM：${anchor.outerHTML}`
+            ).not.toBe('')
+            expect(
+                (anchor as HTMLElement).tabIndex,
+                `互链应可 Tab 到（tabIndex >= 0）；DOM：${anchor.outerHTML}`
+            ).toBeGreaterThanOrEqual(0)
+
+            anchor.focus()
+            expect(
+                document.activeElement === anchor,
+                `focus() 后未命中互链；DOM：${anchor.outerHTML}`
+            ).toBe(true)
         }
+    })
 
-        // 只登记不改分支：必须给出核查结论（受影响页面清单 + 规避结论）
-        const report = defectReport()
+    it('③ 点击走 SPA 导航（defaultPrevented + 路由变化，不整页跳转）', async () => {
+        await mountAt(page === 'signin' ? AuthSignIn : AuthSignUp, route)
+
+        const anchor = links()[0]!
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 })
+        anchor.dispatchEvent(event)
+        await flushPromises()
+
+        expect(event.defaultPrevented, '点击应由 RouterLink 拦截（整页跳转会丢 SPA）').toBe(true)
         expect(
-            report.found,
-            `DEF-116 未修（互链仍不可聚焦：${anchors
-                .filter((anchor) => !isFocusable(anchor))
-                .map((anchor) => anchor.outerHTML)
-                .join(' / ')}）⇒ 必须在 docs/reports 落核查报告（含受影响页面清单 + 规避结论）`
-        ).toBe(true)
-        expect(report.text, `${report.file} 应给出规避结论（规避 / 替代 / 上游）`).toMatch(
-            /规避|替代|上游/
+            router.currentRoute.value.path,
+            `点击后路由应变为 ${target}；实测：${router.currentRoute.value.path}`
+        ).toBe(target)
+    })
+
+    it('④ 外观不变：行内文字链（`nue-link` + `nue-link__content`，不带 `nue-link--route`）', async () => {
+        await mountAt(page === 'signin' ? AuthSignIn : AuthSignUp, route)
+
+        const anchor = links()[0]!
+        expect(
+            [...anchor.classList],
+            `互链类名应与规避前同构（仅 nue-link）；DOM：${anchor.outerHTML}`
+        ).toEqual(['nue-link'])
+        expect(
+            anchor.querySelector('.nue-link__content'),
+            `nue-link 的内容节点缺失（主题样式会失效）；DOM：${anchor.outerHTML}`
+        ).not.toBe(null)
+    })
+
+    it('⑤ 源码无 `DEF-116` 规避残留（router-link / auth-link / 过时注释）', () => {
+        const source = sourceOf(file)
+
+        expect(source, `${file} 不得再出现原生 router-link 规避`).not.toMatch(/router-link/)
+        expect(source, `${file} 不得再出现 auth-link 局部样式 / 类名`).not.toMatch(/auth-link/)
+        expect(source, `${file} 不得再保留「DEF-116 规避」过时注释（缺陷已闭环）`).not.toMatch(
+            /DEF-116/
         )
     })
 })

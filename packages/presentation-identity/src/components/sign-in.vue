@@ -9,7 +9,7 @@ import {
 import { onSessionBoundary } from '@nao-todo/shared/requester/session-boundary'
 import { NueMessage } from 'nue-ui'
 import { computed, reactive, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { AuthUseCase, type SignInViewObject } from '@nao-todo/domain-identity'
 
 defineOptions({ name: 'AuthSignIn' })
@@ -135,9 +135,11 @@ const submit = async (e: Event) => {
         <nue-footer>
             <nue-text align="center">
                 {{ t('auth.signIn.noAccount') }}
-                <router-link class="nue-link auth-link" :to="signUpLinkRoute()">{{
-                    t('auth.signIn.registerLink')
-                }}</router-link>
+                <!-- 行内互链：**故意不加** `theme="route"` —— `.nue-link--route` 是 `display:flex` +
+                     `height: var(--nue-box-size-md)` + padding/border 的导航按钮形态，
+                     会把「还没有账号？<链接>现在就去注册」这句拆开（外观不变口径）；
+                     焦点环由 apps/web/src/themes/link.css 的 `.nue-link:focus-visible` 单点提供 -->
+                <nue-link :route="signUpLinkRoute()">{{ t('auth.signIn.registerLink') }}</nue-link>
                 {{ t('auth.signIn.goToRegister') }}
             </nue-text>
         </nue-footer>
@@ -186,20 +188,6 @@ const submit = async (e: Event) => {
 
 .session-end-banner__close:focus-visible {
     outline: 2px solid var(--nue-warning-color-80);
-    outline-offset: 2px;
-}
-
-/* 互链：原生 router-link（DEF-116 规避）+ 既有 nue-link 主题色 */
-.auth-link {
-    text-decoration: none;
-}
-
-.auth-link:hover {
-    text-decoration: underline;
-}
-
-.auth-link:focus-visible {
-    outline: 2px solid var(--nue-primary-color-600);
     outline-offset: 2px;
 }
 
