@@ -36,6 +36,12 @@ export interface DesktopBridge {
     setTrayTooltip?(text: string): void
     /** 系统从休眠恢复（返回取消订阅） */
     onPowerResume(callback: () => void): () => void
+    /**
+     * 主窗口可见性（T654 / R-10；**可选**：容旧 preload / 测试桩）
+     * @description 托盘隐藏 ⇒ `false`，唤回/显示 ⇒ `true`。桌面端轮询门控唯一信号
+     *              （`backgroundThrottling:false` 下 `visibilityState` 恒 `visible`，不得拿它冒充）。
+     */
+    onWindowVisibility?(callback: (visible: boolean) => void): () => void
 }
 
 /**
