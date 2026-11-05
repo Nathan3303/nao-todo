@@ -488,10 +488,43 @@ export class SyncService {
      * @description 非主标签收到主标签的「已拉取」通知后调用：**只刷新本窗口视图**
      *              （数据已由主标签落入**同一** IndexedDB，不得再发一次网络）。
      *              同时把合并门时间收敛到主标签的完成时间，避免多标签重复拉取。
+     * @returns 新鲜度收敛的完成信号（T659）；调用方可不等待（视图刷新是同步的）
      */
-    applyForeignPullComplete(at: number = Date.now()): void {
+    applyForeignPullComplete(at: number = Date.now()): Promise<void> {
         this.lastPullSucceededAt = Math.max(this.lastPullSucceededAt ?? 0, at)
         this.notifyDataChanged()
+        // T659 / DEF-142：R-7 要求「是否最新」只看 `mirrorPulledAt`；数据已新而面板时间定格
+        //   = 两处判据不一致（用户惑）。收敛取**同一份**持久化事实，不新建真源、不发网络。
+        return this.convergeMirrorFreshness(at)
+    }
+
+    /**
+     * 镜像新鲜度收敛（T659 / DEF-142 / R-7）
+     * @description 主标签已在 `persistMirrorStatus` 落盘**且先落盘再广播** ⇒ 这里重读同一 IndexedDB 的
+     *              `meta`（不新增真源）。规则：
+     *              - `mirrorPulledAt` 只前进不后退（取 max: 当前 / 持久化 / 广播时间）；
+     *              - `mirrorTruncated` **只取持久化事实**，⛔ 绝不因「广播说某时刻拉取成功」而清掉 ——
+     *                截断未补齐 ≠ 已完整（否则等于绕过 DEF-6 续拉判据，把「不够」假绿成「完整」）。
+     *              读不到持久化记录（极端）⇒ 只推进时间戳，truncation 保持原值。
+     */
+    private async convergeMirrorFreshness(at: number): Promise<void> {
+        const userId = this.currentUserId()
+        if (!userId) return
+        try {
+            const persisted = await loadMirrorStatus(userId)
+            const current = syncStatus.get()
+            const previous = [current.mirrorPulledAt, persisted?.mirrorPulledAt ?? null]
+                .filter((value): value is string => typeof value === 'string' && value !== '')
+                .map((value) => Date.parse(value))
+                .filter((value) => Number.isFinite(value))
+            const broadcastAt = Number.isFinite(at) ? at : Date.now()
+            syncStatus.restoreMirrorStatus({
+                mirrorPulledAt: new Date(Math.max(broadcastAt, ...previous)).toISOString(),
+                mirrorTruncated: persisted ? persisted.mirrorTruncated : current.mirrorTruncated
+            })
+        } catch {
+            // 本地读失败：保持原值（不比修复前更差），且不得影响已完成的视图刷新
+        }
     }
 
     /** 判定业务码是否为会话失效（D1 单一判据：被动投影仅凭证类 ⇒ 结束；纳入 `10042`） */
@@ -1072,11 +1105,6 @@ export class SyncService {
                 // 所有表均取尽 ⇒ 镜像完整（DEF-6/AC13b：仅此处推进 mirrorPulledAt）
                 this.pullIncomplete = false
                 syncStatus.markMirrorPulled()
-                // T654 / R-6 / R-9：**完整拉取**才算「上次成功拉取」——
-                //   触顶截断（`pending.size > 0`）仍有后续补拉要跑，⛔ 不得被合并门挡下（DEF-6 回归），
-                //   故只在取尽时推进合并门时间并广播「已拉取」。
-                this.lastPullSucceededAt = Date.now()
-                this.pullBroadcast.post(userId, this.lastPullSucceededAt)
             } else {
                 // 触顶截断：不推进 mirrorPulledAt（护栏 B），交由回传定时补拉
                 this.pullIncomplete = true
@@ -1089,6 +1117,14 @@ export class SyncService {
                 written: writtenCount,
                 truncated: pending.size > 0
             })
+            if (pending.size === 0) {
+                // T654 / R-6 / R-9：**完整拉取**才算「上次成功拉取」——
+                //   触顶截断（`pending.size > 0`）仍有后续补拉要跑，⛔ 不得被合并门挡下（DEF-6 回归），
+                //   故只在取尽时推进合并门时间并广播「已拉取」。
+                // T659：**先落盘再广播**（非主标签收到广播后要读这份 meta 收敛新鲜度）。
+                this.lastPullSucceededAt = Date.now()
+                this.pullBroadcast.post(userId, this.lastPullSucceededAt)
+            }
         } finally {
             // 有实际写入（含续拉中途失败前已落库部分）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
             if (writtenCount > 0) this.notifyDataChanged()

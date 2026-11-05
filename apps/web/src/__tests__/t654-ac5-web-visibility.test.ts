@@ -67,6 +67,7 @@ vi.mock('@nao-todo/infrastructure/src/observability/structured-log', () => ({
 
 const { startSyncRefreshRuntime, stopSyncRefreshRuntime, isSyncRefreshRuntimeRunning } =
     await import('../sync-refresh-runtime')
+const { syncStatus } = await import('@nao-todo/infrastructure/src/persistence-sync/sync-status')
 
 /** 假 `BroadcastChannel`（同步派发给其它实例，便于断言「≤2s」的即时性） */
 class FakeBroadcastChannel {
@@ -110,6 +111,7 @@ describe('T654 · AC5（web）可见性门控 / AC10 清理', () => {
         FakeBroadcastChannel.instances = []
         vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
         mocks.getCurrentUserId.mockReturnValue('u-1')
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: null, mirrorTruncated: false })
         mocks.pullAll.mockImplementation(async () => okResult())
         mocks.resumeBackfill.mockImplementation(async () => okResult())
         mocks.countDirty.mockResolvedValue(0)
@@ -189,6 +191,20 @@ describe('T654 · AC5（web）可见性门控 / AC10 清理', () => {
         mocks.applyForeignPullComplete.mockClear()
         master.postMessage({ type: 'pull-complete', userId: 'other-user', at: 2_000 })
         expect(mocks.applyForeignPullComplete).not.toHaveBeenCalled()
+    })
+
+    it('T659 广播来自**他人 userId** ⇒ 忽略：不刷视图、不动新鲜度、零网络', () => {
+        const OLD = '2020-01-01T00:00:00.000Z'
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: OLD, mirrorTruncated: false })
+        startSyncRefreshRuntime()
+
+        const master = new FakeBroadcastChannel('nao-todo:pull-complete')
+        master.postMessage({ type: 'pull-complete', userId: 'other-user', at: Date.now() })
+
+        expect(mocks.applyForeignPullComplete).not.toHaveBeenCalled()
+        expect(syncStatus.get().mirrorPulledAt).toBe(OLD)
+        expect(mocks.pullAll).not.toHaveBeenCalled()
+        expect(mocks.resumeBackfill).not.toHaveBeenCalled()
     })
 
     it('AC10 停用 ⇒ 定时器清空、监听与广播全部释放（再触发也无请求）', async () => {

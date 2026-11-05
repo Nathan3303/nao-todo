@@ -119,7 +119,7 @@ const createRuntime = (options: SyncRefreshRuntimeOptions): { handle: SyncRefres
         const userId = localSession.getCurrentUserId()
         if (!userId || message.userId !== userId) return
         logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_AUTO_REFRESH_BROADCAST, { userId })
-        syncService.applyForeignPullComplete(message.at)
+        void syncService.applyForeignPullComplete(message.at)
     })
 
     const detach: (() => void)[] = []

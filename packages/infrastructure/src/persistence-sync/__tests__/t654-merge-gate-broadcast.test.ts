@@ -215,7 +215,7 @@ describe('T654 · AC7 单主 + 广播成对', () => {
         const refreshed = vi.fn()
         service.setDataChangedListener(refreshed)
 
-        service.applyForeignPullComplete(1_000)
+        await service.applyForeignPullComplete(1_000)
 
         expect(refreshed).toHaveBeenCalledTimes(1)
         expect(pulls()).toBe(0)
