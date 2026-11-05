@@ -122,6 +122,7 @@ const componentSource = (): string => {
 
 const status = (): Ref<MockSyncStatus> => hooksMock.status as Ref<MockSyncStatus>
 const loadedCount = (): Ref<number> => hooksMock.loadedCount as Ref<number>
+const manualSyncing = (): Ref<boolean> => hooksMock.manualSyncing as Ref<boolean>
 
 // jsdom 未实现 ResizeObserver；D5=B（`:transparent="true"`）下库在 mounted 内 new ResizeObserver
 // （nue-ui 1.10.58 / 1.11.0 同构）→ 测试环境补最小桩（非透明模式不创建，产品代码不依赖）
@@ -201,6 +202,7 @@ const ariaLabel = (): string | null => railButton()?.getAttribute('aria-label') 
 beforeEach(() => {
     status().value = defaultStatus()
     loadedCount().value = 0
+    manualSyncing().value = false
     resetReadOnlyForTest()
 })
 
@@ -858,10 +860,12 @@ describe('SyncStatusBar - DESIGN §4.8 面板视觉整理', () => {
             '数据已是最新'
         )
 
-        // ④ 同步中不显示该句（首行已换为「同步中…」）
+        // ④ DEF-138：同步中该句**常显**（旧行为「同步中消失」正是抖动来源之一）
         status().value = { ...status().value, syncing: true }
         await nextTick()
-        expect(panel()?.querySelector('.sync-panel__hint')).toBeNull()
+        expect(panel()?.querySelector('.sync-panel__hint')?.textContent?.trim()).toBe(
+            '数据已是最新'
+        )
 
         // ⑤ 异常出现即恢复分区（不与正常态互串）
         status().value = { ...defaultStatus(), pendingCount: 1 }
@@ -971,5 +975,133 @@ describe('SyncStatusBar - DESIGN §4.8 面板视觉整理', () => {
         expect(narrowBlock).not.toContain('margin-top')
         // ⑤ 动效降级
         expect(css).toContain('prefers-reduced-motion: reduce')
+    })
+})
+/**
+ * DEF-138 同步中面板抖动（用户走查：「加载的时候会抖动…能不能加载的时候保持其他内容常显」）
+ * @description 三条叠加根因：① 数据层 `beginRun()` 在运行开始清空 `lastError`（ADR D-2 语义**不动**）
+ *              ⇒ 展示层保留上一轮摘要并标注来源；② `allGood` 含 `!syncing` ⇒ 正常态那句忽隐忽现；
+ *              ③ 「立即同步」按钮 loading 换图标导致右缘位移 ⇒ 定宽占位；
+ *              ④ 普通同步会凭空多出「数据」分区（`coverage.loadingMore === syncing`）⇒ ④ 仅在镜像触顶时出现。
+ *              只做展示层稳定化，**不改** `beginRun`/`endRun`、计数与状态判定。
+ */
+describe('SyncStatusBar - DEF-138 同步中内容常显（抖动消除）', () => {
+    /** 分区标题（去掉标题内「· 上次同步」来源标注，只比分区语义名） */
+    const sectionTitles = (): string[] =>
+        Array.from(panel()?.querySelectorAll<HTMLElement>('.sync-panel__section-title') ?? []).map(
+            (el) => (el.firstChild?.textContent ?? '').trim()
+        )
+    const sections = (): HTMLElement[] =>
+        Array.from(panel()?.querySelectorAll<HTMLElement>(':scope > li.sync-panel__section') ?? [])
+
+    it('① 运行开始（数据层清空 lastError）⇒ 分区集合/数量不变，错误区沿用上次摘要并标注「上次同步」', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            // 在线 + 完整镜像 ⇒ freshness=updated（否则「数据」分区本就该在场，与本次修法无关）
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z',
+            lastError: '拉取失败：网络错误'
+        }
+        await nextTick()
+        const titleBefore = sectionTitles()
+        const countBefore = sections().length
+        expect(titleBefore).toEqual(['错误'])
+
+        // beginRun：清空错误 + syncing=true（数据层语义逐字不动）
+        status().value = { ...status().value, syncing: true, lastError: null }
+        await nextTick()
+
+        expect(sectionTitles()).toEqual(titleBefore)
+        expect(sections().length).toBe(countBefore)
+        expect(panelText()).toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__section-note')?.textContent?.trim()).toBe(
+            '· 上次同步'
+        )
+
+        // 本轮报出新错 ⇒ 换成新摘要，且不再标注来源
+        status().value = { ...status().value, lastError: '推送失败：网络错误' }
+        await nextTick()
+        expect(panelText()).toContain('推送失败：网络错误')
+        expect(panelText()).not.toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__section-note')).toBeNull()
+    })
+
+    it('② 同步中正常态那句「数据已是最新」常显（不再随运行消失）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...defaultStatus(),
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z'
+        }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeTruthy()
+
+        status().value = { ...status().value, syncing: true }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')?.textContent?.trim()).toBe(
+            '数据已是最新'
+        )
+        // 普通同步不凭空多出分区（④ 仅在镜像触顶时随 ⑤ 出现）
+        expect(sections().length).toBe(1)
+        expect(panelText()).not.toContain('正在加载更多')
+    })
+
+    it('③ 动作按钮定宽占位：loading 与 idle 均保留图标盒（源级 min-width）', async () => {
+        await openWithPanel()
+        expect(panel()?.querySelector('.sync-panel__action .nue-button__icon')).toBeTruthy()
+
+        manualSyncing().value = true
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__action .nue-button__icon')).toBeTruthy()
+        expect(panel()?.querySelector('.sync-panel__action')?.textContent).toContain('立即同步')
+
+        expect(componentSource()).toMatch(/\.sync-panel__action\s*\{[^}]*min-width:\s*[^;]+;/)
+        expect(componentSource()).toMatch(/\.sync-panel__action\s*\{[^}]*flex:\s*none;/)
+        manualSyncing().value = false
+        await nextTick()
+    })
+
+    it('④ 运行成功收尾 ⇒ 错误区移除（允许这一次收敛）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            // 在线 + 完整镜像 ⇒ freshness=updated（否则「数据」分区本就该在场，与本次修法无关）
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z',
+            lastError: '拉取失败：网络错误'
+        }
+        await nextTick()
+        // 运行开始（清空错误，沿用缓存）
+        status().value = { ...status().value, syncing: true, lastError: null }
+        await nextTick()
+        // 主信息分区恒在 + 错误分区沿用上次摘要
+        expect(sections().length).toBe(2)
+        expect(sectionTitles()).toEqual(['错误'])
+        expect(panel()?.querySelector('.sync-panel__section-note')).toBeTruthy()
+
+        // 运行成功结束（endRun：syncing=false 且仍无错误）⇒ 缓存过期、分区移除、正常态回来
+        status().value = { ...status().value, syncing: false }
+        await nextTick()
+        expect(sections().length).toBe(1)
+        expect(sectionTitles()).toEqual([])
+        expect(panelText()).not.toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeTruthy()
+    })
+
+    it('⑤ 触顶镜像下的 ④⑤ 组合语义不变（未扫完 + 同步上限仍同时出现）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            syncing: true,
+            mirrorTruncated: true,
+            mirrorPulledAt: '2026-11-05T01:00:00.000Z'
+        }
+        await nextTick()
+        const text = panelText()
+        expect(text).toContain('正在加载更多…')
+        expect(text).toContain('同步上限')
+        // 数据分区在场时也不影响既有的错误/正常态判定
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeNull()
     })
 })

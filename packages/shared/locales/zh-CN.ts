@@ -62,6 +62,7 @@ const zhCN: LocaleMessages = {
     'sync.section.queue': '待处理',
     'sync.section.conflict': '冲突',
     'sync.section.error': '错误',
+    'sync.errorFromLastRun': '上次同步',
     'sync.section.diagnostic': '诊断',
     'sync.droppedFields': '有 {count} 项改动未能完整同步（部分字段云端暂不支持）',
     'sync.conflict.title': '冲突记录',

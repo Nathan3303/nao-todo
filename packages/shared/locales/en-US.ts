@@ -66,6 +66,7 @@ const enUS: LocaleMessages = {
     'sync.section.queue': 'Pending',
     'sync.section.conflict': 'Conflicts',
     'sync.section.error': 'Errors',
+    'sync.errorFromLastRun': 'From the last sync',
     'sync.section.diagnostic': 'Diagnostics',
     'sync.droppedFields':
         '{count} change(s) were not fully synced (some fields are not supported by the cloud yet)',

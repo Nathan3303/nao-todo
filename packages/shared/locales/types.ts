@@ -58,6 +58,7 @@ export interface LocaleMessages {
     'sync.section.queue': string
     'sync.section.conflict': string
     'sync.section.error': string
+    'sync.errorFromLastRun': string
     'sync.section.diagnostic': string
     'sync.droppedFields': string
     'sync.conflict.title': string
