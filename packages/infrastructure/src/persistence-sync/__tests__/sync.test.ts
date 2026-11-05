@@ -1125,7 +1125,9 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
     const echoResultsRequester = (isDown: () => boolean): Requester =>
         ({
             post: async (url: string, body: unknown) => {
-                if (url === '/sync/pull') return { data: { data: {} }, serverTime: Date.now() }
+                // T657：真实成功信封（成功码 + 表信袋）；缺 `code` 且无表信袋已被判失败
+                if (url === '/sync/pull')
+                    return { data: { code: 90020, data: { data: {} } }, serverTime: Date.now() }
                 if (isDown()) return { code: 'ERR_NETWORK' }
                 const payload = body as Record<string, unknown>
                 const rows = Object.entries(payload).filter(([key]) => key !== 'deletions')

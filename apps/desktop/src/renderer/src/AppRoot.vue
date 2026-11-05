@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import App from '@/App.vue'
 import { reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
@@ -32,6 +32,8 @@ import {
 } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
+import { startSyncRefreshRuntime, stopSyncRefreshRuntime } from '@/sync-refresh-runtime'
+import { bindDesktopWindowVisibility, hasWindowVisibilityBridge } from './window-visibility'
 
 defineOptions({ name: 'AppRoot' })
 
@@ -169,8 +171,42 @@ const backfillTarget = {
 }
 const unregisterBackfillTriggers = registerBackfillTriggers(withBootstrapRetry(backfillTarget))
 
+/**
+ * T654 / AC5（桌面分支）：窗口隐藏到托盘 = 停轮询；从托盘唤回 = 立即拉一次。
+ * @description 可见性**唯一**信号 = 主进程 `show` / `hide` → IPC（R-10）。
+ *              `backgroundThrottling:false` 使 `document.visibilityState` 恒为 `visible`
+ *              ⇒ 桌面分支显式**不注册** document 监听（`manageDocumentVisibility: false`）；
+ *              仅在旧 preload 缺桥时退回 document（行为等价于「永不隐藏」，不谎报）。
+ */
+let detachWindowVisibility: (() => void) | null = null
+
+const startAutoRefresh = (): void => {
+    const runtime = startSyncRefreshRuntime({
+        initialVisible: true,
+        manageDocumentVisibility: !hasWindowVisibilityBridge()
+    })
+    if (!runtime || detachWindowVisibility) return
+    detachWindowVisibility = bindDesktopWindowVisibility(runtime)
+}
+
+const stopAutoRefresh = (): void => {
+    detachWindowVisibility?.()
+    detachWindowVisibility = null
+    stopSyncRefreshRuntime()
+}
+
+// 登录态切换即时接/断（登出必释放定时器 / 监听 / 广播，AC10）
+watch(
+    () => userStore.getIsAuthenticated(),
+    (authed) => (authed ? startAutoRefresh() : stopAutoRefresh()),
+    {
+        immediate: true
+    }
+)
+
 onUnmounted(() => {
     unregisterBackfillTriggers()
+    stopAutoRefresh()
 })
 </script>
 

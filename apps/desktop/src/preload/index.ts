@@ -2,7 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import {
     DESKTOP_IPC_CHANNELS,
     DESKTOP_ONEWAY_CHANNELS,
-    DESKTOP_POWER_EVENT_CHANNEL
+    DESKTOP_POWER_EVENT_CHANNEL,
+    DESKTOP_WINDOW_VISIBILITY_CHANNEL
 } from '../main/ipc'
 
 /**
@@ -14,6 +15,17 @@ import {
  * @see apps/desktop/src/main/ipc.ts
  * @see docs/reports/T543-arch-review.md（§二 2.1 ipc.ts / §六 凭据暴露面不变）
  */
+/**
+ * 最近一次主窗口可见性（T654 / R-10）
+ * @description preload 在**页面脚本之前**执行 ⇒ 在最早期就开始缓存主进程推播的首帧可见性；
+ *              订阅时先回放缓存值，避免「消息先到、渲染层后订阅」的初值空洞
+ *              （自启静默到托盘时窗口本就隐藏，若漏首帧则渲染层会以「可见」为初值多拉）。
+ */
+let lastWindowVisible: boolean | null = null
+ipcRenderer.on(DESKTOP_WINDOW_VISIBILITY_CHANNEL, (_event, visible: unknown) => {
+    lastWindowVisible = visible === true
+})
+
 contextBridge.exposeInMainWorld('desktopAPI', {
     isDesktop: true,
     platform: process.platform,
@@ -34,5 +46,13 @@ contextBridge.exposeInMainWorld('desktopAPI', {
         const listener = () => callback()
         ipcRenderer.on(DESKTOP_POWER_EVENT_CHANNEL, listener)
         return () => ipcRenderer.removeListener(DESKTOP_POWER_EVENT_CHANNEL, listener)
+    },
+    // T654 / R-10：主窗口可见性（托盘隐藏 = false，唤回 = true）—— 桌面端轮询门控唯一信号
+    onWindowVisibility: (callback: (visible: boolean) => void) => {
+        const listener = (_event: unknown, visible: boolean) => callback(visible === true)
+        ipcRenderer.on(DESKTOP_WINDOW_VISIBILITY_CHANNEL, listener)
+        // 回放已知初值（若已收到过）——订阅方无需再等下一次 show/hide
+        if (lastWindowVisible !== null) callback(lastWindowVisible)
+        return () => ipcRenderer.removeListener(DESKTOP_WINDOW_VISIBILITY_CHANNEL, listener)
     }
 })

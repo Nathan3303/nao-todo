@@ -41,7 +41,9 @@ import { makeTaskVO, setup } from './local-repos-test-helpers'
 const echoResultsRequester = (): Requester =>
     ({
         post: async (url: string, body: unknown) => {
-            if (url === '/sync/pull') return { data: { data: {} }, serverTime: Date.now() }
+            // T657：成功信封必须带成功码 + 表信袋（无 `data` 的业务码响应已判失败）
+            if (url === '/sync/pull')
+                return { data: { code: 90020, data: { data: {} } }, serverTime: Date.now() }
             const payload = body as Record<string, unknown>
             const rows = Object.entries(payload).filter(([key]) => key !== 'deletions')
             const results = rows.flatMap(([table, value]) =>
@@ -70,7 +72,7 @@ const unconfirmedRequester = (): Requester =>
     ({
         post: async (url: string) =>
             url === '/sync/pull'
-                ? { data: { data: {} }, serverTime: Date.now() }
+                ? { data: { code: 90020, data: { data: {} } }, serverTime: Date.now() }
                 : { data: { data: { results: [] }, serverTime: Date.now() } },
         get: async () => ({ data: {} }),
         put: async () => ({ data: {} }),

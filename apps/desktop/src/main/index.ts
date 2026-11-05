@@ -28,6 +28,7 @@ import {
 } from './autostart'
 import {
     DESKTOP_POWER_EVENT_CHANNEL,
+    bindWindowVisibility,
     registerDesktopIpcHandlers,
     registerDesktopTrayTooltipHandler
 } from './ipc'
@@ -175,6 +176,10 @@ const createWindow = (): BrowserWindow => {
         shell.openExternal(url)
         return { action: 'deny' }
     })
+
+    // T654 / R-10：窗口隐藏到托盘 = 停轮询（`backgroundThrottling` 为 false 时 `visibilityState`
+    // 恒为 visible，不能拿它冒充「窗口在托盘里」）；可见性唯一信号 = 主进程 `show`/`hide` → IPC
+    bindWindowVisibility(win)
 
     if (isDev && process.env.ELECTRON_RENDERER_URL) {
         win.loadURL(process.env.ELECTRON_RENDERER_URL)

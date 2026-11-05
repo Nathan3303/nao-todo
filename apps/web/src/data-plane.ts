@@ -7,6 +7,7 @@ import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persist
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
 import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
+import { startSyncRefreshRuntime, stopSyncRefreshRuntime } from '@/sync-refresh-runtime'
 import { selfHealLegacyCipherMirror } from '@nao-todo/infrastructure/src/persistence-local/migration/legacy-cipher-self-heal'
 import { startReadOnlyWatch } from '@nao-todo/presentation/offline'
 import {
@@ -62,16 +63,15 @@ export const startWebDataPlane = (): void => {
             syncService.schedulePush()
         })
         // C-61③：常驻跨 7 天无冷启动 ⇒ 挂既有回传触发源顺带重跑启动收敛点（不新增定时器）
-        // C-59 / ADR-r5.1：回传成功（真实执行 pull）⇒ 清除「离线进入」flag（网络恢复即可写）
+        // T654：**拉取触发已迁到 `sync-refresh-runtime`**（可见性/在线/周期统一门控 + 合并门）；
+        //   此处只保留「触发顺带做的别的事」（重跑启动收敛点 + 偏好队列冲刷），不回退为直调 pull。
         registerBackfillTriggers(
             withBootstrapRetry({
                 handleOnline: () => {
-                    void syncService.resumeBackfill().then(applySyncConfirmation)
                     // TASK-26 / M6：偏好队列复用既有触发源（online）冲刷，不新增重试机制
                     void flushPreferenceQueue()
                 },
                 handleVisibility: () => {
-                    void syncService.resumeBackfill().then(applySyncConfirmation)
                     void flushPreferenceQueue()
                 }
             })
@@ -81,8 +81,14 @@ export const startWebDataPlane = (): void => {
     // 未登录（JWT 已清，如登出）：重置已拉取标记 ⇒ 同一用户重新登录后会重新拉取
     if (!userId) {
         activeUserId = null
+        // AC10：登出 ⇒ 释放自动刷新的定时器 / 监听 / 广播
+        stopSyncRefreshRuntime()
         return
     }
+    // T654 / AC1–AC7：可见窗口自动刷新（30s 周期 + 可见性/在线门控 + 单主广播）。
+    //   ⚠️ **必须早于「同一用户就返回」**：凭证失效停用后重新登录（userId 未变）也要能拉起。
+    //   `onRunResult = applySyncConfirmation`：事件触发真实拉取后才能解「离线进入」只读旗（C-59 语义不变）。
+    startSyncRefreshRuntime({ onRunResult: applySyncConfirmation })
     if (userId === activeUserId) return
     activeUserId = userId
     // 非阻塞：不阻塞进入应用；本条即「web 也用 syncService + 本地镜像」的接线点
@@ -114,6 +120,8 @@ export const resetWebDataPlaneForTest = (): void => {
     registered = false
     activeUserId = null
     firstPullSettled = null
+    // 跨用例不留定时器 / 监听
+    stopSyncRefreshRuntime()
 }
 
 /**

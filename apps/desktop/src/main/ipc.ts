@@ -33,6 +33,14 @@ export const DESKTOP_ONEWAY_CHANNELS = {
 /** 主进程向渲染层单向推送（非 `handle` 通道，不属可调用面）：系统从休眠恢复 */
 export const DESKTOP_POWER_EVENT_CHANNEL = 'nao:power-resume'
 
+/**
+ * 主进程向渲染层单向推送：主窗口可见性（T654 / R-10 / AC5 桌面分支）
+ * @description 桌面窗口隐藏到托盘时，`backgroundThrottling` 为 false 使 `document.visibilityState`
+ *              **恒为 `visible`** ⇒ 不能用它判断「窗口是否在托盘里」；唯一信号 = 主进程 `show`/`hide`。
+ * @see docs/prds/2026-11-05-sync-perception-polling.md（R-10 / AC5）
+ */
+export const DESKTOP_WINDOW_VISIBILITY_CHANNEL = 'nao:window-visibility'
+
 /** IPC 事件最小面（Electron `IpcMainInvokeEvent` 的子集） */
 export interface IpcEventLike {
     senderFrame?: { url?: string } | null
@@ -90,7 +98,6 @@ export const registerDesktopIpcHandlers = (deps: RegisterDesktopIpcDeps): void =
 
 /** tooltip 载荷长度上限（ADR §决策 1 / T574 §二：1..64 字符） */
 const TRAY_TOOLTIP_MAX_LENGTH = 64
-
 export interface RegisterDesktopTrayTooltipDeps {
     ipcMain: { on(channel: string, listener: IpcListener): void }
     isTrustedUrl(url: string): boolean
@@ -118,4 +125,36 @@ export const registerDesktopTrayTooltipHandler = (deps: RegisterDesktopTrayToolt
             // 单向通道无回程面：任何异常只允许落在主进程，且不得影响其它能力
         }
     })
+}
+
+/** 窗口可见性推播所需的最小面（Electron `BrowserWindow` 满足） */
+export interface WindowVisibilityLike {
+    isVisible(): boolean
+    isDestroyed(): boolean
+    on(event: 'show' | 'hide', listener: () => void): unknown
+    webContents: {
+        send(channel: string, ...args: unknown[]): void
+        on(event: 'did-finish-load', listener: () => void): unknown
+    }
+}
+
+/**
+ * 把主窗口可见性推给渲染层（T654 / R-10 / AC5 桌面分支）
+ * @description 三个推播点：`show` / `hide` / `did-finish-load`。
+ *              最后一个用于**首帧初值**：自启静默到托盘时窗口本就不可见，渲染层必须一开始就知道；
+ *              否则会以「可见」为初值多拉一次（不影响正确性，但白花请求）。
+ *              单向通道：渲染层不发请求、不回传任何数据。
+ */
+export const bindWindowVisibility = (window: WindowVisibilityLike): void => {
+    const publish = (): void => {
+        try {
+            if (window.isDestroyed()) return
+            window.webContents.send(DESKTOP_WINDOW_VISIBILITY_CHANNEL, window.isVisible())
+        } catch {
+            // 窗口/渲染层已销毁：静默降级（不得影响生命周期）
+        }
+    }
+    window.on('show', publish)
+    window.on('hide', publish)
+    window.webContents.on('did-finish-load', publish)
 }
