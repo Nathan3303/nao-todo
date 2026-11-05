@@ -11,6 +11,7 @@ import {
     type AutoRefreshTimerHandle,
     type AutoRefreshTrigger
 } from '../auto-refresh'
+import { loadMirrorStatus, saveMirrorStatus } from '../mirror-status-store'
 import { createPullBroadcast, type PullBroadcastChannelLike } from '../pull-broadcast'
 import { syncStatus } from '../sync-status'
 import { SyncService } from '../sync-service'
@@ -745,4 +746,134 @@ describe('T655 · T657 四态业务码（服务端码已独立核对：90020 成
         expect(await localDatabase.tasks.count()).toBe(250) // 补拉补齐，无重复/无覆盖丢失
         subscriber.dispose()
     }, 60_000)
+})
+
+// ---------------------------------------------------------------------------
+// T659 追加复验（DEF-142）—— 广播命中的新鲜度收敛
+// ---------------------------------------------------------------------------
+describe('T655b · T659 追加复验（DEF-142：广播命中 ⇒ 新鲜度收敛，截断态不被清）', () => {
+    const OLD = '2020-01-01T00:00:00.000Z'
+
+    beforeEach(async () => {
+        FakeBroadcastChannel.instances = []
+        vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
+        vi.stubGlobal('navigator', {})
+        await resetLocalState()
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: null, mirrorTruncated: false })
+    })
+    afterEach(() => {
+        vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+        FakeBroadcastChannel.instances = []
+    })
+
+    it('① 广播**发出时**：内存新鲜度已前进 且 meta 已落盘（先落盘再广播的顺序证明）', async () => {
+        const { requester } = makeRequester()
+        const master = new SyncService(requester)
+        const subscriber = createPullBroadcast()
+        const observed: Array<{ at: number; memAt: string | null; persistedAt: string | null }> = []
+        subscriber.subscribe((message) => {
+            const slot = {
+                at: message.at,
+                memAt: syncStatus.get().mirrorPulledAt,
+                persistedAt: null as string | null
+            }
+            observed.push(slot)
+            // 广播**送达瞬间**就去读 meta：若实现「先广播后落盘」，这里读到的是旧值
+            void loadMirrorStatus(USER_ID).then((persisted) => {
+                slot.persistedAt = persisted?.mirrorPulledAt ?? null
+            })
+        })
+
+        const result = await master.pullAll()
+        await flushMicrotasks()
+
+        expect(result.ok).toBe(true)
+        expect(observed).toHaveLength(1)
+        const seen = observed[0]!
+        // 内存已前进
+        expect(seen.memAt).not.toBeNull()
+        expect(Date.parse(seen.memAt as string)).toBeGreaterThan(Date.parse(OLD))
+        // meta 已落盘（顺序证明：post 必须在 persist 之后）
+        expect(seen.persistedAt).not.toBeNull()
+        expect(Date.parse(seen.persistedAt as string)).toBe(Date.parse(seen.memAt as string))
+        subscriber.dispose()
+    })
+
+    it('② 非主标签（内存 truncated=true / 落盘 false）收广播 ⇒ 收敛为**完整态**（只能来自持久化事实）+ 零网络', async () => {
+        await saveMirrorStatus(USER_ID, {
+            mirrorPulledAt: new Date(Date.now() - 60_000).toISOString(),
+            mirrorTruncated: false
+        })
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: OLD, mirrorTruncated: true })
+
+        const { requester, pulls, otherWrites } = makeRequester()
+        const follower = new SyncService(requester)
+        const refreshed = vi.fn()
+        follower.setDataChangedListener(refreshed)
+        const broadcastAt = Date.now()
+
+        await follower.applyForeignPullComplete(broadcastAt)
+
+        const after = syncStatus.get()
+        expect(Date.parse(after.mirrorPulledAt as string)).toBeGreaterThanOrEqual(broadcastAt)
+        expect(after.mirrorTruncated).toBe(false) // 持久化事实 = 完整 ⇒ 收敛为完整
+        expect(pulls()).toBe(0)
+        expect(otherWrites()).toBe(0)
+        expect(refreshed).toHaveBeenCalledTimes(1)
+        expect(follower.getLastSuccessfulPullAt()).toBe(broadcastAt)
+    })
+
+    it('③ 截断态（meta truncated=true）+ 广播 ⇒ 时间前进但 **truncated 保持 true**（不假绿）', async () => {
+        await saveMirrorStatus(USER_ID, { mirrorPulledAt: OLD, mirrorTruncated: true })
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: OLD, mirrorTruncated: true })
+
+        const { requester, pulls, otherWrites } = makeRequester()
+        const follower = new SyncService(requester)
+        const broadcastAt = Date.now()
+
+        await follower.applyForeignPullComplete(broadcastAt)
+
+        const after = syncStatus.get()
+        expect(Date.parse(after.mirrorPulledAt as string)).toBeGreaterThanOrEqual(broadcastAt)
+        expect(after.mirrorTruncated).toBe(true)
+        expect(pulls()).toBe(0)
+        expect(otherWrites()).toBe(0)
+    })
+
+    it('④ 主标签路径不回归：广播仍 1 条 / 载荷仍恰好 3 键 / 新鲜度推进 / 落盘与内存一致', async () => {
+        const { requester } = makeRequester()
+        const master = new SyncService(requester)
+        const subscriber = createPullBroadcast()
+        const received: Array<Record<string, unknown>> = []
+        subscriber.subscribe((message) => received.push({ ...message }))
+
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: OLD, mirrorTruncated: true })
+        const result = await master.pullAll()
+
+        expect(result.ok).toBe(true)
+        expect(received).toHaveLength(1)
+        expect(Object.keys(received[0]!).sort()).toEqual(['at', 'type', 'userId'])
+        const mem = syncStatus.get()
+        expect(Date.parse(mem.mirrorPulledAt as string)).toBeGreaterThan(Date.parse(OLD))
+        expect(mem.mirrorTruncated).toBe(false)
+        const persisted = await loadMirrorStatus(USER_ID)
+        expect(persisted?.mirrorPulledAt).toBe(mem.mirrorPulledAt)
+        expect(persisted?.mirrorTruncated).toBe(false)
+        subscriber.dispose()
+    })
+
+    it('⑤ 无会话时收敛不抛错、不改状态（登出后迟到广播的兜底）', async () => {
+        vi.stubGlobal('navigator', {})
+        const { requester } = makeRequester()
+        const service = new SyncService(requester)
+        syncStatus.restoreMirrorStatus({ mirrorPulledAt: OLD, mirrorTruncated: true })
+
+        localSession.setCurrentUserId('')
+        await expect(service.applyForeignPullComplete(Date.now())).resolves.toBeUndefined()
+
+        expect(syncStatus.get().mirrorPulledAt).toBe(OLD)
+        expect(syncStatus.get().mirrorTruncated).toBe(true)
+        localSession.setCurrentUserId(USER_ID)
+    })
 })

@@ -226,3 +226,41 @@ describe('T655 · AC10 资源清理（dispose 后零监听 / 零定时器 / 广�
         expect(FakeBroadcastChannel.instances.some((c) => c.closed)).toBe(true)
     })
 })
+
+describe('T655b · T659 追加复验（广播过滤：他人 / 畸形消息一律忽略，零网络）', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        vi.useFakeTimers()
+        resetVisibility()
+        FakeBroadcastChannel.instances = []
+        vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
+        mocks.getCurrentUserId.mockReturnValue('t655-user')
+    })
+    afterEach(() => {
+        stopSyncRefreshRuntime()
+        vi.useRealTimers()
+        vi.unstubAllGlobals()
+        resetVisibility()
+    })
+
+    it('他人 userId / 缺 type / 缺 userId / 空 userId ⇒ 不收敛；同用户 ⇒ 恰好 1 次', async () => {
+        startSyncRefreshRuntime()
+        const master = new FakeBroadcastChannel('nao-todo:pull-complete')
+
+        master.postMessage({ type: 'pull-complete', userId: 'other-user', at: 2_000 })
+        master.postMessage({ userId: 't655-user', at: 3_000 })
+        master.postMessage({ type: 'pull-complete', at: 4_000 })
+        master.postMessage({ type: 'pull-complete', userId: '', at: 5_000 })
+        master.postMessage({ type: 'other-type', userId: 't655-user', at: 5_500 })
+        expect(mocks.applyForeignPullComplete).not.toHaveBeenCalled()
+
+        master.postMessage({ type: 'pull-complete', userId: 't655-user', at: 6_000 })
+
+        expect(mocks.applyForeignPullComplete).toHaveBeenCalledTimes(1)
+        expect(mocks.applyForeignPullComplete).toHaveBeenCalledWith(6_000)
+        // 收敛不得引入网络
+        expect(mocks.pullAll).not.toHaveBeenCalled()
+        expect(mocks.resumeBackfill).not.toHaveBeenCalled()
+        await vi.advanceTimersByTimeAsync(0)
+    })
+})
