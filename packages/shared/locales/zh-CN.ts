@@ -57,7 +57,7 @@ const zhCN: LocaleMessages = {
     'sync.syncNow': '立即同步',
     'sync.pendingOffline': '有 {count} 项修改待同步（离线，联网后自动同步）',
     'sync.retryNow': '立即重试',
-    'sync.section.overview': '概览',
+    'sync.upToDate': '数据已是最新',
     'sync.section.data': '数据',
     'sync.section.queue': '待处理',
     'sync.section.conflict': '冲突',

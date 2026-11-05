@@ -53,7 +53,7 @@ export interface LocaleMessages {
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string
-    'sync.section.overview': string
+    'sync.upToDate': string
     'sync.section.data': string
     'sync.section.queue': string
     'sync.section.conflict': string

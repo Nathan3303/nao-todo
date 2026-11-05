@@ -61,7 +61,7 @@ const enUS: LocaleMessages = {
     'sync.syncNow': 'Sync now',
     'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
     'sync.retryNow': 'Retry now',
-    'sync.section.overview': 'Overview',
+    'sync.upToDate': 'All data is up to date',
     'sync.section.data': 'Data',
     'sync.section.queue': 'Pending',
     'sync.section.conflict': 'Conflicts',
