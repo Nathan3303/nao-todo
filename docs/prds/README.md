@@ -126,6 +126,7 @@
 | `v1.17.1` | 发版提交 = 本发版 PR 的 squash（tag `v1.17.1` 指向该提交）；root / `apps/web` / `apps/desktop` `1.17.0 → 1.17.1`（PATCH）。前置：代码 PR `#323`（squash `9a996da9`） | 2026-11-03 | 清零批：`DEF-83` 窄屏设置面板 a11y 语义 · `L5` 反断言顺序 · 销案 `DEF-29/73/64` · 新登记 `DEF-137`（不随本版：`nao-todo-server#87` CI lint 参数） |
 | `v1.17.2` | 发版提交 = 本发版 PR 的 squash（tag `v1.17.2` 指向该提交）；root / `apps/web` / `apps/desktop` `1.17.1 → 1.17.2`（PATCH）。前置：代码 PR `#325`（squash `020bad44`） | 2026-11-04 | 小单批：`R-L` 身份页互链回收（真链接）· `DEF-137` 反断言判据 · `DEF-24` 测试卫生 · `DEF-25` 错误文案单一来源；无服务端改动 |
 | `v1.17.3` | 发版提交 = 本发版 PR 的 squash（tag `v1.17.3` 指向该提交）；root / `apps/web` / `apps/desktop` `1.17.2 → 1.17.3`（PATCH）。前置：代码 PR `#327`（squash `e4722244`） | 2026-11-05 | 小单批 2：`DEF-13` 待推送计数即时刷新 · `DEF-26` 冒烟语义对齐 · 同步面板美化（`DESIGN.md §4.8`）· `DEF-138` 同步防抖 · `DEF-139`（P1）「保留我的修改」支持 `pull-local-wins`；服务端无改动 |
+| `v1.18.0` | 发版提交 = 本发版 PR 的 squash（tag `v1.18.0` 指向该提交）；root / `apps/web` / `apps/desktop` `1.17.3 → 1.18.0`（MINOR）+ `@nao-todo/infrastructure` `0.8.4 → 0.9.0`。前置：代码 PR `#330`（squash `fdcdbb78`）+ 跨仓 `nao-todo-server#88`（`049068a1`，**待部署**） | 2026-11-05 | 同步感知 A′（Issue #329）：可见 30s 自适应刷新 + 隐藏停显后立即拉 + 合并门 + 单主广播（修非主标签永久陈旧）· `DEF-140` 业务码白名单 · `DEF-142` 新鲜度收敛；ADR `2026-11-05-realtime-sync-polling.md` |
 
 ## 事后补录（2026-09-30，PM 补录）
 
