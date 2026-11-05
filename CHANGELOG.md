@@ -2,6 +2,21 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.18.0] - 2026-11-05
+
+同步感知批（PR #330 · 发版说明 `docs/releases/v1.18.0.md`）：
+
+- **`T654` 可见窗口自适应刷新（A′）**：可见时 **30s** 周期拉取（经既有串行入口）；门控优先级 `隐藏 > 离线 > 脏队列 > 周期`；失败退避 **5/10/30/60/120s 封顶**（复用 `sync-retry.ts` 的 `backoffDelayMs`，未新建第二套）；脏队列只门周期、事件触发不门（防饿死）。
+- **`T654` 可见性双信号源**：web 用 `document.visibilityState`；desktop 用主进程 `show`/`hide`/`did-finish-load` → IPC `nao:window-visibility`（`backgroundThrottling:false` 下 `visibilityState` 恒 `visible`，⛔ 不得冒充）；装配判据 `manageDocumentVisibility: !hasWindowVisibilityBridge()`（桥缺失退化为「永不隐藏」而非「永不刷新」）。
+- **`T654` 事件合并门 10s**：只对事件触发（回可见 / `online` / 广播），手动同步不过门；判据 = 距上次**成功**拉取（失败不推进）。
+- **`T654` 单主 + `BroadcastChannel` 成对**：修既有缺陷「`ifAvailable` 未取锁整轮跳过且无补偿 ⇒ 非主标签永久陈旧」；广播载荷恰好 `{type,userId,at}`，非主标签零网络。
+- **`T657`（`DEF-140`）**：`/sync/pull` 成功码改**白名单 `[90020]`**（⛔ 非「非 0 即成功」）；业务码非白名单且无表信袋 ⇒ 判失败（不 `markMirrorPulled`、不删 `pending`、不推进合并门、不广播、走退避）⇒ 消除「已是最新」假绿与首登撞限流的空数据无提示。
+- **`T659`（`DEF-142`）**：广播命中的新鲜度收敛到 `mirrorPulledAt`（`R-7` 单源）；`mirrorTruncated` **只认持久化事实**（⛔ 不因广播清标志）；拉取成功路径改为**先落盘再广播**（否则非主标签读到旧 meta）。
+- **`T658`**：ADR `docs/adr/2026-11-05-realtime-sync-polling.md`（门控/合并门/单主广播/桌面 IPC 判据/退避复用/DEF-140 失效口径/B 挂账与重评触发点）。
+- **跨仓配套**：`nao-todo-server#88`（squash `049068a1`）`/sync` 限流 key 由 **IP → userId** 且 pull/push 拆桶（pull 12 / push 24 · 前置 IP 粗桶 120 作为滥用地板 · 调序后三态码 · 降级 30/5/6 · 日志只留 `key_tag`）—— **需部署生产**。
+- **门禁**：全仓 **380 文件（379 通过 / 1 跳过）· 3054 例（3048 通过 / 6 跳过）· 红 0** · `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；qa 独立探针 23 例 + 变异 6 条。
+- **Tag `v1.18.0`** · root / `apps/web` / `apps/desktop` `1.17.3 → 1.18.0`（MINOR）· `@nao-todo/infrastructure` `0.8.4 → 0.9.0`（新增公开导出）。**服务端需部署**。
+
 ## [v1.17.3] - 2026-11-05
 
 小单批 2（PR #327 · 发版说明 `docs/releases/v1.17.3.md`）：
