@@ -72,7 +72,11 @@ export const STRUCTURED_LOG_EVENTS = {
     /** journal 专用锁（跨路径互斥，ADR §9.3） */
     SYNC_JOURNAL_LOCK_UNAVAILABLE: 'sync.journal.lock.unavailable',
     /** 运行级不可达防御（存储/加解密等意外异常） */
-    SYNC_RUN_UNEXPECTED_ERROR: 'sync.run.unexpected-error'
+    SYNC_RUN_UNEXPECTED_ERROR: 'sync.run.unexpected-error',
+    /** 可见窗口自动刷新（T654 / 同步感知 A′；只记事件，不进用户可见面） */
+    SYNC_AUTO_REFRESH_FAILED: 'sync.auto-refresh.failed',
+    SYNC_AUTO_REFRESH_STOPPED: 'sync.auto-refresh.stopped',
+    SYNC_AUTO_REFRESH_BROADCAST: 'sync.auto-refresh.broadcast-hit'
 } as const
 
 /** 事件名（固定常量并集） */

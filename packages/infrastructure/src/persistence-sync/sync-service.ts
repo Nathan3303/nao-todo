@@ -61,6 +61,7 @@ import {
 } from './sync-retry'
 import { isNotDeleted } from '../persistence-local/utils'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
+import { createPullBroadcast } from './pull-broadcast'
 
 // ---------------------------------------------------------------------------
 // 同步表配置（7 张业务表；⚠️ 偏好 **不随父实体同步**（旧注释不实，TASK-26/ADR-r2 P2 更正）：
@@ -354,6 +355,12 @@ const PENDING_COUNT_SETTLE_DEBOUNCE_MS = 400
 /** 队列上限：单表 1000 / 总量 2000（SHELL-06 C-41；仅提示不阻断） */
 const QUEUE_LIMIT_PER_TABLE = 1000
 const QUEUE_LIMIT_TOTAL = 2000
+/**
+ * 事件触发拉取的合并门（T654 / R-9 / AC5b）
+ * @description 距上次**成功**拉取 <10s ⇒ 本次事件触发（回可见 / `online`）**只推不拉**，
+ *              防 alt-tab / Wi-Fi 抖动把请求数放大；手动「立即同步」与周期拉取**不过门**。
+ */
+const EVENT_PULL_MERGE_GATE_MS = 10_000
 // ---------------------------------------------------------------------------
 // 错误文案（C-12 家族约束：仅三种前缀；禁拼接原始异常/URL）
 // ---------------------------------------------------------------------------
@@ -400,6 +407,19 @@ export class SyncService {
     private backfillLevel = 0
 
     /**
+     * 上次**成功**拉取完成时间（ms epoch；T654 / R-9 合并门判据）
+     * @description 仅「请求成功且已应用」推进（失败/凭证失效/早退不推进）⇒ 事件触发据此判可否合并。
+     *              ⛔ 界面新鲜度判据仍只看 `syncStatus.mirrorPulledAt` / `lastSyncAt`（R-7）。
+     */
+    private lastPullSucceededAt: number | null = null
+
+    /**
+     * 跨标签「拉取完成」广播（T654 / R-6 / AC7；无 `BroadcastChannel` 环境自动 no-op）
+     * @description 每实例独立频道：拉取成功后广播，非主标签据此 refresh 视图（不发网络）。
+     */
+    private readonly pullBroadcast = createPullBroadcast()
+
+    /**
      * 上轮拉取是否未取尽（DEF-6）
      * @description 续拉中途失败/中断 ⇒ true；仅当所有表均取尽（pending 清空）才复位 false。
      *              用于无脏队列时仍安排回传定时补拉（`scheduleBackfillTick`）。
@@ -438,6 +458,26 @@ export class SyncService {
     /** 注册会话失效回调（10041：用户凭证验证失败） */
     setSessionExpiredListener(listener: () => void): void {
         this.sessionExpiredListener = listener
+    }
+
+    /**
+     * 上次**成功**拉取完成时间（ms epoch；从未成功为 null）
+     * @description T654 / R-9：供事件触发合并门与自动刷新层/测试读取。
+     *              ⛔ **不得**作为界面「是否最新」的判据（R-7：只看 `syncStatus.mirrorPulledAt`）。
+     */
+    getLastSuccessfulPullAt(): number | null {
+        return this.lastPullSucceededAt
+    }
+
+    /**
+     * 他标签已拉取完成（广播命中；T654 / R-6 / AC7）
+     * @description 非主标签收到主标签的「已拉取」通知后调用：**只刷新本窗口视图**
+     *              （数据已由主标签落入**同一** IndexedDB，不得再发一次网络）。
+     *              同时把合并门时间收敛到主标签的完成时间，避免多标签重复拉取。
+     */
+    applyForeignPullComplete(at: number = Date.now()): void {
+        this.lastPullSucceededAt = Math.max(this.lastPullSucceededAt ?? 0, at)
+        this.notifyDataChanged()
     }
 
     /** 判定业务码是否为会话失效（D1 单一判据：被动投影仅凭证类 ⇒ 结束；纳入 `10042`） */
@@ -993,6 +1033,11 @@ export class SyncService {
                 // 所有表均取尽 ⇒ 镜像完整（DEF-6/AC13b：仅此处推进 mirrorPulledAt）
                 this.pullIncomplete = false
                 syncStatus.markMirrorPulled()
+                // T654 / R-6 / R-9：**完整拉取**才算「上次成功拉取」——
+                //   触顶截断（`pending.size > 0`）仍有后续补拉要跑，⛔ 不得被合并门挡下（DEF-6 回归），
+                //   故只在取尽时推进合并门时间并广播「已拉取」。
+                this.lastPullSucceededAt = Date.now()
+                this.pullBroadcast.post(userId, this.lastPullSucceededAt)
             } else {
                 // 触顶截断：不推进 mirrorPulledAt（护栏 B），交由回传定时补拉
                 this.pullIncomplete = true
@@ -1633,12 +1678,25 @@ export class SyncService {
         }
         const result = await this.enqueue(() =>
             this.runFull(async () => {
-                await this.pullAllInner()
+                // T654 / R-9 合并门：**事件触发**（`online` / 回到可见 / 前台恢复）距上次成功拉取
+                //   <10s ⇒ 本轮只推不拉（防 alt-tab / Wi-Fi 抖动放大请求）；
+                //   超时/从未成功 ⇒ 正常拉取。手动 `manualSync()` 与本方法无关 ⇒ 永不过门。
+                if (!this.isEventPullMerged()) await this.pullAllInner()
                 await this.pushAllInner()
             })
         )
         await this.scheduleBackfillTick()
         return result
+    }
+
+    /**
+     * 事件触发拉取是否已被合并门拦下（T654 / R-9 / AC5b）
+     * @description 判据 = 「距上次**成功**拉取」；失败不推进时间戳 ⇒ 失败后的事件触发仍会拉取
+     *              （不得把连续失败静默成「已是最新」）。
+     */
+    private isEventPullMerged(nowMs: number = Date.now()): boolean {
+        if (this.lastPullSucceededAt === null) return false
+        return nowMs - this.lastPullSucceededAt < EVENT_PULL_MERGE_GATE_MS
     }
 
     /** `online` 事件触发（仅触发，不作鉴权，C-43） */
