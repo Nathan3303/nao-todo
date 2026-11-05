@@ -104,8 +104,25 @@ vi.mock('@/hooks', async () => {
     }
 })
 
+/**
+ * 组件源码（`?raw`）：DESIGN §4.8 的**样式契约**断言用 —— jsdom 不应用 SFC `<style scoped>`，
+ * 分隔线 / 限高内滚 / 点击区高度等只能按源文本核（同 `safe-area.test.ts` 手法）。
+ */
+const sourceModules = import.meta.glob<string>('../sync-status-bar.vue', {
+    query: '?raw',
+    import: 'default',
+    eager: true
+})
+
+const componentSource = (): string => {
+    const values = Object.values(sourceModules)
+    expect(values.length).toBe(1)
+    return values[0]!
+}
+
 const status = (): Ref<MockSyncStatus> => hooksMock.status as Ref<MockSyncStatus>
 const loadedCount = (): Ref<number> => hooksMock.loadedCount as Ref<number>
+const manualSyncing = (): Ref<boolean> => hooksMock.manualSyncing as Ref<boolean>
 
 // jsdom 未实现 ResizeObserver；D5=B（`:transparent="true"`）下库在 mounted 内 new ResizeObserver
 // （nue-ui 1.10.58 / 1.11.0 同构）→ 测试环境补最小桩（非透明模式不创建，产品代码不依赖）
@@ -185,6 +202,7 @@ const ariaLabel = (): string | null => railButton()?.getAttribute('aria-label') 
 beforeEach(() => {
     status().value = defaultStatus()
     loadedCount().value = 0
+    manualSyncing().value = false
     resetReadOnlyForTest()
 })
 
@@ -305,7 +323,7 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(document.activeElement).toBe(button)
     })
 
-    it('面板按类别分区：概览/待处理/冲突/错误 为独立区域，计数为横向 chips', async () => {
+    it('面板按类别分区：主信息/待处理/冲突/错误 为独立区域，计数为横向 chips', async () => {
         await openWithPanel()
         status().value = {
             ...status().value,
@@ -319,7 +337,10 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         const titles = Array.from(
             document.querySelectorAll<HTMLElement>('.sync-panel__section-title')
         ).map((el) => el.textContent?.trim() ?? '')
-        expect(titles).toEqual(expect.arrayContaining(['概览', '待处理', '冲突', '错误']))
+        // §4.8：首行改为主信息（时间 + 立即同步），不再带「概览」标题
+        expect(titles).toEqual(expect.arrayContaining(['待处理', '冲突', '错误']))
+        expect(titles).not.toContain('概览')
+        expect(panel()?.querySelector('.sync-panel__main .sync-panel__action')).toBeTruthy()
 
         // 计数为 chips（同行横向），而非逐行竖排
         const chips = document.querySelectorAll('.sync-panel__chips .sync-panel__chip')
@@ -328,7 +349,7 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         // 分区仍以 <li> 为面板直系子节点（P8/C12）
         const directItems = panel()?.querySelectorAll(':scope > li') ?? []
         expect(directItems.length).toBeGreaterThan(0)
-        // 同步动作按钮（已随用户调整移入「概览」分区）
+        // 同步动作按钮（已随用户调整移入「主信息」行）
         expect(panel()?.querySelector('button.nue-button')).toBeTruthy()
     })
 
@@ -802,5 +823,285 @@ describe('SyncStatusBar - T522 抽屉变体：可见状态文字', () => {
         expect(railButton()?.textContent?.trim()).toBe('')
         expect(triggerIcon()).toBe('ntd-sync2')
         expect(ariaLabel()).toBe('同步')
+    })
+})
+/**
+ * DESIGN §4.8 同步状态面板视觉整理（T659 追加）
+ * @description 目标：C 端状态面板（非设置表）—— 留白分区（无分隔线）、首行主信息、正常态不铺空分区、
+ *              柔和计数胶囊、冲突入口可点行、hover 只弱变化、长内容限高内滚。
+ *              ⛔ 不涉及任何同步语义（计数/状态判定/按钮动作）；样式断言按源文本核（jsdom 不应用 scoped 样式）。
+ * @see DESIGN.md §4.8（用户 2026-11-04「美化一下同步状态的下拉列表」）
+ */
+describe('SyncStatusBar - DESIGN §4.8 面板视觉整理', () => {
+    /** 面板分区（直系 <li>，P8/C12 不变） */
+    const sections = (): HTMLElement[] =>
+        Array.from(panel()?.querySelectorAll<HTMLElement>(':scope > li.sync-panel__section') ?? [])
+
+    it('正常态：只显示「时间 + 立即同步 + 数据已是最新」，不渲染空分区/空标题/空胶囊', async () => {
+        await openWithPanel()
+        status().value = { ...defaultStatus(), lastSyncAt: '2026-11-04T10:00:00.000Z' }
+        await nextTick()
+
+        // ① 只有一个分区（主信息），空分区一律不铺
+        expect(sections().length).toBe(1)
+        expect(panel()?.querySelectorAll('.sync-panel__section-title').length).toBe(0)
+        expect(panel()?.querySelectorAll('.sync-panel__chip').length).toBe(0)
+
+        // ② 首行 = 主信息：时间（正文色类）+ 立即同步（右对齐由样式承载）
+        expect(
+            panel()?.querySelector('.sync-panel__main .sync-panel__time')?.textContent
+        ).toContain('上次同步')
+        expect(
+            panel()?.querySelector('.sync-panel__main button.nue-button')?.textContent
+        ).toContain('立即同步')
+
+        // ③ 一句话「数据已是最新」
+        expect(panel()?.querySelector('.sync-panel__hint')?.textContent?.trim()).toBe(
+            '数据已是最新'
+        )
+
+        // ④ DEF-138：同步中该句**常显**（旧行为「同步中消失」正是抖动来源之一）
+        status().value = { ...status().value, syncing: true }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')?.textContent?.trim()).toBe(
+            '数据已是最新'
+        )
+
+        // ⑤ 异常出现即恢复分区（不与正常态互串）
+        status().value = { ...defaultStatus(), pendingCount: 1 }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeNull()
+        expect(sections().length).toBe(2)
+    })
+
+    it('异常态：仅渲染有内容的分区，且每个分区都有标题（无空标题）', async () => {
+        await openWithPanel()
+        status().value = { ...status().value, pendingCount: 2, lastError: '拉取失败：网络错误' }
+        await nextTick()
+
+        const rendered = sections()
+        // 主信息 + 待处理 + 错误
+        expect(rendered.length).toBe(3)
+        for (const section of rendered.slice(1)) {
+            expect(
+                section.querySelector('.sync-panel__section-title')?.textContent?.trim()
+            ).toBeTruthy()
+        }
+    })
+
+    it('计数胶囊：待推送 warning / 失败与偏好失败 error（语义类，源级 1px 语义边框 + 语义文字色）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            pendingCount: 2,
+            failedCount: 1,
+            preferenceFailedCount: 3
+        }
+        await nextTick()
+
+        const chips = Array.from(panel()?.querySelectorAll<HTMLElement>('.sync-panel__chip') ?? [])
+        const chipByText = (needle: string): HTMLElement | undefined =>
+            chips.find((chip) => (chip.textContent ?? '').includes(needle))
+
+        expect(chipByText('待推送 2')?.classList.contains('is-warning')).toBe(true)
+        expect(chipByText('失败 1')?.classList.contains('is-error')).toBe(true)
+        expect(chipByText('偏好同步失败 3')?.classList.contains('is-error')).toBe(true)
+
+        // 样式契约（源级）：淡底 + 语义文字色 + 1px 语义边框（文本 90 档 / 边框 60 档）
+        const css = componentSource()
+        expect(css).toMatch(
+            /\.sync-panel__chip\.is-warning\s*\{[^}]*border-color:\s*var\(--nue-warning-color-60\)[^}]*color:\s*var\(--nue-warning-color-90\)/
+        )
+        expect(css).toMatch(
+            /\.sync-panel__chip\.is-error\s*\{[^}]*border-color:\s*var\(--nue-error-color-60\)[^}]*color:\s*var\(--nue-error-color-90\)/
+        )
+    })
+
+    it('冲突入口：整行可点的原生 button（计数 + 对话框语义 + 可聚焦），点击区 ≥40px（源级）', async () => {
+        await openWithPanel()
+        status().value = { ...status().value, conflictCount: 2 }
+        await nextTick()
+
+        const entry = panel()?.querySelector<HTMLButtonElement>('button.sync-conflict-entry')
+        expect(entry).toBeTruthy()
+        expect(entry?.tagName).toBe('BUTTON')
+        expect(entry?.getAttribute('type')).toBe('button')
+        expect(entry?.getAttribute('aria-haspopup')).toBe('dialog')
+        expect(entry?.textContent).toContain('2 项待确认')
+        entry?.focus()
+        expect(document.activeElement).toBe(entry)
+
+        // 点击区底线（§3：≥40px）由 `--nue-box-size-md`（2.5rem = 40px）承载
+        expect(componentSource()).toMatch(
+            /\.sync-panel__row\s*\{[^}]*min-height:\s*var\(--nue-box-size-md\)/
+        )
+    })
+
+    it('错误摘要：2 行截断（clamped=2）+ title 全文，文案不截断语义', async () => {
+        const message = '推送失败：部分数据未确认（第 2 行会在此处截断，完整文本仅在 title 里）'
+        await openWithPanel()
+        status().value = { ...status().value, lastError: message }
+        await nextTick()
+
+        const error = panel()?.querySelector<HTMLElement>(`[title="${message}"]`)
+        expect(error).toBeTruthy()
+        expect(error?.classList.contains('nue-text--clamped')).toBe(true)
+        expect(error?.getAttribute('style') ?? '').toContain('--nue-text-clamped-lines: 2')
+        // 文本节点仍是全文（截断由样式承载，不裁剪数据）
+        expect(error?.textContent?.trim()).toBe(message)
+    })
+
+    it('样式契约（源级）：分区只用留白（无 border-top）· 面板 60vh 内滚 · hover 只弱背景 · 窄屏规格不变', () => {
+        const css = componentSource()
+
+        // ① 去「设置表」气质：分区之间只留白，删掉 1px 分隔线
+        expect(css).not.toContain('border-top')
+        expect(css).toMatch(
+            /\.sync-panel__section\s*\+\s*\.sync-panel__section\s*\{[^}]*margin-top:\s*var\(--nue-gap-sm\)/
+        )
+        // ② 长内容：整体限高 + 内部滚动（不撑破视口）
+        expect(css).toMatch(/\.nue-dropdown--sync-panel\s*\{[^}]*max-height:\s*60vh/)
+        expect(css).toMatch(/\.nue-dropdown--sync-panel\s*\{[^}]*overflow-y:\s*auto/)
+        // ③ 可点行 hover 只做背景弱变化（不加边框 / 阴影）
+        const hoverRule = css.match(/\.sync-panel__row:hover\s*\{[^}]*\}/)?.[0] ?? ''
+        expect(hoverRule).toContain('background-color:')
+        expect(hoverRule).not.toMatch(/border|box-shadow/)
+        // ④ 窄屏 ≤445px：宽度仍 15rem、字号不缩小、分区间距不变（该块内无字号/间距覆盖）
+        const narrowIndex = css.indexOf('@media screen and (max-width: 445px)')
+        expect(narrowIndex).toBeGreaterThan(-1)
+        const narrowBlock = css.slice(narrowIndex)
+        expect(narrowBlock).toContain('max-width: 15rem')
+        expect(narrowBlock).not.toContain('font-size')
+        expect(narrowBlock).not.toContain('margin-top')
+        // ⑤ 动效降级
+        expect(css).toContain('prefers-reduced-motion: reduce')
+    })
+})
+/**
+ * DEF-138 同步中面板抖动（用户走查：「加载的时候会抖动…能不能加载的时候保持其他内容常显」）
+ * @description 三条叠加根因：① 数据层 `beginRun()` 在运行开始清空 `lastError`（ADR D-2 语义**不动**）
+ *              ⇒ 展示层保留上一轮摘要并标注来源；② `allGood` 含 `!syncing` ⇒ 正常态那句忽隐忽现；
+ *              ③ 「立即同步」按钮 loading 换图标导致右缘位移 ⇒ 定宽占位；
+ *              ④ 普通同步会凭空多出「数据」分区（`coverage.loadingMore === syncing`）⇒ ④ 仅在镜像触顶时出现。
+ *              只做展示层稳定化，**不改** `beginRun`/`endRun`、计数与状态判定。
+ */
+describe('SyncStatusBar - DEF-138 同步中内容常显（抖动消除）', () => {
+    /** 分区标题（去掉标题内「· 上次同步」来源标注，只比分区语义名） */
+    const sectionTitles = (): string[] =>
+        Array.from(panel()?.querySelectorAll<HTMLElement>('.sync-panel__section-title') ?? []).map(
+            (el) => (el.firstChild?.textContent ?? '').trim()
+        )
+    const sections = (): HTMLElement[] =>
+        Array.from(panel()?.querySelectorAll<HTMLElement>(':scope > li.sync-panel__section') ?? [])
+
+    it('① 运行开始（数据层清空 lastError）⇒ 分区集合/数量不变，错误区沿用上次摘要并标注「上次同步」', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            // 在线 + 完整镜像 ⇒ freshness=updated（否则「数据」分区本就该在场，与本次修法无关）
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z',
+            lastError: '拉取失败：网络错误'
+        }
+        await nextTick()
+        const titleBefore = sectionTitles()
+        const countBefore = sections().length
+        expect(titleBefore).toEqual(['错误'])
+
+        // beginRun：清空错误 + syncing=true（数据层语义逐字不动）
+        status().value = { ...status().value, syncing: true, lastError: null }
+        await nextTick()
+
+        expect(sectionTitles()).toEqual(titleBefore)
+        expect(sections().length).toBe(countBefore)
+        expect(panelText()).toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__section-note')?.textContent?.trim()).toBe(
+            '· 上次同步'
+        )
+
+        // 本轮报出新错 ⇒ 换成新摘要，且不再标注来源
+        status().value = { ...status().value, lastError: '推送失败：网络错误' }
+        await nextTick()
+        expect(panelText()).toContain('推送失败：网络错误')
+        expect(panelText()).not.toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__section-note')).toBeNull()
+    })
+
+    it('② 同步中正常态那句「数据已是最新」常显（不再随运行消失）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...defaultStatus(),
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z'
+        }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeTruthy()
+
+        status().value = { ...status().value, syncing: true }
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__hint')?.textContent?.trim()).toBe(
+            '数据已是最新'
+        )
+        // 普通同步不凭空多出分区（④ 仅在镜像触顶时随 ⑤ 出现）
+        expect(sections().length).toBe(1)
+        expect(panelText()).not.toContain('正在加载更多')
+    })
+
+    it('③ 动作按钮定宽占位：loading 与 idle 均保留图标盒（源级 min-width）', async () => {
+        await openWithPanel()
+        expect(panel()?.querySelector('.sync-panel__action .nue-button__icon')).toBeTruthy()
+
+        manualSyncing().value = true
+        await nextTick()
+        expect(panel()?.querySelector('.sync-panel__action .nue-button__icon')).toBeTruthy()
+        expect(panel()?.querySelector('.sync-panel__action')?.textContent).toContain('立即同步')
+
+        expect(componentSource()).toMatch(/\.sync-panel__action\s*\{[^}]*min-width:\s*[^;]+;/)
+        expect(componentSource()).toMatch(/\.sync-panel__action\s*\{[^}]*flex:\s*none;/)
+        manualSyncing().value = false
+        await nextTick()
+    })
+
+    it('④ 运行成功收尾 ⇒ 错误区移除（允许这一次收敛）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            lastSyncAt: '2026-11-05T01:00:00.000Z',
+            // 在线 + 完整镜像 ⇒ freshness=updated（否则「数据」分区本就该在场，与本次修法无关）
+            mirrorPulledAt: '2026-11-05T00:30:00.000Z',
+            lastError: '拉取失败：网络错误'
+        }
+        await nextTick()
+        // 运行开始（清空错误，沿用缓存）
+        status().value = { ...status().value, syncing: true, lastError: null }
+        await nextTick()
+        // 主信息分区恒在 + 错误分区沿用上次摘要
+        expect(sections().length).toBe(2)
+        expect(sectionTitles()).toEqual(['错误'])
+        expect(panel()?.querySelector('.sync-panel__section-note')).toBeTruthy()
+
+        // 运行成功结束（endRun：syncing=false 且仍无错误）⇒ 缓存过期、分区移除、正常态回来
+        status().value = { ...status().value, syncing: false }
+        await nextTick()
+        expect(sections().length).toBe(1)
+        expect(sectionTitles()).toEqual([])
+        expect(panelText()).not.toContain('拉取失败：网络错误')
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeTruthy()
+    })
+
+    it('⑤ 触顶镜像下的 ④⑤ 组合语义不变（未扫完 + 同步上限仍同时出现）', async () => {
+        await openWithPanel()
+        status().value = {
+            ...status().value,
+            syncing: true,
+            mirrorTruncated: true,
+            mirrorPulledAt: '2026-11-05T01:00:00.000Z'
+        }
+        await nextTick()
+        const text = panelText()
+        expect(text).toContain('正在加载更多…')
+        expect(text).toContain('同步上限')
+        // 数据分区在场时也不影响既有的错误/正常态判定
+        expect(panel()?.querySelector('.sync-panel__hint')).toBeNull()
     })
 })

@@ -287,12 +287,36 @@ const DETAIL_SNAPSHOT_KINDS: ReadonlySet<ConflictJournalEntry['kind']> = new Set
     'skipped'
 ])
 
-/** 可「以我的版本重试」的类型（仅本地有完整可重放快照的三种；`conflict`/`skipped` 不支持） */
+/**
+ * 可「保留我的修改」（= 以我的版本重试）的类型
+ * @description `conflict` / `skipped` 本批**不可自动恢复**（需手动处理）⇒ 不提供该动作；
+ *              `pull-local-wins`（A1，DEF-139）纳入，但走**只清条目**的专用分支（见下）。
+ */
+const RETRYABLE_KINDS: ReadonlySet<ConflictJournalEntry['kind']> = new Set([
+    'remote-wins',
+    'push-noop',
+    'stale',
+    'pull-local-wins'
+])
+
+/**
+ * 需「败方快照写回本地 + 入队」的重试类型
+ * @description 这三类的败方 = **我的版本**（本地行已被服务端覆盖）⇒ 必须写回并重推；
+ *              `pull-local-wins` **不在此列**：本地已是我的版本、云端那份已被覆盖 ⇒ 只确认保留
+ *              （写回/入队等于凭空造一次同步，DEF-139）。
+ */
 const RETRY_SNAPSHOT_KINDS: ReadonlySet<ConflictJournalEntry['kind']> = new Set([
     'remote-wins',
     'push-noop',
     'stale'
 ])
+
+/**
+ * 该类型是否提供「保留我的修改」动作（UI 与数据层**同一判据**，避免"点了才报错"）
+ * @description `conflict` / `skipped` ⇒ `false`（面板改给「需手动处理」说明 + 复制入口）
+ */
+export const canRetryLocalConflict = (kind: ConflictJournalEntry['kind']): boolean =>
+    RETRYABLE_KINDS.has(kind)
 
 /** 冲突列表项（UI 渲染用；只读快照） */
 export interface ConflictListItem {
@@ -632,20 +656,30 @@ export const resolveConflictRetryLocal = async (
     // 读-改-写同在 journal 锁内（含败方写回本地表的 `putRecord`/`markDirty`）⇒
     // 与后台 `appendConflict` 并发不丢条目（ADR §9.3）；无映射/条目不适用 ⇒ `null` ⇒ 不落盘
     const next = await withJournalRmw(userId, async ({ entries }) => {
+        const entry = latestEntry(entries, table, entityId)
+        if (!entry || !RETRYABLE_KINDS.has(entry.kind)) return null
+        const clearEntries = (): { entries: ConflictJournalEntry[] } => ({
+            entries: entries.filter(
+                (candidate) => candidate.table !== table || candidate.entityId !== entityId
+            )
+        })
+        // DEF-139 / A1 `pull-local-wins`：本地**已是我的版本**、云端那份已被本地覆盖 ⇒「保留我的修改」
+        // = **确认保留**：只清条目（⛔ 不写回本地行、⛔ 不 markDirty/不入队、⛔ base 不变 —— 本地已经是对的，
+        // 再写一次等于凭空造一次同步）
+        if (entry.kind === 'pull-local-wins') {
+            resolved = true
+            return clearEntries()
+        }
+        // 其余可重试类型**必须有**表映射，且必须属「快照写回」集合（未登记的新类型 ⇒ 失败关闭，不静默清条目）
         const config = findConflictEntity(table)
-        const entry = config ? latestEntry(entries, table, entityId) : undefined
-        if (!config || !entry || !RETRY_SNAPSHOT_KINDS.has(entry.kind)) return null
+        if (!config || !RETRY_SNAPSHOT_KINDS.has(entry.kind)) return null
         // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecordAndEnqueue` 保留当前 base，
         // 且业务行 + 入队**同一 Dexie 事务**（T329 / DEF-50：⛔ 不得拆为两次 await ⇒ 防 RC-5 静默丢写）
         const updatedAt = nowCalibratedIso()
         const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
         await config.putRecordAndEnqueue(record, updatedAt)
         resolved = true
-        return {
-            entries: entries.filter(
-                (candidate) => candidate.table !== table || candidate.entityId !== entityId
-            )
-        }
+        return clearEntries()
     })
     // T331/T346：成功恢复 ⇒ 同源刷新状态面计数（`remaining` = 剩余**对象数**）⇒ 徽标递减 / 归零
     if (resolved) syncStatus.setConflictCount(conflictObjectCount(next))

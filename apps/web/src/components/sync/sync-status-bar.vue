@@ -117,10 +117,8 @@ const coverage = computed(() =>
 const timeText = computed(() => formatMirrorPulledAt(status.value.mirrorPulledAt, locale.value))
 
 // @computed 面板分区可见性（按类别聚合，避免空分区）
-// 数据区：新鲜度非 updated（②③）或覆盖度提示（④⑤）任一生效
-const hasDataSection = computed(
-    () => freshness.value !== 'updated' || coverage.value.loadingMore || coverage.value.truncated
-)
+// 数据区：新鲜度非 updated（②③）或触顶（④⑤ 同一触发条件：④「未扫完」仅在触顶时出现，DEF-138）
+const hasDataSection = computed(() => freshness.value !== 'updated' || coverage.value.truncated)
 // 待处理区：暂停/待推送/失败/偏好失败任一 > 0
 const hasQueueSection = computed(
     () =>
@@ -128,6 +126,53 @@ const hasQueueSection = computed(
         status.value.pendingCount > 0 ||
         status.value.failedCount > 0 ||
         status.value.preferenceFailedCount > 0
+)
+
+/**
+ * 上次展示过的错误摘要（DEF-138：同步中保留上次结果）
+ * @description 数据层 `beginRun()` 按 ADR D-2 在**运行开始**即清空错误（语义**不动**）⇒ 展示层自己
+ *              记住「上一轮失败的摘要」，同步中继续显示并标注来源（「上次同步」），避免错误分区
+ *              在运行开始/结束时消失再出现（用户走查「加载的时候会抖动」）。
+ */
+const lastShownError = ref<string | null>(null)
+
+// 本轮出现错误 ⇒ 缓存跟随最新（本次运行的错误总是优先展示）
+watch(
+    () => status.value.lastError,
+    (message) => {
+        if (message) lastShownError.value = message
+    },
+    { immediate: true }
+)
+
+// 运行收敛（DEF-138 ④）：同步结束仍无错误 ⇒ 上一轮结果已过期，清缓存（此后错误分区才移除；
+// 这是唯一允许的一次高度变化）
+watch(
+    () => status.value.syncing,
+    (isSyncing, wasSyncing) => {
+        if (wasSyncing && !isSyncing && !status.value.lastError) lastShownError.value = null
+    }
+)
+
+/** 面板展示的错误摘要：本轮有错 ⇒ 本轮的；运行中本轮尚未出错 ⇒ 上一轮缓存的 */
+const displayError = computed(() => status.value.lastError ?? lastShownError.value)
+
+/** 展示的是「上一轮」的错误（仅运行中可能成立；运行结束即收敛） */
+const errorCarriedOver = computed(() => !status.value.lastError && lastShownError.value !== null)
+
+/**
+ * @computed 正常态（DESIGN §4.8 / DEF-138）：无可展示的数据/待处理/冲突/错误/诊断
+ * @description 正常态**不铺空分区**：面板只显示「时间 + 立即同步 + 一句『数据已是最新』」。
+ *              同步中**同样常显**（去掉 `!syncing`）—— 否则该句会在运行开始/结束时忽隐忽现，
+ *              面板高度与分区数跟着跳（用户走查 DEF-138「加载时会抖动」）。
+ */
+const allGood = computed(
+    () =>
+        !hasDataSection.value &&
+        !hasQueueSection.value &&
+        status.value.conflictCount === 0 &&
+        !displayError.value &&
+        status.value.droppedFieldCount === 0
 )
 
 /**
@@ -305,20 +350,25 @@ watch(
             -->
             <!--
               面板分区行：@open 渲染 / @close 移除（C9）。面板根是库内 <ul> ⇒ **每个分区为一个 <li>**
-              （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合：
-              概览（时间 + 「立即同步」动作）/ 数据（可信度与覆盖度）/ 待处理（计数 chips）/ 冲突 / 错误。
+              （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合（DESIGN §4.8）：
+              主信息（时间 + 「立即同步」动作）/ 数据（可信度与覆盖度）/ 待处理（计数胶囊）/ 冲突 / 错误；
+              分区之间只用留白分隔（无 1px 分隔线），正常态不铺空分区。
             -->
-            <!-- 概览：上次同步时间 / 从未同步 / 同步中… -->
+            <!-- 主信息（§4.8）：上次同步时间（正文色）+「立即同步」右对齐；正常态只多一句「数据已是最新」 -->
             <li class="sync-panel__section">
-                <span class="sync-panel__section-title">{{ t('sync.section.overview') }}</span>
-                <nue-div class="sync-panel__section-body" justify="space-between">
-                    <nue-text size="xs" color="var(--nue-secondary-text-color)">
-                        {{ lastSyncText }}
-                    </nue-text>
-                    <nue-button theme="pure,small" :loading="manualSyncing" @click="runManualSync">
+                <div class="sync-panel__main">
+                    <span class="sync-panel__time">{{ lastSyncText }}</span>
+                    <nue-button
+                        class="sync-panel__action"
+                        theme="pure,small"
+                        icon="ntd-sync2"
+                        :loading="manualSyncing"
+                        @click="runManualSync"
+                    >
                         {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
                     </nue-button>
-                </nue-div>
+                </div>
+                <p v-if="allGood" class="sync-panel__hint">{{ t('sync.upToDate') }}</p>
             </li>
             <!-- 数据：② 回退本地镜像 / ③ 尚未同步完成 / ④ 未扫完 / ⑤ 触顶（仅相关时渲染） -->
             <li v-if="hasDataSection" class="sync-panel__section">
@@ -340,9 +390,13 @@ watch(
                             {{ t('offline.freshness.incompleteHint') }}
                         </nue-text>
                     </template>
-                    <!-- ④ 覆盖度：未扫完（瞬态，自动消失） -->
+                    <!--
+                      ④ 覆盖度：未扫完（瞬态；DEF-138 收窄触发 —— 只有镜像**触顶**（确知还有更多未拉）
+                      时才随 ⑤ 出现）。普通同步不再凭空多出「数据」分区 ⇒ 分区数/高度不随运行增删
+                      （文案与时序语义不变，AC13b 组合用例仍绿）。
+                    -->
                     <nue-text
-                        v-if="coverage.loadingMore"
+                        v-if="coverage.loadingMore && coverage.truncated"
                         size="xs"
                         color="var(--nue-secondary-text-color)"
                     >
@@ -369,7 +423,7 @@ watch(
                     <span v-if="status.paused" class="sync-panel__chip is-warning">
                         {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
                     </span>
-                    <span v-else-if="status.pendingCount > 0" class="sync-panel__chip">
+                    <span v-else-if="status.pendingCount > 0" class="sync-panel__chip is-warning">
                         {{ t('sync.pending', { count: status.pendingCount }) }}
                     </span>
                     <span v-if="status.failedCount > 0" class="sync-panel__chip is-error">
@@ -387,15 +441,18 @@ watch(
                 class="sync-panel__section"
             >
                 <span class="sync-panel__section-title">{{ t('sync.section.conflict') }}</span>
-                <div class="sync-panel__section-body">
-                    <nue-button
-                        class="sync-conflict-entry"
-                        theme="pure,small"
+                <div class="sync-panel__section-body sync-panel__section-body--stack">
+                    <button
+                        class="sync-panel__row sync-conflict-entry"
+                        type="button"
                         aria-haspopup="dialog"
                         @click="conflictDialogOpen = true"
                     >
-                        {{ t('sync.conflict', { count: status.conflictCount }) }}
-                    </nue-button>
+                        <span class="sync-panel__row-text">
+                            {{ t('sync.conflict', { count: status.conflictCount }) }}
+                        </span>
+                        <span class="sync-panel__row-chevron" aria-hidden="true">›</span>
+                    </button>
                     <nue-text
                         v-if="status.conflictCount >= CONFLICT_JOURNAL_LIMIT"
                         size="xs"
@@ -405,17 +462,26 @@ watch(
                     </nue-text>
                 </div>
             </li>
-            <!-- 错误：最近一次运行的首个错误（2 行截断 + title 全文；禁 v-html） -->
-            <li v-if="status.lastError" class="sync-panel__section">
-                <span class="sync-panel__section-title">{{ t('sync.section.error') }}</span>
+            <!--
+              错误：最近一次运行的首个错误（2 行截断 + title 全文；禁 v-html）。
+              DEF-138：运行开始时数据层会清空 `lastError`（ADR D-2 语义不动）⇒ 展示层保留上一轮摘要并
+              标注来源，使**同步中分区不消失**；运行结束且成功 ⇒ 缓存清空、分区才移除。
+            -->
+            <li v-if="displayError" class="sync-panel__section">
+                <span class="sync-panel__section-title">
+                    {{ t('sync.section.error') }}
+                    <span v-if="errorCarriedOver" class="sync-panel__section-note">
+                        · {{ t('sync.errorFromLastRun') }}
+                    </span>
+                </span>
                 <div class="sync-panel__section-body">
                     <nue-text
                         size="xs"
                         color="var(--nue-error-color-90)"
                         :clamped="2"
-                        :title="status.lastError"
+                        :title="displayError"
                     >
-                        {{ status.lastError }}
+                        {{ displayError }}
                     </nue-text>
                 </div>
             </li>
@@ -519,17 +585,16 @@ watch(
     top: calc((var(--nue-box-size-md) - var(--nue-text-2xl)) / 2 - 0.125rem);
 }
 
-/* 面板分区（每分区一个 <li>，由本组件渲染 ⇒ scoped 生效）：分区标题 + 分区内容；分区之间 1px 分隔 */
+/* 面板分区（每个分区一个 <li>，由本组件渲染 ⇒ scoped 生效）：§4.8 只用**留白**分隔（不画分隔线） */
 .sync-panel__section {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-2xs);
-    border-top: 1px solid var(--nue-border-color);
 }
 
-.sync-panel__section:first-child {
-    padding-top: 0;
-    border-top: none;
+/* 分区之间 ≥ --nue-gap-sm 的留白（首区不额外留白） */
+.sync-panel__section + .sync-panel__section {
+    margin-top: var(--nue-gap-sm);
 }
 
 .sync-panel__section-title {
@@ -545,6 +610,47 @@ watch(
     font-size: var(--nue-text-xs);
 }
 
+/* 纵向分区内容（冲突：可点行 + 折叠提示占满宽度、上下排列） */
+.sync-panel__section-body--stack {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* 主信息行（§4.8）：时间用正文色（不是次要色小字），动作右对齐 */
+.sync-panel__main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--nue-gap-xs);
+}
+
+.sync-panel__time {
+    font-size: var(--nue-text-sm);
+    font-weight: 500;
+    color: var(--nue-primary-text-color);
+}
+
+/* DEF-138 ③：动作按钮定宽占位 —— loading 时图标换形态、文案宽度不变 ⇒ 右缘不跳
+   （6rem ≈ 图标 1em + 间距 + 4 个汉字标签在 --nue-text-xs 下的实测宽度，留 1 字余量） */
+.sync-panel__action {
+    flex: none;
+    min-width: 6rem;
+    justify-content: center;
+}
+
+/* 正常态一句话（§4.8）：次要色小字，不抢主信息 */
+/* 分区标题里的来源标注（DEF-138：同步中沿用上次结果） */
+.sync-panel__section-note {
+    color: var(--nue-secondary-text-color);
+    font-weight: 400;
+}
+
+.sync-panel__hint {
+    margin: 0;
+    font-size: var(--nue-text-xs);
+    color: var(--nue-secondary-text-color);
+}
+
 /* 计数 chips：横向排列（不占整行、不竖堆） */
 .sync-panel__chips {
     flex-direction: row;
@@ -552,10 +658,12 @@ watch(
     gap: var(--nue-gap-xs);
 }
 
+/* 计数胶囊（§4.8）：淡底 + 语义文字色 + 1px 语义边框（文本 ≥4.5:1、边框 ≥3:1） */
 .sync-panel__chip {
     display: inline-flex;
     align-items: center;
     padding: 2px var(--nue-gap-xs);
+    border: 1px solid var(--nue-border-color);
     border-radius: var(--nue-primary-radius);
     background-color: var(--nue-primary-color-100);
     color: var(--nue-primary-text-color);
@@ -563,11 +671,68 @@ watch(
 }
 
 .sync-panel__chip.is-warning {
+    border-color: var(--nue-warning-color-60);
+    background-color: var(--nue-warning-color-10);
     color: var(--nue-warning-color-90);
 }
 
 .sync-panel__chip.is-error {
+    border-color: var(--nue-error-color-60);
+    background-color: var(--nue-error-color-10);
     color: var(--nue-error-color-90);
+}
+
+/* 可点行（§4.8：冲突入口）：整行可点、点击区 ≥40px；hover **只**用背景弱变化（不加边框/阴影） */
+.sync-panel__row {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--nue-gap-xs);
+    width: 100%;
+    min-height: var(--nue-box-size-md);
+    padding: 0 var(--nue-padding-2xs);
+    border: 0;
+    border-radius: var(--nue-primary-radius);
+    background-color: transparent;
+    color: var(--nue-primary-text-color);
+    font: inherit;
+    font-size: var(--nue-text-xs);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--nue-animation-duration-short)
+        var(--nue-animation-timing-function);
+}
+
+/* hover 弱底：§4.8 定的 `--nue-primary-color-50` 当前主题（nue-ui-theme-shadlike）未定义
+   ⇒ 回退到既有 `--nue-primary-color-100`（色阶定义后自动改用 -50，无需再改本行） */
+.sync-panel__row:hover {
+    background-color: var(--nue-primary-color-50, var(--nue-primary-color-100));
+}
+
+.sync-panel__row:focus-visible {
+    outline: 2px solid var(--nue-primary-color-500);
+    outline-offset: 1px;
+}
+
+.sync-panel__row-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 可点行的方向提示（符号通道；纯装饰，读屏跳过） */
+.sync-panel__row-chevron {
+    flex: none;
+    color: var(--nue-secondary-text-color);
+}
+
+/* 动效降级（可访问性基线） */
+@media (prefers-reduced-motion: reduce) {
+    .sync-panel__row {
+        transition: none;
+    }
 }
 
 /* 读屏活动区域：视觉隐藏（WCAG sr-only，非 display:none/hidden）；绝对定位脱离 flex 布局 */
@@ -589,6 +754,9 @@ watch(
 .nue-dropdown--sync-panel {
     min-width: 12rem;
     max-width: 24rem;
+    /* §4.8 长内容：整体限高 + 内滚，不撑破视口（窄屏同样适用，不影响宽度契约） */
+    max-height: 60vh;
+    overflow-y: auto;
     padding: var(--nue-padding-xs);
 }
 

@@ -21,9 +21,10 @@ import type { NueTableColumn } from 'nue-ui'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
-import type {
-    ConflictFieldDiff,
-    ConflictListItem
+import {
+    canRetryLocalConflict,
+    type ConflictFieldDiff,
+    type ConflictListItem
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import type { ConflictUx } from '@/hooks'
 import { fieldLabel } from './conflict-field-labels'
@@ -256,6 +257,15 @@ const runRetryLocal = (): void => {
 const needsManualRecovery = computed(() => {
     const kind = activeItem.value?.kind
     return kind === 'conflict' || kind === 'skipped'
+})
+
+/**
+ * 「保留我的修改」是否可用（DEF-139：`conflict` / `skipped` 不可自动恢复 ⇒ **不渲染**该按钮）
+ * @description 判据与数据层 `canRetryLocalConflict` **同源**，避免"点了才报错"（`retryFailed` 只留作真异常兜底）。
+ */
+const canRetryLocal = computed(() => {
+    const kind = activeItem.value?.kind
+    return kind ? canRetryLocalConflict(kind) : false
 })
 
 /** 复制状态（按钮文案反馈） */
@@ -577,7 +587,8 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                     {{ t('sync.conflict.safetyHint') }}
                 </nue-text>
                 <div class="conflict-list__actions">
-                    <nue-button theme="primary,small" @click="runRetryLocal">
+                    <!-- DEF-139：不可自动恢复的类型（conflict / skipped）不渲染该按钮（改由上方「需手动处理」+ 复制入口承载） -->
+                    <nue-button v-if="canRetryLocal" theme="primary,small" @click="runRetryLocal">
                         {{ t('sync.conflict.retryLocal') }}
                     </nue-button>
                     <nue-button theme="small,ghost" @click="runKeepServer">

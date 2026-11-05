@@ -1431,3 +1431,65 @@ describe('DEF-136 差异区改 `nue-table`（技术字段并入主表 / 不加�
         )
     })
 })
+/**
+ * DEF-139（UI 侧）：「保留我的修改」只对**可自动恢复**的类型渲染
+ * @description `pull-local-wins` 必须出现（此前点了才报「该类型不支持」）；
+ *              `conflict` / `skipped` 属本批**不可自动恢复** ⇒ **不渲染**该按钮，改由「需手动处理」说明 + 复制入口承载，
+ *              杜绝"点了才报错"；`sync.conflict.retryFailed` 仅留作真异常兜底（仍可见，见既有用例）。
+ */
+describe('DEF-139 动作 B 仅对可恢复类型渲染（同源判据）', () => {
+    const retryLabel = (): string => messages['zh-CN']['sync.conflict.retryLocal']
+    const manualHint = (): string => messages['zh-CN']['sync.conflict.manualRecoveryHint']
+    const copyLabel = (): string => messages['zh-CN']['sync.conflict.copyLoser']
+
+    const openWith = async (kind: ConflictListItem['kind']): Promise<void> => {
+        await openConflictList(1)
+        conflict().items.value = [conflictItem({ kind })]
+        conflict().comparison.value = {
+            table: 'tasks',
+            entityId: 't1',
+            loser: { name: '我的版本' },
+            current: { name: '云端最新' },
+            diffs: [{ field: 'name', loser: '我的版本', current: '云端最新' }]
+        }
+        await nextTick()
+    }
+
+    it('pull-local-wins ⇒ 「保留我的修改」可见且可点（不再报类型不支持）', async () => {
+        await openWith('pull-local-wins')
+
+        const button = actionButton(retryLabel())
+        expect(button).toBeTruthy()
+        expect(dialogText()).not.toContain(messages['zh-CN']['sync.conflict.retryFailed'])
+
+        button?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+        expect(conflict().retryLocal).toHaveBeenCalledWith(
+            conflictItem({ kind: 'pull-local-wins' })
+        )
+    })
+
+    it('conflict / skipped ⇒ **不渲染**该按钮，改给「需手动处理」说明 + 复制入口', async () => {
+        for (const kind of ['conflict', 'skipped'] as const) {
+            await openWith(kind)
+
+            expect(actionButton(retryLabel()), kind).toBeFalsy()
+            expect(dialogText(), kind).toContain(manualHint())
+            // 复制入口在「需手动处理」区内（不在底部动作栏）
+            expect(
+                document.querySelector('.conflict-list__manual button')?.textContent,
+                kind
+            ).toContain(copyLabel())
+            // 另两种动作仍在（只收敛动作 B）
+            expect(actionButton(messages['zh-CN']['sync.conflict.keepServer']), kind).toBeTruthy()
+            expect(actionButton(messages['zh-CN']['sync.conflict.close']), kind).toBeTruthy()
+        }
+    })
+
+    it('既有三类仍渲染该按钮（remote-wins / push-noop / stale）', async () => {
+        for (const kind of ['remote-wins', 'push-noop', 'stale'] as const) {
+            await openWith(kind)
+            expect(actionButton(retryLabel()), kind).toBeTruthy()
+        }
+    })
+})

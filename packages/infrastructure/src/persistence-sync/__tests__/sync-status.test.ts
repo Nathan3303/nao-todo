@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { SyncStatus } from '../sync-status'
 
 /**
@@ -72,6 +72,30 @@ describe('SyncStatus 运行级语义', () => {
         expect(state.failedCount).toBe(2)
         state.errors.push('外部篡改')
         expect(status.get().errors).toEqual(['推送失败：部分数据未确认'])
+    })
+
+    it('DEF-13：settlePendingCount 是入队侧补充落定（不改运行边界字段，值未变不通知）', () => {
+        const status = new SyncStatus()
+        status.beginRun('pull')
+        status.noteRunError('pull', '拉取失败：网络错误')
+        status.endRun({ pendingCount: 2, failedCount: 1 })
+        const before = status.get()
+        const listener = vi.fn()
+        status.subscribe(listener)
+
+        // 只改计数：错误/syncing/lastSyncAt/failedCount 均不动
+        status.settlePendingCount(5)
+        const after = status.get()
+        expect(after.pendingCount).toBe(5)
+        expect(after.failedCount).toBe(before.failedCount)
+        expect(after.syncing).toBe(false)
+        expect(after.lastError).toBe('拉取失败：网络错误')
+        expect(after.lastSyncAt).toBe(before.lastSyncAt)
+        expect(listener).toHaveBeenCalledTimes(1)
+
+        // 同值不重复通知（避免入队抖动引起重渲染）
+        status.settlePendingCount(5)
+        expect(listener).toHaveBeenCalledTimes(1)
     })
 
     it('syncing 生命周期：beginRun=true，endRun=false', () => {

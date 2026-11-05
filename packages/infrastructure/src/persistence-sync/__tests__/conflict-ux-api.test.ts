@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vite-plus/test'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { CreateTaskValueObject } from '@nao-todo/domain-task'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import {
@@ -15,13 +15,17 @@ import {
     CONFLICT_JOURNAL_LIMIT,
     type ConflictListResult,
     appendConflict,
+    canRetryLocalConflict,
     compareConflict,
     conflictJournalId,
+    countConflicts,
     listConflicts,
     loadConflictJournal,
     resolveConflictKeepServer,
     resolveConflictRetryLocal
 } from '../conflict-journal'
+import { syncStatus } from '../sync-status'
+import { syncTracker } from '../sync-tracker'
 
 /**
  * T162b 用例先行（红基线）—— 阶段二 2B · 面 ③ 冲突 UX **API 数据面**（T165 第一段契约）
@@ -504,5 +508,84 @@ describe('DEF-133 差异面收敛：只遍历败方快照键集（不产出虚�
             loser: '仅快照有',
             current: null
         })
+    })
+})
+/**
+ * DEF-139：「保留我的修改」对 `pull-local-wins` 报「该类型不支持」（用户截图，P1）
+ * @description A1 的 `pull-local-wins` = **本地已是我的版本、云端那份已被本地覆盖** ⇒ 该动作语义 = **确认保留**：
+ *              只清条目（并从计数扣除），**不写回本地行 / 不 markDirty 入队 / base 不变**（再写一次等于凭空造一次同步）。
+ *              既有三类（`remote-wins`/`push-noop`/`stale`）仍走「快照写回 + 入队」，行为逐字不变。
+ */
+describe('DEF-139 pull-local-wins 可「保留我的修改」（只确认保留，不写回/不入队）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('① pull-local-wins ⇒ ok:true、条目清除、计数递减；⛔ 无 putRecord/markDirty、本地行与 base 逐字段不变', async () => {
+        const taskId = await createLocalTask('我的版本')
+        await localDatabase.tasks.update(taskId, { syncedServerUpdatedAt: SERVER_BASE })
+        await localDatabase.syncQueue.clear()
+        const before = await localDatabase.tasks.get(taskId)
+        await appendConflict(USER_ID, {
+            kind: 'pull-local-wins',
+            table: 'tasks',
+            entityId: taskId,
+            // 败方 = 将被本地覆盖的**远端**快照（该类型的 loser 语义）
+            loser: { id: taskId, name: '云端版本' },
+            winnerUpdatedAt: SERVER_BASE
+        })
+        syncStatus.setConflictCount(await countConflicts(USER_ID))
+        expect(syncStatus.get().conflictCount).toBe(1)
+
+        const markDirty = vi.spyOn(syncTracker, 'markDirty')
+        const put = vi.spyOn(localDatabase.tasks, 'put')
+        const result = await resolveConflictRetryLocal(USER_ID, 'tasks', taskId)
+
+        expect(result.ok).toBe(true)
+        expect(result.remaining).toBe(0)
+        expect(await loadConflictJournal(USER_ID)).toHaveLength(0)
+        expect(await countConflicts(USER_ID)).toBe(0)
+        // 状态面计数同源递减（T331/T346 口径不变）
+        expect(syncStatus.get().conflictCount).toBe(0)
+        // ⛔ 不写回本地行、不入队、base 不变
+        expect(put).not.toHaveBeenCalled()
+        expect(markDirty).not.toHaveBeenCalled()
+        expect(await localDatabase.syncQueue.count()).toBe(0)
+        const after = await localDatabase.tasks.get(taskId)
+        expect(after).toEqual(before)
+        expect(after?.syncedServerUpdatedAt).toBe(SERVER_BASE)
+        // 本地仍是我的版本（未被远端快照覆盖）
+        expect(await localTaskName(taskId)).toBe('我的版本')
+    })
+
+    it('① 该实体其他类型的条目同样被清除（动作 A/B 对称：清全部条目）', async () => {
+        const taskId = await createLocalTask('我的版本')
+        await localDatabase.syncQueue.clear()
+        await appendConflict(USER_ID, {
+            kind: 'pull-local-wins',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { id: taskId, name: '云端版本' }
+        })
+        await appendConflict(USER_ID, {
+            kind: 'pull-local-wins',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { id: taskId, name: '云端版本 2' }
+        })
+
+        const result = await resolveConflictRetryLocal(USER_ID, 'tasks', taskId)
+
+        expect(result.ok).toBe(true)
+        expect(await loadConflictJournal(USER_ID)).toHaveLength(0)
+    })
+
+    it('可重试判据同源：pull-local-wins/remote-wins/push-noop/stale ⇒ true；conflict/skipped ⇒ false', () => {
+        for (const kind of ['pull-local-wins', 'remote-wins', 'push-noop', 'stale'] as const) {
+            expect(canRetryLocalConflict(kind), kind).toBe(true)
+        }
+        for (const kind of ['conflict', 'skipped'] as const) {
+            expect(canRetryLocalConflict(kind), kind).toBe(false)
+        }
     })
 })

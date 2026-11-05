@@ -345,6 +345,12 @@ export interface SyncServiceOptions {
  */
 const PULL_BACKTRACK_MS = 1000
 const PUSH_DEBOUNCE_MS = 2000
+/**
+ * 待推送数补充落定防抖（DEF-13）
+ * @description 入队（`markDirty`）后界面数字滞后到下一次运行结束才更新 ⇒ 在**入队侧事件**上
+ *              防抖重读队列并落定；连续入队只刷新一次。
+ */
+const PENDING_COUNT_SETTLE_DEBOUNCE_MS = 400
 /** 队列上限：单表 1000 / 总量 2000（SHELL-06 C-41；仅提示不阻断） */
 const QUEUE_LIMIT_PER_TABLE = 1000
 const QUEUE_LIMIT_TOTAL = 2000
@@ -380,6 +386,9 @@ const rewindIsoCursor = (at: string, deltaMs: number): string => {
 export class SyncService {
     /** 变更后 2s 防抖推送（同实体重复写合并为最新，见 data-sync-plan.md §4.2） */
     private pushTimer: ReturnType<typeof setTimeout> | null = null
+
+    /** 待推送数补充落定防抖定时器（DEF-13；**非运行边界**，只读本地队列） */
+    private pendingCountTimer: ReturnType<typeof setTimeout> | null = null
 
     /** 网络类失败暂停截止时间（ms epoch；SHELL-06 C-38，网络类不写 item） */
     private pausedUntil = 0
@@ -1556,6 +1565,32 @@ export class SyncService {
             this.pushTimer = null
             void this.pushAll()
         }, PUSH_DEBOUNCE_MS)
+        // DEF-13：本方法**唯一**由入队侧事件（`syncTracker.setDirtyListener` ⇒ `markDirty`）调用
+        // （web `data-plane.ts` / desktop `AppRoot.vue`）⇒ 顺带安排一次待推送数落定
+        this.schedulePendingCountSettle()
+    }
+
+    /**
+     * 入队侧刷新待推送数（DEF-13）
+     * @description ⚠️ **这条路径不是运行边界**：不入 `enqueue`、不触发任何网络/同步、不建轮询/定时循环
+     *              （每次入队侧事件只重置同一个一次性防抖定时器，末次后读一次队列）。
+     *              运行内的最终值仍由 `finishRun` → `endRun` 落定（二者同源同值，见 `settlePendingCount`）。
+     *              运行中不落定（`syncing` 为真时跳过）：避免中途数字闪烁，权威值由运行边界给出。
+     */
+    schedulePendingCountSettle(): void {
+        if (this.pendingCountTimer) clearTimeout(this.pendingCountTimer)
+        this.pendingCountTimer = setTimeout(() => {
+            this.pendingCountTimer = null
+            void this.settlePendingCount()
+        }, PENDING_COUNT_SETTLE_DEBOUNCE_MS)
+    }
+
+    /** 重读本地队列并落定待推送数（只读 Dexie；无会话/运行中不动） */
+    private async settlePendingCount(): Promise<void> {
+        if (syncStatus.get().syncing) return
+        const userId = this.currentUserId()
+        if (!userId) return
+        syncStatus.settlePendingCount(await syncTracker.countDirty(userId))
     }
 
     /** 手动完整同步（拉取全部 + 推送全部，供 UI 触发；先重置退避/暂停 C-42） */
