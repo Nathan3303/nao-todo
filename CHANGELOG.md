@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.17.3] - 2026-11-05
+
+小单批 2（PR #327 · 发版说明 `docs/releases/v1.17.3.md`）：
+
+- **`DEF-13`**：同步「待推送 N」改为入队侧防抖 **400ms** 落定（`syncTracker.setDirtyListener` 唯一回调；只读 Dexie、**不触发同步/网络、无轮询**；运行结束仍由 `endRun` 落定，运行中刻意不落定避免闪烁）。
+- **`DEF-26`**：`scripts/electron-smoke` 的 shell-03「本地就绪」改判**真实证据**（壳 / 门 / 逃生入口），`input[type=password]` 降为**限定解锁门容器内**的兼容回退；README + `checklists/shell-02-sync-rail.md` 同步；实跑 `bc1,bc2` = PASS 3 / FAIL 0 / SKIP 1 / INFO 5。
+- **同步状态面板美化（`DESIGN.md §4.8`）**：去 1px 分隔线（只用留白）· 首行主信息（时间正文色 + 立即同步右对齐带图标）· 正常态只留「数据已是最新」· 计数胶囊淡底 + 语义文字色 + 1px 语义边框 · 冲突入口整行可点（≥40px）· 面板 60vh 内滚。
+- **`DEF-138`**：同步中不再抖动 —— 展示层缓存上一轮错误并标注「上次同步」、「数据已是最新」常显、按钮定宽、`coverage.loadingMore` 渲染收窄为「触顶且确知还有更多」（有意收窄）；数据层 `beginRun/endRun` 语义未改（ADR D-2）。
+- **`DEF-139`（P1）**：`pull-local-wins` 纳入「保留我的修改」（专用分支：只清条目，不写回 / 不入队 / base 不变）；`conflict`/`skipped` 不再渲染该按钮（改为需手动处理 + 复制）；同一判据 `canRetryLocalConflict` 供数据层与 UI 共用。
+- **门禁**：全仓 **369 文件通过 +1 跳过 / 2970 例通过 +6 跳过 / 红 0** · `vp check` 0 error（1851 / 1491）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行 · 用户走查通过。
+- **Tag `v1.17.3`** · root / `apps/web` / `apps/desktop` `1.17.2 → 1.17.3`（PATCH）。**服务端无改动，无需部署**。
+
 ## [v1.17.2] - 2026-11-04
 
 小单批（PR #325 · 发版说明 `docs/releases/v1.17.2.md`）：
