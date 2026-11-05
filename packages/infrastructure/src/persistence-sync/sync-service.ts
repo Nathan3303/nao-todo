@@ -13,6 +13,7 @@ import {
     isStaleTokenSnapshot
 } from '@nao-todo/shared/requester/auth-rotation'
 import { isCheckInInFlight } from '@nao-todo/shared/requester/checkin-window'
+import { RATE_LIMIT_ERROR_MESSAGE } from '@nao-todo/shared/requester/network-error-messages'
 import { decideSessionEnd } from '@nao-todo/domain-identity'
 import type { Table } from 'dexie'
 import { pickUnexpectedDroppedFields } from './dropped-fields'
@@ -361,12 +362,25 @@ const QUEUE_LIMIT_TOTAL = 2000
  *              防 alt-tab / Wi-Fi 抖动把请求数放大；手动「立即同步」与周期拉取**不过门**。
  */
 const EVENT_PULL_MERGE_GATE_MS = 10_000
+
+/**
+ * `/sync/pull` 成功业务码**白名单**（T657 / DEF-140）
+ * @description 服务端成功码实测为 `90020`。⛔ **不得**改用「非 0 即成功」：
+ *              限流 / 拒绝类业务码（`10051` 限流、`90022`）走 **HTTP 200 + 业务码 + 无 `data`**，
+ *              按「非 0 即成功」会被当成空拉取（假绿）。白名单可能有多值，故用集合。
+ */
+const PULL_SUCCESS_CODES: readonly unknown[] = [90020]
+
+/** 限流业务码（已知：`10051`；与 `apps/web/.../search-tasks.ts` 的限流识别同源含义） */
+const PULL_RATE_LIMIT_CODES: readonly unknown[] = [10051]
 // ---------------------------------------------------------------------------
 // 错误文案（C-12 家族约束：仅三种前缀；禁拼接原始异常/URL）
 // ---------------------------------------------------------------------------
 const ERR_PULL_EXPIRED = '拉取失败：登录已过期，请重新登录'
 const ERR_PULL_NETWORK = '拉取失败：网络错误'
 const ERR_PULL_DATA = '拉取失败：数据异常'
+/** 限流（10051）专用文案：复用 requester 的既有用户文案，不说内部术语（T657） */
+const ERR_PULL_RATE_LIMITED = `拉取失败：${RATE_LIMIT_ERROR_MESSAGE}`
 const ERR_PUSH_EXPIRED = '推送失败：登录已过期，请重新登录'
 const ERR_PUSH_NETWORK = '推送失败：网络错误'
 const ERR_PUSH_DATA = '推送失败：数据异常'
@@ -989,6 +1003,31 @@ export class SyncService {
                     })
                     syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
                     return
+                }
+                // T657 / DEF-140：**业务码 + 无数据信袋**不得当「空拉取成功」
+                //   限流 / 拒绝形态 = HTTP 200 + 业务码 + 无 `data`；旧实现 `?? {}` ⇒ 逐表 `pending.delete`
+                //   ⇒ `pending.size===0` ⇒ `markMirrorPulled()` ⇒ `ok:true`（假绿 + 骗过自动刷新门控）。
+                //   现口径（白名单，非「非 0 即失败」）：
+                //   - 无表信袋且 `code` ∉ 成功码 ⇒ **失败**（不推进新鲜度 / 不删 pending / 不广播 / 走退避）；
+                //   - `code` 命中成功码（含 `data.data = {}` 的正常空拉取）⇒ 成功（DEF-6 补拉前提）。
+                const pullCode = (data as { code?: unknown } | undefined)?.code
+                const pulledTables = (data?.data as { data?: unknown } | undefined)?.data
+                if (pulledTables === undefined || pulledTables === null) {
+                    if (!PULL_SUCCESS_CODES.includes(pullCode)) {
+                        this.pullIncomplete = true
+                        const rateLimited = PULL_RATE_LIMIT_CODES.includes(pullCode)
+                        logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
+                            userId,
+                            kind: 'business',
+                            code: typeof pullCode === 'number' ? pullCode : undefined,
+                            rateLimited
+                        })
+                        syncStatus.noteRunError(
+                            'pull',
+                            rateLimited ? ERR_PULL_RATE_LIMITED : ERR_PULL_DATA
+                        )
+                        return
+                    }
                 }
                 // T326 / AC-T325-1：serverTime 在 SyncPullRes 内（`body.data.serverTime`），非 `body.serverTime`
                 this.calibrateServerTime(
