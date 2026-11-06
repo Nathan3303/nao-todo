@@ -36,7 +36,12 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
     const newTaskId = ref<TaskViewObject['id'] | undefined>(undefined)
 
     /** 列内聚合摘要（外层空态 / 错误态判据，R-N） */
-    const summary = ref<KanbanColumnSummary>({ settled: false, total: 0, firstError: '' })
+    const summary = ref<KanbanColumnSummary>({
+        settled: false,
+        total: 0,
+        firstError: '',
+        firstRefreshError: ''
+    })
 
     /**
      * 按 ID 取任务视图对象
@@ -85,7 +90,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
      *              让外层离开错误态、看板重新挂载；各列 `onMounted` 走**非 silent** 拉取（AC-K2）。
      */
     const handleRetry = () => {
-        summary.value = { settled: false, total: 0, firstError: '' }
+        summary.value = { settled: false, total: 0, firstError: '', firstRefreshError: '' }
         refreshSilent.value = false
         refreshToken.value += 1
     }
@@ -95,6 +100,14 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         refreshSilent.value = true
         refreshToken.value += 1
     }
+
+    /**
+     * 列级「原地刷新失败」提示（`DEF-148`，非阻塞）
+     * @description 只有**有内容**时才用提示条：无内容（首进即失败）仍走既有整页错误分支（AC-E4）
+     */
+    const refreshWarning = computed(() =>
+        summary.value.total > 0 ? summary.value.firstRefreshError : ''
+    )
 
     /** `AddNewTaskId` ⇒ 交给看板做「目标列置顶插入」 */
     const handleAddNewTaskId = (taskId: TaskViewObject['id']) => {
@@ -115,6 +128,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         sortOptions,
         refreshToken,
         refreshSilent,
+        refreshWarning,
         newTaskId,
         getTask,
         empty,

@@ -24,11 +24,19 @@ export const useCalendarTaskQuery = (deps: {
 
     // @states 任务快照与拉取状态
     const loading = ref<boolean>(true) // 任务加载中
-    const error = ref<string>('') // 任务加载错误
+    const error = ref<string>('') // 任务加载错误（阻塞式：无内容可保时落错误分支）
+    /**
+     * 原地刷新失败（非阻塞，`DEF-148`）
+     * @description 自动刷新（`RefreshData`）失败时**保留已有快照**，改用提示条表达失败；
+     *              下轮成功自动消除（不残留、不刷屏）。
+     */
+    const refreshError = ref<string>('')
     const taskIds = ref<Set<TaskViewObject['id']>>(new Set()) // 已加载任务快照
     const pendingLoad = ref<boolean>(false) // 拉取请求合并标记（运行中触发只补跑一次）
 
     // @method 单次全量拉取（服务端过滤，分页归并到快照；只携带发起时的筛选条件）
+    // @description `DEF-148`：失败时按「有无内容」分流 —— 有内容 ⇒ 保留快照 + `refreshError`
+    //              （非破坏性提示条）；无内容 ⇒ 既有 `error` 分支（首进即失败仍要正常错误态）。
     const runSweep = async (): Promise<void> => {
         error.value = ''
         loading.value = taskIds.value.size === 0
@@ -58,6 +66,13 @@ export const useCalendarTaskQuery = (deps: {
             // 仓储/请求层意外抛错（如异常响应形状）不冒泡为未处理拒绝：归一为错误态
             error.value = unwrapError(thrown as Error)
         } finally {
+            if (error.value && taskIds.value.size > 0) {
+                // 有内容 ⇒ 保留快照，失败降级为非阻塞提示（不清空日历、不换错误分支）
+                refreshError.value = error.value
+                error.value = ''
+            } else if (!error.value) {
+                refreshError.value = ''
+            }
             loading.value = false
         }
     }
@@ -134,5 +149,5 @@ export const useCalendarTaskQuery = (deps: {
     // 未安排任务（B7：endAt 为空）不再由本组合式排序：展示顺序唯一真源＝用户排序，
     // 故由组装点（useCalendarMonthly）从 sortedTasks 派生（TASK-15 D4）。
 
-    return { loading, error, retry: resetAndLoad, tasks }
+    return { loading, error, refreshError, retry: resetAndLoad, tasks }
 }

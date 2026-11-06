@@ -18,6 +18,11 @@ export type KanbanColumnSummary = {
     total: number
     /** 首个列级错误（无错误 ⇒ 空串） */
     firstError: string
+    /**
+     * 首个列级「原地刷新失败」（非阻塞；无则空串）
+     * @description `DEF-148`：刷新失败不得把列内卡片换成错误分支 ⇒ 由外层用提示条（非破坏性）展示。
+     */
+    firstRefreshError: string
 }
 
 /** 单列摘要（列内上报，父级只读） */
@@ -85,7 +90,12 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
 
     const register = (handle: KanbanColumnHandle) => {
         handles.set(handle.category, handle)
-        columnStates[handle.category] = { settled: false, total: 0, firstError: '' }
+        columnStates[handle.category] = {
+            settled: false,
+            total: 0,
+            firstError: '',
+            firstRefreshError: ''
+        }
     }
 
     /**
@@ -105,6 +115,7 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
         current.settled = state.settled
         current.total = state.total
         current.firstError = state.firstError
+        current.firstRefreshError = state.firstRefreshError
     }
 
     const summary = computed<KanbanColumnSummary>(() => {
@@ -112,7 +123,9 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
         return {
             settled: list.length > 0 && list.every((state) => state.settled),
             total: list.reduce((sum, state) => sum + state.total, 0),
-            firstError: list.find((state) => state.firstError)?.firstError ?? ''
+            firstError: list.find((state) => state.firstError)?.firstError ?? '',
+            firstRefreshError:
+                list.find((state) => state.firstRefreshError)?.firstRefreshError ?? ''
         }
     })
 

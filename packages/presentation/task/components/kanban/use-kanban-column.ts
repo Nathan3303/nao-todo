@@ -157,7 +157,9 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
         paging.report(props.category, {
             settled: queryOptions.value === null || loadedOnce.value,
             total: total.value,
-            firstError: error.value
+            firstError: error.value,
+            // DEF-148：原地刷新失败（非阻塞）单独上报 ⇒ 外层提示条，不清空列内卡片
+            firstRefreshError: loader.states.refreshError
         })
     })
 

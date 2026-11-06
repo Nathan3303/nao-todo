@@ -50,7 +50,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const taskUseCase = useTaskUseCase(tasksStore)
 
     // —— O12 拆分子组合式：任务拉取+订阅 / 排期+撤销（DI 依赖由本组装点注入） ——
-    const { loading, error, retry, tasks } = useCalendarTaskQuery({
+    const { loading, error, refreshError, retry, tasks } = useCalendarTaskQuery({
         tasksStore,
         taskUseCase
     })
@@ -263,6 +263,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     return {
         loading,
         error,
+        refreshError,
         retry,
         model,
         monthTitle,

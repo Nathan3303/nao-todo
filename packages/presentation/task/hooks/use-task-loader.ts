@@ -12,7 +12,14 @@ import { TaskUseCase } from '@nao-todo/domain-task'
 export type UseTasksLoaderStates = {
     taskIds: Set<TaskViewObject['id']>
     loading: boolean
+    /** 阻塞式错误（首次进入 / 用户主动重试失败）：无内容可保 ⇒ 视图落错误分支 */
     error: string
+    /**
+     * 非阻塞式错误（**原地刷新失败**）：内容保留，视图用非破坏性提示条（条带）展示
+     * @description `DEF-148`：自动刷新（`silent`）失败不得把已有内容换成错误分支；
+     *              也不得吞错（必须可被用户看到）。下轮成功后自动消除（不残留、不刷屏）。
+     */
+    refreshError: string
     pagination: Pagination
     isDone: boolean
     lastGetOptions: GetTasksOptions
@@ -42,6 +49,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         taskIds: new Set<TaskViewObject['id']>(),
         loading: true,
         error: '',
+        refreshError: '',
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
         isDone: false,
         lastGetOptions: originalGetOptions ?? {},
@@ -68,12 +76,18 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
         const [res, err] = await taskUseCase.list(getOptions)
         if (err !== null) {
-            states.error = unwrapError(err)
+            // `DEF-148`：原地刷新（silent）且**已有内容** ⇒ 不得落阻塞式 error（否则内容被整块换掉）；
+            // 改用非阻塞 `refreshError`（内容保留 + 提示条可见，下轮成功自动消除）。
+            // 无内容可保（首进 / 空列）⇒ 仍走阻塞式 `error`（AC-E4：不得把失败静默掉）。
+            if (silent && states.taskIds.size > 0) states.refreshError = unwrapError(err)
+            else states.error = unwrapError(err)
             states.loading = false
             return [null, err]
         }
-        // silent 下本就未置 loading（失败的可见错误语义不变：error 仍照常落定）
+        // silent 下本就未置 loading；成功（无论 silent 与否）⇒ 清掉两条错误
         states.loading = false
+        states.error = ''
+        states.refreshError = ''
         if (res.pagination) {
             states.pagination.maxPage = res.pagination.maxPage
             states.pagination.total = res.pagination.total

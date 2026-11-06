@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
@@ -15,6 +16,7 @@ const {
     sortOptions,
     refreshToken,
     refreshSilent,
+    refreshWarning,
     newTaskId,
     getTask,
     empty,
@@ -48,6 +50,14 @@ const handleUnfinishTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainKanbanContainer">
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不换内容分支、不卸载卡片/编辑器） -->
+        <rule-hint
+            v-if="refreshWarning"
+            class="task-refresh-warning"
+            variant="error"
+            icon="warning"
+            :content="t('task.refreshFailed', { reason: refreshWarning })"
+        />
         <nue-main>
             <nue-content fill style="overflow: auto">
                 <!--
