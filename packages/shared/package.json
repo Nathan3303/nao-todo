@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/shared",
-    "version": "1.4.7",
+    "version": "1.4.8",
     "author": "Nathan Lee",
     "license": "MIT",
     "main": "index.ts",
