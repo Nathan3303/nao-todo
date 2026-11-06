@@ -139,6 +139,14 @@ describe('useTaskViewObject - store 联动保护未保存输入', () => {
     it('提交后（updateTaskDetails 同步 store）不误判为编辑中', async () => {
         const taskUseCase = makeUseCase(makeTask())
         const tasksStore = useTasksStore()
+        // T662：真实 `TaskUseCase.update` 成功后会把 store 同步成同一值（`taskStore.updateTask`）
+        // ⇒ mock 必须复刻这一步，否则「提交后」场景测的是「store 永远旧」，与生产不符
+        ;(taskUseCase.update as ReturnType<typeof vi.fn>).mockImplementation(
+            async (id: string, updateVO: Record<string, unknown>) => {
+                tasksStore.updateTask(id, updateVO as never)
+                return null
+            }
+        )
         tasksStore.addTask(makeTask())
         const { task, getTaskDetails, updateTaskDetails } = useTaskViewObject(
             taskUseCase,
