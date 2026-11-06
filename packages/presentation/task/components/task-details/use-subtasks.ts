@@ -84,6 +84,23 @@ const useSubTasks = (
     }
 
     /**
+     * 失效重载（`RefreshData`）—— **原地刷新**
+     * @description 同步拉取落库后的重载：**不清空**已渲染行、不置 `subTasksLoading`。
+     *              否则每轮自动刷新（30s）都会把子任务区整块换成加载态（`DEF-144` 同族闪动），
+     *              并冲掉「新增子任务」输入框里未提交的文字（`DEF-145` 同族输入丢失）。
+     *              首次进入 / 切换任务仍走 `loadSubTasks`（正常显示 loading，不得“永不显示 loading”）。
+     *              失败仍落可见错误（不得把刷新失败静默掉）。
+     */
+    const refreshSubTasksInPlace = async (taskId: TaskViewObject['id']) => {
+        const [taskIds, err] = await subTaskLoader.load({ parentTaskId: taskId }, { silent: true })
+        if (err !== null) {
+            taskDetailsStore.setSubTasksError('子任务获取失败：' + unwrapError(err))
+            return
+        }
+        if (taskIds) subTaskLoader.states.taskIds = new Set(taskIds)
+    }
+
+    /**
      * 重试加载子任务
      */
     const retrySubTasks = async () => {
@@ -93,10 +110,14 @@ const useSubTasks = (
 
     /**
      * 失效通路（DEF-STORE-06 方向 2）：订阅应用级 `RefreshData`（由 store-invalidation hub 派发），
-     * 等价 `initialize()` 的整体失效 —— 以当前父任务 id 清空重取（事件驱动"最终一致"）。
+     * 以当前父任务 id **原地重取**（`refreshSubTasksInPlace`：不清空/不置 loading —— `DEF-144`）
+     * 而非走 `loadSubTasks`（后者会清空并显示加载态，仅用于首次进入 / 切换任务）。
      * 组件作用域订阅 ⇒ 卸载时必须反订阅（防泄漏/重复重取）。
      */
-    const onRefresh = () => void retrySubTasks()
+    const onRefresh = () => {
+        if (!currentParentTaskId.value) return
+        void refreshSubTasksInPlace(currentParentTaskId.value)
+    }
     subscriber.subscribe('RefreshData', onRefresh)
     onUnmounted(() => subscriber.unsubscribe('RefreshData', onRefresh))
 

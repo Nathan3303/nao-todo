@@ -19,7 +19,18 @@ export type UseTasksLoaderStates = {
     delay: number
     disabled: boolean
     /** DEF-STORE-06 方向 4：在飞中到达的刷新请求（单槽，完成后重跑一次；null = 无待重跑） */
-    pendingRefresh: { requested?: GetTasksOptions } | null
+    pendingRefresh: { requested?: GetTasksOptions; silent?: boolean } | null
+}
+
+/**
+ * 加载选项
+ * @description `silent` = **原地刷新**：不置 `loading`（保持当前内容可见）。
+ *              仅用于「同步拉取落库后的视图刷新」（`RefreshData`）—— 自动刷新每 30s 触发一次，
+ *              若沿用 loading 语义会把已渲染内容整块换成加载态（`DEF-144`）。
+ *              ⛔ 首次进入 / 翻页 / 用户点「重试」仍走非 silent（必须显示加载态，`AC-A3`）。
+ */
+export type TasksLoaderLoadOptions = {
+    silent?: boolean
 }
 
 /**
@@ -42,10 +53,15 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载任务数据
      * @param extraGetOptions 额外的选项
+     * @param options `silent` ⇒ 原地刷新（不置 `loading`，见 `TasksLoaderLoadOptions`）
      * @returns 任务 ID 列表
      */
-    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<TaskViewObject['id'][]> => {
-        states.loading = true
+    const load = async (
+        extraGetOptions?: GetTasksOptions,
+        options: TasksLoaderLoadOptions = {}
+    ): GoAsync<TaskViewObject['id'][]> => {
+        const silent = options.silent === true
+        if (!silent) states.loading = true
         states.error = ''
         const getOptions: GetTasksOptions = { ...originalGetOptions, ...extraGetOptions }
         getOptions.page = states.pagination.page
@@ -56,6 +72,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
             states.loading = false
             return [null, err]
         }
+        // silent 下本就未置 loading（失败的可见错误语义不变：error 仍照常落定）
         states.loading = false
         if (res.pagination) {
             states.pagination.maxPage = res.pagination.maxPage
@@ -87,20 +104,28 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载任务数据并替换当前任务 ID 列表
      * @param extraGetOptions 额外的选项
+     * @param options `silent` ⇒ 原地刷新（同步拉取后的刷新；不闪加载态）
      * @returns 无
      */
-    const loadAndReplace = async (extraGetOptions?: GetTasksOptions) => {
+    const loadAndReplace = async (
+        extraGetOptions?: GetTasksOptions,
+        options: TasksLoaderLoadOptions = {}
+    ) => {
         if (states.disabled) {
             // DEF-STORE-06 方向 4：在飞中到达的刷新**置脏不丢弃**，完成后重跑一次
             // （单槽防循环：重跑自身在飞时到达的刷新会再入本分支，依次收敛）
             // 注：须包 `requested` 壳（与下方 `pending.requested` 重跑行一致）——派单初稿此处
             //    写 `{ ...(extraGetOptions ?? {}) }` 会把 options 直接展开，导致 pending.requested 恒 undefined
-            states.pendingRefresh = { requested: { ...extraGetOptions } }
+            states.pendingRefresh = {
+                requested: { ...extraGetOptions },
+                // 静默属性随重跑一起带走（不得因重跑又闪一次）；默认路径不写入该键（状态形状不变）
+                ...(options.silent === true ? { silent: true } : {})
+            }
             return
         }
         states.disabled = true
         try {
-            const [taskIds, err] = await load(extraGetOptions)
+            const [taskIds, err] = await load(extraGetOptions, options)
             if (err !== null) return
             states.taskIds = new Set(taskIds)
         } finally {
@@ -109,7 +134,10 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
             states.pendingRefresh = null
             setTimeout(() => {
                 states.disabled = false
-                if (pending) void loadAndReplace(pending.requested) // 完成后重跑一次（单槽防循环）
+                // 完成后重跑一次（单槽防循环）；静默属性随重跑一起带走（不得因重跑又闪一次）
+                if (pending) {
+                    void loadAndReplace(pending.requested, { silent: pending.silent === true })
+                }
             }, states.delay)
         }
     }
@@ -149,13 +177,14 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载第一页
      * @param isReplace 是否替换当前任务 ID 列表
+     * @param options `silent` ⇒ 原地刷新（同步拉取后的刷新；不闪加载态）
      * @returns 无
      */
-    const loadFirstPage = async (isReplace?: boolean) => {
+    const loadFirstPage = async (isReplace?: boolean, options: TasksLoaderLoadOptions = {}) => {
         if (states.disabled) return
         if (states.pagination.page !== 1) states.pagination.page = 1
         if (isReplace) {
-            await loadAndReplace()
+            await loadAndReplace(undefined, options)
             return
         }
         await loadAndPush()
