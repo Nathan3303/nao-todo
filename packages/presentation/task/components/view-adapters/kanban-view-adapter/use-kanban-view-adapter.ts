@@ -25,6 +25,13 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
     /** 刷新计数：递增 ⇒ 各列回第 1 页（`RefreshData`） */
     const refreshToken = ref(0)
 
+    /**
+     * 本次 `refreshToken` 递增是否为**原地刷新**（`RefreshData`）
+     * @description 同步拉取落库后的刷新 ⇒ `silent`（列内不置 loading、不插列底加载条、
+     *              空列占位不换）；用户「重试」⇒ 非 silent（必须可见 loading，AC-K2）。
+     */
+    const refreshSilent = ref(false)
+
     /** 新增任务 ID：换值 ⇒ 看板只向目标列置顶插入（保页） */
     const newTaskId = ref<TaskViewObject['id'] | undefined>(undefined)
 
@@ -71,13 +78,21 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         summary.value = next
     }
 
-    /** 重试（整页错误态）：让各列重新拉第 1 页 */
+    /**
+     * 重试（整页错误态）：让各列重新拉第 1 页（**可见 loading**，不得静默）
+     * @description 错误态下 `loading-error` 只渲染错误分支 ⇒ 看板（含各列）**已卸载**，
+     *              此时仅递增 `refreshToken` 无人消费（各列句柄已反注册）⇒ 必须先把聚合摘要复位
+     *              让外层离开错误态、看板重新挂载；各列 `onMounted` 走**非 silent** 拉取（AC-K2）。
+     */
     const handleRetry = () => {
+        summary.value = { settled: false, total: 0, firstError: '' }
+        refreshSilent.value = false
         refreshToken.value += 1
     }
 
-    /** `RefreshData` ⇒ 各列回第 1 页 */
+    /** `RefreshData` ⇒ 各列回第 1 页（**原地刷新**：`DEF-144` / AC-K1） */
     const handleRefreshData = () => {
+        refreshSilent.value = true
         refreshToken.value += 1
     }
 
@@ -99,6 +114,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
     return {
         sortOptions,
         refreshToken,
+        refreshSilent,
         newTaskId,
         getTask,
         empty,

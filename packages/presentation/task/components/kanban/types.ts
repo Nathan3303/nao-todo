@@ -31,6 +31,13 @@ export type TaskKanbanProps = {
      */
     refreshToken: number
     /**
+     * 本次 `refreshToken` 递增是否为**原地刷新**（`RefreshData` 触发）
+     * @description `true` ⇒ 各列回第 1 页走 `silent`：不置 `loading`（不插列底加载条、
+     *              不把空列「无待办任务」换成「正在加载任务」）—— `DEF-144` 看板落点。
+     *              ⛔ 首次进入 / 翻页 / 用户「重试」/ 筛选与排序变化 **不得**为 `true`（必须可见 loading）。
+     */
+    refreshSilent?: boolean
+    /**
      * 新增任务 ID（`AddNewTaskId` ⇒ 换新值）
      * @description 只向目标列**置顶插入**（保页），不重查整板（R-M/D2）
      *

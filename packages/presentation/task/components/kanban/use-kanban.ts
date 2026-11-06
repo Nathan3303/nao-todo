@@ -66,9 +66,11 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     )
 
     // @watch 重置规则（R-C）：刷新 / 筛选变化 / 排序变化 ⇒ 各列回第 1 页
+    // `refreshSilent`（`RefreshData` 触发的刷新）⇒ 原地刷新：不置 loading、不插列底加载条、
+    //   空列占位不换（`DEF-144` 看板落点，AC-K1）；筛选 / 排序变化仍走非 silent（AC-K2）
     watch(
         () => props.refreshToken,
-        () => void paging.resetAll()
+        () => void paging.resetAll({ silent: props.refreshSilent === true })
     )
     watch(
         () => props.getTasksOptions,

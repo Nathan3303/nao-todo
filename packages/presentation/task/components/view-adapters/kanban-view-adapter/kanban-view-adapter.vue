@@ -14,6 +14,7 @@ const props = defineProps<KanbanViewAdapterProps>()
 const {
     sortOptions,
     refreshToken,
+    refreshSilent,
     newTaskId,
     getTask,
     empty,
@@ -98,6 +99,7 @@ const handleUnfinishTask = async (taskId: string) => {
                         :get-tasks-options="getTasksOptions"
                         :get-task="getTask"
                         :refresh-token="refreshToken"
+                        :refresh-silent="refreshSilent"
                         :new-task-id="newTaskId"
                         :task-use-case="taskUseCase"
                         @summary-change="handleSummaryChange"

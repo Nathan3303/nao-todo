@@ -24,21 +24,26 @@ export type KanbanColumnSummary = {
 export type KanbanColumnState = Omit<KanbanColumnSummary, 'settled'> & { settled: boolean }
 
 /** 列句柄（父级可发起的编排动作；不含任何分页游标读写） */
+export type KanbanColumnResetOptions = {
+    /** 原地刷新（`RefreshData`）：不置 loading，不插列底加载条、不换空列占位（`DEF-144`） */
+    silent?: boolean
+}
+
 export type KanbanColumnHandle = {
     category: string
     /** 新增任务置顶插入（`AddNewTaskId`，R-M/D2） */
     insertTask: (taskId: string) => void
     /** 拖走一条：移出 + 标 `needsRefill`（R-M/D3） */
     removeTask: (taskId: string) => void
-    /** 回到第 1 页（RefreshData / 筛选 / 排序，R-C） */
-    reset: () => Promise<void>
+    /** 回到第 1 页（RefreshData / 筛选 / 排序，R-C）；`silent` ⇒ 原地刷新 */
+    reset: (options?: KanbanColumnResetOptions) => Promise<void>
 }
 
 export type KanbanColumnPaging = {
     register: (handle: KanbanColumnHandle) => void
     unregister: (handle: KanbanColumnHandle) => void
-    /** 各列回到第 1 页 */
-    resetAll: () => Promise<void>
+    /** 各列回到第 1 页（`silent` ⇒ 原地刷新，用于 `RefreshData`） */
+    resetAll: (options?: KanbanColumnResetOptions) => Promise<void>
     /** 跨列拖拽的本地增量（源列 -1 且待补拉、目标列置顶 +1） */
     moveTask: (taskId: string, from: string, to: string) => void
     /** 新增任务：只向目标列置顶插入（保页） */
@@ -111,8 +116,8 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
         }
     })
 
-    const resetAll = async () => {
-        await Promise.all([...handles.values()].map((handle) => handle.reset()))
+    const resetAll = async (options?: KanbanColumnResetOptions) => {
+        await Promise.all([...handles.values()].map((handle) => handle.reset(options)))
     }
 
     const moveTask = (taskId: string, from: string, to: string) => {
