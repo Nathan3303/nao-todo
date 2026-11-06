@@ -74,9 +74,16 @@ export const useCalendarTaskQuery = (deps: {
         })()
     }
 
-    // @method 清空并重新拉取（筛选变化/刷新/重试统一出口）
+    // @method 清空并重新拉取（筛选变化 / 首进 / 用户重试的出口）
     const resetAndLoad = (): void => {
         taskIds.value = new Set()
+        requestLoad()
+    }
+
+    // @method 原地刷新（`RefreshData` 出口）
+    // @description `DEF-144` 日历落点：**不清空快照**（清空会让 `runSweep` 把 `loading` 置真 ⇒
+    //              整个月历被加载块替换）；快照在成功后整体替换（失败则保留 + 提示条）。
+    const refreshInPlace = (): void => {
         requestLoad()
     }
 
@@ -95,7 +102,7 @@ export const useCalendarTaskQuery = (deps: {
 
     // @method 事件订阅刷新（与其他任务区一致：RefreshData 全量、AddNewTaskId 增量）
     const onRefreshData = () => {
-        resetAndLoad()
+        refreshInPlace()
     }
     const onAddNewTaskId = (id: TaskViewObject['id']) => {
         // 服务端过滤激活时，增量 id 可能不匹配当前范围：改为全量重查保证一致
