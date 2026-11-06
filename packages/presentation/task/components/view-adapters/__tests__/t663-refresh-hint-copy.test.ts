@@ -12,13 +12,13 @@ import ListViewAdapter from '../list-view-adapter/list-view-adapter.vue'
 import { NUE_COMPONENTS, makeTask } from '../../kanban/__tests__/t608-kanban-harness'
 
 /**
- * `T663` 追加复验 · 新增 B：`DEF-148` 提示条文案（中英双语 / 空 reason / 超长 reason）
+ * `T663` 末轮 · `DEF-150`（空原因必须**可见** + 兜底句式）+ 裸业务码清洗（`T665` / `87b669e4`）
  *
- * @description 真实挂载列表适配器（真 `RuleHint`），把 `taskUseCase.list` 打成失败，读实际渲染出来的
- *              提示条文本。断言：① 中英文案齐备且语义不误导（明说「显示上次内容」+「会自动重试」）；
- *              ② `reason` 为空 / 超长时不出现 `undefined`/`null`/占位符外泄、文本完整；
- *              ③ 文案不撑破布局 —— jsdom 无布局引擎，**像素不可测**（`scrollWidth/offsetWidth` 恒 0），
- *              故以「源码级是否有换行保护」取证并如实标注（见 `T663` 报告 §十一-5）。
+ * @description 真实挂载列表适配器（真 `RuleHint`），`taskUseCase.list` 打成可控失败，读实际渲染的提示条文本。
+ *              判据（PM 锁定）：① 空原因 ⇒ **提示条可见**且不含 `{reason}` / `undefined` / `null`；
+ *              ② 兜底句必须含「会自动重试」这类可执行信息（**不得**塌缩成「刷新失败」四个字）；
+ *              ③ 裸业务码（`10051` / `90022`）不外泄，走兜底句；④ **非纯数字的真实文案原样保留**
+ *              （不得误清洗成兜底）。
  */
 
 const SETTLE = async (): Promise<void> => {
@@ -29,18 +29,18 @@ const SETTLE = async (): Promise<void> => {
     }
 }
 
-type Harness = { wrapper: VueWrapper; emit: (event: string) => void }
+type Harness = { wrapper: VueWrapper; failWith: (reason: string) => void }
 
-const mountWithFail = (reason: string): Harness => {
+const mountWithFail = (): Harness => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useTasksStore(pinia)
     const seed: TaskViewObject[] = [makeTask({ id: 't1', name: '任务-t1' })]
     store.addTasks(seed.map((t) => ({ ...t })))
 
-    let failing = false
+    let reason: string | null = null
     const list = vi.fn(async () => {
-        if (failing) return [null, reason]
+        if (reason !== null) return [null, reason]
         store.addTasks(seed.map((t) => ({ ...t })))
         return [
             {
@@ -81,22 +81,12 @@ const mountWithFail = (reason: string): Harness => {
 
     return {
         wrapper,
-        emit: (event: string) => {
-            failing = true
-            subscriber.emit(event as never)
+        failWith: (next: string) => {
+            reason = next
+            subscriber.emit('RefreshData' as never)
         }
     }
 }
-
-/** `RuleHint` 组件源码（`?raw`）：样式契约只能按源文本核（jsdom 不应用 SFC `<style scoped>`） */
-const hintSources = import.meta.glob<string>(
-    '/packages/shared/components/rule-hint/rule-hint.vue',
-    {
-        query: '?raw',
-        import: 'default',
-        eager: true
-    }
-)
 
 let mounted: VueWrapper[] = []
 beforeEach(() => setLocale('zh-CN'))
@@ -108,87 +98,130 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-const hintText = (wrapper: VueWrapper): string => {
-    const el = wrapper.find('.task-refresh-warning')
-    return el.exists() ? (el.text() ?? '') : ''
-}
+const hint = (wrapper: VueWrapper) => wrapper.find('.task-refresh-warning')
+const hintText = (wrapper: VueWrapper): string =>
+    hint(wrapper).exists() ? hint(wrapper).text() : ''
 
-describe('T663 追加 B · 提示条文案（中英双语 / 空 reason / 超长 reason）', () => {
-    it('中文：空 reason 时不外泄 undefined/null/占位符，且明说「显示上次内容 + 会自动重试」', async () => {
-        const harness = mountWithFail('')
+describe('T663 末轮 · DEF-150：空原因也必须可见（不得失败静默）', () => {
+    it('中文：空串 ⇒ 提示条可见 + 兜底句式含「正在显示上次加载的内容 / 稍后会自动重试」', async () => {
+        const harness = mountWithFail()
         mounted.push(harness.wrapper)
         await SETTLE()
-        harness.emit('RefreshData')
+        harness.failWith('')
         await SETTLE()
 
         const text = hintText(harness.wrapper)
-        // ⚠️ 实测记录（`T663` 报告 §十一-5 缺陷候选）：`reason` 为空串时 `refreshError === ''`
-        //    ⇒ `v-if="refreshError"` 不成立 ⇒ **提示条不渲染、失败不可见**（静默）。真实仓储
-        //    不会返回空错误串（Go 风格错误带消息），故按边界输入记 P3；此处只固化「不外泄」，
-        //    不把该边界行为写成通过判据。
-        console.log('[T663/probeHint:zh-empty]', JSON.stringify({ text, visible: text !== '' }))
-        expect(text, '空 reason 时不得外泄 undefined/null/占位符').not.toMatch(
-            /undefined|null|\{reason\}/
+        console.log('[T663/probe150:zh-empty]', JSON.stringify({ visible: text !== '', text }))
+        expect(text, '空原因必须仍然渲染提示条（不得静默）').not.toBe('')
+        expect(text).toContain('刷新失败')
+        expect(text, '兜底句不得塌缩成四个字：必须含「上次加载的内容」').toContain(
+            '正在显示上次加载的内容'
         )
+        expect(text, '必须有可执行的「会自动重试」信息').toContain('稍后会自动重试')
+        expect(text).not.toMatch(/undefined|null|\{reason\}/)
     })
 
-    it('中文：超长 reason（含无空格长 token）完整渲染，不截断、不报错', async () => {
-        const longToken = 'A'.repeat(200)
-        const reason = `${'限流错误码 10051 但服务端返回了很长的解释文本，'.repeat(8)}${longToken}`
-        const harness = mountWithFail(reason)
+    it('中文：仅空白字符 ⇒ 同样走兜底句（trim 后为空）', async () => {
+        const harness = mountWithFail()
         mounted.push(harness.wrapper)
         await SETTLE()
-        harness.emit('RefreshData')
+        harness.failWith('   \n  ')
+        await SETTLE()
+
+        const text = hintText(harness.wrapper)
+        console.log('[T663/probe150:zh-blank]', JSON.stringify({ text }))
+        expect(text).not.toBe('')
+        expect(text).toContain('稍后会自动重试')
+        expect(text).not.toMatch(/undefined|null|\{reason\}/)
+    })
+
+    it('英文：空串 ⇒ 可见 + English 兜底句含「retrying automatically」（不含中文）', async () => {
+        setLocale('en-US')
+        const harness = mountWithFail()
+        mounted.push(harness.wrapper)
+        await SETTLE()
+        harness.failWith('')
+        await SETTLE()
+
+        const text = hintText(harness.wrapper)
+        console.log('[T663/probe150:en-empty]', JSON.stringify({ text }))
+        expect(text).not.toBe('')
+        expect(text).toContain('Refresh failed')
+        expect(text).toContain('retrying automatically')
+        expect(text).not.toMatch(/[\u4e00-\u9fa5]/)
+        expect(text).not.toMatch(/undefined|null|\{reason\}/)
+    })
+})
+
+describe('T663 末轮 · 裸业务码清洗：码不外泄，但真实文案不得被误清洗', () => {
+    it.each(['10051', '90022', ' 10051 '])('裸码 %s ⇒ 不外泄该码，走兜底句', async (code) => {
+        const harness = mountWithFail()
+        mounted.push(harness.wrapper)
+        await SETTLE()
+        harness.failWith(code)
+        await SETTLE()
+
+        const text = hintText(harness.wrapper)
+        console.log('[T663/probe150:bare]', JSON.stringify({ code, text }))
+        expect(text, '必须有提示条').not.toBe('')
+        expect(text, '内部业务码不得出现在用户文案里').not.toContain(code.trim())
+        expect(text).toContain('稍后会自动重试')
+    })
+
+    it.each(['网络不可用', '10051 请求过于频繁，请稍后再试', 'sync failed: timeout'])(
+        '真实文案 %s ⇒ 原样保留（不得误清洗成兜底）',
+        async (reason) => {
+            const harness = mountWithFail()
+            mounted.push(harness.wrapper)
+            await SETTLE()
+            harness.failWith(reason)
+            await SETTLE()
+
+            const text = hintText(harness.wrapper)
+            console.log('[T663/probe150:real]', JSON.stringify({ reason, text }))
+            expect(text).toContain(reason.trim())
+        }
+    )
+
+    it('非空 → 空 的切换：仍可见并换成兜底句（不残留上一次文案）', async () => {
+        const harness = mountWithFail()
+        mounted.push(harness.wrapper)
+        await SETTLE()
+
+        harness.failWith('网络不可用')
+        await SETTLE()
+        expect(hintText(harness.wrapper)).toContain('网络不可用')
+
+        harness.failWith('')
+        await SETTLE()
+        const text = hintText(harness.wrapper)
+        console.log('[T663/probe150:switch]', JSON.stringify({ text }))
+        expect(text).not.toBe('')
+        expect(text, '不得残留上一次的具体原因').not.toContain('网络不可用')
+        expect(text).toContain('稍后会自动重试')
+    })
+})
+
+describe('T663 末轮 · 超长原因仍完整渲染（换行保护见 rule-hint 源级审计）', () => {
+    it('中文超长（含 200 字符无空格 token）不被 JS 层截断', async () => {
+        const longToken = 'A'.repeat(200)
+        const reason = `${'限流说明文本，'.repeat(20)}${longToken}`
+        const harness = mountWithFail()
+        mounted.push(harness.wrapper)
+        await SETTLE()
+        harness.failWith(reason)
         await SETTLE()
 
         const text = hintText(harness.wrapper)
         console.log(
-            '[T663/probeHint:zh-long]',
+            '[T663/probe150:long]',
             JSON.stringify({
                 length: text.length,
-                head: text.slice(0, 20),
-                tail: text.slice(-30),
-                hasToken: text.includes(longToken)
+                hasToken: text.includes(longToken),
+                tail: text.slice(-24)
             })
         )
-        expect(text).toContain('刷新失败')
-        expect(text.includes(longToken), '长 reason 不得被 JS 层截断').toBe(true)
-
-        // 布局保护取证（非像素实测）：源码是否有换行/防溢出规则
-        const source = Object.values(hintSources)[0] ?? ''
-        const hasWrapRule = /overflow-wrap|word-break|min-width:\s*0/.test(source)
-        const nueTextCss = import.meta.glob<string>(
-            '/node_modules/nue-ui-theme-shadlike/dist/components/text.css',
-            {
-                query: '?raw',
-                import: 'default',
-                eager: true
-            }
-        )
-        const hasWrapInText =
-            /overflow-wrap|word-break/.test(Object.values(nueTextCss)[0] ?? '') ?? false
-        console.log(
-            '[T663/probeHint:wrap]',
-            JSON.stringify({ hasWrapRuleInHint: hasWrapRule, hasWrapRuleInNueText: hasWrapInText })
-        )
-        expect(source.length, '规则提示条源码应可读（?raw）').toBeGreaterThan(0)
-    })
-
-    it('英文：文案为 English 且同语义（不泄漏中文、不宣称已更新）', async () => {
-        setLocale('en-US')
-        const harness = mountWithFail('rate limited')
-        mounted.push(harness.wrapper)
-        await SETTLE()
-        harness.emit('RefreshData')
-        await SETTLE()
-
-        const text = hintText(harness.wrapper)
-        console.log('[T663/probeHint:en]', JSON.stringify(text))
-        expect(text).toContain('Refresh failed')
-        expect(text).toContain('rate limited')
-        expect(text).toMatch(/content loaded earlier|earlier/)
-        expect(text).toMatch(/retrying automatically|retry/i)
-        expect(text, '英文文案不得混入中文').not.toMatch(/[\u4e00-\u9fa5]/)
-        expect(text).not.toMatch(/undefined|null|\{reason\}/)
+        expect(text.includes(longToken), '长 reason 不得被截断').toBe(true)
+        expect(text).toContain('稍后会自动重试')
     })
 })
