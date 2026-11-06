@@ -116,6 +116,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
          * 原地刷新失败（`DEF-148`，非阻塞）
          * @description 有内容时只用提示条表达失败：**不得**把已渲染行换成错误分支；下轮成功自动消除
          */
+        /** `null` = 无失败；`''` = 失败但无可读原因（`T665`：显示判据 = `!== null`） */
         refreshError: computed(() => taskLoader.states.refreshError),
         noTaskError,
         handleUpdatePage,

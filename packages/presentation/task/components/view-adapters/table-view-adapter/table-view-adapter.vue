@@ -41,13 +41,18 @@ const handleRestoreTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainTableContainer">
-        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；内容与行 DOM 保留） -->
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；内容与行 DOM 保留）
+             T665：显示由 `refreshError !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
         <rule-hint
-            v-if="refreshError"
+            v-if="refreshError !== null"
             class="task-refresh-warning"
             variant="error"
             icon="warning"
-            :content="t('task.refreshFailed', { reason: refreshError })"
+            :content="
+                refreshError
+                    ? t('task.refreshFailed', { reason: refreshError })
+                    : t('task.refreshFailedGeneric')
+            "
         />
         <loading-error
             :loading="adapterLoading"

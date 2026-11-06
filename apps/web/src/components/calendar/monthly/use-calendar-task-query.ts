@@ -7,6 +7,16 @@ import { useTaskUseCase } from '@/hooks'
 import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
 
 /**
+ * 原地刷新失败的「用户可读原因」清洗（`T665`）
+ * @description 空串 / 纯业务码（如 `10051`）不外泄 ⇒ 返回空串，由视图走兜底句式。
+ *              与 `presentation/task` 加载器同口径（此处单点实现，避免跨层依赖）。
+ */
+const toRefreshReason = (text: string): string => {
+    const trimmed = text.trim()
+    return /^\d+$/.test(trimmed) ? '' : trimmed
+}
+
+/**
  * useCalendarTaskQuery —— 日历任务快照拉取与订阅（O12 拆分）
  * @description 服务端过滤全量拉取（多清单/多标签/隐藏已完成，顶层/未删除/未归档/未放弃）
  *              + 分页归并到快照 + RefreshData 全量 / AddNewTaskId 增量订阅 + 筛选变化重查。
@@ -30,7 +40,13 @@ export const useCalendarTaskQuery = (deps: {
      * @description 自动刷新（`RefreshData`）失败时**保留已有快照**，改用提示条表达失败；
      *              下轮成功自动消除（不残留、不刷屏）。
      */
-    const refreshError = ref<string>('')
+    /**
+     * 原地刷新失败（非阻塞，`DEF-148`）
+     * @description `T665` 两态编码：`null` = 无失败；`''` = 失败但无可读原因（空文本 / 裸业务码已清洗）
+     *              ⇒ **显示判据必须是 `!== null`**（不得用真假值，否则空文案会让提示条消失）。
+     *              下轮成功自动回到 `null`（不残留、不刷屏）。
+     */
+    const refreshError = ref<string | null>(null)
     const taskIds = ref<Set<TaskViewObject['id']>>(new Set()) // 已加载任务快照
     const pendingLoad = ref<boolean>(false) // 拉取请求合并标记（运行中触发只补跑一次）
 
@@ -68,10 +84,10 @@ export const useCalendarTaskQuery = (deps: {
         } finally {
             if (error.value && taskIds.value.size > 0) {
                 // 有内容 ⇒ 保留快照，失败降级为非阻塞提示（不清空日历、不换错误分支）
-                refreshError.value = error.value
+                refreshError.value = toRefreshReason(error.value)
                 error.value = ''
             } else if (!error.value) {
-                refreshError.value = ''
+                refreshError.value = null
             }
             loading.value = false
         }

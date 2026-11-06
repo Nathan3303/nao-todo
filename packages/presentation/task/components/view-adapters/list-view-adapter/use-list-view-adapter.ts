@@ -65,6 +65,7 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
         taskLoader,
         loading: computed(() => taskLoader.states.loading),
         /** 原地刷新失败（`DEF-148`，非阻塞：内容保留 + 提示条；下轮成功自动消除） */
+        /** `null` = 无失败；`''` = 失败但无可读原因（`T665`：显示判据 = `!== null`） */
         refreshError: computed(() => taskLoader.states.refreshError),
         sortOptions,
         error: computed(() => taskLoader.states.error),

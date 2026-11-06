@@ -50,12 +50,12 @@ describe('T664 / DEF-148 · 原地刷新失败的加载器契约', () => {
         await waitTick()
 
         const refresh = loader.loadAndReplace(undefined, { silent: true })
-        respond([null, '10051'])
+        respond([null, '网络错误，请检查网络连接'])
         await refresh
         await waitTick()
 
         expect([...loader.states.taskIds], 'AC-E1：条目必须保留').toEqual(['t1', 't2'])
-        expect(loader.states.refreshError, 'AC-E2：失败必须可见（非阻塞）').not.toBe('')
+        expect(loader.states.refreshError, 'AC-E2：失败必须可见（非阻塞）').not.toBeNull()
         expect(loader.states.error, 'AC-E1：不得落阻塞式错误分支').toBe('')
     })
 
@@ -67,16 +67,16 @@ describe('T664 / DEF-148 · 原地刷新失败的加载器契约', () => {
         await waitTick()
 
         const failed = loader.loadAndReplace(undefined, { silent: true })
-        respond([null, '10051'])
+        respond([null, '网络错误，请检查网络连接'])
         await failed
         await waitTick()
-        expect(loader.states.refreshError).not.toBe('')
+        expect(loader.states.refreshError).not.toBeNull()
 
         const ok = loader.loadAndReplace(undefined, { silent: true })
         respond([page(['t1', 't9']), null])
         await ok
         await waitTick()
-        expect(loader.states.refreshError).toBe('')
+        expect(loader.states.refreshError, 'AC-E3：成功后必须回到 null').toBeNull()
         expect(loader.states.error).toBe('')
         expect([...loader.states.taskIds]).toEqual(['t1', 't9'])
     })
@@ -88,7 +88,7 @@ describe('T664 / DEF-148 · 原地刷新失败的加载器契约', () => {
         await refresh
         await waitTick()
         expect(loader.states.error).not.toBe('')
-        expect(loader.states.refreshError).toBe('')
+        expect(loader.states.refreshError).toBeNull()
     })
 
     it('非 silent 失败 ⇒ 既有阻塞式 error 语义逐字不变（首进 / 重试）', async () => {
@@ -98,6 +98,6 @@ describe('T664 / DEF-148 · 原地刷新失败的加载器契约', () => {
         await boot
         await waitTick()
         expect(loader.states.error).not.toBe('')
-        expect(loader.states.refreshError).toBe('')
+        expect(loader.states.refreshError).toBeNull()
     })
 })

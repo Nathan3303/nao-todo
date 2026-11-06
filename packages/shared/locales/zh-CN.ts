@@ -753,6 +753,7 @@ const zhCN: LocaleMessages = {
     'task.empty.tag': '此标签下暂无任务',
     'task.error.loadFailed': '加载失败，请稍后重试',
     'task.refreshFailed': '刷新失败：{reason}（正在显示上次加载的内容，稍后会自动重试）',
+    'task.refreshFailedGeneric': '刷新失败（正在显示上次加载的内容，稍后会自动重试）',
     'task.error.nameEmpty': '任务名称不能为空',
     'task.error.nameTooLong': '任务名称最多128个字符',
     'task.error.descTooLong': '任务描述最多256个字符',

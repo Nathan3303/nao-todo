@@ -68,7 +68,7 @@ const mountCalendar = (options: { failOnMount?: boolean } = {}) => {
     const taskUseCase = {
         list: vi.fn(async () =>
             fail
-                ? [null, '10051']
+                ? [null, '网络错误，请检查网络连接']
                 : [
                       {
                           taskIds: ['c1'],

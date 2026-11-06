@@ -7,6 +7,17 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TaskUseCase } from '@nao-todo/domain-task'
 
 /**
+ * 原地刷新失败的「用户可读原因」清洗（`T665`）
+ * @description 只有**可读文案**才进提示条：空串 / 纯业务码（如 `10051` / `90022`）**不得**外泄
+ *              ⇒ 返回空串，由视图走兜底句式（`task.refreshFailedGeneric`）。
+ *              裸码判据 = 去掉首尾空白后全为数字（本仓业务码全为数字；网络/领域文案均含非数字字符）。
+ */
+const toRefreshReason = (err: Parameters<typeof unwrapError>[0]): string => {
+    const text = unwrapError(err).trim()
+    return /^\d+$/.test(text) ? '' : text
+}
+
+/**
  * 任务加载器状态
  */
 export type UseTasksLoaderStates = {
@@ -18,8 +29,11 @@ export type UseTasksLoaderStates = {
      * 非阻塞式错误（**原地刷新失败**）：内容保留，视图用非破坏性提示条（条带）展示
      * @description `DEF-148`：自动刷新（`silent`）失败不得把已有内容换成错误分支；
      *              也不得吞错（必须可被用户看到）。下轮成功后自动消除（不残留、不刷屏）。
+     *              ⚠️ **两态编码**（`T665`）：`null` = 无失败；`''` = 失败但无可读原因
+     *              （底层文本为空 / 只有裸业务码）⇒ **显示判据必须是 `!== null`，不得用真假值**
+     *              （否则空文案会让提示条消失 = 失败静默）；空原因由视图走兜底句式。
      */
-    refreshError: string
+    refreshError: string | null
     pagination: Pagination
     isDone: boolean
     lastGetOptions: GetTasksOptions
@@ -49,7 +63,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         taskIds: new Set<TaskViewObject['id']>(),
         loading: true,
         error: '',
-        refreshError: '',
+        refreshError: null,
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
         isDone: false,
         lastGetOptions: originalGetOptions ?? {},
@@ -79,7 +93,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
             // `DEF-148`：原地刷新（silent）且**已有内容** ⇒ 不得落阻塞式 error（否则内容被整块换掉）；
             // 改用非阻塞 `refreshError`（内容保留 + 提示条可见，下轮成功自动消除）。
             // 无内容可保（首进 / 空列）⇒ 仍走阻塞式 `error`（AC-E4：不得把失败静默掉）。
-            if (silent && states.taskIds.size > 0) states.refreshError = unwrapError(err)
+            if (silent && states.taskIds.size > 0) states.refreshError = toRefreshReason(err)
             else states.error = unwrapError(err)
             states.loading = false
             return [null, err]
@@ -87,7 +101,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         // silent 下本就未置 loading；成功（无论 silent 与否）⇒ 清掉两条错误
         states.loading = false
         states.error = ''
-        states.refreshError = ''
+        states.refreshError = null
         if (res.pagination) {
             states.pagination.maxPage = res.pagination.maxPage
             states.pagination.total = res.pagination.total

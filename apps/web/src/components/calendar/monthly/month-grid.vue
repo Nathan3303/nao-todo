@@ -263,13 +263,18 @@ const {
             <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
         </nue-div>
 
-        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不清空日历、不卸载编辑器） -->
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不清空日历、不卸载编辑器）
+             T665：显示由 `refreshError !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
         <rule-hint
-            v-if="refreshError"
+            v-if="refreshError !== null"
             class="task-refresh-warning"
             variant="error"
             icon="warning"
-            :content="t('task.refreshFailed', { reason: refreshError })"
+            :content="
+                refreshError
+                    ? t('task.refreshFailed', { reason: refreshError })
+                    : t('task.refreshFailedGeneric')
+            "
         />
 
         <!-- 月历主体 -->

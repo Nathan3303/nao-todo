@@ -19,10 +19,11 @@ export type KanbanColumnSummary = {
     /** 首个列级错误（无错误 ⇒ 空串） */
     firstError: string
     /**
-     * 首个列级「原地刷新失败」（非阻塞；无则空串）
+     * 首个列级「原地刷新失败」（非阻塞）
      * @description `DEF-148`：刷新失败不得把列内卡片换成错误分支 ⇒ 由外层用提示条（非破坏性）展示。
+     *              `T665`：`null` = 无失败；`''` = 失败但无可读原因（显示判据 = `!== null`）。
      */
-    firstRefreshError: string
+    firstRefreshError: string | null
 }
 
 /** 单列摘要（列内上报，父级只读） */
@@ -94,7 +95,7 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
             settled: false,
             total: 0,
             firstError: '',
-            firstRefreshError: ''
+            firstRefreshError: null
         }
     }
 
@@ -125,7 +126,7 @@ export const useKanbanColumnPaging = (): KanbanColumnPaging => {
             total: list.reduce((sum, state) => sum + state.total, 0),
             firstError: list.find((state) => state.firstError)?.firstError ?? '',
             firstRefreshError:
-                list.find((state) => state.firstRefreshError)?.firstRefreshError ?? ''
+                list.find((state) => state.firstRefreshError !== null)?.firstRefreshError ?? null
         }
     })
 

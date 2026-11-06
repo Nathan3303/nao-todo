@@ -40,7 +40,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         settled: false,
         total: 0,
         firstError: '',
-        firstRefreshError: ''
+        firstRefreshError: null
     })
 
     /**
@@ -90,7 +90,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
      *              让外层离开错误态、看板重新挂载；各列 `onMounted` 走**非 silent** 拉取（AC-K2）。
      */
     const handleRetry = () => {
-        summary.value = { settled: false, total: 0, firstError: '', firstRefreshError: '' }
+        summary.value = { settled: false, total: 0, firstError: '', firstRefreshError: null }
         refreshSilent.value = false
         refreshToken.value += 1
     }
@@ -105,8 +105,14 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
      * 列级「原地刷新失败」提示（`DEF-148`，非阻塞）
      * @description 只有**有内容**时才用提示条：无内容（首进即失败）仍走既有整页错误分支（AC-E4）
      */
-    const refreshWarning = computed(() =>
-        summary.value.total > 0 ? summary.value.firstRefreshError : ''
+    /**
+     * 列级「原地刷新失败」提示内容（`DEF-148`，非阻塞）
+     * @description 只有**有内容**时才用提示条：无内容（首进即失败）仍走既有整页错误分支（AC-E4）。
+     *              `T665`：`null` = 无失败；`''` = 失败但无可读原因 ⇒ 显示判据必须是 `!== null`
+     *              （不得用文案真假判断，否则空原因会让提示条消失 = 失败静默）。
+     */
+    const refreshWarning = computed<string | null>(() =>
+        summary.value.total > 0 ? summary.value.firstRefreshError : null
     )
 
     /** `AddNewTaskId` ⇒ 交给看板做「目标列置顶插入」 */

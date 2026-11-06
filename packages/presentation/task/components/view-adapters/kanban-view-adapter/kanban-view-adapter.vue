@@ -50,13 +50,18 @@ const handleUnfinishTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainKanbanContainer">
-        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不换内容分支、不卸载卡片/编辑器） -->
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不换内容分支、不卸载卡片/编辑器）
+             T665：显示由 `refreshWarning !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
         <rule-hint
-            v-if="refreshWarning"
+            v-if="refreshWarning !== null"
             class="task-refresh-warning"
             variant="error"
             icon="warning"
-            :content="t('task.refreshFailed', { reason: refreshWarning })"
+            :content="
+                refreshWarning
+                    ? t('task.refreshFailed', { reason: refreshWarning })
+                    : t('task.refreshFailedGeneric')
+            "
         />
         <nue-main>
             <nue-content fill style="overflow: auto">
