@@ -118,7 +118,11 @@ type Harness = {
     setResponder: (responder: () => unknown) => void
 }
 
-const mountAdapter = (view: 'table' | 'list', seed: TaskViewObject[]): Harness => {
+const mountAdapter = (
+    view: 'table' | 'list',
+    seed: TaskViewObject[],
+    options: { responder?: () => unknown } = {}
+): Harness => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useTasksStore(pinia)
@@ -126,7 +130,8 @@ const mountAdapter = (view: 'table' | 'list', seed: TaskViewObject[]): Harness =
 
     let parked: Deferred | null = null
     let calls = 0
-    let responder: (() => unknown) | null = null
+    // 首进即可控（首进失败用例需要在挂载前设定）
+    let responder: (() => unknown) | null = options.responder ?? null
 
     const page = (ids: string[]) => ({
         taskIds: ids,
@@ -410,4 +415,86 @@ describe('T663 / AC-B2 · 其它行更新上限 = 30s 周期 + 10s 合并门（�
         expect(mergeGate).toBe(10_000)
         expect(interval + mergeGate, 'AC-B2 上限 40s').toBeLessThanOrEqual(40_000)
     })
+})
+describe('T663 追加 · DEF-148：原地刷新失败保留内容 + 提示条（列表 / 表格同口径）', () => {
+    it.each(['table', 'list'] as const)(
+        '%s：失败时内容与行节点保留，提示条可见，且不换错误分支',
+        async (view) => {
+            const seed = ['t1', 't2', 't3'].map((id) => makeTask({ id, name: `任务-${id}` }))
+            const harness = mountAdapter(view, seed)
+            mounted.push(harness.wrapper)
+            await SETTLE()
+            const before = sampleOf(harness.wrapper, view)
+            expect(before.rows).toBe(3)
+
+            harness.setResponder(() => [null, '10051 请求过于频繁，请稍后再试'])
+            harness.emit('RefreshData')
+            await SETTLE()
+
+            const after = sampleOf(harness.wrapper, view)
+            const warning = harness.wrapper.find('.task-refresh-warning')
+            console.log(
+                `[T663/probeFail148:${view}]`,
+                JSON.stringify({
+                    rows: after.rows,
+                    loading: after.loadingMarkers,
+                    warn: warning.exists() ? warning.text().slice(0, 24) : '',
+                    errorBranch: harness.wrapper.text().includes('加载失败')
+                })
+            )
+            expect(after.rows, '失败时条目数不得归零').toBe(3)
+            expect(after.rowNodes, '失败时行 DOM 节点身份不得变化').toEqual(before.rowNodes)
+            expect(warning.exists(), '失败必须可见（提示条）').toBe(true)
+            expect(warning.text(), '提示条文案应说明「刷新失败」').toMatch(/刷新失败/)
+            expect(harness.wrapper.text(), '有内容时不得整块换成错误分支').not.toContain('加载失败')
+            expect(after.loadingMarkers, '失败后不得卡在加载态').toEqual([])
+        }
+    )
+
+    it.each(['table', 'list'] as const)('%s：下一轮成功 ⇒ 提示条消除', async (view) => {
+        const seed = ['t1'].map((id) => makeTask({ id, name: `任务-${id}` }))
+        const harness = mountAdapter(view, seed)
+        mounted.push(harness.wrapper)
+        await SETTLE()
+
+        harness.setResponder(() => [null, '10051 请求过于频繁，请稍后再试'])
+        harness.emit('RefreshData')
+        await SETTLE()
+        expect(harness.wrapper.find('.task-refresh-warning').exists()).toBe(true)
+
+        harness.setResponder(() => undefined)
+        harness.emit('RefreshData')
+        await SETTLE()
+        expect(
+            harness.wrapper.find('.task-refresh-warning').exists(),
+            '成功后提示条必须消失（不残留）'
+        ).toBe(false)
+        expect(sampleOf(harness.wrapper, view).rows).toBe(1)
+    })
+
+    it.each(['table', 'list'] as const)(
+        '%s：首进即失败（无内容）⇒ 仍走整页错误分支 + 重试（不得降级成提示条）',
+        async (view) => {
+            const harness = mountAdapter(view, [], {
+                responder: () => [null, '10051 请求过于频繁，请稍后再试']
+            })
+            mounted.push(harness.wrapper)
+            await SETTLE()
+
+            console.log(
+                `[T663/probeFail148:${view}:first]`,
+                JSON.stringify({
+                    errorBranch: harness.wrapper.text().includes('加载失败'),
+                    hasRetry: harness.wrapper.text().includes('重试'),
+                    warn: harness.wrapper.find('.task-refresh-warning').exists()
+                })
+            )
+            expect(harness.wrapper.text(), '首进失败必须整页错误态').toContain('加载失败')
+            expect(harness.wrapper.text()).toContain('重试')
+            expect(
+                harness.wrapper.find('.task-refresh-warning').exists(),
+                '无内容可保时不得只用提示条'
+            ).toBe(false)
+        }
+    )
 })
