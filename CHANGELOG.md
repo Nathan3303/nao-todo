@@ -2,6 +2,19 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.18.1] - 2026-11-06
+
+走查修复批（PR #334 · 发版说明 `docs/releases/v1.18.1.md`）：
+
+- **`DEF-144`（P2）自动刷新把视图拖回加载态**：四个视图（列表 / 表格 / 看板 / 日历）改**原地刷新** —— `useTasksLoader` 新增 `silent`（不置 `loading`、不清空、成功后整体替换），仅挂 `RefreshData` 订阅；首进 / 翻页 / 重试 / 筛选仍非 silent（`AC-A3`）。看板侧由适配器区分触发源（`refreshSilent`）⇒ 列内 `loadFirstPage({silent})`；日历 `resetAndLoad` 不再先清 `taskIds`。
+- **`DEF-145`（P1）编辑中的输入被刷新冲掉**：原先保护基准（`lastSyncedText`）在每次 store 合并后被推进成「本地已编辑值」⇒ 只挡第一轮、30s 后第二轮覆盖。改为 `persistedText`，**只在「重载」与「提交成功（仅限本次提交涉及字段）」推进**；编辑中字段保值、其余字段照常跟随（选「仅更新非编辑字段」而非跳过整条）。
+- **`DEF-148`（P2）刷新失败清空内容**：新增**非阻塞** `refreshError`（silent 且已有内容才落，`taskIds` 原样保留）；阻塞式 `error` 保持首进/主动加载失败语义；任一成功同时清空两者。界面复用既有 `RuleHint(variant="error")`，⛔ 未新增自绘错误态。
+- **`DEF-150`（P3）空原因 ⇒ 失败静默**：`refreshError` 改两态编码 `string | null`（`null`=无失败 / `''`=失败无可读原因），显示判据统一 `!== null`（表格/列表/看板聚合/日历四处）；空原因走新兜底句式 `task.refreshFailedGeneric`（zh/en/types 齐备）。**连带修「说人话」**：裸业务码（`10051`/`90022`）不再插进文案（`toRefreshReason` 只清洗 trim 后全为数字者）。
+- **`DEF-151`（P3）提示条超长无空格 token 无换行**：仅改 `rule-hint.vue` 加 `min-width:0` + `overflow-wrap:anywhere`（容器/内容/正文三层，仍 `scoped`、无 `:deep`）；⛔ 未动 `nue-ui`。
+- **连带修既有缺陷**：整页错误态下看板「重试」为死路（看板已卸载、列句柄反注册 ⇒ 只递增 token 无人消费）⇒ 重试先复位聚合摘要使看板重挂载。
+- **门禁**：全仓 **397 文件通过 + 1 跳过 / 3139 例通过 + 6 跳过 / 红 0** · `vp check` 0 error（1893 格式 / 1524 lint+类型）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；qa 三轮独立复验（50 例自写探针 + 变异 9 条）。**数据层零改动**。
+- **Tag `v1.18.1`** · root / `apps/web` / `apps/desktop` `1.18.0 → 1.18.1`（PATCH）· `presentation` `0.8.2 → 0.9.0`（`TasksLoaderLoadOptions` 新增可选 `silent`）· `shared` `1.4.7 → 1.4.8`。**服务端无改动，无需部署**。
+
 ## [v1.18.0] - 2026-11-05
 
 同步感知批（PR #330 · 发版说明 `docs/releases/v1.18.0.md`）：
