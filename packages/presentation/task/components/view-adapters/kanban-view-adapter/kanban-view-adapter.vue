@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
@@ -14,6 +15,8 @@ const props = defineProps<KanbanViewAdapterProps>()
 const {
     sortOptions,
     refreshToken,
+    refreshSilent,
+    refreshWarning,
     newTaskId,
     getTask,
     empty,
@@ -47,6 +50,19 @@ const handleUnfinishTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainKanbanContainer">
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不换内容分支、不卸载卡片/编辑器）
+             T665：显示由 `refreshWarning !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
+        <rule-hint
+            v-if="refreshWarning !== null"
+            class="task-refresh-warning"
+            variant="error"
+            icon="warning"
+            :content="
+                refreshWarning
+                    ? t('task.refreshFailed', { reason: refreshWarning })
+                    : t('task.refreshFailedGeneric')
+            "
+        />
         <nue-main>
             <nue-content fill style="overflow: auto">
                 <!--
@@ -98,6 +114,7 @@ const handleUnfinishTask = async (taskId: string) => {
                         :get-tasks-options="getTasksOptions"
                         :get-task="getTask"
                         :refresh-token="refreshToken"
+                        :refresh-silent="refreshSilent"
                         :new-task-id="newTaskId"
                         :task-use-case="taskUseCase"
                         @summary-change="handleSummaryChange"

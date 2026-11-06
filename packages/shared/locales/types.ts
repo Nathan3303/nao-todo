@@ -727,6 +727,8 @@ export interface LocaleMessages {
     'task.empty.project': string
     'task.empty.tag': string
     'task.error.loadFailed': string
+    'task.refreshFailed': string
+    'task.refreshFailedGeneric': string
     'task.error.nameEmpty': string
     'task.error.nameTooLong': string
     'task.error.descTooLong': string

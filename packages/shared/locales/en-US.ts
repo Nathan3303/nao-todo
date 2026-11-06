@@ -779,6 +779,10 @@ const enUS: LocaleMessages = {
     'task.empty.project': 'No tasks in this project',
     'task.empty.tag': 'No tasks under this tag',
     'task.error.loadFailed': 'Failed to load, please try again',
+    'task.refreshFailed':
+        'Refresh failed: {reason} (showing the content loaded earlier; retrying automatically)',
+    'task.refreshFailedGeneric':
+        'Refresh failed (showing the content loaded earlier; retrying automatically)',
     'task.error.nameEmpty': 'Task name cannot be empty',
     'task.error.nameTooLong': 'Task name must be at most 128 characters',
     'task.error.descTooLong': 'Task description must be at most 256 characters',

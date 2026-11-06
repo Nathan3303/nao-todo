@@ -58,6 +58,7 @@ export const useCalendarHost = (options?: {
     const {
         loading,
         error,
+        refreshError,
         retry,
         model,
         monthTitle,
@@ -276,6 +277,7 @@ export const useCalendarHost = (options?: {
     provide<CalendarMonthlyContext>(CALENDAR_MONTHLY_CONTEXT_KEY, {
         loading,
         error,
+        refreshError,
         retry,
         model,
         monthTitle,

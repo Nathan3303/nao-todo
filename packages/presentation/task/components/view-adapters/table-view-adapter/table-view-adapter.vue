@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { Pager } from '@nao-todo/shared/components/pager'
 import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
@@ -19,6 +20,7 @@ const {
     adapterLoading,
     loading,
     error,
+    refreshError,
     noTaskError,
     handleUpdatePage,
     handleUpdatePerPage,
@@ -39,6 +41,19 @@ const handleRestoreTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainTableContainer">
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；内容与行 DOM 保留）
+             T665：显示由 `refreshError !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
+        <rule-hint
+            v-if="refreshError !== null"
+            class="task-refresh-warning"
+            variant="error"
+            icon="warning"
+            :content="
+                refreshError
+                    ? t('task.refreshFailed', { reason: refreshError })
+                    : t('task.refreshFailedGeneric')
+            "
+        />
         <loading-error
             :loading="adapterLoading"
             :error="!!error"

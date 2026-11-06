@@ -7,19 +7,51 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TaskUseCase } from '@nao-todo/domain-task'
 
 /**
+ * 原地刷新失败的「用户可读原因」清洗（`T665`）
+ * @description 只有**可读文案**才进提示条：空串 / 纯业务码（如 `10051` / `90022`）**不得**外泄
+ *              ⇒ 返回空串，由视图走兜底句式（`task.refreshFailedGeneric`）。
+ *              裸码判据 = 去掉首尾空白后全为数字（本仓业务码全为数字；网络/领域文案均含非数字字符）。
+ */
+const toRefreshReason = (err: Parameters<typeof unwrapError>[0]): string => {
+    const text = unwrapError(err).trim()
+    return /^\d+$/.test(text) ? '' : text
+}
+
+/**
  * 任务加载器状态
  */
 export type UseTasksLoaderStates = {
     taskIds: Set<TaskViewObject['id']>
     loading: boolean
+    /** 阻塞式错误（首次进入 / 用户主动重试失败）：无内容可保 ⇒ 视图落错误分支 */
     error: string
+    /**
+     * 非阻塞式错误（**原地刷新失败**）：内容保留，视图用非破坏性提示条（条带）展示
+     * @description `DEF-148`：自动刷新（`silent`）失败不得把已有内容换成错误分支；
+     *              也不得吞错（必须可被用户看到）。下轮成功后自动消除（不残留、不刷屏）。
+     *              ⚠️ **两态编码**（`T665`）：`null` = 无失败；`''` = 失败但无可读原因
+     *              （底层文本为空 / 只有裸业务码）⇒ **显示判据必须是 `!== null`，不得用真假值**
+     *              （否则空文案会让提示条消失 = 失败静默）；空原因由视图走兜底句式。
+     */
+    refreshError: string | null
     pagination: Pagination
     isDone: boolean
     lastGetOptions: GetTasksOptions
     delay: number
     disabled: boolean
     /** DEF-STORE-06 方向 4：在飞中到达的刷新请求（单槽，完成后重跑一次；null = 无待重跑） */
-    pendingRefresh: { requested?: GetTasksOptions } | null
+    pendingRefresh: { requested?: GetTasksOptions; silent?: boolean } | null
+}
+
+/**
+ * 加载选项
+ * @description `silent` = **原地刷新**：不置 `loading`（保持当前内容可见）。
+ *              仅用于「同步拉取落库后的视图刷新」（`RefreshData`）—— 自动刷新每 30s 触发一次，
+ *              若沿用 loading 语义会把已渲染内容整块换成加载态（`DEF-144`）。
+ *              ⛔ 首次进入 / 翻页 / 用户点「重试」仍走非 silent（必须显示加载态，`AC-A3`）。
+ */
+export type TasksLoaderLoadOptions = {
+    silent?: boolean
 }
 
 /**
@@ -31,6 +63,7 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         taskIds: new Set<TaskViewObject['id']>(),
         loading: true,
         error: '',
+        refreshError: null,
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
         isDone: false,
         lastGetOptions: originalGetOptions ?? {},
@@ -42,21 +75,33 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载任务数据
      * @param extraGetOptions 额外的选项
+     * @param options `silent` ⇒ 原地刷新（不置 `loading`，见 `TasksLoaderLoadOptions`）
      * @returns 任务 ID 列表
      */
-    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<TaskViewObject['id'][]> => {
-        states.loading = true
+    const load = async (
+        extraGetOptions?: GetTasksOptions,
+        options: TasksLoaderLoadOptions = {}
+    ): GoAsync<TaskViewObject['id'][]> => {
+        const silent = options.silent === true
+        if (!silent) states.loading = true
         states.error = ''
         const getOptions: GetTasksOptions = { ...originalGetOptions, ...extraGetOptions }
         getOptions.page = states.pagination.page
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
         const [res, err] = await taskUseCase.list(getOptions)
         if (err !== null) {
-            states.error = unwrapError(err)
+            // `DEF-148`：原地刷新（silent）且**已有内容** ⇒ 不得落阻塞式 error（否则内容被整块换掉）；
+            // 改用非阻塞 `refreshError`（内容保留 + 提示条可见，下轮成功自动消除）。
+            // 无内容可保（首进 / 空列）⇒ 仍走阻塞式 `error`（AC-E4：不得把失败静默掉）。
+            if (silent && states.taskIds.size > 0) states.refreshError = toRefreshReason(err)
+            else states.error = unwrapError(err)
             states.loading = false
             return [null, err]
         }
+        // silent 下本就未置 loading；成功（无论 silent 与否）⇒ 清掉两条错误
         states.loading = false
+        states.error = ''
+        states.refreshError = null
         if (res.pagination) {
             states.pagination.maxPage = res.pagination.maxPage
             states.pagination.total = res.pagination.total
@@ -87,20 +132,28 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载任务数据并替换当前任务 ID 列表
      * @param extraGetOptions 额外的选项
+     * @param options `silent` ⇒ 原地刷新（同步拉取后的刷新；不闪加载态）
      * @returns 无
      */
-    const loadAndReplace = async (extraGetOptions?: GetTasksOptions) => {
+    const loadAndReplace = async (
+        extraGetOptions?: GetTasksOptions,
+        options: TasksLoaderLoadOptions = {}
+    ) => {
         if (states.disabled) {
             // DEF-STORE-06 方向 4：在飞中到达的刷新**置脏不丢弃**，完成后重跑一次
             // （单槽防循环：重跑自身在飞时到达的刷新会再入本分支，依次收敛）
             // 注：须包 `requested` 壳（与下方 `pending.requested` 重跑行一致）——派单初稿此处
             //    写 `{ ...(extraGetOptions ?? {}) }` 会把 options 直接展开，导致 pending.requested 恒 undefined
-            states.pendingRefresh = { requested: { ...extraGetOptions } }
+            states.pendingRefresh = {
+                requested: { ...extraGetOptions },
+                // 静默属性随重跑一起带走（不得因重跑又闪一次）；默认路径不写入该键（状态形状不变）
+                ...(options.silent === true ? { silent: true } : {})
+            }
             return
         }
         states.disabled = true
         try {
-            const [taskIds, err] = await load(extraGetOptions)
+            const [taskIds, err] = await load(extraGetOptions, options)
             if (err !== null) return
             states.taskIds = new Set(taskIds)
         } finally {
@@ -109,7 +162,10 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
             states.pendingRefresh = null
             setTimeout(() => {
                 states.disabled = false
-                if (pending) void loadAndReplace(pending.requested) // 完成后重跑一次（单槽防循环）
+                // 完成后重跑一次（单槽防循环）；静默属性随重跑一起带走（不得因重跑又闪一次）
+                if (pending) {
+                    void loadAndReplace(pending.requested, { silent: pending.silent === true })
+                }
             }, states.delay)
         }
     }
@@ -149,13 +205,14 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     /**
      * 加载第一页
      * @param isReplace 是否替换当前任务 ID 列表
+     * @param options `silent` ⇒ 原地刷新（同步拉取后的刷新；不闪加载态）
      * @returns 无
      */
-    const loadFirstPage = async (isReplace?: boolean) => {
+    const loadFirstPage = async (isReplace?: boolean, options: TasksLoaderLoadOptions = {}) => {
         if (states.disabled) return
         if (states.pagination.page !== 1) states.pagination.page = 1
         if (isReplace) {
-            await loadAndReplace()
+            await loadAndReplace(undefined, options)
             return
         }
         await loadAndPush()

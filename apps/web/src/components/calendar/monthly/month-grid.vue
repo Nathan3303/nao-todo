@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { t } from '@nao-todo/shared/locales'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import QuickCreate from './quick-create.vue'
@@ -30,6 +31,7 @@ const {
     laneLimit,
     loading,
     error,
+    refreshError,
     retry,
     model,
     monthTitle,
@@ -260,6 +262,20 @@ const {
         <nue-div class="cal-weekdays" gap="0">
             <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
         </nue-div>
+
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；不清空日历、不卸载编辑器）
+             T665：显示由 `refreshError !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
+        <rule-hint
+            v-if="refreshError !== null"
+            class="task-refresh-warning"
+            variant="error"
+            icon="warning"
+            :content="
+                refreshError
+                    ? t('task.refreshFailed', { reason: refreshError })
+                    : t('task.refreshFailedGeneric')
+            "
+        />
 
         <!-- 月历主体 -->
         <div ref="calBodyEl" class="cal-body">

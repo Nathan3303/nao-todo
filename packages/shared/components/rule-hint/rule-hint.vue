@@ -28,12 +28,17 @@ defineProps<RuleHintProps>()
     background-color: var(--nue-primary-color-100);
     box-shadow: var(--nue-secondary-shadow);
     font-size: var(--nue-text-sm);
+    /* T665：超长无空格 token（错误文本 / URL）不得撑破容器或溢出卡片 —— 在容器与内容两层都允许任意断行 */
+    min-width: 0;
+    overflow-wrap: anywhere;
 
     > .nue-div--rule-hint__content-wrapper {
         display: flex;
         flex-direction: column;
         gap: 0;
         flex: auto;
+        /* flex 子项默认 min-width:auto ⇒ 长串会把卡片撑宽；归零后允许内部断行 */
+        min-width: 0;
 
         > .nue-text--title {
             font-weight: bold;
@@ -41,6 +46,7 @@ defineProps<RuleHintProps>()
 
         > .nue-text--content {
             font-size: var(--nue-text-xs);
+            overflow-wrap: anywhere;
         }
     }
 }

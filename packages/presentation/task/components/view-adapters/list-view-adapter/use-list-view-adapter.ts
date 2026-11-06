@@ -34,8 +34,10 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
     const addNewTaskId = (taskId: string) => taskLoader.states.taskIds.add(taskId)
 
     // @method 刷新数据事件订阅
+    // @description **原地刷新**（`silent`）：同步拉取落库后的重载不得把已渲染内容换成加载态
+    //              （`DEF-144` / AC-A1）；首次进入的 loading 仍由 `viewLoading` 正常控制（AC-A3）。
     const refreshHandler = () => {
-        taskLoader.loadFirstPage(true)
+        void taskLoader.loadFirstPage(true, { silent: true })
     }
 
     // @onMounted
@@ -62,6 +64,9 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
         tasks,
         taskLoader,
         loading: computed(() => taskLoader.states.loading),
+        /** 原地刷新失败（`DEF-148`，非阻塞：内容保留 + 提示条；下轮成功自动消除） */
+        /** `null` = 无失败；`''` = 失败但无可读原因（`T665`：显示判据 = `!== null`） */
+        refreshError: computed(() => taskLoader.states.refreshError),
         sortOptions,
         error: computed(() => taskLoader.states.error),
         noTaskError,

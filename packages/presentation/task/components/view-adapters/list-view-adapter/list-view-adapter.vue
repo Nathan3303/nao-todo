@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TaskList } from '../../list'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { assetUrl } from '@nao-todo/shared/utils/asset-url'
@@ -18,6 +19,7 @@ const {
     viewLoading,
     sortOptions,
     error,
+    refreshError,
     noTaskError,
     handleNextPage,
     handleRetry
@@ -37,6 +39,19 @@ const handleRestoreTask = async (taskId: string) => {
 
 <template>
     <nue-container id="TasksMainListContainer">
+        <!-- DEF-148：原地刷新失败 ⇒ 提示条（非破坏性；内容与行 DOM 保留）
+             T665：显示由 `refreshError !== null` 驱动（空原因也必须可见）+ 空原因走兜底句式 -->
+        <rule-hint
+            v-if="refreshError !== null"
+            class="task-refresh-warning"
+            variant="error"
+            icon="warning"
+            :content="
+                refreshError
+                    ? t('task.refreshFailed', { reason: refreshError })
+                    : t('task.refreshFailedGeneric')
+            "
+        />
         <nue-main>
             <nue-content fill style="overflow: hidden">
                 <loading-error

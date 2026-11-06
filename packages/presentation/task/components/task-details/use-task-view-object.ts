@@ -31,10 +31,13 @@ const useTaskViewObject = (
     const loading = ref(false) /** 加载状态 */
     const error = ref('') /** 错误信息 */
 
-    // @state 上次从后端/store 同步的 name/description
+    // @state 上次**已持久化**的 name/description（未保存的编辑**不得**推进它）
     // @description 详情面板 textarea 的 v-model 直接写入本地 task.value（未 @change 提交前），
-    //              用该值识别"编辑中未提交"字段，store 重装时保留，避免丢失输入
-    const lastSyncedText = ref<{ name: string; description: string }>({ name: '', description: '' })
+    //              以该基准识别「编辑中未提交」字段；推进点**只有**「重新加载」（`getTaskDetails`）与
+    //              「提交成功」（`updateTaskDetails`，且仅限本次提交涉及的字段）。
+    //              ⛔ 不得在 store 联动合并后推进 —— 自动刷新每 30s 一次（回拉窗口重放同一条），
+    //              合并后一推进，下一轮就会把编辑误判成「已同步」并覆盖用户输入（`DEF-145` 实测丢字）。
+    const persistedText = ref<{ name: string; description: string }>({ name: '', description: '' })
 
     // @store 任务列表 store（与列表视图共享同一 pinia 实例）
     const tasksStore = useTasksStore()
@@ -100,7 +103,7 @@ const useTaskViewObject = (
             return
         }
         task.value = assembleTaskViewObject(_task)
-        lastSyncedText.value = { name: _task.name, description: _task.description }
+        persistedText.value = { name: _task.name, description: _task.description }
     }
 
     // @watch 订阅列表 store：任务在列表侧（看板/列表/表格）被更新时，同步刷新详情面板
@@ -110,20 +113,26 @@ const useTaskViewObject = (
     //       回调每次赋值新 task.value 会反复触发源 effect 造成递归循环（Maximum recursive updates）。
     //       本 store 所有更新均为 map.set(id, 新对象) 整体替换，依赖引用变化即可正常触发。
     // 注意：字段级合并 —— name/description 由详情面板 textarea 的 v-model 直接写入本地 task.value
-    //       （未 @change 提交前）；以 lastSyncedText 为基准识别"编辑中"字段并保留本地值，其余字段随 store 同步。
+    //       （未 @change 提交前）；以「已持久化值」（`persistedText`）为基准识别"编辑中"字段并保留本地值，
+    //       其余字段随 store 同步。⛔ 基准不得在合并后推进，否则下一轮自动刷新（回拉窗口每周期重放同一条）
+    //       就会把未提交的编辑误判成「已同步」而覆盖用户输入（`DEF-145` 实测丢字）。
     watch(
         () => (task.value ? tasksStore.getTask(task.value.id) : undefined),
         (latest) => {
             if (!latest || !task.value) return
             const current = task.value
+            const nameEdited = current.name !== persistedText.value.name
+            const descriptionEdited = current.description !== persistedText.value.description
             const editedFields: Partial<TaskDetailsViewObject> = {}
-            if (current.name !== lastSyncedText.value.name) editedFields.name = current.name
-            if (current.description !== lastSyncedText.value.description)
-                editedFields.description = current.description
+            if (nameEdited) editedFields.name = current.name
+            if (descriptionEdited) editedFields.description = current.description
             task.value = { ...assembleTaskViewObject(latest), ...editedFields }
-            lastSyncedText.value = {
-                name: editedFields.name ?? latest.name,
-                description: editedFields.description ?? latest.description
+            // 基准只跟随「未编辑」字段：编辑中的字段继续以（未变的）已持久化值为基准 ⇒ 多轮刷新都算「编辑中」
+            persistedText.value = {
+                name: nameEdited ? persistedText.value.name : latest.name,
+                description: descriptionEdited
+                    ? persistedText.value.description
+                    : latest.description
             }
         }
     )
@@ -172,6 +181,14 @@ const useTaskViewObject = (
                 updateVO.deletedAt !== undefined
                     ? Boolean(updateVO.deletedAt)
                     : task.value.isDeleted
+        }
+        // 持久化基准推进（仅限本次提交涉及的字段）：提交后该字段重新跟随 store（保护只管「未保存」）
+        persistedText.value = {
+            name: updateVO.name !== undefined ? task.value.name : persistedText.value.name,
+            description:
+                updateVO.description !== undefined
+                    ? task.value.description
+                    : persistedText.value.description
         }
         return null
     }

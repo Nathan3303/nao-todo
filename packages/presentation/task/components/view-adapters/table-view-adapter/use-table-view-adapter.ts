@@ -62,6 +62,15 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     }
 
     /**
+     * 刷新数据事件订阅（`RefreshData`）
+     * @description **原地刷新**（`silent`）：同步拉取落库后触发的重载不得把已渲染内容换成加载态
+     *              （`DEF-144` / AC-A1）。首次进入的 loading 由 `adapterLoading` 控制，不受影响（AC-A3）。
+     */
+    const refreshHandler = () => {
+        void taskLoader.loadAndReplace(undefined, { silent: true })
+    }
+
+    /**
      * 组件挂载时
      * 1. 加载第一页数据
      * 2. 订阅刷新数据事件
@@ -69,7 +78,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
      */
     onMounted(() => {
         taskLoader.loadFirstPage(true).finally(() => (adapterLoading.value = false))
-        props.subscriber.subscribe('RefreshData', taskLoader.loadAndReplace)
+        props.subscriber.subscribe('RefreshData', refreshHandler)
         props.subscriber.subscribe('AddNewTaskId', addNewTaskId)
     })
 
@@ -79,7 +88,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
      * 2. 取消订阅新增任务 ID 事件
      */
     onUnmounted(() => {
-        props.subscriber.unsubscribe('RefreshData', taskLoader.loadAndReplace)
+        props.subscriber.unsubscribe('RefreshData', refreshHandler)
         props.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
     })
 
@@ -103,6 +112,12 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
         adapterLoading,
         loading: computed(() => taskLoader.states.loading),
         error: computed(() => taskLoader.states.error),
+        /**
+         * 原地刷新失败（`DEF-148`，非阻塞）
+         * @description 有内容时只用提示条表达失败：**不得**把已渲染行换成错误分支；下轮成功自动消除
+         */
+        /** `null` = 无失败；`''` = 失败但无可读原因（`T665`：显示判据 = `!== null`） */
+        refreshError: computed(() => taskLoader.states.refreshError),
         noTaskError,
         handleUpdatePage,
         handleUpdatePerPage,

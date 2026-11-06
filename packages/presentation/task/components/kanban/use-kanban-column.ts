@@ -2,7 +2,10 @@ import type { GetTasksOptions } from '@nao-todo/shared/constants'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, onMounted, onUnmounted, ref, toRef, watchEffect } from 'vue'
 import { useTasksLoader } from '../../hooks'
-import { kanbanColumnGetTasksOptions } from './use-kanban-column-paging'
+import {
+    kanbanColumnGetTasksOptions,
+    type KanbanColumnResetOptions
+} from './use-kanban-column-paging'
 import type { TaskKanbanColumnProps, TaskKanbanContext } from './types'
 
 /**
@@ -77,9 +80,12 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
 
     /**
      * 加载第 1 页（重置入口）
-     * @description 求交为空 ⇒ 清空并列头归 0，且**不发请求**（R-I / AC11）
+     * @description 求交为空 ⇒ 清空并列头归 0，且**不发请求**（R-I / AC11）。
+     *              `options.silent` ⇒ 原地刷新（`RefreshData`）：不置 loading ⇒ 列底不插加载条、
+     *              空列占位不换成「正在加载任务」（`DEF-144` 看板落点，AC-K1）。
+     *              ⛔ 首次进入 / 筛选排序变化 / 用户「重试」不走 silent（AC-K2）。
      */
-    const loadFirstPage = async () => {
+    const loadFirstPage = async (options: KanbanColumnResetOptions = {}) => {
         needsRefill.value = false
         loader.states.pagination.page = 1
         if (queryOptions.value === null) {
@@ -90,7 +96,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
             loadedOnce.value = true
             return
         }
-        await loader.loadAndReplace(queryOptions.value)
+        await loader.loadAndReplace(queryOptions.value, { silent: options.silent === true })
         loadedOnce.value = true
     }
 
@@ -138,8 +144,8 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
      * 重置回第 1 页（`RefreshData` / 筛选 / 排序，R-C）
      * @description 分组切换不经过这里：靠 `:key` 结构性重建（ADR 决策 3）
      */
-    const reset = async () => {
-        await loadFirstPage()
+    const reset = async (options?: KanbanColumnResetOptions) => {
+        await loadFirstPage(options)
     }
 
     // @handle 注册到父级注册表（唯一编排入口，ADR 决策 1）
@@ -151,7 +157,9 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
         paging.report(props.category, {
             settled: queryOptions.value === null || loadedOnce.value,
             total: total.value,
-            firstError: error.value
+            firstError: error.value,
+            // DEF-148：原地刷新失败（非阻塞）单独上报 ⇒ 外层提示条，不清空列内卡片
+            firstRefreshError: loader.states.refreshError
         })
     })
 
@@ -173,7 +181,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps, context: TaskKanbanContex
         loadingMore,
         error,
         loadMore,
-        fetchTasks: loadFirstPage
+        fetchTasks: () => loadFirstPage()
     }
 }
 
