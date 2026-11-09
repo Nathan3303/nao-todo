@@ -5,6 +5,7 @@ import type { GoError } from '@nao-todo/shared'
 import {
     isGivenUpBy,
     isStarMarkedBy,
+    type TaskUpdateOrigin,
     type TaskUseCase,
     type TaskViewObject,
     type UpdateTaskViewObject
@@ -149,7 +150,20 @@ const useTaskViewObject = (
         updateVO: UpdateTaskViewObject
     ): Promise<GoError> => {
         if (!id) return null
-        const updateError = await taskUseCase.update(id, updateVO)
+        // DEF-146：编辑基准 = 本次载荷涉及字段的「已持久化值」（用户编辑起点 `O`）
+        //   ⇒ 保存侧判「编辑期间该字段被远端改过（R≠O）且我确实要覆盖（L≠R）」才记账。
+        //   ⛔ 必须在成功分支推进 `persistedText` **之前**取值。
+        const origin: TaskUpdateOrigin = {
+            ...(updateVO.name === undefined ? {} : { name: persistedText.value.name }),
+            ...(updateVO.description === undefined
+                ? {}
+                : { description: persistedText.value.description })
+        }
+        const updateError = await taskUseCase.update(
+            id,
+            updateVO,
+            Object.keys(origin).length === 0 ? undefined : origin
+        )
         if (updateError !== null) {
             // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
             if (!isArchivedReadOnlyError(updateError)) {

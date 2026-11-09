@@ -1,6 +1,7 @@
 import type { GoAsync, Pagination } from '@nao-todo/shared/types'
 import { TaskEntity } from '../entities'
 import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
+import type { TaskUpdateOrigin } from '../valueobjects'
 
 /**
  * TaskRepository 任务仓库接口
@@ -25,9 +26,14 @@ export interface TaskRepository {
      * update 更新任务
      * @param id 任务ID
      * @param updateVO 更新任务值对象
+     * @param editOrigin 编辑基准（可选；`DEF-146` 编辑期覆盖记账，缺省 = 不记账）
      * @returns 更新错误信息
      */
-    update(id: string, updateVO: UpdateTaskValueObject): GoAsync<void>
+    update(
+        id: string,
+        updateVO: UpdateTaskValueObject,
+        editOrigin?: TaskUpdateOrigin
+    ): GoAsync<void>
 
     /**
      * remove 删除任务

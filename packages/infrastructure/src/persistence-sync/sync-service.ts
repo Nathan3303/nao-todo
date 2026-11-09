@@ -50,7 +50,8 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './sync-normalize'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
-import { appendConflict, countConflicts, valuesEqual } from './conflict-journal'
+import { appendConflict, countConflicts } from './conflict-journal'
+import { pickChangedFields } from './edit-overwrite'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -92,18 +93,6 @@ const buildPush =
         }
         return record
     }
-
-/**
- * A1 差异比较的忽略字段（身份/时间/同步元数据 —— 不属于「业务内容差异」）
- * @description 判据口径：`updatedAt/syncedServerUpdatedAt/revision`（T640 Q2）
- */
-const SNAPSHOT_IGNORED_FIELDS: ReadonlySet<string> = new Set([
-    'id',
-    'userId',
-    'updatedAt',
-    'syncedServerUpdatedAt',
-    'revision'
-])
 
 /**
  * 收集箱本地哨兵（单一口径：数据面一律字面 `'inbox'`；ADR `2026-09-24-project-archive.md` §15.1 / Q4）
@@ -765,14 +754,9 @@ export class SyncService {
         if (!localRecord) return
         const local = await config.recordToEntity(localRecord)
         const loser: Record<string, unknown> = { id: entityId }
-        const diffFields: string[] = []
-        for (const field of new Set([...Object.keys(remote), ...Object.keys(local)])) {
-            if (SNAPSHOT_IGNORED_FIELDS.has(field)) continue
-            // DEF-135：判等口径**唯一**（空值哨兵 `null`/`undefined`/`''`/`[]` 归一）⇒
-            //   与读侧 `diffFields` 同一函数，避免「写侧记了差异、读侧判相等」
-            if (valuesEqual(remote[field], local[field])) continue
-            diffFields.push(field)
-        }
+        // DEF-135 / T669：判等与「挑差异字段」的唯一口径（空值哨兵归一 + 忽略集单一来源）
+        //   ⇒ 与保存侧（`edit-overwrite.pickOverwrittenFields`）共用同一 helper，⛔ 禁第二套
+        const diffFields = pickChangedFields(remote, local as unknown as Record<string, unknown>)
         // 逐字段 diff 为空 ⇒ 不是一次「会丢数据的裁决」⇒ 不记账
         if (diffFields.length === 0) return
         for (const field of diffFields) {

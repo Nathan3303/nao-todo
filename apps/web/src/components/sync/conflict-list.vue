@@ -268,6 +268,17 @@ const canRetryLocal = computed(() => {
     return kind ? canRetryLocalConflict(kind) : false
 })
 
+/**
+ * 「保留服务端版本」是否渲染（`DEF-146` / R-8 / PM 裁定 `D6`：仅对 `pull-local-wins` 收口）
+ * @description 该动作对非 `stale` 只清条目 —— `remote-wins` / `push-noop` 语义上**服务端已是胜方**，
+ *              点它 = 确认保留（不误导）；`pull-local-wins` 则会让用户以为能拿回云端（实际只清条目）
+ *              ⇒ 不渲染，改由「复制」入口承载（`DEF-139` 同一精神）。
+ */
+const canKeepServer = computed(() => {
+    const kind = activeItem.value?.kind
+    return kind !== undefined && kind !== 'pull-local-wins'
+})
+
 /** 复制状态（按钮文案反馈） */
 const copyLoserLabel = computed(() => {
     if (copyState.value === 'copied') return t('sync.conflict.copySuccess')
@@ -591,7 +602,7 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                     <nue-button v-if="canRetryLocal" theme="primary,small" @click="runRetryLocal">
                         {{ t('sync.conflict.retryLocal') }}
                     </nue-button>
-                    <nue-button theme="small,ghost" @click="runKeepServer">
+                    <nue-button v-if="canKeepServer" theme="small,ghost" @click="runKeepServer">
                         {{ t('sync.conflict.keepServer') }}
                     </nue-button>
                     <nue-button theme="pure,small" @click="emit('close')">

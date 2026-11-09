@@ -7,6 +7,7 @@ import {
     TaskRepository,
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
+import type { TaskUpdateOrigin } from '@nao-todo/domain-task'
 import type { GoAsync } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import {
@@ -25,6 +26,7 @@ import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
+import { pickOverwrittenFields, recordEditOverwrite } from '../../persistence-sync/edit-overwrite'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -137,11 +139,26 @@ export class LocalTaskRepoImpl implements TaskRepository {
         }
     }
 
-    async update(id: string, updateVO: UpdateTaskValueObject): GoAsync<void> {
+    async update(
+        id: string,
+        updateVO: UpdateTaskValueObject,
+        editOrigin?: TaskUpdateOrigin
+    ): GoAsync<void> {
         try {
             const record = await this.db.tasks.get(id)
             if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
+            // DEF-146：写前取 `R`（库中云端当前值）并完成三值判定；⛔ 必须在任何字段赋值之前
+            const overwrittenFields = pickOverwrittenFields(
+                entity as unknown as Record<string, unknown>,
+                updateVO as unknown as Record<string, unknown>,
+                editOrigin as Record<string, unknown> | undefined
+            )
+            // 被覆盖字段的云端值快照（entity 即将被改写 ⇒ 先拍下来，供写后记账用）
+            const cloudFields: Record<string, unknown> = {}
+            for (const field of overwrittenFields) {
+                cloudFields[field] = (entity as unknown as Record<string, unknown>)[field]
+            }
             if (updateVO.parentTaskId !== undefined) entity.parentTaskId = updateVO.parentTaskId
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.description !== undefined) entity.description = updateVO.description
@@ -169,6 +186,17 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'upsert',
                 entity.updatedAt
             )
+            // R-5：记账在保存事务**之后**；失败只 log（`recordEditOverwrite` 内部兜住、不抛出）
+            if (overwrittenFields.length > 0) {
+                await recordEditOverwrite({
+                    userId: this.currentUserId,
+                    table: 'tasks',
+                    entityId: id,
+                    cloud: cloudFields,
+                    fields: overwrittenFields,
+                    winnerUpdatedAt: entity.updatedAt
+                })
+            }
             return null
         } catch (err) {
             return String(err)

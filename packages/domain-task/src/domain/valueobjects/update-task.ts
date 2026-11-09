@@ -88,3 +88,12 @@ export class UpdateTaskValueObject {
         return null
     }
 }
+/**
+ * 任务更新「编辑基准」（`DEF-146`）
+ * @description **可选**入参（R-6）：编辑器在用户开始编辑时冻结的字段值（详情面板 `persistedText`）。
+ *              保存侧据此做字段级三值判定 —— `R` = 库中云端当前值 / `L` = 本次载荷 / `O` = 本基准，
+ *              **只记**「编辑期间该字段被远端改过（`R≠O`）且我确实要覆盖它（`L≠R`）」的字段。
+ *              不传 = 今天行为逐字不变（非详情面板入口 / 移动端 / 既有调用点）。
+ * @see docs/adr/2026-11-06-edit-vs-remote-overwrite.md
+ */
+export type TaskUpdateOrigin = Readonly<Partial<Omit<UpdateTaskValueObject, 'id'>>>

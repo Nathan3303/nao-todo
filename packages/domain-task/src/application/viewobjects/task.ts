@@ -84,6 +84,12 @@ export type UpdateTaskViewObject = {
     isGivenUp?: boolean
 }
 
+/**
+ * 任务更新「编辑基准」（`DEF-146`）
+ * @description 类型定义在 domain 值对象层（`domain` 不得依赖 `application`），此处按 PRD 口径转出。
+ */
+export type { TaskUpdateOrigin } from '../../domain/valueobjects'
+
 // 任务标签视图对象
 export type TaskTagViewObject = {
     id: string
