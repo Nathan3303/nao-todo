@@ -250,6 +250,8 @@ describe('T669 边界与异常（AC3 / AC4 / AC6）', () => {
             (entry) => entry.event === STRUCTURED_LOG_EVENTS.SYNC_JOURNAL_RECORD_FAILED
         )
         expect(failed).toHaveLength(1)
+        // 级别 = error：一次真实覆盖没有任何记录 = 能力失效，不得降级为 warn
+        expect(failed[0]!.level).toBe('error')
         expect(failed[0]!.fields.entityId).toBe(id)
         expect(failed[0]!.fields.table).toBe('tasks')
         expect(String(failed[0]!.fields.reason)).toContain('quota-exceeded')

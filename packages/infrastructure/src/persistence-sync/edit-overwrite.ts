@@ -100,7 +100,9 @@ export const recordEditOverwrite = async (input: EditOverwriteInput): Promise<vo
         })
         syncStatus.setConflictCount(count)
     } catch (err) {
-        logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_JOURNAL_RECORD_FAILED, {
+        // 级别 = error（PM 追加要求）：含义是「一次真实覆盖没有任何记录」= 本批能力失效，
+        //   warn 在默认告警面极易漏（DEF-143 教训）
+        logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_JOURNAL_RECORD_FAILED, {
             table,
             entityId,
             // reason 只放错误类型 / 摘要，不落业务值
