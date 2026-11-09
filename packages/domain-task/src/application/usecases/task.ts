@@ -7,7 +7,12 @@ import { TaskErrorCode } from '../../domain/errors'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
 import { UpdateTaskValueObject } from '../../domain/valueobjects'
-import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
+import type {
+    CreateTaskViewObject,
+    TaskUpdateOrigin,
+    TaskViewObject,
+    UpdateTaskViewObject
+} from '../viewobjects'
 import type { TaskStore } from '../stores'
 import {
     createTaskViewObjectToValueObject,
@@ -211,9 +216,14 @@ export class TaskUseCase {
      * 更新任务
      * @param id 任务ID
      * @param updateViewObject 更新任务视图对象
+     * @param editOrigin 编辑基准（可选；`DEF-146` 编辑期覆盖记账，缺省 = 不记账）
      * @returns 错误信息
      */
-    async update(id: TaskViewObject['id'], updateViewObject: UpdateTaskViewObject): GoAsync<void> {
+    async update(
+        id: TaskViewObject['id'],
+        updateViewObject: UpdateTaskViewObject,
+        editOrigin?: TaskUpdateOrigin
+    ): GoAsync<void> {
         // 获取原始数据
         // const oldTask = this.taskStore.getTask(id)
         // const newTask = { name: oldTask?.name || undefined, ...updateViewObject }
@@ -265,7 +275,7 @@ export class TaskUseCase {
             if (parentErr !== null) return parentErr
         }
         // 更新任务
-        const updateError = await this.taskRepo.update(id, updateTaskValueObject)
+        const updateError = await this.taskRepo.update(id, updateTaskValueObject, editOrigin)
         if (updateError !== null) return updateError
         // 更新内存数据（根据 givenUpAt 计算 isGivenUp，根据 starMarkAt 计算 isStarMarked）
         const storeUpdateData = { ...updateViewObject }

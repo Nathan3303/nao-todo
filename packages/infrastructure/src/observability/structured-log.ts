@@ -71,6 +71,8 @@ export const STRUCTURED_LOG_EVENTS = {
     SYNC_PUSH_LOCK_UNAVAILABLE: 'sync.push.lock.unavailable',
     /** journal 专用锁（跨路径互斥，ADR §9.3） */
     SYNC_JOURNAL_LOCK_UNAVAILABLE: 'sync.journal.lock.unavailable',
+    /** 覆盖类记账失败（`DEF-146`：journal 写入抛错 ⇒ 只记日志，保存不阻断） */
+    SYNC_JOURNAL_RECORD_FAILED: 'sync.journal.record-failed',
     /** 运行级不可达防御（存储/加解密等意外异常） */
     SYNC_RUN_UNEXPECTED_ERROR: 'sync.run.unexpected-error',
     /** 可见窗口自动刷新（T654 / 同步感知 A′；只记事件，不进用户可见面） */

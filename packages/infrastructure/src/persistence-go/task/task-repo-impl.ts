@@ -3,6 +3,7 @@ import type {
     CreateTaskValueObject,
     TaskEntity,
     TaskRepository,
+    TaskUpdateOrigin,
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
@@ -71,9 +72,14 @@ export class TaskRepoImpl implements TaskRepository {
      * update 更新任务
      * @param id 任务 ID
      * @param updateVO 更新任务值对象
+     * @param _editOrigin 编辑基准（`DEF-146`；**远程仓储不消费**，行为零改动）
      * @returns 更新结果
      */
-    async update(id: string, updateVO: UpdateTaskValueObject): GoAsync<void> {
+    async update(
+        id: string,
+        updateVO: UpdateTaskValueObject,
+        _editOrigin?: TaskUpdateOrigin
+    ): GoAsync<void> {
         // 1. 转换为请求体
         const updateTaskReq = updateTaskValueObject2Req(updateVO)
         // 2. 调用接口
