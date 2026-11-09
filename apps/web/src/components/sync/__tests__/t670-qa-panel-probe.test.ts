@@ -26,8 +26,9 @@ import ConflictList from '../conflict-list.vue'
  * 独立路径：**直接挂载 `conflict-list.vue` + 注入 `ux`**（不经过 `SyncStatusBar` / 对话框链路），
  * 逐 kind 断言动作按钮的**真实数量**（⛔ stub / 静态源码断言不算证据）。
  *
- * 契约：`pull-local-wins` ⇒ 「用云端的」**0 个**；`remote-wins`/`push-noop`/`stale` 各 **1 个**；
- *      `conflict`/`skipped` 仍由 `DEF-139` 收口「保留我的修改」= 0 个（不回归）。
+ * 契约：`pull-local-wins` ⇒ 「用云端的」**0 个** + 动作行「复制」**1 个**（`T669-C`：复制云端那份）；
+ *      `remote-wins`/`push-noop`/`stale` 各「用云端的」**1 个**且复制 **0 个**；
+ *      `conflict`/`skipped` 仍由 `DEF-139` 收口「保留我的修改」= 0 个、手动区复制 1 个（不回归）。
  */
 
 const t = (key: keyof (typeof messages)['zh-CN']): string => messages['zh-CN'][key]
@@ -46,12 +47,20 @@ const item = (kind: ConflictListItem['kind']): ConflictListItem => ({
 const comparison = (): ConflictComparison => ({
     table: 'tasks',
     entityId: 't1',
-    loser: { name: '云端当时的版本' },
-    current: { name: '我的当前版本' },
+    loser: { id: 't1', name: '云端当时的版本' },
+    current: { id: 't1', name: '我的当前版本' },
     diffs: [{ field: 'name', loser: '云端当时的版本', current: '我的当前版本' }]
 })
 
 let wrapper: VueWrapper | null = null
+
+const clipboardWrite = vi.fn(async (_text: string) => {})
+
+const unmountCurrent = (): void => {
+    wrapper?.unmount()
+    wrapper = null
+    document.body.innerHTML = ''
+}
 
 const mountWith = async (kind: ConflictListItem['kind']): Promise<void> => {
     const ux = {
@@ -103,6 +112,8 @@ afterEach(() => {
     wrapper = null
     document.body.innerHTML = ''
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+    clipboardWrite.mockClear()
 })
 
 describe('T670 探针 E：面板动作按钮按 kind 收口（真实挂载）', () => {
@@ -136,13 +147,56 @@ describe('T670 探针 E：面板动作按钮按 kind 收口（真实挂载）', 
         }
     )
 
-    it('E4 边界事实：pull-local-wins 无「复制我的修改」按钮（复制入口仅 conflict/skipped）', async () => {
+    it('E4 `T669-C` 新契约：pull-local-wins ⇒ 动作行「复制」1 / 「用云端的」0，点击复制 loser（云端那份）且文案切「已复制」', async () => {
+        vi.stubGlobal('navigator', { clipboard: { writeText: clipboardWrite } })
+
         await mountWith('pull-local-wins')
-        // 事实断言：本批未新增复制入口；面板无该按钮（可否复制见报告「观察项」）
-        expect(document.querySelectorAll('.conflict-list__manual button')).toHaveLength(0)
-        const copyButtons = Array.from(document.querySelectorAll('button')).filter((button) =>
-            button.textContent?.includes(t('sync.conflict.copyLoser'))
+        expect(actionButtons(t('sync.conflict.keepServer'))).toHaveLength(0)
+        expect(actionButtons(t('sync.conflict.retryLocal'))).toHaveLength(1)
+        expect(actionButtons(t('sync.conflict.copyLoser'))).toHaveLength(1)
+        // 该 kind 不进「需手动处理」区（手动区复制只属 conflict/skipped，不重复）
+        expect(document.querySelector('.conflict-list__manual button')).toBeFalsy()
+
+        actionButtons(t('sync.conflict.copyLoser'))[0]!.dispatchEvent(
+            new MouseEvent('click', { bubbles: true })
         )
-        expect(copyButtons).toHaveLength(0)
+        await nextTick()
+        await nextTick()
+
+        // 载荷 = 败方快照（pull-local-wins 的败方 = 云端当时的版本），⛔ 不是「我的当前版本」
+        expect(clipboardWrite).toHaveBeenCalledTimes(1)
+        expect(JSON.parse(String(clipboardWrite.mock.calls[0]?.[0]))).toEqual({
+            id: 't1',
+            name: '云端当时的版本'
+        })
+        expect(actionButtons(t('sync.conflict.copySuccess'))).toHaveLength(1)
+        expect(actionButtons(t('sync.conflict.copyLoser'))).toHaveLength(0)
+        unmountCurrent()
+
+        // stale / remote-wins / push-noop：有真写回或「服务端已是胜方」语义 ⇒ 复制不扩面
+        for (const kind of ['stale', 'remote-wins', 'push-noop'] as const) {
+            await mountWith(kind)
+            expect(actionButtons(t('sync.conflict.copyLoser')), kind).toHaveLength(0)
+            expect(actionButtons(t('sync.conflict.keepServer')), kind).toHaveLength(1)
+            unmountCurrent()
+        }
+
+        // conflict / skipped：DEF-139 零回归（动作行不重复放复制；手动区复制仍 1）
+        for (const kind of ['conflict', 'skipped'] as const) {
+            await mountWith(kind)
+            expect(actionButtons(t('sync.conflict.copyLoser')), kind).toHaveLength(0)
+            expect(actionButtons(t('sync.conflict.retryLocal')), kind).toHaveLength(0)
+            expect(actionButtons(t('sync.conflict.keepServer')), kind).toHaveLength(1)
+            const manual = document.querySelector('.conflict-list__manual')
+            expect(manual, kind).toBeTruthy()
+            expect(manual!.textContent, kind).toContain(t('sync.conflict.manualRecoveryHint'))
+            expect(
+                Array.from(manual!.querySelectorAll('button')).filter((button) =>
+                    button.textContent?.includes(t('sync.conflict.copyLoser'))
+                ),
+                kind
+            ).toHaveLength(1)
+            unmountCurrent()
+        }
     })
 })
