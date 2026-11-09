@@ -200,9 +200,15 @@ const actionButtons = (label: string): HTMLButtonElement[] =>
         document.querySelectorAll<HTMLButtonElement>('.conflict-list__actions button')
     ).filter((button) => button.textContent?.includes(label))
 
+/** 剪贴板桩（复制入口走 `navigator.clipboard.writeText`，本机零网络） */
+const clipboardWrite = vi.fn(async (_text: string) => {})
+
 beforeEach(() => {
     status().value = { ...status().value, conflictCount: 0 }
     resetReadOnlyForTest()
+    clipboardWrite.mockClear()
+    // 只桩剪贴板（组件复制入口只读 `navigator.clipboard`；不整体伪造 navigator）
+    vi.stubGlobal('navigator', { clipboard: { writeText: clipboardWrite } })
 })
 
 afterEach(() => {
@@ -231,6 +237,65 @@ describe('T669 / R-8：「保留服务端版本」按 kind 收口（真实挂载
         async (kind) => {
             await openWith(kind)
             expect(actionButtons(keepServerLabel())).toHaveLength(1)
+        }
+    )
+})
+
+/**
+ * `T669-C`：`pull-local-wins` 的恢复路径 = **复制云端当时的版本**（`R-8` 收口后无真写回动作）
+ * @description 断言真实挂载后的按钮数 + 点击载荷 + 文案反馈；其余 kind 一律**不给**该按钮（不扩面）
+ */
+describe('T669-C：复制入口（仅 pull-local-wins，动作行内）', () => {
+    const copyLabel = (): string => messages['zh-CN']['sync.conflict.copyLoser']
+    const copiedLabel = (): string => messages['zh-CN']['sync.conflict.copySuccess']
+
+    it('pull-local-wins ⇒ 复制按钮 1 个；点击后复制 loser（云端当时的版本）且文案切到「已复制」', async () => {
+        await openWith('pull-local-wins')
+
+        const copyButtons = actionButtons(copyLabel())
+        expect(copyButtons).toHaveLength(1)
+        // 与 R-8 收口并列生效：保留服务端版本仍为 0
+        expect(actionButtons(messages['zh-CN']['sync.conflict.keepServer'])).toHaveLength(0)
+
+        copyButtons[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await settle()
+
+        expect(clipboardWrite).toHaveBeenCalledTimes(1)
+        // 载荷 = 败方快照（`pull-local-wins` 的败方就是云端那份）
+        expect(JSON.parse(String(clipboardWrite.mock.calls[0]?.[0]))).toEqual({
+            name: '云端当时的版本'
+        })
+        expect(actionButtons(copiedLabel())).toHaveLength(1)
+        expect(actionButtons(copyLabel())).toHaveLength(0)
+    })
+
+    it.each(['stale', 'remote-wins', 'push-noop'] as const)(
+        '%s ⇒ 动作行**不给**复制按钮（有真写回或语义不同，不扩面）',
+        async (kind) => {
+            await openWith(kind)
+            expect(actionButtons(copyLabel())).toHaveLength(0)
+            expect(actionButtons(messages['zh-CN']['sync.conflict.keepServer'])).toHaveLength(1)
+        }
+    )
+
+    it.each(['conflict', 'skipped'] as const)(
+        '%s ⇒ 复制入口仍在「需手动处理」区（DEF-139 零回归），动作行不重复放',
+        async (kind) => {
+            await openWith(kind)
+
+            expect(actionButtons(copyLabel())).toHaveLength(0)
+            expect(actionButtons(messages['zh-CN']['sync.conflict.keepServer'])).toHaveLength(1)
+            // 既有手动恢复区原样：说明文案 + 复制按钮各 1
+            const manual = document.querySelector('.conflict-list__manual')
+            expect(manual).toBeTruthy()
+            expect(manual?.textContent).toContain(
+                messages['zh-CN']['sync.conflict.manualRecoveryHint']
+            )
+            expect(
+                Array.from(manual!.querySelectorAll('button')).filter((button) =>
+                    button.textContent?.includes(copyLabel())
+                )
+            ).toHaveLength(1)
         }
     )
 })

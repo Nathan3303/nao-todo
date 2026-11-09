@@ -272,12 +272,21 @@ const canRetryLocal = computed(() => {
  * 「保留服务端版本」是否渲染（`DEF-146` / R-8 / PM 裁定 `D6`：仅对 `pull-local-wins` 收口）
  * @description 该动作对非 `stale` 只清条目 —— `remote-wins` / `push-noop` 语义上**服务端已是胜方**，
  *              点它 = 确认保留（不误导）；`pull-local-wins` 则会让用户以为能拿回云端（实际只清条目）
- *              ⇒ 不渲染，改由「复制」入口承载（`DEF-139` 同一精神）。
+ *              ⇒ 不渲染，该 kind 的恢复路径**改由下方「复制」入口承载**（`T669-C`）。
  */
 const canKeepServer = computed(() => {
     const kind = activeItem.value?.kind
     return kind !== undefined && kind !== 'pull-local-wins'
 })
+
+/**
+ * 「复制」是否渲染到动作行（`T669-C`）：仅 `pull-local-wins`
+ * @description 该 kind 在 R-8 收口后**没有**真写回动作（「保留服务端版本」只清条目，已掩）⇒
+ *              它的恢复路径 = **复制云端当时的版本**（`loser` = 被覆盖的云端那份），由本按钮承载。
+ *              ⛔ 不给 `stale` / `remote-wins` / `push-noop` 加：它们各有真写回或「服务端已是胜方」语义，
+ *              `conflict` / `skipped` 的复制入口已在「需手动处理」区内（`DEF-139`，勿重复）。
+ */
+const canCopyLoser = computed(() => activeItem.value?.kind === 'pull-local-wins')
 
 /** 复制状态（按钮文案反馈） */
 const copyLoserLabel = computed(() => {
@@ -598,6 +607,10 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                     {{ t('sync.conflict.safetyHint') }}
                 </nue-text>
                 <div class="conflict-list__actions">
+                    <!-- T669-C：`pull-local-wins` 的恢复路径 = 复制云端当时的版本（无真写回动作） -->
+                    <nue-button v-if="canCopyLoser" theme="pure,small" @click="copyLoser">
+                        {{ copyLoserLabel }}
+                    </nue-button>
                     <!-- DEF-139：不可自动恢复的类型（conflict / skipped）不渲染该按钮（改由上方「需手动处理」+ 复制入口承载） -->
                     <nue-button v-if="canRetryLocal" theme="primary,small" @click="runRetryLocal">
                         {{ t('sync.conflict.retryLocal') }}
