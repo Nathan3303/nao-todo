@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.18.2] - 2026-11-09
+
+编辑期覆盖可见化（`DEF-146` · Issue #336 · 代码 PR #338 · 发版说明 `docs/releases/v1.18.2.md`）：
+
+- **`DEF-146`（P1）编辑期间远端也变过 ⇒ 保存时静默覆盖、无记账**：新增**保存侧字段级三值判定** —— `R`（库中云端当前值）× `L`（本次载荷）× `O`（编辑起点 `persistedText`），逐字段 `(R_f ≠ O_f) 且 (L_f ≠ R_f)` 才记录；命中字段的云端值作为 `loser` 落进冲突面板（复用既有 `kind = 'pull-local-wins'` + `appendConflict`，**零新 kind / 零新文案键 / 零新裁决路径**）。记账在保存事务**之后**，失败只 `logStructured('error', 'sync.journal.record-failed', {table, entityId, reason})`（不含业务值）、保存不阻断不回滚。
+- **可选「编辑基准」入参**（`TaskUpdateOrigin`，domain 值对象层定义、application 转出）：详情面板在保存时按载荷涉及字段传 `persistedText` 值；不传 = 行为逐字不变（`persistence-go` 签名跟随但不消费；`batchUpdate` 与其余调用点不传；移动端仅签名兼容、diff 0）。
+- **共享「挑差异字段」helper**：`edit-overwrite.pickChangedFields` 统一 A1 拉取侧与保存侧口径，忽略集单一来源 `SYNC_COMPARE_IGNORED_FIELDS`（删掉 `sync-service` 重复表）；补「新旧实现同输入同产物」等价用例。
+- **冲突面板按 kind 收口**：`pull-local-wins` 不再渲染「保留服务端版本」（该动作对它只清条目、会误导），动作行改为「复制」（复用既有 `copyLoser`/`copyLoserLabel`）；其余 kind 计数不变（`DEF-139` 零回归）。
+- **门禁**：全仓 **403 文件通过 + 1 跳过（404）/ 3210 例通过 + 6 跳过（3216）/ 红 0** · `vp check` 0 error（1905 格式 / 1530 lint+类型）· 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；rd-fe 变异 M1–M5 与 qa 独立变异 M1–M6 逐条 kill 并逐字节还原。
+- **Tag `v1.18.2`** · root / `apps/web` / `apps/desktop` `1.18.1 → 1.18.2`（PATCH）· `domain-task` `1.4.1 → 1.5.0`（可选「编辑基准」入参）· `infrastructure` `0.9.0 → 0.10.0`（新增 `edit-overwrite` 模块）· `presentation` `0.9.0 → 0.10.0`（透传可选入参）。**服务端无改动，无需部署。**
+- **已知边界（登记，不阻断）**：`DEF-153`（P2 挂账）—— 编辑基准只覆盖 `name` / `description`，`state` / `priority` / `starMarkAt` / `tags` / `parentTaskId` / 日期类字段的覆盖仍不记录；「两端各改不同字段仍整行冲突」= 既有行级 OCC（字段级合并属 B 批，另行立项）。
+
 ## [v1.18.1] - 2026-11-06
 
 走查修复批（PR #334 · 发版说明 `docs/releases/v1.18.1.md`）：
