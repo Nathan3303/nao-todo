@@ -2,6 +2,17 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.19.1] - 2026-11-10
+
+挂账清理批（`M20261110-def-pool-cleanup` · 维护型无 Issue · 客户端 PR #344 · 发版说明 `docs/releases/v1.19.1.md`）：
+
+- **`DEF-149`（P2）子任务区刷新失败仍整块替换内容、卸载「新增子任务」输入框**：复用列表/表格同一套非破坏性提示（`refreshError` 两态 `string | null`、`!== null` 判显示、空原因走既有兜底），零新 i18n、零自绘错误态；**0 条 / 首进失败仍走阻塞式错误**（不吞真错误）。新增 `t690-def149-copy-guard` 永久护栏（文案是人话、无内部痕迹）。
+- **`DEF-153`（P2）保存侧覆盖记账只覆盖 `name`/`description`**：`useTaskViewObject` 新增 `editOrigins` + `beginEdit(field)`，在**控件交互起点**冻结已持久化值（首次胜、幂等），保存时只对本次载荷涉及字段透传 `origin`；接线 6 处（`state`/`priority`/`tags`/日期+提醒组/`starMarkAt`/`parentTaskId`）。**domain / 仓储零改动**；⛔ 不使用 store 当前值当基准（自动刷新会推进它）。
+- **契约变更（同批）**：`t663-def145-editor-probe` 的「失败可见」断言原锚定「阻塞式 `subTasksError` + 文本含『子任务获取失败』」，与新契约互斥 ⇒ 改为「非阻塞 `subTasksRefreshError !== null` + 行与输入框保留 + `subTasksError === ''`」，意图不变并由新护栏补足。
+- **服务端配套（独立仓 `nao-todo-server`，另行部署）**：`#91`（`DEF-157` 缺 `iat` 的 JWT 不再 500 空体 · `DEF-141` integration 同库可重复跑）· `#92`（`DEF-158` 到期提醒用例改用 `SELECT NOW()` 造数 · README 落字 integration 必须 `-p 1`）。
+- **门禁**：客户端全仓 **428 文件（427 绿 / 1 skip）· 3368 例（3362 绿 / 6 skip / 0 红）** · `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；qa 独立探针 22 例（含 `DEF-153` 命门反证：改用当前值当基准 ⇒ 0 条）。
+- **Tag `v1.19.1`** · root / `apps/web` / `apps/desktop` `1.19.0 → 1.19.1`（PATCH）；`infrastructure` 无改动（仍 `0.11.0`）。
+
 ## [v1.19.0] - 2026-11-10
 
 字段级合并（B 批 · Issue #340 · 代码 PR #341 · 发版说明 `docs/releases/v1.19.0.md`）：
