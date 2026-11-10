@@ -137,3 +137,4 @@
 - **2026-09-29 组件库与主题治理批次**（`v1.12.3`）：NueUI 1.13.0 两端对齐 · 日历撤销改库 `NueMessage` 插槽 · 测试归入 `__tests__` + 新守卫 · 主题对比度 AA ⇒ `2026-09-29-component-library-and-theme-batch.md`
 - **2026-09-29 文档规范上游化**（上游 `nao-skill@0.10.0`）：发版说明写作规范 + 文档「默认不使用表格」（含 PRD）⇒ `2026-09-29-doc-conventions-upstreaming.md`
 - **2026-11-07 编辑期覆盖可见化**（`v1.18.2`）：保存侧三值判定 + 复用 `pull-local-wins` 记账 + 面板按 kind 收口 ⇒ `2026-11-07-edit-vs-remote-overwrite.md`
+- **2026-11-09 字段级合并（B 批）**（`v1.19.0`）：三方字段合并 · `fieldBase` 基准 · 零新 kind · 回滚开关 ⇒ `2026-11-09-field-level-merge.md`
