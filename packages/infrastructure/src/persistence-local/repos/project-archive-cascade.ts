@@ -1,6 +1,7 @@
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
+import { captureFieldBase } from '../../persistence-sync/field-base'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { putWithSyncBase } from './put-with-sync-base'
 
@@ -38,8 +39,16 @@ export const cascadeProjectArchive = async (
             const projectPatch = action === 'archive' ? now : null
             if (isAbsentStamp(projectRecord.archivedAt) !== isAbsentStamp(projectPatch)) {
                 const nextProject = { ...projectRecord, archivedAt: projectPatch, updatedAt: now }
+                const fieldBase = captureFieldBase(projectRecord, nextProject)
                 await putWithSyncBase(db.projects, nextProject)
-                await syncTracker.markDirty('projects', projectId, 'upsert', now)
+                await syncTracker.markDirty(
+                    'projects',
+                    projectId,
+                    'upsert',
+                    now,
+                    db.syncQueue,
+                    fieldBase
+                )
             }
 
             // 2. 其下任务：逐条判定 + 逐条 markDirty（PA-6 / PA-7）
@@ -62,7 +71,15 @@ export const cascadeProjectArchive = async (
                     updatedAt: now
                 }
                 await putWithSyncBase(db.tasks, nextTask)
-                await syncTracker.markDirty('tasks', taskRecord.id, 'upsert', now)
+                const fieldBase = captureFieldBase(taskRecord, nextTask)
+                await syncTracker.markDirty(
+                    'tasks',
+                    taskRecord.id,
+                    'upsert',
+                    now,
+                    db.syncQueue,
+                    fieldBase
+                )
             }
         })
         return null

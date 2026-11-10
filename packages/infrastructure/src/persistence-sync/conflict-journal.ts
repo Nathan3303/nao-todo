@@ -16,12 +16,17 @@ import {
 } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import { findConflictEntity } from './conflict-entity-registry'
+import { captureFieldBase } from './field-base'
 import { nowCalibratedIso } from './sync-config'
 import { toLocalProjectId } from './sync-normalize'
+import { valuesEqual } from './sync-compare'
 import { syncStatus } from './sync-status'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 export type { ConflictJournalEntry }
+
+// DEF-135 / R-1：唯一判等口径已下沉到 `sync-compare`（无循环依赖），此处 re-export 保持公开 API 不变
+export { valuesEqual }
 
 /** 每用户冲突记账上限（环形淘汰，保留最新；DP-2B-5：50 → 200 + 折叠提示） */
 export const CONFLICT_JOURNAL_LIMIT = 200
@@ -171,6 +176,11 @@ export interface ConflictJournalInput {
     loserUpdatedAt?: string
     /** 服务端当前行（A2 additive `serverCurrent`；仅 `stale` 回执携带） */
     serverCurrent?: Record<string, unknown>
+    /**
+     * 冲突字段集合（T682 / M5，**additive**）：真正冲突的字段名（按合并域顺序；提醒组含整组四字段）
+     * @description 缺省 / 空数组 ⇒ 条目不落该键（旧调用点行为逐字不变）
+     */
+    conflictFields?: string[]
 }
 
 /** 读取冲突记账（无记录 ⇒ 空数组；按记账顺序，末尾为最新） */
@@ -193,6 +203,24 @@ export const countConflicts = async (userId: string): Promise<number> =>
     conflictObjectCount(await loadConflictJournal(userId))
 
 /**
+ * 冲突次数（**按字段**）—— 从 journal 条目读（`T683` / M6 · NFR「可观测」）
+ * @description 每条目的 `conflictFields` **去重后**各计 1（同一裁决的同一字段只算一次）；
+ *              缺省 `conflictFields` 的旧条目不计入（整行裁决，无字段级信号）。
+ *              ⛔ 纯读：不写库、不改计数口径（`conflictCount` 仍是对象数）。
+ */
+export const conflictFieldCounts = (
+    entries: ReadonlyArray<{ conflictFields?: string[] }>
+): Record<string, number> => {
+    const counts: Record<string, number> = {}
+    for (const entry of entries) {
+        for (const field of new Set(entry.conflictFields ?? [])) {
+            counts[field] = (counts[field] ?? 0) + 1
+        }
+    }
+    return counts
+}
+
+/**
  * 追加一条冲突记账（**纯追加 + 有界**：超上限环形淘汰最旧）
  * @returns 追加后的**对象数**（distinct 实体；供状态面计数，T346 口径）
  * @description 空 `userId` 硬失败（C-55：不得退化为空用户读写）
@@ -204,6 +232,8 @@ export const appendConflict = async (
     if (!userId) return 0
     // R-H / A3：快照 = 业务字段子集；文本 >512 字符截断并标记（truncated + truncatedFields）
     const { snapshot, truncated, truncatedFields } = buildConflictSnapshot(input.loser)
+    // T682 / M5（additive）：冲突字段集合（去重、保持调用方顺序）
+    const conflictFields = [...new Set(input.conflictFields ?? [])]
     // 跨路径互斥（ADR §9.3）：pull 的 remote-wins 与 push 的 stale/noop/... 均经本入口 ⇒
     // 同一 `meta` 单记录的 RMW 在 journal 锁内串行（锁序：pull/push 锁 → journal 锁，最内层）
     const next = await withJournalRmw(userId, ({ entries, record }) => {
@@ -237,6 +267,8 @@ export const appendConflict = async (
                 : { winnerUpdatedAt: input.winnerUpdatedAt }),
             ...(input.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: input.loserUpdatedAt }),
             ...(input.serverCurrent === undefined ? {} : { serverCurrent: input.serverCurrent }),
+            // T682 / M5（additive）：只落**非空**字段集（去重、保持传入顺序）；缺省 ⇒ 不落键
+            ...(conflictFields.length === 0 ? {} : { conflictFields }),
             ...(truncated ? { truncated: true, truncatedFields } : {}),
             ...(input.kind === 'pull-local-wins' ? { occurrences: 1 } : {}),
             at: new Date().toISOString()
@@ -329,6 +361,8 @@ export interface ConflictListItem {
     loser: Record<string, unknown> | null
     winnerUpdatedAt?: string
     loserUpdatedAt?: string
+    /** 冲突字段集合（T682 / M5 additive；缺省 ⇒ 面板按整行差异展示） */
+    conflictFields?: string[]
     at: string
 }
 
@@ -388,6 +422,7 @@ const toConflictListItem = (entry: ConflictJournalEntry): ConflictListItem => ({
     loser: LIST_SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null,
     ...(entry.winnerUpdatedAt === undefined ? {} : { winnerUpdatedAt: entry.winnerUpdatedAt }),
     ...(entry.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: entry.loserUpdatedAt }),
+    ...(entry.conflictFields === undefined ? {} : { conflictFields: entry.conflictFields }),
     at: entry.at
 })
 
@@ -405,37 +440,6 @@ export const listConflicts = async (userId: string): Promise<ConflictListResult>
         items: entries.map(toConflictListItem),
         folded: evicted || atLimit,
         foldedReason: evicted ? 'evicted' : atLimit ? 'limit' : null
-    }
-}
-
-/**
- * 空值哨兵（`null` / `undefined` / `''` / `[]`）—— 与展示层 `conflict-value-format.ts` 的
- * `isUnsetValue` **同一口径**（DEF-135：判等与展示不一致 ⇒ 两侧都渲染「未设置」却仍标差异）。
- * ⛔ `0` 与 `false` **不是**空值。
- */
-const isEmptySentinel = (value: unknown): boolean =>
-    value === null ||
-    value === undefined ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-
-/**
- * 深比较：**空值哨兵先归一**（`null` ≡ `undefined` ≡ `''` ≡ `[]`），数组/对象再按 JSON 比较
- *
- * @description **唯一判等实现**（DEF-135）：读侧 `diffFields` 与写侧
- *   `sync-service.recordPullLocalWins`（A1 快照字段挑选）**共用本函数**——⛔ 禁第二套口径，
- *   否则「写侧判差异、读侧判相等」会再次出现「两边都写未设置却标了差异」。
- */
-export const valuesEqual = (a: unknown, b: unknown): boolean => {
-    if (a === b) return true
-    const aEmpty = isEmptySentinel(a)
-    const bEmpty = isEmptySentinel(b)
-    if (aEmpty || bEmpty) return aEmpty && bEmpty
-    if (typeof a !== 'object' || typeof b !== 'object') return false
-    try {
-        return JSON.stringify(a) === JSON.stringify(b)
-    } catch {
-        return false
     }
 }
 
@@ -473,8 +477,14 @@ const latestEntry = (
     [...entries].reverse().find((entry) => entry.table === table && entry.entityId === entityId)
 
 /**
- * 只读对比：`table:entityId` 的败方快照 vs 本地当前行（字段级差异仅展示，不自动合并）
- * @returns 无该条目 ⇒ `null`；本地当前行缺失 ⇒ `current: null`（不抛错、不臆造结论）
+ * 只读对比：`table:entityId` 的败方快照 vs **当前版本**（字段级差异仅展示，不自动合并）
+ *
+ * @description 「当前版本」的取源（T680 / M4 修正）：
+ *              - 条目带 `serverCurrent`（push 回执的 `stale` / `noop` 等）⇒ 取**服务端当前行**
+ *                —— 面板标签是「云端最新」，且 M4 后本地行会**保留我的字段**（合并），
+ *                若仍拿本地行当「当前」，败方 === 当前 ⇒ 差异为空、冲突面板看不到任何东西；
+ *              - 否则（`pull-local-wins` 等无 `serverCurrent`）⇒ 维持既有口径：本地当前行。
+ * @returns 无该条目 ⇒ `null`；当前行缺失 ⇒ `current: null`（不抛错、不臆造结论）
  */
 export const compareConflict = async (
     userId: string,
@@ -487,7 +497,14 @@ export const compareConflict = async (
     const loser = DETAIL_SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null
     const config = findConflictEntity(table)
     let current: Record<string, unknown> | null = null
-    if (config) {
+    if (config && entry.serverCurrent) {
+        const serverEntity = config.resToEntity(entry.serverCurrent) as Record<string, unknown>
+        // 与 pull 同一条归一链：服务端隐式桶（`userId`）⇒ 本地字面 `'inbox'`
+        current =
+            table === 'tasks'
+                ? { ...serverEntity, projectId: toLocalProjectId(serverEntity.projectId, userId) }
+                : serverEntity
+    } else if (config) {
         const record = await config.getRecord(entityId)
         if (record) current = await config.recordToEntity(record)
     }
@@ -675,9 +692,18 @@ export const resolveConflictRetryLocal = async (
         if (!config || !RETRY_SNAPSHOT_KINDS.has(entry.kind)) return null
         // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecordAndEnqueue` 保留当前 base，
         // 且业务行 + 入队**同一 Dexie 事务**（T329 / DEF-50：⛔ 不得拆为两次 await ⇒ 防 RC-5 静默丢写）
+        // T680 / M4：顺带闭合唯一漏捕业务写点（679b §5.3）—— 用**写前旧实体**算字段级基准，
+        // 否则「partial base + 本次写 + 重试」会拼出「我的改动被静默取远端」路径。
         const updatedAt = nowCalibratedIso()
+        const previousRecord = await config.getRecord(entityId)
+        const fieldBase = previousRecord
+            ? captureFieldBase(await config.recordToEntity(previousRecord), {
+                  ...entry.loser,
+                  updatedAt
+              })
+            : undefined
         const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
-        await config.putRecordAndEnqueue(record, updatedAt)
+        await config.putRecordAndEnqueue(record, updatedAt, fieldBase)
         resolved = true
         return clearEntries()
     })

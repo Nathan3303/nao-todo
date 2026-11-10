@@ -2,8 +2,11 @@
  * 冲突对象标题解析（DEF-134）—— 左栏「这一行是什么东西冲突了」
  *
  * @description 左栏一行 = 一个冲突对象（`table:entityId`），标题必须能**指认对象**：
- *              1. 优先**当前行**（与 `compareConflict` 的 `current` 同源：本地当前行明文）的
+ *              1. 优先**本地当前行**明文（`getCurrent` = `getRecord` → `recordToEntity`）的
  *                 `name` / `title`；评论取 `content` 摘要、检查项取 `name`；
+ *                 ⚠️ 与 `compareConflict` 的 `current` **不再同源**（`T680 / M4` 后，带 `serverCurrent` 的条目
+ *                 其 `current` = **服务端当前行**；而标题始终取本地行 —— 标题的职责是「指认我这边这条记录」，
+ *                 与「对比展示用哪一版」正交）。
  *              2. 评论 / 检查项 ⇒「父任务名 · 摘要」（父任务按 `taskId` 查一次并缓存）；
  *              3. 仍取不到 ⇒ 表名 + 短 ID（≤8 位）；⛔ **不得只显示裸记录 ID**。
  *              ⛔ 不用败方快照回退：快照只存**差异字段 + 身份字段**（A1/A3），常无 `name`

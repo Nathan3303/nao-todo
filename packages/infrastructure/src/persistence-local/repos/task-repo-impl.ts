@@ -27,6 +27,7 @@ import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { pickOverwrittenFields, recordEditOverwrite } from '../../persistence-sync/edit-overwrite'
+import { captureFieldBase } from '../../persistence-sync/field-base'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -148,6 +149,9 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const record = await this.db.tasks.get(id)
             if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
+            // T676 / M1：字段级基准（`B`）= 本次写前的**明文**旧值。
+            // ⚠️ 必须在实体层捕获：`name`/`description` 落库为 `plain:<明文>`，与同步边界（实体）不同形状。
+            const entityBefore = Object.assign({}, entity)
             // DEF-146：写前取 `R`（库中云端当前值）并完成三值判定；⛔ 必须在任何字段赋值之前
             const overwrittenFields = pickOverwrittenFields(
                 entity as unknown as Record<string, unknown>,
@@ -184,7 +188,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'tasks',
                 await taskEntityToRecord(entity, this.currentUserId),
                 'upsert',
-                entity.updatedAt
+                entity.updatedAt,
+                captureFieldBase(entityBefore, entity)
             )
             // R-5：记账在保存事务**之后**；失败只 log（`recordEditOverwrite` 内部兜住、不抛出）
             if (overwrittenFields.length > 0) {
@@ -352,13 +357,22 @@ export class LocalTaskRepoImpl implements TaskRepository {
                         : undefined
                     const movedToInbox = !isAbsentStamp(project?.archivedAt)
                     const now = nowCalibratedIso()
-                    await putWithSyncBase(this.db.tasks, {
+                    const nextTask = {
                         ...record,
                         archivedAt: null,
                         projectId: movedToInbox ? 'inbox' : record.projectId,
                         updatedAt: now
-                    })
-                    await syncTracker.markDirty('tasks', id, 'upsert', now)
+                    }
+                    const fieldBase = captureFieldBase(record, nextTask)
+                    await putWithSyncBase(this.db.tasks, nextTask)
+                    await syncTracker.markDirty(
+                        'tasks',
+                        id,
+                        'upsert',
+                        now,
+                        this.db.syncQueue,
+                        fieldBase
+                    )
                     return { ok: true as const, movedToInbox }
                 }
             )
@@ -544,6 +558,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const record = await this.db.tasks.get(id)
             if (!record || record.userId !== this.currentUserId) return [null, '任务不存在']
             const entity = await taskRecordToEntity(record)
+            // T676 / M1：字段级基准在实体层捕获（同 `update`：密文字段与同步边界同形状）
+            const entityBefore = Object.assign({}, entity)
             const newRemindAt = dayjs().add(durationMinutes, 'minute').toISOString()
             entity.remindAt = newRemindAt
             // 同步提醒时刻：DateSelector 显示条件要求 remindTime 非空（task-date-selector.vue），
@@ -556,7 +572,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'tasks',
                 await taskEntityToRecord(entity, this.currentUserId),
                 'upsert',
-                entity.updatedAt
+                entity.updatedAt,
+                captureFieldBase(entityBefore, entity)
             )
             return [newRemindAt, null]
         } catch (err) {

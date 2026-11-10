@@ -29,13 +29,18 @@ export class SyncTracker {
      * @param entityId 实体 id
      * @param action 动作（upsert/delete）
      * @param updatedAt 本地实体 updatedAt（删除时为 deletedAt）
+     * @param queue 队列表（默认全局 `localDatabase.syncQueue`；事务内调用方传自己的 `db.syncQueue`）
+     * @param fieldBase 字段级基准（T676 / M1）：`{ 字段名: 写前值 }`，只含本次写涉及的字段。
+     *                  缺省 ⇒ 队列项不写该键（老调用点逐字不变）。同实体重复写**首次写胜**
+     *                  （基准只前进：后续写只更新 `L`，不覆盖既有 `B`）。
      */
     async markDirty(
         table: string,
         entityId: string,
         action: SyncAction,
         updatedAt: string,
-        queue: Table<SyncQueueRecord, string> = localDatabase.syncQueue
+        queue: Table<SyncQueueRecord, string> = localDatabase.syncQueue,
+        fieldBase?: Record<string, unknown>
     ): Promise<void> {
         const userId = localSession.getCurrentUserId()
         if (!userId) return // 无会话（未登录/测试环境）不登记
@@ -43,6 +48,12 @@ export class SyncTracker {
         const id = `${userId}:${table}:${entityId}`
         // 同实体重复写合并：保留首次入队时间与既有重试计数
         const existing = await queue.get(id)
+        // T676 / M1：字段级基准首次写胜（既有 `B` 优先于本次捕获值 ⇒ 基准只前进）
+        let mergedFieldBase = existing?.fieldBase
+        if (fieldBase !== undefined) {
+            mergedFieldBase =
+                mergedFieldBase === undefined ? fieldBase : { ...fieldBase, ...mergedFieldBase }
+        }
         await queue.put({
             id,
             userId,
@@ -57,6 +68,8 @@ export class SyncTracker {
             attempts: existing?.attempts,
             nextAttemptAt: existing?.nextAttemptAt,
             lastErrorClass: existing?.lastErrorClass,
+            // T676 / M1：仅在捕获到基准时落键（无改动 ⇒ 键不存在，下游走保守路径）
+            ...(mergedFieldBase === undefined ? {} : { fieldBase: mergedFieldBase }),
             createdAt: existing?.createdAt ?? now,
             updatedAt: now
         })

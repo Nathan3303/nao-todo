@@ -232,6 +232,16 @@ const activeItems = computed<ConflictListItem[]>(() => {
     )
 })
 
+/**
+ * 冲突字段（T682 / M5）：最新条目声明的**真正冲突**字段 → 人话标签
+ * @description 复用 `conflict-field-labels`（零新 i18n 键）；缺省（旧条目 / 整行裁决）⇒ 空数组、不渲染该行。
+ *              与下方「差异详情」的区别：差异 = 败方 vs 当前的**全部**差异；本列表 = **同字段冲突**的子集
+ *              （不同字段已自动合并，不出现在这里）。
+ */
+const conflictFieldLabels = computed<string[]>(() =>
+    (activeItem.value?.conflictFields ?? []).map((field) => fieldLabel(field))
+)
+
 /** 该对象的全部冲突类型（去重、按出现顺序）——避免「只显示最新 kind」丢信息 */
 const activeKinds = computed<string[]>(() => {
     const kinds: string[] = []
@@ -420,6 +430,10 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                         <div v-if="activeKinds.length" class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaKind') }}</dt>
                             <dd>{{ activeKinds.join('、') }}</dd>
+                        </div>
+                        <div v-if="conflictFieldLabels.length" class="conflict-list__meta-row">
+                            <dt>{{ t('sync.conflict.fieldColumn') }}</dt>
+                            <dd>{{ conflictFieldLabels.join('、') }}</dd>
                         </div>
                         <div v-if="activeItems.length" class="conflict-list__meta-row">
                             <dt>{{ t('sync.conflict.metaRecordCount') }}</dt>

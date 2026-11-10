@@ -54,6 +54,13 @@ export interface SyncStatusState {
      */
     conflictCount: number
     /**
+     * 字段级合并**已应用次数**（`T683` / M6 · PRD NFR「可观测」）
+     * @description 内存态累计（**不落盘、不参与运行边界**）：每次 pull/push 侧合并真正落库（业务字段变化）
+     *              或产出冲突时 +1。冲突的**按字段**计数从 journal 条目 `conflictFields` 读
+     *              （`conflictFieldCounts`），本字段只回答「合并发生了几次」。
+     */
+    fieldMergeCount: number
+    /**
      * 最近一次推送中「被服务端丢弃非白名单字段」的**条目数**（T471 / DEF-44；信息级诊断）
      * @description 每次推送运行**覆盖式**落定（无漂移 ⇒ 归 0）；**不计入** `pendingCount`/`failedCount`；
      *              ⛔ 不阻塞出队（字段漂移非可处置项）。
@@ -95,6 +102,7 @@ export class SyncStatus {
         failedCount: 0,
         preferenceFailedCount: 0,
         conflictCount: 0,
+        fieldMergeCount: 0,
         droppedFieldCount: 0,
         lastError: null,
         errors: [],
@@ -189,6 +197,16 @@ export class SyncStatus {
      */
     setConflictCount(count: number): void {
         this.set({ conflictCount: count })
+    }
+
+    /**
+     * 累加「字段级合并已应用次数」（`T683` / M6 · NFR 可观测）
+     * @description 独立字段：不改变 `pendingCount`/`failedCount`/`conflictCount` 语义，
+     *              也**不参与** `beginRun`/`endRun` 运行边界（会话内累计，页面刷新归零）。
+     */
+    reportFieldMerge(count = 1): void {
+        if (count <= 0) return
+        this.set({ fieldMergeCount: this.state.fieldMergeCount + count })
     }
 
     /**
