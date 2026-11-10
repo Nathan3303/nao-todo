@@ -18,6 +18,7 @@ const {
     taskHandler,
     switchTaskDetails,
     dialogManager,
+    beginEdit,
     updateTaskDetails,
     deleteTask,
     restoreTask,
@@ -42,6 +43,8 @@ const handleCopy = (text: string) => void copyMarkdown(text)
 
 const openParentTaskSelector = () => {
     if (!vo.value) return
+    // DEF-153：打开选择器 = 交互起点 ⇒ 冻结 parentTaskId 基准
+    beginEdit('parentTaskId')
     dialogManager.open(PARENT_TASK_SELECTOR_DIALOG_KEY, {
         currentTaskId: vo.value.id,
         onSelect: (parentTaskId: TaskViewObject['id']) => {
@@ -55,9 +58,12 @@ const handleDropdownExecute = async (executeId: string) => {
     if (!vo.value) return
     switch (executeId) {
         case 'star-mark':
+            // DEF-153：动作点击 = 交互起点 ⇒ 冻结 starMarkAt 基准（此刻 vo.starMarkAt 仍是旧值）
+            beginEdit('starMarkAt')
             await updateTaskDetails(vo.value.id, { starMarkAt: dayjs().toISOString() })
             break
         case 'un-star-mark':
+            beginEdit('starMarkAt')
             await updateTaskDetails(vo.value.id, { starMarkAt: '' })
             break
         case 'comment-todo':

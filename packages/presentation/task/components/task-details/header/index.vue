@@ -8,11 +8,31 @@ import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const emit = defineEmits<{ (e: 'reload'): void }>()
 
-const { vo, refreshKey, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, refreshKey, closeDetails, beginEdit, updateTaskDetails } =
+    inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const switchState = () => {
     if (vo.value === null) return
+    // DEF-153：点击（= 交互起点）即冻结 state 基准（此刻 vo.state 仍是旧值）
+    beginEdit('state')
     updateTaskDetails(vo.value.id, { state: vo.value.isDone ? 'todo' : 'done' })
+}
+
+/**
+ * 日期/提醒面板打开 ⇒ 冻结相关字段基准（`DEF-153`）
+ * @description 只冻结**可能出现在本次载荷**里的字段；`updateTaskDetails` 仅对载荷涉及字段透传。
+ */
+const beginEditDates = () => {
+    for (const field of [
+        'startAt',
+        'endAt',
+        'remindAt',
+        'remindRepeat',
+        'remindTime',
+        'remindWeekdays'
+    ]) {
+        beginEdit(field)
+    }
 }
 
 const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
@@ -31,6 +51,7 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
                 :end-at="vo.endAt"
                 :task="vo"
                 :refresh-key="refreshKey"
+                @edit-start="beginEditDates"
                 @update-all="updateDateAndRemind"
             />
         </nue-div>

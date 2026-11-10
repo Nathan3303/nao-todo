@@ -14,4 +14,6 @@ export type TaskDateSelectorProps = {
 // 任务日期选择器事件
 export type TaskDateSelectorEmits = {
     (e: 'update-all', vo: UpdateTaskViewObject): void
+    /** 面板打开那一刻（`DEF-153`）：供调用方冻结日期/提醒字段的编辑基准 */
+    (e: 'edit-start'): void
 }

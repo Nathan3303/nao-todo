@@ -476,8 +476,14 @@ describe('T663 / DEF-144 · 子任务区（真实组件）：首进 loading、�
                 loadingText: wrapper.text().includes('正在加载')
             })
         )
-        expect(wrapper.text(), '失败必须可见').toContain('子任务获取失败')
-        expect(api.subTasksError.value).not.toBe('')
+        // T688 / `DEF-149`（2026-11-10 行为契约变更，PM 授权）：
+        //   有已渲染行时，刷新失败改走**非阻塞提示条**（原「阻塞式 subTasksError + 整块替换」正是本缺陷
+        //   要修掉的行为）。可见性要求**不变且更强**：失败仍可见 + 行与输入框**保留**。
+        expect(wrapper.text(), '失败必须可见').toContain('刷新失败')
+        expect(api.subTasksRefreshError.value).not.toBeNull()
+        expect(api.subTasksError.value).toBe('')
+        expect(wrapper.findAll('.subtask-row').length).toBeGreaterThan(0)
+        expect(wrapper.find('.subtask-row__create-bar').exists()).toBe(true)
         expect(wrapper.text(), '不得卡在加载态').not.toContain('正在加载')
     })
 })
