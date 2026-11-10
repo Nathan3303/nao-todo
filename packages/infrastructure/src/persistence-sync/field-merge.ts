@@ -27,6 +27,23 @@ import { SYNC_COMPARE_IGNORED_FIELDS } from './sync-normalize'
 /** 合并模式：`merge` = 字段级三方；`lww` = 整行赢家退化（同一函数，⛔ 不是第二套算法） */
 export type MergeMode = 'merge' | 'lww'
 
+/** 回滚开关的存储键（ADR D7 固定；`merge` 默认 / `lww` 一键降级） */
+export const FIELD_MERGE_MODE_KEY = 'nao-todo:field-merge-mode'
+
+/**
+ * 解析当前合并模式（ADR D7：开关读取点**唯一**）
+ * @description `localStorage['nao-todo:field-merge-mode'] === 'lww'` ⇒ 降级；其余（含无 localStorage /
+ *              读失败 / 非法值）⇒ `merge`。⛔ 不要在调用点另读 localStorage。
+ */
+export const resolveMergeMode = (): MergeMode => {
+    try {
+        if (typeof localStorage === 'undefined') return 'merge'
+        return localStorage.getItem(FIELD_MERGE_MODE_KEY) === 'lww' ? 'lww' : 'merge'
+    } catch {
+        return 'merge'
+    }
+}
+
 /** `lww` 模式的整行赢家（仅 `mode='lww'` 读取；`merge` 模式只决定冲突字段取值） */
 export type MergeWinner = 'local' | 'remote'
 

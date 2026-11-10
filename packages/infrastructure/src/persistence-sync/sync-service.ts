@@ -50,8 +50,9 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './sync-normalize'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
-import { appendConflict, countConflicts } from './conflict-journal'
+import { appendConflict, countConflicts, valuesEqual } from './conflict-journal'
 import { pickChangedFields } from './edit-overwrite'
+import { mergeBusinessFields, resolveMergeMode, type MergeWinner } from './field-merge'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -774,6 +775,154 @@ export class SyncService {
     }
 
     /**
+     * T679 / M3：pull 侧字段级合并（`tasks` × `upsert` × 有字段级基准）
+     *
+     * @description 三条集成守卫（ADR §实施口径补充 / M2 复核）：
+     *              ① `fields` = **完整合并域**（`entityToPush` 键集）—— ⛔ 不传「差异字段子集」（否则
+     *                 提醒组整组快照与冲突字段集合残缺）；
+     *              ② 落库 = `{ ...localRecord, ...mergedFiltered }` + **base 单独推进**（不回退）+ `deletedAt`
+     *                 从本地行保留（R-4）—— ⛔ 不得整行 replace；
+     *              ③ `merged` 的显式 `undefined` **必须过滤**（否则 spread 会清空本地值）。
+     *
+     *              基准补齐：`fieldBase` 只含「我改过的字段」⇒ 缺失字段的 `B` = **本地当前值**
+     *              （= 我未改）⇒ 取远端值；整份 `fieldBase` 缺失时调用方根本不会进本方法（走今日分支）。
+     *              失败语义（AC3）：行 + 基准**同事务**落库，**落库成功后才记账**（不写半成品 / 不记假账）。
+     *              记账 kind 沿用该边界既有 kind（远端胜 = `remote-wins`；本地胜 = `pull-local-wins`），
+     *              ⛔ 本步不加 `conflictFields`（M5）。
+     *
+     * @returns `written` = 行是否有实际变更（业务字段或 base）；`keptLocalFields` = 合并结果是否仍有
+     *          我方字段（远端胜支据此决定是否出队）；`conflicts` = 冲突字段（按合并域顺序）
+     */
+    private async applyPullFieldMerge(
+        config: SyncTableConfig,
+        remote: Record<string, unknown>,
+        entityId: string,
+        queued: SyncQueueRecord,
+        localRecord: Record<string, unknown>,
+        winner: MergeWinner,
+        userId: string
+    ): Promise<{ written: boolean; keptLocalFields: boolean; conflicts: string[] }> {
+        const local = await config.recordToEntity(localRecord)
+        // 形状对齐：`tasks.projectId` 的远端形态是服务端隐式桶（`userId`）⇒ 先归一为本地字面 `'inbox'`，
+        // 否则「我未改」的字段会被判成差异（`valuesEqual('inbox', userId) === false`）而多写一次。
+        const remoteEntity =
+            config.table === 'tasks'
+                ? { ...remote, projectId: toLocalProjectId(remote.projectId, userId) }
+                : remote
+        const fields = Object.keys(config.entityToPush(remoteEntity))
+        const base = this.augmentFieldBase(queued.fieldBase ?? {}, local, fields)
+        const { merged, conflicts } = mergeBusinessFields({
+            base,
+            remote: remoteEntity,
+            local,
+            fields,
+            lwwWinner: winner
+        })
+        const mergedFields = Object.fromEntries(
+            Object.entries(merged).filter(([, value]) => value !== undefined)
+        )
+        const remoteUpdatedAt =
+            typeof remoteEntity.updatedAt === 'string' ? remoteEntity.updatedAt : ''
+        const businessChanged = Object.keys(mergedFields).some(
+            (field) => !valuesEqual(mergedFields[field], local[field])
+        )
+        const baseChanged =
+            remoteUpdatedAt !== '' && localRecord.syncedServerUpdatedAt !== remoteUpdatedAt
+        // 基准只前进（R-6）：合并后 `fieldBase` = 远端当前域值（下一轮判据稳定、重复 pull 幂等）
+        const retiredBase: Record<string, unknown> = {}
+        for (const field of fields) retiredBase[field] = remoteEntity[field]
+        const queueBaseChanged = !this.fieldBaseEquals(queued.fieldBase, retiredBase)
+        // 落库行必须走 **entity → record**（`name`/`description` 落库为 `plain:<明文>`，
+        // ⛔ 不能把实体明文直接 spread 进记录）；加解密在事务外完成（Dexie 事务内禁 await 外部 Promise）。
+        let nextRecord: Record<string, unknown> | undefined
+        if (businessChanged || baseChanged) {
+            const nextEntity = { ...local, ...(businessChanged ? mergedFields : {}) }
+            const source =
+                config.table === 'tasks'
+                    ? { ...nextEntity, projectId: toLocalProjectId(nextEntity.projectId, userId) }
+                    : nextEntity
+            nextRecord = (await config.entityToRecord(source, userId)) as Record<string, unknown>
+            const nextBase = baseChanged ? remoteUpdatedAt : localRecord.syncedServerUpdatedAt
+            if (typeof nextBase === 'string' && nextBase) {
+                nextRecord.syncedServerUpdatedAt = nextBase
+            }
+        }
+        let written = false
+        if (nextRecord || queueBaseChanged) {
+            const rawTable = this.rawTableOf(config)
+            // 行 + 基准同事务（AC3：抛错时整体回滚，不留下「已落库但基准未推进」或反之）
+            await localDatabase.transaction('rw', rawTable, localDatabase.syncQueue, async () => {
+                if (nextRecord) {
+                    await rawTable.put(nextRecord)
+                    written = true
+                }
+                if (queueBaseChanged) {
+                    await localDatabase.syncQueue.update(`${userId}:${config.table}:${entityId}`, {
+                        fieldBase: retiredBase
+                    })
+                }
+            })
+        }
+        // 落库成功后才记账（AC3）：无冲突 = 全部自动合并，0 记账（R-3）
+        if (conflicts.length > 0) {
+            const remoteUpdatedAtValue = remoteUpdatedAt || undefined
+            const loser: Record<string, unknown> =
+                winner === 'remote' ? await config.recordToEntity(localRecord) : { id: entityId }
+            if (winner === 'local') {
+                // R-H：快照只含**冲突字段**（合并成功的字段不入账，AC5-⑧）
+                for (const field of conflicts) {
+                    loser[field] = remoteEntity[field] === undefined ? null : remoteEntity[field]
+                }
+            }
+            const count = await appendConflict(userId, {
+                kind: winner === 'remote' ? 'remote-wins' : 'pull-local-wins',
+                table: config.table,
+                entityId,
+                loser,
+                winnerUpdatedAt: winner === 'remote' ? remoteUpdatedAtValue : queued.localUpdatedAt,
+                loserUpdatedAt: winner === 'remote' ? queued.localUpdatedAt : remoteUpdatedAtValue
+            })
+            syncStatus.setConflictCount(count)
+        }
+        // 我方是否还有字段可保留（远端胜支据此决定是否出队）：合并结果与远端逐字段相等 ⇒ 无
+        const keptLocalFields = Object.keys(mergedFields).some(
+            (field) => !valuesEqual(mergedFields[field], remoteEntity[field])
+        )
+        return { written, keptLocalFields, conflicts }
+    }
+
+    /**
+     * 字段级基准补齐（T679 / M3）
+     * @description `fieldBase` 只含「我改过的字段」⇒ 缺失字段的基准 = **本地当前值**（= 我未改）
+     *              ⇒ 三方判定里 `L==B` ⇒ 取远端值（这正是「不同字段互不覆盖」的前提）。
+     *              ⛔ 整份 `fieldBase` 缺失不在此处理（调用方直接走今日分支 = 保守）。
+     */
+    private augmentFieldBase(
+        fieldBase: Record<string, unknown>,
+        local: Record<string, unknown>,
+        fields: readonly string[]
+    ): Record<string, unknown> {
+        const base: Record<string, unknown> = {}
+        for (const field of fields) {
+            base[field] = Object.prototype.hasOwnProperty.call(fieldBase, field)
+                ? fieldBase[field]
+                : local[field]
+        }
+        return base
+    }
+
+    /** 字段级基准是否等价（逐字段 `valuesEqual`；键集不一致 ⇒ 不等价） */
+    private fieldBaseEquals(
+        left: Record<string, unknown> | undefined,
+        right: Record<string, unknown>
+    ): boolean {
+        if (!left) return false
+        const keys = Object.keys(right)
+        if (Object.keys(left).length !== keys.length) return false
+        return keys.every((field) => valuesEqual(left[field], right[field]))
+    }
+
+    /**
      * 消费派生行版本回执（T326 / B②，客户端半边；服务端字段由 T327 提供）
      * @description 同一批 push 中，服务端对子实体（检查项/评论/子任务）的写入会**派生推进父任务/清单**
      *              的 `updated_at` 却不回传（RC-1）⇒ 客户端 base 静默过期 ⇒ 下次 push `stale`。
@@ -1133,6 +1282,9 @@ export class SyncService {
         if (!userId) return 0
         const records = result.items ?? []
         let written = 0
+        // T679 / M3：回滚开关（ADR D7，读取点唯一 = `resolveMergeMode`）
+        // `lww` ⇒ 整批跳过合并路径，逐字走今日两支（一键降级，不是第二套算法）
+        const mergeMode = resolveMergeMode()
         for (const res of records) {
             const entity = config.resToEntity(res) as Record<string, unknown>
             const id = String((entity.id as string | number) ?? '')
@@ -1143,7 +1295,36 @@ export class SyncService {
             const queued = await localDatabase.syncQueue.get(`${userId}:${config.table}:${id}`)
             if (queued) {
                 const localTs = Date.parse(queued.localUpdatedAt) || 0
-                if (remoteTs > localTs) {
+                const remoteDeleted =
+                    entity.deletedAt !== null &&
+                    entity.deletedAt !== undefined &&
+                    entity.deletedAt !== ''
+                // T679 / M3：字段级合并只作用于 `tasks` 的 `upsert` 且**有字段级基准**（R-8 / ADR D1）；
+                // 墓碑不进合并域（R-4）⇒ 仍走今日「远端胜 + 出队」分支（AC6 删除两护栏）。
+                const mergeable =
+                    mergeMode === 'merge' &&
+                    config.table === 'tasks' &&
+                    queued.action === 'upsert' &&
+                    queued.fieldBase !== undefined
+                const mergeLocalRecord = mergeable ? await this.tableOf(config).get(id) : undefined
+                if (mergeLocalRecord && !remoteDeleted) {
+                    const winner: MergeWinner = remoteTs > localTs ? 'remote' : 'local'
+                    const outcome = await this.applyPullFieldMerge(
+                        config,
+                        entity,
+                        id,
+                        queued,
+                        mergeLocalRecord,
+                        winner,
+                        userId
+                    )
+                    if (outcome.written) written += 1
+                    // 远端胜支：合并后我方已无字段可保留（== 远端）⇒ 出队（= 今日行为）；
+                    // 仍有我方字段 ⇒ 保队列，由下一轮 push 收敛（D-b2；AC1-Z / AC3 依赖）。
+                    if (winner === 'remote' && !outcome.keptLocalFields) {
+                        await syncTracker.removeQueued(config.table, id)
+                    }
+                } else if (remoteTs > localTs) {
                     // PS-14 / DP-1：远端胜 ⇒ 覆盖前记录**败方（本地被覆盖记录）快照**（不静默丢数据）
                     const localRecord = await this.tableOf(config).get(id)
                     if (localRecord) {
@@ -1163,11 +1344,7 @@ export class SyncService {
                     await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
-                } else if (
-                    entity.deletedAt !== null &&
-                    entity.deletedAt !== undefined &&
-                    entity.deletedAt !== ''
-                ) {
+                } else if (remoteDeleted) {
                     // A1 墓碑硬约束（T640 Q2）：远端为墓碑时**不得**走本地胜分支 ——
                     //   否则下一步 push 的 base 恰等于墓碑版本，服务端判 Overwrite 并清 `deleted_at`
                     //   ⇒ **确定性复活**。改走「远端胜」语义：应用墓碑 + 出队 + 记本地内容。

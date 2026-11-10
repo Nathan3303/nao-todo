@@ -379,7 +379,11 @@ describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC
 describe('T671 时序 Z：B 保存后先 pull（周期自动刷新）⇒ 既有 A1 `pull-local-wins`', () => {
     beforeEach(resetLocalState)
 
-    it('Z0 对照组：不传编辑基准（= 回退本批保存侧改动的等价路径）⇒ 同场景仍 pull-local-wins', async () => {
+    it('Z0【M3 翻转】对照组：不传编辑基准（origin）⇒ 仍字段级合并、0 条（基准捕获与 origin 无关）', async () => {
+        // T675 / B 批 M3（2026-11-10）：字段级合并后「不同字段」不再产生记录 ⇒ 断言由
+        // 「1 条 pull-local-wins」**收紧**为「0 条 + 字段级两值都在」；原整行二选一语义已由
+        // `AC1-Z` 的字段级断言承担。本例保留的意义 = 证明 `fieldBase` 捕获与保存侧 `origin` 无关
+        // （见 T675 报告 §4.1）。
         const server = makeServer()
         const id = await initSynced(server)
         server.setRemote(id, { description: 'A-desc' })
@@ -388,18 +392,18 @@ describe('T671 时序 Z：B 保存后先 pull（周期自动刷新）⇒ 既有 
         expect(await journal()).toHaveLength(0)
 
         await new SyncService(server.requester).pullAll()
-        const entries = await journal()
-        dump('Z0 entry', {
-            kind: entries[0]?.kind,
-            loser: entries[0]?.loser,
-            loserUpdatedAt: entries[0]?.loserUpdatedAt
-        })
-        expect(entries).toHaveLength(1)
-        expect(entries[0]!.kind).toBe('pull-local-wins')
-        expect(entries[0]!.loserUpdatedAt).toBeDefined()
+        expect(await journal()).toHaveLength(0)
+        const local = await localTask(id)
+        expect(local.name).toBe('B-name')
+        expect(local.description).toBe('A-desc')
+        expect(await localDatabase.syncQueue.get(`${USER_ID}:tasks:${id}`)).toBeTruthy()
     })
 
-    it('Z1 记录 kind=pull-local-wins、loser=云端整行、loserUpdatedAt 有值（非保存侧）', async () => {
+    it('Z1【M3 翻转】不同字段 ⇒ 字段级合并（0 条）+ 保队列 + base 前进；随后 push 两端字段都在', async () => {
+        // T675 / B 批 M3（2026-11-10）：不同字段 ⇒ 字段级合并（0 条），我的名称与云端描述都保住；
+        // 队列保留（我的字段仍需推送），base 已推进到远端版本。原「loser=云端整行 / loserUpdatedAt /
+        // 随后 push 覆盖云端描述」断言描述的是本批要消灭的整行行为，已由 `AC1-Z` 的字段级断言取代
+        // （见 T675 报告 §4.1：断言为收紧，不是放宽）。
         const server = makeServer()
         const id = await initSynced(server)
         const remoteAt = server.setRemote(id, { description: 'A-desc' })
@@ -409,28 +413,18 @@ describe('T671 时序 Z：B 保存后先 pull（周期自动刷新）⇒ 既有 
 
         await new SyncService(server.requester).pullAll() // 周期 auto-refresh：只 pull
 
-        const entries = await journal()
-        expect(entries).toHaveLength(1)
-        const entry = entries[0]!
-        dump('Z1 entry', {
-            kind: entry.kind,
-            table: entry.table,
-            entityId: entry.entityId,
-            loser: entry.loser,
-            loserUpdatedAt: entry.loserUpdatedAt,
-            winnerUpdatedAt: entry.winnerUpdatedAt,
-            loserFields: Object.keys(entry.loser).sort()
-        })
-        expect(entry.kind).toBe('pull-local-wins')
-        expect(entry.loser).toMatchObject({ name: 'A0-name', description: 'A-desc' })
-        // A1 标志：败方=远端快照（loserUpdatedAt = 远端 updatedAt）；保存侧记录不会带该字段
-        expect(entry.loserUpdatedAt).toBe(remoteAt)
+        expect(await journal()).toHaveLength(0)
+        const local = await localTask(id)
+        expect(local.name).toBe('B-name')
+        expect(local.description).toBe('A-desc')
+        expect((await localDatabase.tasks.get(id))?.syncedServerUpdatedAt).toBe(remoteAt)
+        expect(await localDatabase.syncQueue.get(`${USER_ID}:tasks:${id}`)).toBeTruthy()
 
-        // 随后的 push 会把「我的整行」写回服务端 ⇒ 云端描述被覆盖（真实覆盖，记录是诚实的）
+        // 随后的 push 把合并结果（我的名称 + 云端描述）写回服务端
         await new SyncService(server.requester).pushAll()
         dump('Z1 after-push server', server.row(id))
         expect(server.row(id)?.name).toBe('B-name')
-        expect(server.row(id)?.description).toBe('A0-desc')
+        expect(server.row(id)?.description).toBe('A-desc')
     })
 })
 
