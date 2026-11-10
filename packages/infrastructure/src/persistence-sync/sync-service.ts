@@ -870,6 +870,15 @@ export class SyncService {
                 }
             })
         }
+        // T683 / M6（NFR 可观测）：合并已应用次数 + 结构化事件（⛔ 不含业务值）
+        if (businessChanged || conflicts.length > 0) {
+            syncStatus.reportFieldMerge()
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_FIELD_MERGE_APPLIED, {
+                userId,
+                table: config.table,
+                conflicts: conflicts.length
+            })
+        }
         // 落库成功后才记账（AC3）：无冲突 = 全部自动合并，0 记账（R-3）
         if (conflicts.length > 0) {
             const remoteUpdatedAtValue = remoteUpdatedAt || undefined
@@ -1028,6 +1037,15 @@ export class SyncService {
             })
         }
         if (written) this.notifyDataChanged()
+        // T683 / M6（NFR 可观测）：合并已应用次数 + 结构化事件（⛔ 不含业务值）
+        if (handled && (businessChanged || conflicts.length > 0)) {
+            syncStatus.reportFieldMerge()
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_FIELD_MERGE_APPLIED, {
+                userId,
+                table: config.table,
+                conflicts: conflicts.length
+            })
+        }
         if (handled && conflicts.length > 0) {
             // 冲突仍可见（kind 沿用既有 `stale`，loser = 我的整行 + `serverCurrent`）；无冲突 = 0 记账
             const loser = await config.recordToEntity(localRecord)

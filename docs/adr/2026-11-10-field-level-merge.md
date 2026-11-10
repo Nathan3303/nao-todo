@@ -51,6 +51,23 @@
 - 事务边界：`fieldMerge` 只做纯计算；持久化仍走既有 Dexie 事务与 `navigator.locks` 锁序（pull → journal）。
 - 用例口径：AC8「既有用例零修改」按两层执行 —— 断言不得放宽、语义不得变；**靠「不同字段」构造 `stale`/`remote-wins` 的夹具必须同字段化**（合并后不再产生该记录是设计目的，不是回归），需 qa 出具等价性清单。
 
+## 生产回滚操作说明（M6 定稿，2026-11-10）
+
+- **开关键**：`localStorage['nao-todo:field-merge-mode']`（代码常量 `FIELD_MERGE_MODE_KEY`）；读取点**唯一** = `field-merge.resolveMergeMode()`。
+- **取值**：缺省 / 非法值 / 读失败 ⇒ `merge`（默认：字段级合并）；`'lww'` ⇒ **一键降级为整行 LWW**（逐字复现 `v1.18.2`：pull 远端胜 = 整行覆盖 + 出队、pull 本地胜 = 只推进 base、push `stale` = 记账 + 出队）。
+- **生效时机**：**下一次 pull / push 运行**（模式按**批**读取：`applyPullBatch` 与 `pushAllInnerLocked` 入口各读一次）。⛔ **无需重启、无需重新登录、无需改库 / 迁移**。
+- **操作步骤**（浏览器控制台或桌面端 devtools，当前 origin）：
+    1. 关闭合并：`localStorage.setItem('nao-todo:field-merge-mode', 'lww')`
+    2. 触发一次同步（切页再回 / 点状态栏重试 / 等 30s 自动刷新）⇒ 冲突面板与 `sync.field-merge.applied` 结构化日志**停止增长**即为已生效
+    3. 恢复合并：`localStorage.removeItem('nao-todo:field-merge-mode')`（或设为 `'merge'`）
+- **已知边界**：① 关闭时**捕获仍继续**（队列项照旧写 `fieldBase`），只禁**消费**（ADR D7）⇒ 重开无需回填；② 关闭**不**回滚已合并的数据（合并结果已落库，属正常数据）；③ 关闭**不**影响 `DEF-146` 保存侧记账（`v1.18.2` 已有）；④ 面板「当前版本」取源（M4：带 `serverCurrent` 的条目取服务端行）**不随开关变化**（展示口径，非同步行为）。
+- **验收实测**：`t683-rollback-switch`（真实仓储 + 真实 journal + 假服务端只模拟契约）在**同一进程 / 同一 DB** 内运行中切换：`merge` ⇒ 0 条 + 字段级两值；切 `lww` ⇒ 1 条 + 整行不合并；切回 `merge` ⇒ 再 0 条；并覆盖 `lww` 下远端胜支与 push `stale` 的逐字今日行为。
+
+## 可观测（M6 · PRD NFR）
+
+- **合并次数**：`syncStatus.get().fieldMergeCount`（内存态累计，不落盘、不参与运行边界；每次合并真正落库或产出冲突时 +1）+ 结构化事件 `sync.field-merge.applied`（字段：`table` / `conflicts` 计数，**⛔ 不含业务值**）。
+- **冲突次数（按字段）**：从 journal 条目读 —— `conflictFieldCounts(entries)`（每条目 `conflictFields` 去重后各计 1；缺省字段的旧条目不计入）。⛔ 不新增 UI 面、不新增持久化字段。
+
 ## 相关指针
 
 - 10 问逐答 / 文件级落点 / 工期表 / 受影响用例 triage：`docs/reports/T672-field-merge-arch-review.md`

@@ -203,6 +203,24 @@ export const countConflicts = async (userId: string): Promise<number> =>
     conflictObjectCount(await loadConflictJournal(userId))
 
 /**
+ * 冲突次数（**按字段**）—— 从 journal 条目读（`T683` / M6 · NFR「可观测」）
+ * @description 每条目的 `conflictFields` **去重后**各计 1（同一裁决的同一字段只算一次）；
+ *              缺省 `conflictFields` 的旧条目不计入（整行裁决，无字段级信号）。
+ *              ⛔ 纯读：不写库、不改计数口径（`conflictCount` 仍是对象数）。
+ */
+export const conflictFieldCounts = (
+    entries: ReadonlyArray<{ conflictFields?: string[] }>
+): Record<string, number> => {
+    const counts: Record<string, number> = {}
+    for (const entry of entries) {
+        for (const field of new Set(entry.conflictFields ?? [])) {
+            counts[field] = (counts[field] ?? 0) + 1
+        }
+    }
+    return counts
+}
+
+/**
  * 追加一条冲突记账（**纯追加 + 有界**：超上限环形淘汰最旧）
  * @returns 追加后的**对象数**（distinct 实体；供状态面计数，T346 口径）
  * @description 空 `userId` 硬失败（C-55：不得退化为空用户读写）
