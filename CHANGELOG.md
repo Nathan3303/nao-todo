@@ -2,6 +2,22 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.19.0] - 2026-11-10
+
+字段级合并（B 批 · Issue #340 · 代码 PR #341 · 发版说明 `docs/releases/v1.19.0.md`）：
+
+- **核心**：同步裁决粒度由**整行快照**改为**字段级三方合并**（`B` 上次同步成功的字段值 × `R` 云端当前 × `L` 本地当前）：`R==B ⇒ L` · `L==B ⇒ R` · `R==L ⇒ 任取` · 三者两两不等 ⇒ 冲突。⇒ 两端改不同字段**不再互相覆盖**（`T671` 实测的三时序 X/Y/Z 全部收敛为零冲突且两字段都在）。
+- **基准**：队列项新增可选 `fieldBase`（只含**我改过的字段**），写时捕获、零额外 IO、零 Dexie 版本、零迁移；任务文本字段在**实体层**捕获（落库 `plain:` 与同步边界不同形状）；缺失字段按「我未改」取远端（等价性由源级护栏保证）。
+- **实现**：纯函数 `persistence-sync/field-merge.ts`（无 IO / 无加解密 / 无 async）；三个接入边界（pull 远端胜 / pull 本地胜 / push `stale`）均**显式**传 `lwwWinner`；`tags` 逐元素并集不丢、提醒四字段按组原子、`archivedAt` 归档优先但其它字段继续合并、`deletedAt` 不进合并域。
+- **落库守卫**：`fields` = 完整合并域 · 过滤 `merged` 的 `undefined` · `{...localRecord, ...merged}` + base 单独推进 + `deletedAt` 保留（⛔ 不整行 replace）。
+- **并发守卫（`T680b` F1）**：回执在飞期间本地 `revision` 变 ⇒ 放弃本轮合并（⛔ 不记账 / 不写回 base / 不出队），下一轮走完整合并；避免了「用从未推送的新本地值当败方 + 写回 base ⇒ 整行覆盖远端」。
+- **记账**：零新 kind；`conflictFields` additive（四边界落账、缺省不落键、老条目向后兼容）；提醒组冲突时 `conflictFields` 与 `loser` 均为整组四字段；面板按字段呈现（复用既有 40+ 字段人话标签，零新 i18n）。
+- **可观测**：`syncStatus.fieldMergeCount` + 结构化事件 `sync.field-merge.applied`（仅表名与冲突计数，无业务值）。
+- **回滚**：`localStorage['nao-todo:field-merge-mode']='lww'` 一键回到整行裁决（下一次 pull/push 生效，无需重启/重登/迁移；同一函数退化，非第二套实现）。
+- **门禁**：全仓 **422 文件（421 绿 / 1 skip）· 3330 例（3324 绿 / 6 skip / 0 红）**（单跑 ×2，数值逐字相同）· `vp check` 0 error · 九项守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；变异 rd-fe 14 条 + qa 独立 6 条全 kill。
+- **Tag `v1.19.0`** · root / `apps/web` / `apps/desktop` `1.18.2 → 1.19.0`（MINOR）· `infrastructure` `0.10.0 → 0.11.0`。**服务端无改动，无需部署。**
+- **登记未修**：`DEF-155`（`projects` 接入合并须改实体层捕获）· `DEF-156`（浅拷贝 / `restore` 并发不合并）· `DEF-153`（保存侧只对名称/描述记账）。
+
 ## [v1.18.2] - 2026-11-09
 
 编辑期覆盖可见化（`DEF-146` · Issue #336 · 代码 PR #338 · 发版说明 `docs/releases/v1.18.2.md`）：
