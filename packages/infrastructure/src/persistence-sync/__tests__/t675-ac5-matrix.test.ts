@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import { isEmptySyncSentinel } from '../sync-normalize'
 import {
+    FUTURE_REMOTE_TS,
     countQueue,
     createSyncedTask,
     makeServer,
@@ -26,6 +27,11 @@ import {
  * - **同毫秒**：`remoteTs > localTs` 为假 ⇒ 落本地胜分支且记账（合并判据不得依赖时间戳）；
  * - **字段集不相交**：现状记 1 条且对方字段整行丢失；
  * - **部分相交**：现状记 1 条但快照是整行、无字段级信号，且被合并的字段（description）也丢。
+ *
+ * **AC5-⑨（T678 补，红基线）**：钉住「**远端胜支 × 同字段冲突 ⇒ 冲突字段取 `R`**」——
+ * 这是 `lwwWinner='remote'` 的唯一可观测面（M3 若漏传该参数，会静默按 `local` 裁决）。
+ * 现状必红点 = `conflictFields` 缺失（字段级信号属 M5 记账面）；落库值/对照组断言现状即成立，
+ * 用于在 M3 接入后守住方向（远端胜支落库必须 = 远端值）。
  */
 describe('T675 / AC5 判据矩阵', () => {
     beforeEach(resetLocalState)
@@ -179,5 +185,41 @@ describe('T675 / AC5 判据矩阵', () => {
         expect(server.row(id)?.name).toBe('B-name')
         expect(server.row(id)?.description).toBe('A-desc')
         expect(server.row(id)?.priority).toBe('high')
+    })
+
+    it('AC5-⑨【T678】远端胜支 × 同字段冲突 ⇒ 冲突字段取 R（对照组：本地胜支不记 remote-wins）', async () => {
+        // 主场景：同一字段双方都改（B='medium' → L='high' / R='low'）且远端时间更晚 ⇒ pull 远端胜支
+        const server = makeServer()
+        const id = await createSyncedTask(server)
+        await patchLocal(id, { priority: 'high' })
+        server.setRemote(id, { priority: 'low' }, FUTURE_REMOTE_TS)
+
+        await makeService(server).pullAll()
+
+        const entries = await readJournal()
+        expect(entries).toHaveLength(1)
+        const entry = entries[0]!
+        // 该边界既有 kind（⛔ 不新增 kind）
+        expect(String(entry.kind)).toBe('remote-wins')
+        // 字段级信号：漏传 lwwWinner='remote' 时，下面的「落库 = 远端值」会红
+        const conflictFields = (entry as unknown as { conflictFields?: string[] }).conflictFields
+        // 现状必红点（M5 记账面）：条目必须带字段级信号
+        expect(conflictFields, '远端胜支的记账缺 conflictFields（字段级信号）').toBeDefined()
+        expect(conflictFields).toContain('priority')
+        // 落库 = **远端**那个值（⛔ 不是本地 'high'）
+        expect((await readLocal(id)).priority).toBe('low')
+
+        // 对照组：同场景改走本地胜支（远端时间更早）⇒ 不得记 remote-wins，落库 = 本地值
+        await resetLocalState()
+        const localWinServer = makeServer()
+        const localWinId = await createSyncedTask(localWinServer)
+        await patchLocal(localWinId, { priority: 'high' })
+        localWinServer.setRemote(localWinId, { priority: 'low' })
+
+        await makeService(localWinServer).pullAll()
+
+        const control = await readJournal()
+        expect(control.map((item) => String(item.kind))).not.toContain('remote-wins')
+        expect((await readLocal(localWinId)).priority).toBe('high')
     })
 })

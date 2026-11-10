@@ -47,7 +47,8 @@
 
 - M2 提交改动面（`git diff --name-only 5e28feb2..HEAD`）= **恰好 2 个新文件**：`persistence-sync/field-merge.ts`、`__tests__/t677-field-merge-core.test.ts`。
 - 我的 12 个文件（10 个 `t675-*` + 2 份报告）**逐个 blob 哈希与基线逐一相等**（脚本比对输出：`12 文件 hash 逐一相等 ✅`）；`git diff 5e28feb2..HEAD -- __tests__/t675-*` = **空**。
-    - 基线样例：`t675-ac5-matrix.test.ts = 77ffa022…` · `t675-write-point-source-guard.test.ts = 1c491e04…` · `t675-field-merge-harness.ts = 5d938eb9…`
+    - 基线（`5e28feb2` 时点，逐文件）：`t675-ac1-timings=34bb5b28…` · `t675-ac2-tags=76fd4258…` · `t675-ac3=efe108ed…` · `t675-ac4=f1bb1d3e…` · `t675-ac5-matrix=3fc815aa…`（T678 前为 `77ffa022`）· `t675-ac6=5a8a1d55…` · `harness=77ffa022…` · `t675-field-types=c971079b…` · `t675-mode-lww=5d938eb9…` · `t675-write-point=2ff259a0…` · `red-baseline.md=6d61a225…` · `m1-verify.md=1c491e04…`
+    - ⚠️ **更正（T678 自查）**：677b 回执中我曾把哈希与文件名的**标签错位**（批量 `hash-object` 输出与 `ls` 排序列拼接所致，哈希集合本身比对无误）。以上为逐文件 `git hash-object` 实测的正确对应；`t675-ac5-matrix` 因 T678 新增 `AC5-⑨` 变为 `3fc815aa…`，其余 11 个文件哈希不变（`m2-kernel-verify.md` 除外，其哈希随本报告修订更新）。
 - ⇒ 「断言不被放宽」在本轮**机验成立**（不是人工目测）。
 
 ## 3. 判据 3：未接线（越界事实面）
@@ -121,7 +122,7 @@
 2. **`merged` 是「部分行」**：不含 `id`/`userId`/`updatedAt`/`syncedServerUpdatedAt`/`revision`/`baseUpdatedAt`/`fieldBase`/`deletedAt`。
     - 处置建议：M3/M4 必须 `{ ...localRecord, ...mergedFiltered }` 写回，**base 单独推进**（`syncedServerUpdatedAt = R.updatedAt`），⛔ **不得整行 replace**；`deletedAt` 必须从**本地行**保留（R-4 墓碑不进合并）。
 3. **M3/M4 三处 `lwwWinner` 必须显式**（见 §5.1）：远端胜支传 `'remote'`，其余两支用 `'local'`；我 M3 的端到端用例会分别覆盖两支，缺少显式传参会被抓到。
-4. **覆盖缺口（我的，需在 M3 补）**：现有 M0 用例覆盖「**本地胜支** × 同字段冲突 ⇒ 冲突字段取 L」（`AC5-⑧`）与「push stale × 冲突」（`AC4`），但**没有**「远端胜支 × 同字段冲突 ⇒ 冲突字段取 R」的端到端用例 ⇒ 若 M3 在远端胜支漏传 `'remote'`，我的套件抓不到。**建议在 M3 派单时我补 1 条**（会使当批红数 +1，需 PM 在 M3 卡里同意计数基线变化）。
+4. ~~**覆盖缺口（我的）**~~ **已补（T678，2026-11-10，PM 授权 14 → 15）**：新增 `AC5-⑨`（远端胜支 × 同字段冲突 ⇒ 冲突字段取 R + 对照组），详见 §9。
 
 ## 8. 复跑
 
@@ -133,3 +134,21 @@ git diff 5e28feb2..HEAD -- packages/infrastructure/src/persistence-sync/sync-ser
 pnpm exec vp check && pnpm run guard:ddd && pnpm run guard:gate-pathspec && pnpm run guard:barrel-imports && pnpm run guard:mobile-imports && pnpm run guard:test-location
 pnpm exec vp run webapp build && pnpm run desktop:build
 ```
+
+## 9. 追加（T678，2026-11-10）：覆盖缺口已补 1 例（红基线）
+
+- **例名**：`t675-ac5-matrix.test.ts` › `AC5-⑨【T678】远端胜支 × 同字段冲突 ⇒ 冲突字段取 R（对照组：本地胜支不记 remote-wins）`
+- **场景**：`B.priority='medium'` → 本地写 `'high'` / 远端 `'low'`，远端时间戳更晚 ⇒ pull **远端胜支**；对照组同场景但远端时间更早 ⇒ **本地胜支**。
+- **现状 = 红**（M3 尚未接线）。红因（强红，非模块缺失）：`远端胜支的记账缺 conflictFields（字段级信号）: expected undefined to be defined`。
+- 断言与转绿里程碑：
+
+| 断言                                                       | 现状               | 转绿 / 守护点                                                                     |
+| ---------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
+| 落库值 = **远端** `'low'`（⛔ 不是本地 `'high'`）          | 绿（今日整行覆盖） | **必须保持绿**——M3 若在远端胜支漏传 `lwwWinner='remote'`，此断言即红 ⇒ 盲区闭合点 |
+| `kind = 'remote-wins'`（该边界**既有** kind，零新 kind）   | 绿                 | 保持（AC8 零扩张）                                                                |
+| `conflictFields` 含 `priority`                             | **红**             | M5（记账 additive 字段）                                                          |
+| 对照组：本地胜支不记 `remote-wins`，且落库 = 本地 `'high'` | 绿                 | 保持（防两支 winner 互相污染）                                                    |
+
+- **计数变化**（基于 `996587db`）：全仓 **416 文件（7 红 / 408 绿 / 1 skip）· 3302 例（15 红 / 3281 绿 / 6 skip）**；`vp check` **rc=0**（1928 文件格式 / 1545 文件 0 lint+type）。
+- 本文件 §6 的数字是 `677b` 时点（`5c314acf`，3301 例 / 14 红）；**以本节为最新**。
+- 复验基线更新：`t675-ac5-matrix.test.ts` 的 blob 哈希已随本用例改变（新基线见回执），其余 11 个文件不变。
