@@ -66,6 +66,8 @@ const triggerText = computed(() => {
 
 // @method 打开面板前重置本地状态（并按 key 重挂载提醒设置器）
 const handleBeforeOpen = () => {
+    // DEF-153：面板打开 = 交互起点 ⇒ 通知调用方冻结日期/提醒字段基准（⛔ 不是保存时刻）
+    emit('edit-start')
     startAtLocal.value = props.startAt || ''
     endAtLocal.value = props.endAt || ''
     pendingRemindUpdate.value = null

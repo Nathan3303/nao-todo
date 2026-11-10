@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { InputButton } from '@nao-todo/shared/components/input-button'
 import { Loading } from '@nao-todo/shared/components/loading'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import { t } from '@nao-todo/shared/locales'
 import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
@@ -15,6 +16,7 @@ const {
     subTasks,
     subTasksLoading,
     subTasksError,
+    subTasksRefreshError,
     retrySubTasks,
     switchTaskDetails,
     subTaskHandler,
@@ -85,6 +87,19 @@ const handleCreateSubTask = async (payload: { value: string }) => {
     <nue-container id="TodoDetailsSubTasksContainer">
         <nue-main>
             <nue-content>
+                <!-- DEF-149：原地刷新失败 ⇒ 非阻塞提示条（保留已渲染子任务与「新增子任务」输入框；
+                     下轮成功自动消除）。与列表/表格/看板/日历同一套 `refreshError` 语义（两态编码）。 -->
+                <rule-hint
+                    v-if="subTasksRefreshError !== null"
+                    class="subtask-refresh-warning"
+                    variant="error"
+                    icon="warning"
+                    :content="
+                        subTasksRefreshError
+                            ? t('task.refreshFailed', { reason: subTasksRefreshError })
+                            : t('task.refreshFailedGeneric')
+                    "
+                />
                 <loading v-if="subTasksLoading" :placeholder="t('task.details.subTasksLoading')" />
                 <nue-empty v-else-if="subTasksError" :description="subTasksError" image-size="64px">
                     <nue-button theme="primary,small" @click="retrySubTasks">

@@ -52,6 +52,14 @@ const useSubTasks = (
     // @state 子任务加载&错误状态
     const subTasksLoading = computed(() => taskDetailsStore.subTasksLoading)
     const subTasksError = computed(() => taskDetailsStore.subTasksError)
+    /**
+     * @state 原地刷新失败（**非阻塞**，`DEF-149`；两态编码 `string | null`）
+     * @description 与列表/表格/看板/日历**同一套语义**（`DEF-148`/`T665`）：刷新失败且**有内容可保** ⇒ 只落
+     *              提示条（保留已渲染行与「新增子任务」输入框），下轮成功自动消除；空原因 ⇒ 视图走
+     *              `task.refreshFailedGeneric` 兜底。显示判据一律 `!== null`（空串也要可见）。
+     *              ⛔ 不得把刷新失败落进阻塞式 `subTasksError`（那会整块替换内容并卸载输入框）。
+     */
+    const subTasksRefreshError = computed<string | null>(() => subTaskLoader.states.refreshError)
 
     // @state 子任务完成进度
     const subTaskProgress = computed(() => {
@@ -94,10 +102,16 @@ const useSubTasks = (
     const refreshSubTasksInPlace = async (taskId: TaskViewObject['id']) => {
         const [taskIds, err] = await subTaskLoader.load({ parentTaskId: taskId }, { silent: true })
         if (err !== null) {
-            taskDetailsStore.setSubTasksError('子任务获取失败：' + unwrapError(err))
+            // `DEF-149`：**有已渲染行** ⇒ 只落非阻塞 `refreshError`（由加载器写入；内容与输入框保留）；
+            // **无内容可保**（0 条）⇒ 仍落阻塞式错误（不得把真错误静默掉）。
+            if (subTaskLoader.states.taskIds.size === 0) {
+                taskDetailsStore.setSubTasksError('子任务获取失败：' + unwrapError(err))
+            }
             return
         }
         if (taskIds) subTaskLoader.states.taskIds = new Set(taskIds)
+        // 刷新成功 ⇒ 清掉可能残留的阻塞错误（下轮成功自动消除，不刷屏）
+        taskDetailsStore.setSubTasksError('')
     }
 
     /**
@@ -183,6 +197,7 @@ const useSubTasks = (
         subTasks,
         subTasksLoading,
         subTasksError,
+        subTasksRefreshError,
         subTaskProgress,
         loadSubTasks,
         retrySubTasks,

@@ -55,4 +55,9 @@ export type TaskTagBarEmits = {
      * @param tagName 新创建的标签名称
      */
     (event: 'createTag', tagName: TaskTagViewObject['name']): void
+
+    /**
+     * 标签编辑态进入（`DEF-153`）：combo-box 打开那一刻触发，供调用方冻结 `tags` 的编辑基准
+     */
+    (event: 'editStart'): void
 }

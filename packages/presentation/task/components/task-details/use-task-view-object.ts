@@ -40,6 +40,27 @@ const useTaskViewObject = (
     //              合并后一推进，下一轮就会把编辑误判成「已同步」并覆盖用户输入（`DEF-145` 实测丢字）。
     const persistedText = ref<{ name: string; description: string }>({ name: '', description: '' })
 
+    /**
+     * @state 非文本字段的「交互起点基准」（`DEF-153`）
+     * @description 在控件**交互起点**（下拉/日期面板打开、标签编辑态进入、开关点击前）冻结该字段的
+     *              **已持久化值** `O`；保存时只为本次载荷涉及的字段透传（判据仍是
+     *              `F = keys(载荷) ∩ keys(基准)`，逐字段 `R≠O 且 L≠R`）。
+     *              ⛔ 不得用 store 当前值当 `O` —— 自动刷新每 30s 推进它，判据会失效（`DEF-145` 教训）。
+     *              成功提交后清除（下次交互重新冻结）；切换/重载任务时清空。
+     */
+    const editOrigins = ref<Record<string, unknown>>({})
+
+    /**
+     * 冻结某字段的编辑基准（`DEF-153`）
+     * @description 幂等：同一字段已冻结 ⇒ 保留**首次**值（多轮交互 / 期间自动刷新都不覆盖）。
+     */
+    const beginEdit = (field: string): void => {
+        const current = task.value as Record<string, unknown> | null
+        if (!current) return
+        if (Object.prototype.hasOwnProperty.call(editOrigins.value, field)) return
+        editOrigins.value = { ...editOrigins.value, [field]: current[field] }
+    }
+
     // @store 任务列表 store（与列表视图共享同一 pinia 实例）
     const tasksStore = useTasksStore()
 
@@ -93,6 +114,7 @@ const useTaskViewObject = (
     const getTaskDetails = async (taskId?: TaskViewObject['id']) => {
         if (!taskId) {
             task.value = null
+            editOrigins.value = {}
             return
         }
         error.value = ''
@@ -105,6 +127,8 @@ const useTaskViewObject = (
         }
         task.value = assembleTaskViewObject(_task)
         persistedText.value = { name: _task.name, description: _task.description }
+        // DEF-153：切换/重载任务 ⇒ 丢弃上一任务的交互起点基准
+        editOrigins.value = {}
     }
 
     // @watch 订阅列表 store：任务在列表侧（看板/列表/表格）被更新时，同步刷新详情面板
@@ -159,6 +183,15 @@ const useTaskViewObject = (
                 ? {}
                 : { description: persistedText.value.description })
         }
+        // DEF-153：非文本字段的交互起点基准 —— **只取本次载荷涉及**的字段（其余冻结值不使用）
+        const payload = updateVO as Record<string, unknown>
+        const consumedOrigins: string[] = []
+        for (const [field, value] of Object.entries(editOrigins.value)) {
+            if (payload[field] === undefined) continue
+            if (Object.prototype.hasOwnProperty.call(origin, field)) continue
+            ;(origin as Record<string, unknown>)[field] = value
+            consumedOrigins.push(field)
+        }
         const updateError = await taskUseCase.update(
             id,
             updateVO,
@@ -203,6 +236,12 @@ const useTaskViewObject = (
                 updateVO.description !== undefined
                     ? task.value.description
                     : persistedText.value.description
+        }
+        // DEF-153：本次已消费的非文本基准失效（下次交互重新冻结）
+        if (consumedOrigins.length > 0) {
+            const nextOrigins = { ...editOrigins.value }
+            for (const field of consumedOrigins) delete nextOrigins[field]
+            editOrigins.value = nextOrigins
         }
         return null
     }
@@ -275,6 +314,7 @@ const useTaskViewObject = (
         loading,
         error,
         getTaskDetails,
+        beginEdit,
         updateTaskDetails,
         deleteTask,
         restoreTask,

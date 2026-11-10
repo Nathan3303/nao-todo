@@ -26,6 +26,7 @@ const {
     tags,
     dialogManager,
     switchTaskDetails,
+    beginEdit,
     updateTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
@@ -39,6 +40,17 @@ const percentage = computed(() => {
 const backToParent = () => {
     if (!vo.value?.parentTaskId) return
     switchTaskDetails(vo.value.parentTaskId)
+}
+
+/**
+ * 下拉类控件的「交互起点」冻结（`DEF-153`）
+ * @description 点开状态/优先级下拉的那一刻取当前**已持久化值**当 `O`（⛔ 不是 change 时刻 ——
+ *              期间自动刷新会推进 store 值，`DEF-145` 教训）。两者在同一操作区，一并冻结（幂等、无副作用：
+ *              只有本次载荷涉及的字段才会进 `origin`）。
+ */
+const beginEditSelectors = () => {
+    beginEdit('state')
+    beginEdit('priority')
 }
 
 const updateTaskState = (v: unknown) => {
@@ -79,7 +91,8 @@ const createCommentHandler = async (content: string) => {
     <nue-container id="TasksTodoDetailsMainContainer" v-if="vo">
         <!-- 任务详情头部 -->
         <nue-header>
-            <nue-div flex="1">
+            <!-- DEF-153：下拉打开（click / 键盘）即冻结 state/priority 的编辑基准 -->
+            <nue-div flex="1" @click="beginEditSelectors" @keydown="beginEditSelectors">
                 <task-selector
                     :options="TaskStateSelectOptions"
                     :value="vo.state"
@@ -149,6 +162,7 @@ const createCommentHandler = async (content: string) => {
                     <task-tag-bar
                         :available-tags="tags"
                         :task-tag-ids="vo.tags"
+                        @edit-start="beginEdit('tags')"
                         @update-tags="updateTaskTags"
                         @create-tag="
                             (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })

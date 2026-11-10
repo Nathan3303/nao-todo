@@ -46,7 +46,14 @@ export type TaskDetailsContext = {
     commentsError: Ref<string>
     subTasksLoading: ComputedRef<boolean>
     subTasksError: ComputedRef<string>
+    /** 原地刷新失败（**非阻塞**，`DEF-149`）：`null` = 无失败；`''` = 失败但无可读原因（两态编码） */
+    subTasksRefreshError: ComputedRef<string | null>
 
+    /**
+     * 冻结某字段的编辑基准（`DEF-153`）：在控件**交互起点**调用（下拉/日期面板打开、标签编辑态进入、
+     * 开关点击前）。保存时只为本次载荷涉及的字段透传 `O`。⛔ 不得传 store 当前值以外的东西。
+     */
+    beginEdit: (field: string) => void
     updateTaskDetails: (
         id: TaskViewObject['id'],
         updateVO: UpdateTaskViewObject

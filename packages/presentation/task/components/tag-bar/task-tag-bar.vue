@@ -52,6 +52,7 @@ const overflowTag = computed(() => ({
             hide-counter
             hide-on-click
             trigger-title="标签"
+            @before-open="emit('editStart')"
             @change="pushTagHandler"
         >
             <template #emptyActions="{ filterText }">
