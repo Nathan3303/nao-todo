@@ -303,6 +303,12 @@ export interface SyncQueueRecord {
     nextAttemptAt?: string | null
     /** 最近一次失败分类（SHELL-06 C-38；凭证类维持会话失效路径） */
     lastErrorClass?: 'network' | 'business' | 'credential'
+    /**
+     * 字段级基准（`B`，T676 / B 批 M1）：`{ 字段名: 写前值 }`，**只含本次写涉及的字段**。
+     * 可选字段、非索引 ⇒ 不 bump Dexie version / 无迁移；老队列项缺失 ⇒ 下游走保守路径（不合并）。
+     * ⚠️ 只在本地队列内流转，**不得**进推送载荷（`entityToPush` 键集不变）。
+     */
+    fieldBase?: Record<string, unknown>
     createdAt: string
     updatedAt: string
 }

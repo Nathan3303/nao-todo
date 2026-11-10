@@ -47,10 +47,18 @@ export const putWithSyncBaseAndEnqueue = async <T extends { id: string }>(
     tableName: string,
     record: T,
     action: SyncAction,
-    updatedAt: string
+    updatedAt: string,
+    fieldBase?: Record<string, unknown>
 ): Promise<void> => {
     await db.transaction('rw', table, db.syncQueue, async () => {
         await putWithSyncBase(table, record)
-        await syncTracker.markDirty(tableName, record.id, action, updatedAt, db.syncQueue)
+        await syncTracker.markDirty(
+            tableName,
+            record.id,
+            action,
+            updatedAt,
+            db.syncQueue,
+            fieldBase
+        )
     })
 }
