@@ -14,7 +14,7 @@
  * @see docs/adr/2026-11-10-field-level-merge.md（D1：写时捕获、零额外 IO、无 Dexie 版本变更）
  */
 
-import { valuesEqual } from './conflict-journal'
+import { valuesEqual } from './sync-compare'
 import { SYNC_COMPARE_IGNORED_FIELDS } from './sync-normalize'
 
 /** 字段级基准：`{ 字段名: 写前值 }`，只含本次写涉及的字段 */

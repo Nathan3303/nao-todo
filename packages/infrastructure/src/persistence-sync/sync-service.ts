@@ -52,7 +52,12 @@ import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './s
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
 import { appendConflict, countConflicts, valuesEqual } from './conflict-journal'
 import { pickChangedFields } from './edit-overwrite'
-import { mergeBusinessFields, resolveMergeMode, type MergeWinner } from './field-merge'
+import {
+    isMergeDomainField,
+    mergeBusinessFields,
+    resolveMergeMode,
+    type MergeWinner
+} from './field-merge'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -830,7 +835,9 @@ export class SyncService {
             remoteUpdatedAt !== '' && localRecord.syncedServerUpdatedAt !== remoteUpdatedAt
         // 基准只前进（R-6）：合并后 `fieldBase` = 远端当前域值（下一轮判据稳定、重复 pull 幂等）
         const retiredBase: Record<string, unknown> = {}
-        for (const field of fields) retiredBase[field] = remoteEntity[field]
+        for (const field of fields) {
+            if (isMergeDomainField(field)) retiredBase[field] = remoteEntity[field]
+        }
         const queueBaseChanged = !this.fieldBaseEquals(queued.fieldBase, retiredBase)
         // 落库行必须走 **entity → record**（`name`/`description` 落库为 `plain:<明文>`，
         // ⛔ 不能把实体明文直接 spread 进记录）；加解密在事务外完成（Dexie 事务内禁 await 外部 Promise）。
@@ -920,6 +927,109 @@ export class SyncService {
         const keys = Object.keys(right)
         if (Object.keys(left).length !== keys.length) return false
         return keys.every((field) => valuesEqual(left[field], right[field]))
+    }
+
+    /**
+     * T680 / M4：push `stale` 回执侧字段级合并（`tasks` × `upsert` × 有 `fieldBase` × 有 `serverCurrent`）
+     *
+     * @description 与 pull 侧**同一内核 / 同一三守卫**（完整合并域 / 过滤 `undefined` / 部分行覆盖 +
+     *              base 单独推进 + `deletedAt` 保留）。差异：
+     *              - `R` = 回执 `serverCurrent`（服务端当前行，经 `resToEntity` 归一）
+     *              - 冲突 winner = **显式 `'local'`**（⛔ 不依赖默认值）
+     *              - **保队列**：合并结果 + 新 base 由下一轮 push 收敛（AC4，网络往返不增加）
+     *              - **`fieldBase` 退役为完整合并域**（`679b` 判据 5 第二前提）：否则
+     *                「partial base + 漏捕写 + 重试」会拼出「我的改动被静默取远端」路径
+     *              - AC12：写库前在**同一事务内**复核队列 `revision`；推送期间有新本地写 ⇒ 放弃本次合并
+     *              - AC3 同源：**落库成功后才记账**；无冲突 ⇒ 0 记账（AC4）；⛔ 本步不加 `conflictFields`（M5）
+     *
+     * @returns `handled=false` ⇒ 未处理（无本地行 / revision 已变）⇒ 调用方回退到今日 `stale` 分支
+     */
+    private async applyPushFieldMerge(
+        config: SyncTableConfig,
+        item: SyncQueueRecord,
+        snapshot: number,
+        serverCurrent: Record<string, unknown>,
+        serverUpdatedAt: string | undefined,
+        userId: string
+    ): Promise<{ handled: boolean }> {
+        const localRecord = await this.tableOf(config).get(item.entityId)
+        if (!localRecord) return { handled: false }
+        const local = await config.recordToEntity(localRecord)
+        const serverEntity = config.resToEntity(serverCurrent) as Record<string, unknown>
+        // 形状对齐：与 pull 侧一致（`tasks.projectId` 服务端隐式桶 ⇒ 本地字面 `'inbox'`）
+        const remote =
+            config.table === 'tasks'
+                ? { ...serverEntity, projectId: toLocalProjectId(serverEntity.projectId, userId) }
+                : serverEntity
+        const fields = Object.keys(config.entityToPush(remote))
+        const base = this.augmentFieldBase(item.fieldBase ?? {}, local, fields)
+        const { merged, conflicts } = mergeBusinessFields({
+            base,
+            remote,
+            local,
+            fields,
+            lwwWinner: 'local'
+        })
+        const mergedFields = Object.fromEntries(
+            Object.entries(merged).filter(([, value]) => value !== undefined)
+        )
+        const nextBase =
+            serverUpdatedAt ??
+            (typeof remote.updatedAt === 'string' ? (remote.updatedAt as string) : '')
+        const businessChanged = Object.keys(mergedFields).some(
+            (field) => !valuesEqual(mergedFields[field], local[field])
+        )
+        const baseChanged = nextBase !== '' && localRecord.syncedServerUpdatedAt !== nextBase
+        // 不变量（679b 判据 5）：合并后 `fieldBase` = **完整合并域**（键集 = entityToPush 键集）
+        const retiredBase: Record<string, unknown> = {}
+        for (const field of fields) {
+            if (isMergeDomainField(field)) retiredBase[field] = remote[field]
+        }
+        const queueBaseChanged = !this.fieldBaseEquals(item.fieldBase, retiredBase)
+        let nextRecord: Record<string, unknown> | undefined
+        if (businessChanged || baseChanged) {
+            const nextEntity = { ...local, ...(businessChanged ? mergedFields : {}) }
+            const source =
+                config.table === 'tasks'
+                    ? { ...nextEntity, projectId: toLocalProjectId(nextEntity.projectId, userId) }
+                    : nextEntity
+            nextRecord = (await config.entityToRecord(source, userId)) as Record<string, unknown>
+            if (nextBase) nextRecord.syncedServerUpdatedAt = nextBase
+        }
+        let handled = !(nextRecord || queueBaseChanged)
+        let written = false
+        if (nextRecord || queueBaseChanged) {
+            const rawTable = this.rawTableOf(config)
+            await localDatabase.transaction('rw', rawTable, localDatabase.syncQueue, async () => {
+                // AC12：推送期间有新本地写（revision 变化）⇒ 放弃本次合并（保队列，下轮重来）
+                const current = await localDatabase.syncQueue.get(item.id)
+                if (!current || (current.revision ?? 0) !== snapshot) return
+                if (nextRecord) {
+                    await rawTable.put(nextRecord)
+                    written = true
+                }
+                if (queueBaseChanged) {
+                    await localDatabase.syncQueue.update(item.id, { fieldBase: retiredBase })
+                }
+                handled = true
+            })
+        }
+        if (written) this.notifyDataChanged()
+        if (handled && conflicts.length > 0) {
+            // 冲突仍可见（kind 沿用既有 `stale`，loser = 我的整行 + `serverCurrent`）；无冲突 = 0 记账
+            const loser = await config.recordToEntity(localRecord)
+            const count = await appendConflict(userId, {
+                kind: 'stale',
+                table: config.table,
+                entityId: item.entityId,
+                loser,
+                ...(serverUpdatedAt === undefined ? {} : { winnerUpdatedAt: serverUpdatedAt }),
+                loserUpdatedAt: item.localUpdatedAt,
+                serverCurrent
+            })
+            syncStatus.setConflictCount(count)
+        }
+        return { handled }
     }
 
     /**
@@ -1520,6 +1630,9 @@ export class SyncService {
             const dueQueue =
                 this.pausedUntil > nowMs ? [] : queue.filter((item) => isRetryDue(item, nowMs))
             if (dueQueue.length === 0) return
+            // T680 / M4：回滚开关（ADR D7，读取点唯一 = `resolveMergeMode`）
+            // `lww` ⇒ 整批跳过回执侧合并，逐字走今日 `stale` 处理（一键降级）
+            const mergeMode = resolveMergeMode()
 
             const pushBody: Record<string, Record<string, unknown>[]> = {}
             const deletions: { table: string; id: string; baseUpdatedAt?: string }[] = []
@@ -1749,6 +1862,37 @@ export class SyncService {
                     await syncTracker.markBusinessFailure(item.id, this.businessNextAttemptAt(item))
                     unconfirmed = true
                     continue
+                }
+                // T680 / M4：push `stale` 回执侧字段级合并（tasks × upsert × 有 fieldBase × 有 serverCurrent）
+                //   ⇒ 不记账 / 不删队列项 / base 前进 / fieldBase 退役为完整域；下一轮 push 以新 base 收敛（AC4）。
+                //   缺 `serverCurrent` / 删除动作 / 非 tasks / `lww` ⇒ 逐字走今日分支（`t641-a4` 零修改）。
+                const staleMergeable =
+                    effectiveOutcome === 'stale' &&
+                    mergeMode === 'merge' &&
+                    item.table === 'tasks' &&
+                    item.action === 'upsert' &&
+                    item.fieldBase !== undefined &&
+                    serverCurrent !== undefined &&
+                    snapshot !== undefined &&
+                    !(
+                        serverCurrent.deletedAt !== null &&
+                        serverCurrent.deletedAt !== undefined &&
+                        serverCurrent.deletedAt !== ''
+                    )
+                if (staleMergeable) {
+                    const mergeConfig = SYNC_TABLES.find((c) => c.table === item.table)
+                    if (mergeConfig) {
+                        const mergeOutcome = await this.applyPushFieldMerge(
+                            mergeConfig,
+                            item,
+                            snapshot,
+                            serverCurrent,
+                            result?.serverUpdatedAt,
+                            userId
+                        )
+                        // 合并已处理（含「无差异」）⇒ 保队列，跳过今日的记账 / base 写回 / 出队
+                        if (mergeOutcome.handled) continue
+                    }
                 }
                 // §9.1.4：`noop` / `stale` / `conflict` / `skipped` 全部登记（journal + 可见计数），不静默出队
                 //   `noop` / `stale` 带**败方快照**（本地被拒内容）；`conflict` / `skipped` 无快照（仅登记）

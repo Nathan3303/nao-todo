@@ -16,12 +16,17 @@ import {
 } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import { findConflictEntity } from './conflict-entity-registry'
+import { captureFieldBase } from './field-base'
 import { nowCalibratedIso } from './sync-config'
 import { toLocalProjectId } from './sync-normalize'
+import { valuesEqual } from './sync-compare'
 import { syncStatus } from './sync-status'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 export type { ConflictJournalEntry }
+
+// DEF-135 / R-1：唯一判等口径已下沉到 `sync-compare`（无循环依赖），此处 re-export 保持公开 API 不变
+export { valuesEqual }
 
 /** 每用户冲突记账上限（环形淘汰，保留最新；DP-2B-5：50 → 200 + 折叠提示） */
 export const CONFLICT_JOURNAL_LIMIT = 200
@@ -409,37 +414,6 @@ export const listConflicts = async (userId: string): Promise<ConflictListResult>
 }
 
 /**
- * 空值哨兵（`null` / `undefined` / `''` / `[]`）—— 与展示层 `conflict-value-format.ts` 的
- * `isUnsetValue` **同一口径**（DEF-135：判等与展示不一致 ⇒ 两侧都渲染「未设置」却仍标差异）。
- * ⛔ `0` 与 `false` **不是**空值。
- */
-const isEmptySentinel = (value: unknown): boolean =>
-    value === null ||
-    value === undefined ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-
-/**
- * 深比较：**空值哨兵先归一**（`null` ≡ `undefined` ≡ `''` ≡ `[]`），数组/对象再按 JSON 比较
- *
- * @description **唯一判等实现**（DEF-135）：读侧 `diffFields` 与写侧
- *   `sync-service.recordPullLocalWins`（A1 快照字段挑选）**共用本函数**——⛔ 禁第二套口径，
- *   否则「写侧判差异、读侧判相等」会再次出现「两边都写未设置却标了差异」。
- */
-export const valuesEqual = (a: unknown, b: unknown): boolean => {
-    if (a === b) return true
-    const aEmpty = isEmptySentinel(a)
-    const bEmpty = isEmptySentinel(b)
-    if (aEmpty || bEmpty) return aEmpty && bEmpty
-    if (typeof a !== 'object' || typeof b !== 'object') return false
-    try {
-        return JSON.stringify(a) === JSON.stringify(b)
-    } catch {
-        return false
-    }
-}
-
-/**
  * 逐字段差异（**仅差异**入列；任一侧缺失时以 `null` 呈现）
  *
  * @description 比较面 = **败方快照的键集**（`Object.keys(loser)`），不是 `loser ∪ current`。
@@ -473,8 +447,14 @@ const latestEntry = (
     [...entries].reverse().find((entry) => entry.table === table && entry.entityId === entityId)
 
 /**
- * 只读对比：`table:entityId` 的败方快照 vs 本地当前行（字段级差异仅展示，不自动合并）
- * @returns 无该条目 ⇒ `null`；本地当前行缺失 ⇒ `current: null`（不抛错、不臆造结论）
+ * 只读对比：`table:entityId` 的败方快照 vs **当前版本**（字段级差异仅展示，不自动合并）
+ *
+ * @description 「当前版本」的取源（T680 / M4 修正）：
+ *              - 条目带 `serverCurrent`（push 回执的 `stale` / `noop` 等）⇒ 取**服务端当前行**
+ *                —— 面板标签是「云端最新」，且 M4 后本地行会**保留我的字段**（合并），
+ *                若仍拿本地行当「当前」，败方 === 当前 ⇒ 差异为空、冲突面板看不到任何东西；
+ *              - 否则（`pull-local-wins` 等无 `serverCurrent`）⇒ 维持既有口径：本地当前行。
+ * @returns 无该条目 ⇒ `null`；当前行缺失 ⇒ `current: null`（不抛错、不臆造结论）
  */
 export const compareConflict = async (
     userId: string,
@@ -487,7 +467,14 @@ export const compareConflict = async (
     const loser = DETAIL_SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null
     const config = findConflictEntity(table)
     let current: Record<string, unknown> | null = null
-    if (config) {
+    if (config && entry.serverCurrent) {
+        const serverEntity = config.resToEntity(entry.serverCurrent) as Record<string, unknown>
+        // 与 pull 同一条归一链：服务端隐式桶（`userId`）⇒ 本地字面 `'inbox'`
+        current =
+            table === 'tasks'
+                ? { ...serverEntity, projectId: toLocalProjectId(serverEntity.projectId, userId) }
+                : serverEntity
+    } else if (config) {
         const record = await config.getRecord(entityId)
         if (record) current = await config.recordToEntity(record)
     }
@@ -675,9 +662,18 @@ export const resolveConflictRetryLocal = async (
         if (!config || !RETRY_SNAPSHOT_KINDS.has(entry.kind)) return null
         // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecordAndEnqueue` 保留当前 base，
         // 且业务行 + 入队**同一 Dexie 事务**（T329 / DEF-50：⛔ 不得拆为两次 await ⇒ 防 RC-5 静默丢写）
+        // T680 / M4：顺带闭合唯一漏捕业务写点（679b §5.3）—— 用**写前旧实体**算字段级基准，
+        // 否则「partial base + 本次写 + 重试」会拼出「我的改动被静默取远端」路径。
         const updatedAt = nowCalibratedIso()
+        const previousRecord = await config.getRecord(entityId)
+        const fieldBase = previousRecord
+            ? captureFieldBase(await config.recordToEntity(previousRecord), {
+                  ...entry.loser,
+                  updatedAt
+              })
+            : undefined
         const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
-        await config.putRecordAndEnqueue(record, updatedAt)
+        await config.putRecordAndEnqueue(record, updatedAt, fieldBase)
         resolved = true
         return clearEntries()
     })

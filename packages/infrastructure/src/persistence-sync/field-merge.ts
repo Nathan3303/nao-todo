@@ -113,6 +113,13 @@ const isExcludedField = (field: string): boolean =>
     QUEUE_ONLY_FIELDS.has(field) ||
     field === TOMBSTONE_FIELD
 
+/**
+ * 合并域判定（**单一来源**）
+ * @description `true` ⇒ 该字段属于合并域（可用于「基准退役 = 完整合并域」的不变量校验）。
+ *              ⛔ 调用方不得另写一份剔除规则（忽略集 / 队列内部字段 / 墓碑）。
+ */
+export const isMergeDomainField = (field: string): boolean => !isExcludedField(field)
+
 const resolveFields = (input: FieldMergeInput): string[] => {
     if (input.fields) return [...new Set(input.fields)]
     const union = new Set<string>()

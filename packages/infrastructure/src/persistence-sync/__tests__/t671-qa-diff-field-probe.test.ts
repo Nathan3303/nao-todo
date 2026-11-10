@@ -279,7 +279,10 @@ describe('T671 时序 X：B 编辑前已拉取（base 已前进）⇒ 不同字�
 describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC `stale`', () => {
     beforeEach(resetLocalState)
 
-    it('Y1 记录 kind=stale；loser=我的整行、serverCurrent=云端整行、字段级内容可见', async () => {
+    it('Y1【M4 翻转】不同字段 ⇒ 回执侧合并（0 条）+ 保队列 + base 前进；下一轮 push 两端都在', async () => {
+        // T675 / B 批 M4（2026-11-10）：push `stale` 回执侧合并后，不同字段不再产生记录 ⇒ 断言由
+        // 「1 条 stale + 整行快照」**收紧**为「0 条 + 字段级两值 + 保队列 + base 前进 + 下一轮 push 收敛」
+        // （与 Z1 同强度；见 T675 报告 §4.1）。
         const server = makeServer()
         const id = await initSynced(server)
         const remoteAt = server.setRemote(id, { description: 'A-desc' })
@@ -289,30 +292,24 @@ describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC
 
         await new SyncService(server.requester).pushAll()
 
-        const entries = await journal()
-        expect(entries).toHaveLength(1)
-        const entry = entries[0]!
-        dump('Y1 entry', {
-            kind: entry.kind,
-            table: entry.table,
-            entityId: entry.entityId,
-            loser: entry.loser,
-            loserUpdatedAt: entry.loserUpdatedAt,
-            winnerUpdatedAt: entry.winnerUpdatedAt,
-            serverCurrent: entry.serverCurrent,
-            loserFields: Object.keys(entry.loser).sort()
-        })
-        expect(entry.kind).toBe('stale')
-        expect(entry.table).toBe('tasks')
-        expect(entry.entityId).toBe(id)
-        expect(entry.loser).toMatchObject({ name: 'B-name', description: 'A0-desc' })
-        expect(entry.serverCurrent).toMatchObject({ name: 'A0-name', description: 'A-desc' })
-        expect(entry.winnerUpdatedAt).toBe(remoteAt)
-        // 既有行级 OCC：远端版本不是本批保存侧判据产生的（保存侧见上 = 0）
-        expect(entry.loserUpdatedAt).toBeDefined()
+        expect(await journal()).toHaveLength(0)
+        const merged = await localTask(id)
+        expect(merged.name).toBe('B-name')
+        expect(merged.description).toBe('A-desc')
+        // R-6 基准只前进：base = 回执里的服务端当前版本
+        expect(merged.syncedServerUpdatedAt).toBe(remoteAt)
+        expect(await localDatabase.syncQueue.get(`${USER_ID}:tasks:${id}`)).toBeTruthy()
+
+        // 下一轮 push 以新 base 命中 applied ⇒ 两端字段都在、队列清空
+        await new SyncService(server.requester).pushAll()
+        expect(await journal()).toHaveLength(0)
+        expect(await localDatabase.syncQueue.get(`${USER_ID}:tasks:${id}`)).toBeUndefined()
+        expect(server.row(id)?.name).toBe('B-name')
+        expect(server.row(id)?.description).toBe('A-desc')
     })
 
-    it('Y0 对照组：不传编辑基准（= 回退本批保存侧改动的等价路径）⇒ 同场景仍 stale', async () => {
+    it('Y0【M4 翻转】对照组：不传编辑基准（origin）⇒ 仍字段级合并、0 条（基准捕获与 origin 无关）', async () => {
+        // 同 Z0：字段级基准的捕获与保存侧 `origin` 参数无关（`fieldBase` 由写前旧实体算出）。
         const server = makeServer()
         const id = await initSynced(server)
         server.setRemote(id, { description: 'A-desc' })
@@ -322,46 +319,65 @@ describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC
         expect(await journal()).toHaveLength(0)
 
         await new SyncService(server.requester).pushAll()
-        const entries = await journal()
-        dump('Y0 entry', { kind: entries[0]?.kind, loser: entries[0]?.loser })
-        expect(entries).toHaveLength(1)
-        expect(entries[0]!.kind).toBe('stale')
-        expect(entries[0]!.loser).toMatchObject({ name: 'B-name', description: 'A0-desc' })
+        expect(await journal()).toHaveLength(0)
+        const merged = await localTask(id)
+        expect(merged.name).toBe('B-name')
+        expect(merged.description).toBe('A-desc')
+        expect(await localDatabase.syncQueue.get(`${USER_ID}:tasks:${id}`)).toBeTruthy()
+
+        await new SyncService(server.requester).pushAll()
+        expect(await journal()).toHaveLength(0)
+        expect(server.row(id)?.name).toBe('B-name')
+        expect(server.row(id)?.description).toBe('A-desc')
     })
 
     it('Y2 动作只会整行二选一：保留我的 ⇒ 云端描述丢失；用云端的 ⇒ 我的名称丢失', async () => {
+        // T675 / B 批 M4（2026-11-10）：**仅夹具同字段化**（两侧都改 `name` + `description`）⇒ 仍产出
+        // `stale`；断言逐条保留（整行快照内容随夹具值同步变化，强度不变；见 T675 报告 §4.1）。
         // 分支 a：保留我的修改
         let server = makeServer()
         let id = await initSynced(server)
-        server.setRemote(id, { description: 'A-desc' })
-        await saveName(id, 'B-name', 'A0-name')
+        server.setRemote(id, { name: 'A-name', description: 'A-desc' })
+        await saveNameAndDescription(id, 'B-name', 'B-desc', {
+            name: 'A0-name',
+            description: 'A0-desc'
+        })
         await new SyncService(server.requester).pushAll()
         const retry = await resolveConflictRetryLocal(USER_ID, 'tasks', id)
         dump('Y2 retry', { result: retry, local: await localTask(id) })
         expect(retry.ok).toBe(true)
-        expect(await localTask(id)).toMatchObject({ name: 'B-name', description: 'A0-desc' })
+        expect(await localTask(id)).toMatchObject({ name: 'B-name', description: 'B-desc' })
         await new SyncService(server.requester).pushAll()
-        // ⚠️ A 的描述被这次保存覆盖（行级整行）
-        expect(server.row(id)?.description).toBe('A0-desc')
+        // ⚠️ A 的名称与描述被这次保存覆盖（行级整行）
+        expect(server.row(id)?.name).toBe('B-name')
+        expect(server.row(id)?.description).toBe('B-desc')
 
         // 分支 b：用云端的
         await resetLocalState()
         server = makeServer()
         id = await initSynced(server)
-        server.setRemote(id, { description: 'A-desc' })
-        await saveName(id, 'B-name', 'A0-name')
+        server.setRemote(id, { name: 'A-name', description: 'A-desc' })
+        await saveNameAndDescription(id, 'B-name', 'B-desc', {
+            name: 'A0-name',
+            description: 'A0-desc'
+        })
         await new SyncService(server.requester).pushAll()
         const keep = await resolveConflictKeepServer(USER_ID, 'tasks', id)
         dump('Y2 keep', { result: keep, local: await localTask(id) })
         expect(keep.ok).toBe(true)
-        expect(await localTask(id)).toMatchObject({ name: 'A0-name', description: 'A-desc' })
+        expect(await localTask(id)).toMatchObject({ name: 'A-name', description: 'A-desc' })
     })
 
     it('Y3 stale 后若先发生一次 pull（自动刷新）⇒ 面板对比才出现双侧字段差异', async () => {
+        // T675 / B 批 M4（2026-11-10）：**仅夹具同字段化**（两侧都改 `name` + `description`）⇒ 仍产出
+        // `stale`（快照含双侧字段）；断言逐字保留（见 T675 报告 §4.1）。
         const server = makeServer()
         const id = await initSynced(server)
-        server.setRemote(id, { description: 'A-desc' })
-        await saveName(id, 'B-name', 'A0-name')
+        server.setRemote(id, { name: 'A-name', description: 'A-desc' })
+        await saveNameAndDescription(id, 'B-name', 'B-desc', {
+            name: 'A0-name',
+            description: 'A0-desc'
+        })
         await new SyncService(server.requester).pushAll()
 
         const before = await compareConflict(USER_ID, 'tasks', id)

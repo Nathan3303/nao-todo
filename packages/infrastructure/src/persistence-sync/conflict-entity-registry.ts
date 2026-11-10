@@ -76,8 +76,13 @@ export interface ConflictEntityConfig {
     /**
      * T329 / DEF-50：落库 + 入队**同一 Dexie `rw` 事务**（仅改 base + 业务行 + `syncQueue`）。
      * 冲突恢复动作 B「以我的版本重试」用：避免 `putRecord` + `markDirty` 两次 await 的 RC-5 窗口。
+     * @param fieldBase T680 / M4：本次重试的字段级基准（缺省 ⇒ 不落键，行为逐字不变）
      */
-    putRecordAndEnqueue: (record: unknown, updatedAt: string) => Promise<unknown>
+    putRecordAndEnqueue: (
+        record: unknown,
+        updatedAt: string,
+        fieldBase?: Record<string, unknown>
+    ) => Promise<unknown>
 }
 
 const makeConfig = <T extends { id: string }>(
@@ -94,8 +99,16 @@ const makeConfig = <T extends { id: string }>(
     recordToEntity,
     entityToRecord,
     putRecord: (record) => putWithSyncBase(tableRef, record as T),
-    putRecordAndEnqueue: (record, updatedAt) =>
-        putWithSyncBaseAndEnqueue(localDatabase, tableRef, table, record as T, 'upsert', updatedAt)
+    putRecordAndEnqueue: (record, updatedAt, fieldBase) =>
+        putWithSyncBaseAndEnqueue(
+            localDatabase,
+            tableRef,
+            table,
+            record as T,
+            'upsert',
+            updatedAt,
+            fieldBase
+        )
 })
 
 /** 业务同步 7 表的冲突实体映射（key 集 ≡ `SYNC_TABLES`，见一致性测试） */
