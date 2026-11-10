@@ -942,7 +942,12 @@ export class SyncService {
      *              - AC12：写库前在**同一事务内**复核队列 `revision`；推送期间有新本地写 ⇒ 放弃本次合并
      *              - AC3 同源：**落库成功后才记账**；无冲突 ⇒ 0 记账（AC4）；⛔ 本步不加 `conflictFields`（M5）
      *
-     * @returns `handled=false` ⇒ 未处理（无本地行 / revision 已变）⇒ 调用方回退到今日 `stale` 分支
+     * @returns 三种状态（`T681` / F1，ADR「并发守卫的正确语义」）：
+     *          - `handled: true` ⇒ 合并已处理（含「无差异」）⇒ 调用方保队列、跳过今日兜底；
+     *          - `aborted: true` ⇒ 回执在飞期间有**新本地写**（`revision` 变）⇒ **直接 `continue`**：
+     *            ⛔ 不记账、⛔ 不写回 base、⛔ 不出队（回落今日分支会拿「从未推送的新值」当 loser、
+     *            并写回 base ⇒ 下一轮 `applied` 整行覆盖远端异字段）；
+     *          - 两者皆 false ⇒ `unavailable`（本地行已物理缺失）⇒ 调用方回落今日 `stale` 分支。
      */
     private async applyPushFieldMerge(
         config: SyncTableConfig,
@@ -951,9 +956,9 @@ export class SyncService {
         serverCurrent: Record<string, unknown>,
         serverUpdatedAt: string | undefined,
         userId: string
-    ): Promise<{ handled: boolean }> {
+    ): Promise<{ handled: boolean; aborted: boolean }> {
         const localRecord = await this.tableOf(config).get(item.entityId)
-        if (!localRecord) return { handled: false }
+        if (!localRecord) return { handled: false, aborted: false }
         const local = await config.recordToEntity(localRecord)
         const serverEntity = config.resToEntity(serverCurrent) as Record<string, unknown>
         // 形状对齐：与 pull 侧一致（`tasks.projectId` 服务端隐式桶 ⇒ 本地字面 `'inbox'`）
@@ -997,13 +1002,19 @@ export class SyncService {
             if (nextBase) nextRecord.syncedServerUpdatedAt = nextBase
         }
         let handled = !(nextRecord || queueBaseChanged)
+        let aborted = false
         let written = false
         if (nextRecord || queueBaseChanged) {
             const rawTable = this.rawTableOf(config)
             await localDatabase.transaction('rw', rawTable, localDatabase.syncQueue, async () => {
-                // AC12：推送期间有新本地写（revision 变化）⇒ 放弃本次合并（保队列，下轮重来）
+                // AC12（T681 / F1）：推送期间有新本地写（revision 变化）⇒ **放弃本轮合并**
+                //   ⇒ 调用方 `continue`（不记账 / 不写回 base / 不出队），下一轮 `stale` 走完整合并
                 const current = await localDatabase.syncQueue.get(item.id)
-                if (!current || (current.revision ?? 0) !== snapshot) return
+                if (!current || (current.revision ?? 0) !== snapshot) {
+                    aborted = true
+                    handled = false
+                    return
+                }
                 if (nextRecord) {
                     await rawTable.put(nextRecord)
                     written = true
@@ -1029,7 +1040,7 @@ export class SyncService {
             })
             syncStatus.setConflictCount(count)
         }
-        return { handled }
+        return { handled, aborted }
     }
 
     /**
@@ -1890,6 +1901,11 @@ export class SyncService {
                             result?.serverUpdatedAt,
                             userId
                         )
+                        // T681 / F1：回执在飞期间有新本地写 ⇒ **放弃本轮**（⛔ 不记账 / ⛔ 不写回 base /
+                        //   ⛔ 不出队）⇒ 下一轮 `stale` 用新 fieldBase 走完整合并 ⇒ 再下一轮 applied。
+                        //   ⛔ 不得回落今日 `stale` 分支（会用「从未推送的新值」当 loser + 写回 base ⇒
+                        //   下一轮 applied 整行覆盖远端异字段）。
+                        if (mergeOutcome.aborted) continue
                         // 合并已处理（含「无差异」）⇒ 保队列，跳过今日的记账 / base 写回 / 出队
                         if (mergeOutcome.handled) continue
                     }

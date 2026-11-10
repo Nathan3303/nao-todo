@@ -126,6 +126,61 @@ describe('T680 / M4 墓碑与今日分支（不合并）', () => {
     })
 })
 
+describe('T681 / F1 并发守卫：回执在飞期间有新本地写 ⇒ 放弃本轮（不回落今日分支）', () => {
+    beforeEach(resetLocalState)
+
+    it('revision 变化 ⇒ 0 记账 / 保队列 / 新写保留 / base 未前进；随后两轮收敛且远端异字段不被覆盖', async () => {
+        const server = makeServer()
+        const id = await createSyncedTask(server)
+        server.setRemote(id, { description: 'A-desc' })
+        await patchLocal(id, { name: 'B-name' })
+        const baseBefore = (await rawRow(id))?.syncedServerUpdatedAt as string
+
+        // 注入并发写：push 请求发出后、回执处理前，本地再写一次（队列 revision 变化）
+        const requester = server.requester as unknown as {
+            post: (url: string, body: unknown) => Promise<unknown>
+        }
+        const originalPost = requester.post.bind(requester)
+        let injected = false
+        requester.post = async (url, body) => {
+            if (url === '/sync/push' && !injected) {
+                injected = true
+                await patchLocal(id, { priority: 'high' })
+            }
+            return originalPost(url, body)
+        }
+
+        await makeService(server).pushAll()
+
+        // ① 0 记账 ② 队列保留 ③ 新本地写完整保留 ④ base **未**前进
+        //    （⛔ 回落今日分支会：记账 + 写回 base ⇒ 下一轮 applied 整行覆盖远端 description）
+        expect(await readJournal()).toHaveLength(0)
+        expect(await countQueue()).toBe(1)
+        const local = await readLocal(id)
+        expect(local.name).toBe('B-name')
+        expect(local.priority).toBe('high')
+        expect(local.description).toBe('A0-desc') // 本轮合并被放弃
+        expect((await rawRow(id))?.syncedServerUpdatedAt).toBe(baseBefore)
+
+        // 下一轮（无并发写）⇒ 旧 base 再次撞 stale ⇒ 完整合并：0 记账 + base 前进 + 两端字段都在
+        await makeService(server).pushAll()
+        expect(await readJournal()).toHaveLength(0)
+        expect(await countQueue()).toBe(1)
+        const merged = await readLocal(id)
+        expect(merged.name).toBe('B-name')
+        expect(merged.priority).toBe('high')
+        expect(merged.description).toBe('A-desc')
+        expect((await rawRow(id))?.syncedServerUpdatedAt).toBe(server.row(id)?.updatedAt)
+
+        // 再下一轮 ⇒ applied、队列清空；**远端异字段仍在**（不被整行覆盖）
+        await makeService(server).pushAll()
+        expect(await countQueue()).toBe(0)
+        expect(server.row(id)?.name).toBe('B-name')
+        expect(server.row(id)?.priority).toBe('high')
+        expect(server.row(id)?.description).toBe('A-desc')
+    })
+})
+
 describe('T680 / M4 漏捕写点闭合：resolveConflictRetryLocal 携带 fieldBase', () => {
     beforeEach(resetLocalState)
 
