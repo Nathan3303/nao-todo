@@ -65,3 +65,9 @@
 - 服务端 `domain/types/upsert.go:38-56` · `interfaces/controllers/sync.go:84-100` · 访问 2026-11-10 · OCC 仅比行版本（故整行推可自洽）；`stale` 回执携带 `serverCurrent`（push 侧合并的 `R`）。
 - 客户端 `apps/web/src/components/sync/conflict-field-labels.ts:14-58` · 访问 2026-11-10 · 字段人话标签已就绪（AC9 零新 i18n 键）。
 - [RFC 9110 §13.1.2 先决条件](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.2) · 访问 2026-11-10 · 以「版本先决条件 + 失败重取」实现乐观并发的通用范式（本项目用 `baseUpdatedAt` 而非 ETag）。
+
+## 实施口径补充（M1 落地时确认，2026-11-10）
+
+- **`fieldBase` 的捕获形状 = 同步边界形状（实体明文）**：`tasks.name` / `tasks.description` 落库为 `plain:<明文>`（`crypto-service.PLAIN_PREFIX`），与同步边界（实体明文）**不同形状** ⇒ **⛔ 不得在记录层捕获密文字段**（捕获出的 `B` 会带 `plain:` 前缀 ⇒ 三方比较 `R==B`/`L==B` 恒假 ⇒ 远端行一到就把文本字段全判冲突，AC1/AC5 恒红）。任务写路径（`update` / `snooze`）在**实体层**捕获；级联归档 / 脱归档只改非密文字段（`archivedAt` / `projectId`），记录层捕获等价。**M1 已按此实现并有探针证据**（同一任务记录层 `'plain:A0-name'` vs 实体层 `'A0-name'`，`valuesEqual` 双向 false）。
+- **同族陷阱（后续实体批次必须注意）**：`project-archive-cascade.ts:42` 的**项目行**目前仍是记录层捕获，而 `projects.name` / `description` 同样 `plain:` 加密 ⇒ **`R-8` 解除、projects 接入字段级合并时同一误判必复现** ⇒ 届时须改为实体层捕获（已登记 `DEF-155`）。
+- **两条已知保守边界（`P3` 备忘，已登记 `DEF-156`）**：`entityBefore` 为浅拷贝（数组字段引用共享；今天全部整体赋值、就地 `push`/`splice` 命中 0 ⇒ 安全，但未来新增就地写路径须改深拷）；`restore` 与「对方改字段」并发时不自动合并（基准缺失 ⇒ 走保守路径）。
