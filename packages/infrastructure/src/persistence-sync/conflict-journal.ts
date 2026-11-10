@@ -176,6 +176,11 @@ export interface ConflictJournalInput {
     loserUpdatedAt?: string
     /** 服务端当前行（A2 additive `serverCurrent`；仅 `stale` 回执携带） */
     serverCurrent?: Record<string, unknown>
+    /**
+     * 冲突字段集合（T682 / M5，**additive**）：真正冲突的字段名（按合并域顺序；提醒组含整组四字段）
+     * @description 缺省 / 空数组 ⇒ 条目不落该键（旧调用点行为逐字不变）
+     */
+    conflictFields?: string[]
 }
 
 /** 读取冲突记账（无记录 ⇒ 空数组；按记账顺序，末尾为最新） */
@@ -209,6 +214,8 @@ export const appendConflict = async (
     if (!userId) return 0
     // R-H / A3：快照 = 业务字段子集；文本 >512 字符截断并标记（truncated + truncatedFields）
     const { snapshot, truncated, truncatedFields } = buildConflictSnapshot(input.loser)
+    // T682 / M5（additive）：冲突字段集合（去重、保持调用方顺序）
+    const conflictFields = [...new Set(input.conflictFields ?? [])]
     // 跨路径互斥（ADR §9.3）：pull 的 remote-wins 与 push 的 stale/noop/... 均经本入口 ⇒
     // 同一 `meta` 单记录的 RMW 在 journal 锁内串行（锁序：pull/push 锁 → journal 锁，最内层）
     const next = await withJournalRmw(userId, ({ entries, record }) => {
@@ -242,6 +249,8 @@ export const appendConflict = async (
                 : { winnerUpdatedAt: input.winnerUpdatedAt }),
             ...(input.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: input.loserUpdatedAt }),
             ...(input.serverCurrent === undefined ? {} : { serverCurrent: input.serverCurrent }),
+            // T682 / M5（additive）：只落**非空**字段集（去重、保持传入顺序）；缺省 ⇒ 不落键
+            ...(conflictFields.length === 0 ? {} : { conflictFields }),
             ...(truncated ? { truncated: true, truncatedFields } : {}),
             ...(input.kind === 'pull-local-wins' ? { occurrences: 1 } : {}),
             at: new Date().toISOString()
@@ -334,6 +343,8 @@ export interface ConflictListItem {
     loser: Record<string, unknown> | null
     winnerUpdatedAt?: string
     loserUpdatedAt?: string
+    /** 冲突字段集合（T682 / M5 additive；缺省 ⇒ 面板按整行差异展示） */
+    conflictFields?: string[]
     at: string
 }
 
@@ -393,6 +404,7 @@ const toConflictListItem = (entry: ConflictJournalEntry): ConflictListItem => ({
     loser: LIST_SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null,
     ...(entry.winnerUpdatedAt === undefined ? {} : { winnerUpdatedAt: entry.winnerUpdatedAt }),
     ...(entry.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: entry.loserUpdatedAt }),
+    ...(entry.conflictFields === undefined ? {} : { conflictFields: entry.conflictFields }),
     at: entry.at
 })
 

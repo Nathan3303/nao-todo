@@ -887,7 +887,9 @@ export class SyncService {
                 entityId,
                 loser,
                 winnerUpdatedAt: winner === 'remote' ? remoteUpdatedAtValue : queued.localUpdatedAt,
-                loserUpdatedAt: winner === 'remote' ? queued.localUpdatedAt : remoteUpdatedAtValue
+                loserUpdatedAt: winner === 'remote' ? queued.localUpdatedAt : remoteUpdatedAtValue,
+                // T682 / M5（additive）：字段级信号（冲突字段；提醒组含整组四字段）
+                conflictFields: conflicts
             })
             syncStatus.setConflictCount(count)
         }
@@ -1036,7 +1038,9 @@ export class SyncService {
                 loser,
                 ...(serverUpdatedAt === undefined ? {} : { winnerUpdatedAt: serverUpdatedAt }),
                 loserUpdatedAt: item.localUpdatedAt,
-                serverCurrent
+                serverCurrent,
+                // T682 / M5（additive）：字段级信号（冲突字段；提醒组含整组四字段）
+                conflictFields: conflicts
             })
             syncStatus.setConflictCount(count)
         }

@@ -96,7 +96,9 @@ export const recordEditOverwrite = async (input: EditOverwriteInput): Promise<vo
             table,
             entityId,
             loser,
-            winnerUpdatedAt
+            winnerUpdatedAt,
+            // T682 / M5（additive）：保存侧口径对齐 —— 字段级信号 = 被覆盖字段集
+            conflictFields: fields
         })
         syncStatus.setConflictCount(count)
     } catch (err) {

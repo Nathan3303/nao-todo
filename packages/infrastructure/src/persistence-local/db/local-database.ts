@@ -238,6 +238,12 @@ export interface ConflictJournalEntry {
      *              **离线**写回本地（无额外往返）。旧服务端无该字段 ⇒ 动作走「下次同步后生效」两态。
      */
     serverCurrent?: Record<string, unknown>
+    /**
+     * 冲突字段集合（T682 / M5，**additive**）：本次裁决**真正冲突**的字段名（合并域内、按合并域顺序）。
+     * @description ⛔ 不改既有 `kind` / 字段形状，仅追加可选字段；缺省（旧条目 / 整行裁决）⇒ 面板回退到
+     *              「败方 vs 当前」整行差异展示。提醒组冲突时含**整组四字段**（不得只记单个字段）。
+     */
+    conflictFields?: string[]
     /** 同一裁决重复出现次数（T643 / A1 去重：仅 `pull-local-wins` 累加） */
     occurrences?: number
     /** 败方快照是否发生过文本截断（T643 / A3；R-H：>512 字符截断并标记） */

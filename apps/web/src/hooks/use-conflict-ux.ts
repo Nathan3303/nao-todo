@@ -68,7 +68,9 @@ export const useConflictUx = (): ConflictUx => {
 
     /**
      * 解析左栏标题（DEF-134）
-     * @description 数据面只读（与 `compareConflict` 的 `current` 同一转换链）；失败即降级，不影响列表渲染。
+     * @description 数据面只读（`getRecord` → `recordToEntity` 同一转换链）；失败即降级，不影响列表渲染。
+     *              ⚠️ `T680 / M4` 起与 `compareConflict` 的 `current` **不再同源**（带 `serverCurrent` 的条目
+     *              其 `current` 取服务端当前行）—— 标题固定取**本地行**（用于指认「我这边这条记录」）。
      *              异步补齐 ⇒ 不阻塞列表首帧（先出行，标题随后替换）。
      */
     const resolveTitles = async (list: ConflictListItem[], run: number): Promise<void> => {

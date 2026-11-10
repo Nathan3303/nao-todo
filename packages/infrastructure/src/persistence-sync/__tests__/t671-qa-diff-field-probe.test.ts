@@ -368,9 +368,12 @@ describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC
         expect(await localTask(id)).toMatchObject({ name: 'A-name', description: 'A-desc' })
     })
 
-    it('Y3 stale 后若先发生一次 pull（自动刷新）⇒ 面板对比才出现双侧字段差异', async () => {
+    it('Y3【M5 订正】stale 后**无需**再 pull：对比（取 serverCurrent）即含双侧字段差异', async () => {
         // T675 / B 批 M4（2026-11-10）：**仅夹具同字段化**（两侧都改 `name` + `description`）⇒ 仍产出
-        // `stale`（快照含双侧字段）；断言逐字保留（见 T675 报告 §4.1）。
+        // `stale`（快照含双侧字段）。
+        // T682 / M5 订正：M4 起 `compareConflict` 的「当前」在条目带 `serverCurrent` 时取**服务端当前行**
+        //   ⇒ push 后即可对比；原前提「需先 pull 才出现差异」已不成立。断言**收紧**（新增 `before` 断言，
+        //   既有 `after` 断言保留）。
         const server = makeServer()
         const id = await initSynced(server)
         server.setRemote(id, { name: 'A-name', description: 'A-desc' })
@@ -382,6 +385,9 @@ describe('T671 时序 Y：B 保存后先 push（未拉取）⇒ 既有行级 OCC
 
         const before = await compareConflict(USER_ID, 'tasks', id)
         dump('Y3 compare-before-pull', before)
+        const beforeFields = before?.diffs.map((diff) => diff.field) ?? []
+        // 收紧：push 后（未 pull）即可看到双侧字段差异
+        expect(beforeFields).toEqual(expect.arrayContaining(['description', 'name']))
         await new SyncService(server.requester).pullAll()
         const after = await compareConflict(USER_ID, 'tasks', id)
         dump('Y3 compare-after-pull', after)
