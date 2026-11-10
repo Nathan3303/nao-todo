@@ -255,3 +255,12 @@ if err != nil {
 - 客户端 `packages/shared/requester/{axios.ts:139-227,lynx.ts:76-117,credential-codes.ts:13}`、`packages/infrastructure/src/persistence-sync/{sync-service.ts:361-364,978-1045,1420-1440,sync-retry.ts:103-110}`、`packages/domain-identity/src/application/usecases/auth-service/{error-classification.ts:15-31,187-220,usecase.ts:141-150}` · 访问 2026-11-10 · 失败分类学（network/business/credential）、成功码白名单、移动端零改动依据。
 - [RFC 9110 §15.6.4 503 Service Unavailable](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.6.4) · 访问 2026-11-10 · 「服务当前因临时过载/维护无法处理请求」⇒ 依赖不可用属该语义。
 - [RFC 9110 §15.6.3 502 Bad Gateway](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.6.3) · 访问 2026-11-10 · 网关语义，本文不采用。
+
+## 八、PM 拍板（2026-11-10，用户已确认 3 项、PM 定了 2 项）
+
+- **D1 码型 = 采纳 HTTP 503 + `{"code":50300}`**（用户确认）。理由全采纳 arch §三：`9002x` 已被 `/sync` 占用、客户端对未知业务码 fail-closed（检入路径会清认证）、`50300` 在 `NETWORK_ERROR_CODES` 白名单内、`>=500` 令推送走服务级暂停而非逐项烧 `attempts`、访问日志 `status>=500` 自动 error。**失败态契约变更已授权**。
+- **D4 方向 = 未知错误一律不登出**（用户确认）。代价（2 处测试夹具改返回值、断言值仍 `10041`）接受；**真失效四子场景必须仍 `10041`，且须有红基线证明「未知/基础设施错误不再 10041」**。
+- **D6 = `DEF-152` 同批**（用户确认）。接受代价「慢查询日志此后无绑定值」，但**错误日志必须仍带 `err` 原文**（AC-5）。
+- **D2 = 不加客户端二次确认**（PM 定）。理由：客户端**无区分证据**（`T667` 实测响应体逐字节相同，计数只是代理指标）+ 与 AC-10「既有用例不许改」直接冲突；结构性修复在服务端「默认不登出」。⇒ **AC-11 标记为「不适用（本方案下不需要）」**，不删条目以留痕。
+- **R1 = 接受**（PM 定）：DB 故障恢复期重试可能先撞 `10051`（IP 粗桶 24/min，限流在鉴权之前）。`10051` **非凭证类**、不清认证、不丢 `pending` ⇒ 可接受；观测上二者可通过状态码区分（503 vs 200+10051）。
+- **开工口径**：维护型批次 `M20261110-db-failure-mapping` · 服务端 `nao-todo-server` 单 PR · 客户端 0 改动（移动端红线）· 工期 **1.5–2 人天**（超 3 人天须重报）· 验收按 `docs/reports/667-def143-repro-and-criteria.md` 的 AC-1…AC-13（AC-11 不适用）。
