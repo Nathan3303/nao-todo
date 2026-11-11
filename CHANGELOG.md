@@ -2,6 +2,22 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.20.0] - 2026-11-11
+
+变更审计日志（A 档 · Issue #346 · 代码 PR #347 · 发版说明 `docs/releases/v1.20.0.md`）：
+
+- **核心**：任务详情新增「变更历史」时间线 —— 每次修改追加一条**字段级**记录（`{entity, entityId, action, fields:[{field,from,to}], at, source}`），`source` 四值（`local-edit` / `pull` / `push-merge` / `conflict-retry`）。**旁路追加，不参与同步裁决**；真相源仍为当前表。
+- **假刷屏双源已挡**：① `DEF-147` 重放（内容无变化却每轮重写）② **`DEF-159` 收集箱桶**（`'inbox'` ↔ 服务端 `userId`）—— 判据为**实际业务字段变化**（`valuesEqual` + 单一忽略集），⛔ 不按 put 计数；收集箱 diff 前统一 `toLocalProjectId` 归一。
+- **写入点 16 处**：`local-edit` 9（含 `copy`/`snooze`/级联）· `pull` 4（两级筛选：记录层零解密预筛 + 实体层精筛）· `push-merge` 1 · `conflict-retry` 2；`recordAudit` 唯一写入口（源级守卫）。
+- **值形状**：任务文本字段在**实体层**取明文（落库为 `plain:` 前缀，⛔ 不得记录层捕获 —— `T676`/`DEF-155` 同族教训）。
+- **有界**：每用户 ≤1000 条 / ≤90 天；每次调度最多删 400 条、`bulkDelete` 分块 ≤200、块间让出事件循环；剩余留待下次（无自旋定时器）。实测「1000 条满 + 连续真实写」`update` max 823ms → **1.84ms**。
+- **失败语义**：写入抛错不向上抛（`audit.record.failed`，不含业务值），保存 / 同步不受影响；无 IndexedDB 环境四入口（`record`/`load`/`count`/`prune`）全部安全降级。
+- **面板**：`history.vue` 时间线卡片（默认折叠 / 「更早」分页 / 三态复用既有 `LoadingError`）· 13 个新 i18n 键 ×（zh + en）· 字段标签下沉 `packages/shared`（单一真源）。
+- **门禁**：全仓 **443 文件 / 3449 例 / 3443 通过 / 6 跳过 / 0 红**（洁净前提单跑）· `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；变异 **11 条**逐条 kill + 逐字节还原（其中 2 条原判「结构性不可杀」经 qa 复核**证伪**，已补齐判据并落成永久护栏）。
+- **回滚**：ADR 附录 B（四级关闭入口 + 降级实测：老客户端打开 v5 库可开、`verno` 如实 4、业务数据可读、`auditLogs` 不可见）。
+- **Tag `v1.20.0`** · root / `apps/web` / `apps/desktop` `1.19.1 → 1.20.0`（MINOR）· `infrastructure` `0.11.0 → 0.12.0` · `presentation` `0.10.0 → 0.11.0` · `shared` `1.4.8 → 1.5.0`。**服务端无改动，无需部署。**
+- **登记**：`DEF-159`（收集箱归一缺口，本档已规避）· `DEF-160`（`vp staged` 整树 stash 吞他人未提交改动，缓解入 `AGENTS.md`）。
+
 ## [v1.19.1] - 2026-11-10
 
 挂账清理批（`M20261110-def-pool-cleanup` · 维护型无 Issue · 客户端 PR #344 · 发版说明 `docs/releases/v1.19.1.md`）：
