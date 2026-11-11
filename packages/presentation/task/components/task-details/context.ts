@@ -94,6 +94,43 @@ export type TaskDetailsContext = {
 export const TASK_DETAILS_CONTEXT_KEY: InjectionKey<TaskDetailsContext> =
     Symbol('TASK_DETAILS_CONTEXT')
 
+/** 一条变更历史（**面向展示的最小形状**；⛔ 不含内部元字段，`T697` Q2 冻结契约） */
+export interface TaskHistoryItem {
+    /** 插入序 = 分页游标（keyset，⛔ 不用 offset） */
+    seq?: number
+    /** 变更发生的本机时间（ISO） */
+    at: string
+    /** 来源四值（`local-edit` / `pull` / `push-merge` / `conflict-retry`）→ UI 映射为中文 */
+    source: 'local-edit' | 'pull' | 'push-merge' | 'conflict-retry'
+    /** 动作六值 → UI 映射为中文 */
+    action: 'create' | 'update' | 'archive' | 'unarchive' | 'delete' | 'restore'
+    /** 字段级 diff（值 = 实体明文） */
+    fields: Array<{ field: string; from: unknown; to: unknown }>
+}
+
+/** 一页变更历史 */
+export interface TaskHistoryPage {
+    /** 最新在前 */
+    items: TaskHistoryItem[]
+    /** 本页之外还有更早的记录 */
+    hasMore: boolean
+    /** 表不可用 / 老数据无历史 ⇒ 专门表示「不可用」（⛔ 不得用空数组冒充） */
+    unavailable?: boolean
+}
+
+/**
+ * 变更历史数据源（端侧经 DI 注入；`packages/presentation` 对 infrastructure **零 import**）
+ * @description 实现见 `apps/web/src/hooks/use-task-history.ts`（web + desktop 共用 `app.ts` 一处 provide）；
+ *              未 provide（如移动端 / 测试）⇒ 面板不渲染（不报错）。
+ */
+export interface TaskHistoryProvider {
+    load: (taskId: string, beforeSeq?: number) => Promise<TaskHistoryPage>
+}
+
+// 变更历史上下文键（M5 / T704）
+export const TASK_HISTORY_CONTEXT_KEY: InjectionKey<TaskHistoryProvider> =
+    Symbol('TASK_HISTORY_CONTEXT')
+
 // 任务详情预上下文
 export type TaskDetailsPreContext = {
     taskUseCase: TaskUseCase

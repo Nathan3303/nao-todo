@@ -1094,6 +1094,21 @@ export interface LocaleMessages {
     'mobile.taskList.refresh': string
     'mobile.taskList.hideCompleted': string
     'mobile.taskList.showCompleted': string
+
+    // 变更历史（A 档审计日志 · T704 / R-7，共 13 键）
+    'history.title': string
+    'history.empty': string
+    'history.loadFailed': string
+    'history.more': string
+    'history.source.local': string
+    'history.source.pull': string
+    'history.source.pushMerge': string
+    'history.source.conflictRetry': string
+    'history.action.create': string
+    'history.action.archive': string
+    'history.action.unarchive': string
+    'history.action.delete': string
+    'history.action.restore': string
 }
 
 export type LocaleKey = keyof LocaleMessages

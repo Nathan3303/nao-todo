@@ -1,7 +1,7 @@
 import { registerAppCommands } from '@/commands/app.commands'
 import { scopeManager } from '@/commands/instance'
 import { env } from '@/env'
-import { useKeyboardShortcuts } from '@/hooks'
+import { useKeyboardShortcuts, useTaskHistory } from '@/hooks'
 import router from '@/router'
 import { startWebDataPlane } from '@/data-plane'
 import { useLocaleStore, useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
@@ -11,6 +11,7 @@ import { t } from '@nao-todo/shared/locales'
 import { useResponsiveFlag } from '@nao-todo/shared/hooks'
 import { provide } from 'vue'
 import { APP_CONTEXT_KEY, type RouterLink } from './context'
+import { TASK_HISTORY_CONTEXT_KEY } from '@nao-todo/presentation/task/components/task-details/context'
 
 const useApp = () => {
     // @initialize 执行 App 初始化动作
@@ -68,6 +69,10 @@ const useApp = () => {
             routeName: 'search'
         }
     ]
+
+    // A 档审计日志（T704 / D7）：变更历史数据源一处 provide 覆盖 web + desktop
+    // （desktop 经 `@` alias 复用本 `App.vue`）；缺失 ⇒ 面板不渲染（移动端不走这里）
+    provide(TASK_HISTORY_CONTEXT_KEY, useTaskHistory())
 
     // 初始化响应式标志
     const { flag } = useResponsiveFlag()

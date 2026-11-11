@@ -25,11 +25,16 @@ import { resetReadOnlyForTest } from '@nao-todo/presentation/offline'
 
 /** 冲突组件源码（`?raw`）：用于 i18n 悬空键 / 死键静态守护（T169）——
  *  T338：同时扇入同目录 `.ts`（`DIFF_LABEL_KEY` 等纯函数模块也消费 i18n 键） */
-const conflictComponentSources = import.meta.glob('../*.{vue,ts}', {
-    query: '?raw',
-    import: 'default',
-    eager: true
-}) as Record<string, string>
+// T704 / D2：字段标签表唯一真源已下沉 `packages/shared`
+// ⇒ 扫描面同步扩到该模块（判据不变：仍是「死键集合为空」）
+const conflictComponentSources = import.meta.glob(
+    ['../*.{vue,ts}', '/packages/shared/utils/conflict-field-labels.ts'],
+    {
+        query: '?raw',
+        import: 'default',
+        eager: true
+    }
+) as Record<string, string>
 
 /**
  * T162 用例先行（红基线）—— 阶段二 2B · 面 ③ 冲突 UX（可见面）

@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vite-plus/test'
 import { messages } from '@nao-todo/shared/locales'
-import { FIELD_LABEL_KEYS, fieldLabel, humanizeField } from '../conflict-field-labels'
+import {
+    FIELD_LABEL_KEYS,
+    fieldLabel,
+    humanizeField
+} from '@nao-todo/shared/utils/conflict-field-labels'
 
 /**
  * T340 —— 冲突字段名 → 用户可读标签（C 端化：不裸露技术键名）

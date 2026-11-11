@@ -1124,7 +1124,20 @@ const zhCN: LocaleMessages = {
     'mobile.taskList.more': '更多',
     'mobile.taskList.refresh': '刷新列表',
     'mobile.taskList.hideCompleted': '隐藏已完成',
-    'mobile.taskList.showCompleted': '显示已完成'
+    'mobile.taskList.showCompleted': '显示已完成',
+    'history.title': '变更历史',
+    'history.empty': '暂无变更记录',
+    'history.loadFailed': '变更记录加载失败',
+    'history.more': '更早的记录',
+    'history.source.local': '本机修改',
+    'history.source.pull': '同步自云端',
+    'history.source.pushMerge': '已合并云端修改',
+    'history.source.conflictRetry': '恢复了我的修改',
+    'history.action.create': '创建',
+    'history.action.archive': '归档',
+    'history.action.unarchive': '取消归档',
+    'history.action.delete': '删除',
+    'history.action.restore': '恢复'
 }
 
 export default zhCN

@@ -27,7 +27,7 @@ import {
     type ConflictListItem
 } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 import type { ConflictUx } from '@/hooks'
-import { fieldLabel } from './conflict-field-labels'
+import { fieldLabel } from '@nao-todo/shared/utils/conflict-field-labels'
 import {
     DIFF_LABEL_KEY,
     DIFF_SYMBOL,

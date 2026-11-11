@@ -1,5 +1,9 @@
 /**
- * 冲突 diff 字段名 → 用户可读标签（T340 · C 端化）
+ * 字段名 → 用户可读标签（T340 · C 端化；`T704` 从 `apps/web` 下沉到 `packages/shared`）
+ *
+ * @description 下沉原因（PRD `D2` 裁定）：`packages/presentation` **不能** import `apps/web`，
+ *              而「变更历史」面板与冲突面板必须用同一份字段标签 ⇒ 本模块是唯一真源；
+ *              `apps/web` 侧改为从 `@nao-todo/shared/utils/conflict-field-labels` 导入（导出面不变）。
  *
  * @description 面向用户的界面**不得**裸露技术键名（`name`/`archivedAt`/`revision`…）⇒
  *              已知字段一律映射到 i18n 标签；未映射字段走 `humanizeField` **可读回退**
@@ -7,7 +11,7 @@
  *              新增字段接入方式：在 `FIELD_LABEL_KEYS` 增一行 + 在 `packages/shared/locales/{types,zh-CN,en-US}`
  *              增对应字段标签键（三处齐备；键集合由死键守护覆盖）。
  */
-import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { t, type LocaleKey } from '../locales'
 
 /** 已知字段 → i18n 键（缺失 ⇒ 走 `humanizeField` 回退） */
 export const FIELD_LABEL_KEYS: Record<string, LocaleKey> = {

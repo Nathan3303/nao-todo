@@ -1156,7 +1156,20 @@ const enUS: LocaleMessages = {
     'mobile.taskList.more': 'More',
     'mobile.taskList.refresh': 'Refresh',
     'mobile.taskList.hideCompleted': 'Hide Completed',
-    'mobile.taskList.showCompleted': 'Show Completed'
+    'mobile.taskList.showCompleted': 'Show Completed',
+    'history.title': 'change history',
+    'history.empty': 'no changes yet',
+    'history.loadFailed': 'could not load change history',
+    'history.more': 'show earlier',
+    'history.source.local': 'edited on this device',
+    'history.source.pull': 'synced from cloud',
+    'history.source.pushMerge': 'merged cloud changes',
+    'history.source.conflictRetry': 'restored my version',
+    'history.action.create': 'created',
+    'history.action.archive': 'archived',
+    'history.action.unarchive': 'unarchived',
+    'history.action.delete': 'deleted',
+    'history.action.restore': 'restored'
 }
 
 export default enUS
