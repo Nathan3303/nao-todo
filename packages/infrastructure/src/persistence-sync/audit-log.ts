@@ -61,6 +61,12 @@ export const AUDIT_LIMIT = 1000
 /** 每用户保留期（天，时间界，`R-5`） */
 export const AUDIT_RETENTION_DAYS = 90
 
+/** 每次调度**最多删除条数**（防「一次性巨型删除」阻塞事件循环；剩余留给下一次调度） */
+export const AUDIT_PRUNE_MAX_PER_RUN = 400
+
+/** 单个删除批次的条数上限（≤200 条一块，每块 `bulkDelete` 自成一个事务） */
+export const AUDIT_PRUNE_CHUNK_SIZE = 200
+
 /** 淘汰调度防抖（ms）：一批写入只清一次，且**不阻塞**保存路径（`T696` §8.1） */
 const AUDIT_PRUNE_DEBOUNCE_MS = 500
 
@@ -281,34 +287,65 @@ export const pruneAuditLog = async (
 const pruneAuditLogInner = async (userId: string): Promise<number> => {
     if (!hasAuditTable()) return 0
     const table = localDatabase.auditLogs
+    const startedAt = Date.now()
     let evicted = 0
-    // ① 时间界：`at < cutoff`（左开区间含空串界，右开因此界不含）
+    // ① 时间界：`at < cutoff`（左开区间含空串界，右开因此界不含）—— 本次限幅内先删过期的
     const cutoff = new Date(Date.now() - AUDIT_RETENTION_DAYS * DAY_MS).toISOString()
     const expiredKeys = await table
         .where(AUDIT_AT_INDEX)
         .between([userId, AUDIT_AT_LOWER_BOUND], [userId, cutoff], true, false)
+        .limit(AUDIT_PRUNE_MAX_PER_RUN)
         .primaryKeys()
-    if (expiredKeys.length > 0) {
-        await table.bulkDelete(expiredKeys)
-        evicted += expiredKeys.length
-    }
-    // ② 条数界（最旧的 `count - 上限` 条）
-    const total = await table.where('userId').equals(userId).count()
-    if (total > AUDIT_LIMIT) {
-        const oldestKeys = await table
-            .where(AUDIT_AT_INDEX)
-            .between([userId, AUDIT_AT_LOWER_BOUND], [userId, AUDIT_AT_UPPER_BOUND], true, false)
-            .limit(total - AUDIT_LIMIT)
-            .primaryKeys()
-        if (oldestKeys.length > 0) {
-            await table.bulkDelete(oldestKeys)
-            evicted += oldestKeys.length
+    evicted += await deleteAuditRowsInChunks(table, expiredKeys)
+    // ② 条数界（最旧的 `count - 上限` 条）—— 只花掉本次剩余额度；超出部分留给下一次调度
+    const budget = AUDIT_PRUNE_MAX_PER_RUN - evicted
+    if (budget > 0) {
+        const total = await table.where('userId').equals(userId).count()
+        if (total > AUDIT_LIMIT) {
+            const oldestKeys = await table
+                .where(AUDIT_AT_INDEX)
+                .between(
+                    [userId, AUDIT_AT_LOWER_BOUND],
+                    [userId, AUDIT_AT_UPPER_BOUND],
+                    true,
+                    false
+                )
+                .limit(Math.min(budget, total - AUDIT_LIMIT))
+                .primaryKeys()
+            evicted += await deleteAuditRowsInChunks(table, oldestKeys)
         }
     }
     if (evicted > 0) {
-        logStructured('info', STRUCTURED_LOG_EVENTS.AUDIT_ENTRY_EVICTED, { userId, count: evicted })
+        // 只记条数与耗时（⛔ 不含业务值）
+        logStructured('info', STRUCTURED_LOG_EVENTS.AUDIT_ENTRY_EVICTED, {
+            userId,
+            count: evicted,
+            durationMs: Date.now() - startedAt
+        })
     }
     return evicted
+}
+
+/**
+ * 分块删除（每块 ≤ `AUDIT_PRUNE_CHUNK_SIZE`，`bulkDelete` 每块自成一个事务）
+ * @description 避免单个巨型事务长时间占用事件循环（qa 实测一次性删 1000/2000 条会出现秒级卡顿）。
+ *              返回实际删除条数。
+ */
+const deleteAuditRowsInChunks = async (
+    table: typeof localDatabase.auditLogs,
+    keys: readonly number[]
+): Promise<number> => {
+    let removed = 0
+    for (let index = 0; index < keys.length; index += AUDIT_PRUNE_CHUNK_SIZE) {
+        const chunk = keys.slice(index, index + AUDIT_PRUNE_CHUNK_SIZE)
+        await table.bulkDelete(chunk)
+        removed += chunk.length
+        // 块与块之间让出一次宏任务：待保存的交互能在下一块之前插进来（⛔ 不改变删除总量语义）
+        if (index + AUDIT_PRUNE_CHUNK_SIZE < keys.length) {
+            await new Promise((resolve) => setTimeout(resolve, 0))
+        }
+    }
+    return removed
 }
 
 /** 待执行的淘汰定时器（每用户最多 1 个 ⇒ 防抖 + 单飞） */
@@ -410,14 +447,21 @@ export const loadAudit = async (
 }
 
 /**
- * 某用户的审计条数
- * @param userId 缺省取当前会话用户（C-55 硬失败口径：无会话即抛）
+ * 某用户的审计条数（诊断用读接口）
+ * @description 与 `loadAudit` / `pruneAuditLog` / `recordAudit` **同姿态：不 reject**
+ *              —— 无 IndexedDB（node 环境 / 库未初始化）或库操作抛错 ⇒ 返回 `0`。
+ *              这是**读诊断**，⛔ 不得因它把未处理拒绝抛回调用方（`T707` 修复项 1）。
+ * @param userId 缺省取当前会话用户（无会话 ⇒ 同样按 `0` 处理）
+ * @returns 该用户审计条数；不可用时 `0`
  */
-export const countAudit = async (
-    userId: string = localSession.requireCurrentUserId()
-): Promise<number> => {
-    if (!hasAuditTable()) return 0
-    return localDatabase.auditLogs.where('userId').equals(userId).count()
+export const countAudit = async (userId?: string): Promise<number> => {
+    try {
+        if (!hasAuditTable()) return 0
+        const scoped = userId ?? localSession.requireCurrentUserId()
+        return await localDatabase.auditLogs.where('userId').equals(scoped).count()
+    } catch {
+        return 0
+    }
 }
 
 /**
