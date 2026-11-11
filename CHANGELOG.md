@@ -2,6 +2,17 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.20.1] - 2026-11-11
+
+变更历史入口调整（用户 2026-11-11 决定 · PRD `D8` / `R-10` / `AC12` · 代码 PR #349 · 发版说明 `docs/releases/v1.20.1.md`）：
+
+- **入口从正文内联改为 Footer「更多」→ 对话框**：`main/history.vue` 迁为 `task-history-dialog.vue`（旧文件删除、无隐藏占位）；菜单项文案复用 `history.title`，**i18n 零新增键**（仍精确 13 个）。
+- **对话框硬要求全部落地**：底部按钮 / × / Esc 三路关闭 · 关闭后焦点归还常驻「更多」按钮（WAI-ARIA menu button 行为）· 打开期间自动刷新不清空不重挂（`vo` 整对象替换后同一 DOM 节点、`load` 仍 1 次）。
+- **未打开不取数**：正文不再挂载历史组件 ⇒ 详情打开时**零查询**（`T713` 断言 `load` 调用数 = 0）。
+- **`AC9` 定向豁免（已用尽）**：`t697-ac3-history-panel`（7 例）与 `t706-qa-history-panel-probe`（5 例）**只改载体指向**（内联 → 对话框），**内容断言逐字未动**（中文标签 / 旧值→新值 / 无内部词 / 非表格式 / 空态 / 「更早」）。
+- **门禁**：全仓 **445 文件 / 3465 例 / 3459 通过 / 6 跳过 / 0 红** · `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行；`T713` 独立探针 8 例 + 变异 4 条全 kill。
+- **Tag `v1.20.1`** · root / `apps/web` / `apps/desktop` `1.20.0 → 1.20.1`（PATCH）· `presentation` `0.11.0 → 0.11.1`。**服务端无改动，无需部署。**
+
 ## [v1.20.0] - 2026-11-11
 
 变更审计日志（A 档 · Issue #346 · 代码 PR #347 · 发版说明 `docs/releases/v1.20.0.md`）：
