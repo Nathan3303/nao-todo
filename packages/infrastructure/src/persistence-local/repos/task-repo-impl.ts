@@ -27,6 +27,7 @@ import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { pickOverwrittenFields, recordEditOverwrite } from '../../persistence-sync/edit-overwrite'
+import { deriveAuditAction, diffAuditFields, recordAudit } from '../../persistence-sync/audit-log'
 import { captureFieldBase } from '../../persistence-sync/field-base'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -87,6 +88,20 @@ export class LocalTaskRepoImpl implements TaskRepository {
         return localSession.requireCurrentUserId()
     }
 
+    /**
+     * 本机编辑的审计记账（旁路）
+     * @description 调用时机 = **业务事务提交之后**（`recordAudit` 内部兜住失败、不抛、不阻断）；
+     *              判据 = 「落库前后实体是否真的变了」（`diffAuditFields` 非空）**或**动作变化
+     *              （归档 / 取消归档）⇒ 同值再写 = 0 条（`R-2` / `AC1`）。
+     *              值一律取**实体层明文**（⛔ 记录层形状；`T676` 教训）。
+     */
+    private async recordLocalEditAudit(before: object, after: object & { id: string }) {
+        const action = deriveAuditAction(before, after)
+        const fields = diffAuditFields(before, after)
+        if (action === 'update' && fields.length === 0) return
+        await recordAudit({ entityId: after.id, action, source: 'local-edit', fields })
+    }
+
     async get(id: string): GoAsync<TaskEntity> {
         try {
             const record = await this.db.tasks.get(id)
@@ -134,6 +149,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'upsert',
                 entity.updatedAt
             )
+            // 旁路审计（`AC1` / PM 2026-11-11 裁定：创建也记 1 条，`fields` 为空 = 不产字段噪声）
+            await recordAudit({ entityId: entity.id, action: 'create', source: 'local-edit' })
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -202,6 +219,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                     winnerUpdatedAt: entity.updatedAt
                 })
             }
+            // 旁路审计：落库前后实体比对（动作由 archivedAt 前后变化派生）
+            await this.recordLocalEditAudit(entityBefore, entity)
             return null
         } catch (err) {
             return String(err)
@@ -223,6 +242,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'delete',
                 entity.deletedAt ?? entity.updatedAt
             )
+            // 旁路审计：动作 = 删除（`deletedAt` 不进 `fields`，`AC7`）
+            await recordAudit({ entityId: id, action: 'delete', source: 'local-edit' })
             // 级联软删：子任务（递归）+ 检查项 + 评论（与删除一起入队，防远程残留孤儿子实体，见 data-sync-plan.md §5）
             await this.cascadeRemove(id, entity.deletedAt)
             return null
@@ -261,6 +282,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'delete',
                 deletedAt
             )
+            // 旁路审计：子任务也是 `tasks` 实体（`R-8` 只记 tasks；检查项 / 评论本批不记）
+            await recordAudit({ entityId: subEntity.id, action: 'delete', source: 'local-edit' })
             await this.cascadeRemove(sub.id, deletedAt)
         }
         // 检查项
@@ -318,6 +341,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'upsert',
                 entity.updatedAt
             )
+            // 旁路审计：动作 = 恢复（`deletedAt` 复原不产字段噪声，`AC7`）
+            await recordAudit({ entityId: id, action: 'restore', source: 'local-edit' })
             return null
         } catch (err) {
             return String(err)
@@ -373,10 +398,27 @@ export class LocalTaskRepoImpl implements TaskRepository {
                         this.db.syncQueue,
                         fieldBase
                     )
-                    return { ok: true as const, movedToInbox }
+                    return {
+                        ok: true as const,
+                        movedToInbox,
+                        // 审计用：脱归档前后的清单归属（结构字段 ⇒ 记录层与实体层同形）
+                        previousProjectId: record.projectId,
+                        nextProjectId: nextTask.projectId
+                    }
                 }
             )
             if (!outcome.ok) return [null, outcome.message]
+            // 旁路审计在业务事务之后（⛔ 审计不进 Dexie 事务）；动作 = 脱归档，
+            // 仅当回收集箱（清单归属变化）时 `fields` 只含 `projectId`（`T696` §3.1）
+            await recordAudit({
+                entityId: id,
+                action: 'unarchive',
+                source: 'local-edit',
+                fields: diffAuditFields(
+                    { projectId: outcome.previousProjectId },
+                    { projectId: outcome.nextProjectId }
+                )
+            })
             return [{ movedToInbox: outcome.movedToInbox }, null]
         } catch (err) {
             return [null, String(err)]
@@ -547,6 +589,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 'upsert',
                 copyEntity.updatedAt
             )
+            // 旁路审计：复制 = 新建一个实体（`fields` 为空）
+            await recordAudit({ entityId: copyEntity.id, action: 'create', source: 'local-edit' })
             return [copyEntity, null]
         } catch (err) {
             return [null, String(err)]
@@ -575,6 +619,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 entity.updatedAt,
                 captureFieldBase(entityBefore, entity)
             )
+            // 旁路审计：提醒组字段（`remindAt` / `remindTime`）走 `fields`
+            await this.recordLocalEditAudit(entityBefore, entity)
             return [newRemindAt, null]
         } catch (err) {
             return [null, String(err)]

@@ -5,6 +5,7 @@ import {
     type ClearUserScopedStorageOptions
 } from './local-storage-policy'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../../observability/structured-log'
+import { isAuditTableAvailable } from '../../persistence-sync/audit-log'
 
 /**
  * 注销反悔期天数（与后端一致：注销后 7 天内可恢复，到期彻底删除）
@@ -73,16 +74,19 @@ export class DeletionService {
         if (!userId) return
         logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_STARTED, { userId })
         const tables = BUSINESS_TABLES as readonly string[]
+        // R-6 / AC15：审计日志随业务数据一并清除。⚠️ ⛔ 不能把 `auditLogs` 加进 `BUSINESS_TABLES`
+        //（该常量与「离线进入门」共用，加进去会改变离线门语义）⇒ 清库名单显式追加。
+        const wipeTables = isAuditTableAvailable() ? [...tables, 'auditLogs'] : [...tables]
         await localDatabase.transaction(
             'rw',
-            [...tables, 'meta', 'syncQueue', 'syncCursor'],
+            [...wipeTables, 'meta', 'syncQueue', 'syncCursor'],
             async () => {
                 // C-53：标记与清库同一事务提交 ⇒ 崩溃后由 resumePendingWipe 补清
                 await localDatabase.meta.put({
                     id: PENDING_WIPE_META_ID,
                     pendingWipe: userId
                 } satisfies MetaRecord)
-                for (const tableName of tables) {
+                for (const tableName of wipeTables) {
                     await localDatabase.table(tableName).where('userId').equals(userId).delete()
                 }
                 // meta 按 userId 前缀过滤（密钥包 `${userId}:key-bundle` + 迁移完成标记）
@@ -104,7 +108,7 @@ export class DeletionService {
         await localDatabase.meta.delete(PENDING_WIPE_META_ID)
         logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_COMPLETED, {
             userId,
-            tables: tables.length
+            tables: wipeTables.length
         })
     }
 

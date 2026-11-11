@@ -8,6 +8,7 @@ import {
     STRUCTURED_LOG_EVENTS
 } from '@nao-todo/infrastructure/src/observability/structured-log'
 import type { BackfillTriggerTarget } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
+import { pruneAuditLog } from '@nao-todo/infrastructure/src/persistence-sync/audit-log'
 
 /**
  * 本地数据启动收敛点（C-61 / DEF-10）
@@ -42,6 +43,9 @@ export const bootstrapLocalData = async (userId?: string | null): Promise<void> 
         }
         localSession.setCurrentUserId(uid)
         await deletionService.checkAndCleanExpired(uid)
+        // A 档审计日志（T704 / `R-5`）：启动裁切一次 —— 长期只读不写的用户也会留下超限残留。
+        // `void`：审计是旁路，裁切失败不得影响启动（只丢日志，见 `pruneAuditLog` 内部）。
+        void pruneAuditLog(uid)
         logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_COMPLETED, {
             hasExplicitUserId,
             hasSession: true

@@ -16,6 +16,8 @@ import {
 } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import { findConflictEntity } from './conflict-entity-registry'
+import { recordRemoteWriteAudit } from './audit-log'
+import { SNAPSHOT_TEXT_LIMIT, truncateSnapshotValues } from './text-snapshot'
 import { captureFieldBase } from './field-base'
 import { nowCalibratedIso } from './sync-config'
 import { toLocalProjectId } from './sync-normalize'
@@ -37,8 +39,11 @@ const CONFLICT_JOURNAL_SUFFIX = 'conflict-journal'
 /** 某用户冲突记账在 `meta` 表中的主键 */
 export const conflictJournalId = (userId: string): string => `${userId}:${CONFLICT_JOURNAL_SUFFIX}`
 
-/** 快照文本字段截断上限（R-H：>512 字符截断并标记；T643 / A3） */
-export const CONFLICT_SNAPSHOT_TEXT_LIMIT = 512
+/** 快照文本字段截断上限（R-H：>512 字符截断并标记；T643 / A3）
+ * @description 实现与字节口径已下沉 `text-snapshot`（与变更审计共用唯一实现，`T703`）；
+ *              本导出保持不变以维持公开 API。
+ */
+export const CONFLICT_SNAPSHOT_TEXT_LIMIT = SNAPSHOT_TEXT_LIMIT
 
 /** 记录层元字段（非业务内容 ⇒ 不进快照；R-H「禁整行复制」） */
 const SNAPSHOT_EXCLUDED_FIELDS: ReadonlySet<string> = new Set([
@@ -61,18 +66,11 @@ export interface ConflictSnapshot {
 export const buildConflictSnapshot = (
     value: Record<string, unknown> | null | undefined
 ): ConflictSnapshot => {
-    const snapshot: Record<string, unknown> = {}
-    const truncatedFields: string[] = []
-    for (const [field, raw] of Object.entries(value ?? {})) {
-        if (SNAPSHOT_EXCLUDED_FIELDS.has(field)) continue
-        if (typeof raw === 'string' && raw.length > CONFLICT_SNAPSHOT_TEXT_LIMIT) {
-            snapshot[field] = raw.slice(0, CONFLICT_SNAPSHOT_TEXT_LIMIT)
-            truncatedFields.push(field)
-            continue
-        }
-        snapshot[field] = raw
-    }
-    return { snapshot, truncated: truncatedFields.length > 0, truncatedFields }
+    const { values, truncatedFields } = truncateSnapshotValues(
+        value ?? {},
+        SNAPSHOT_EXCLUDED_FIELDS
+    )
+    return { snapshot: values, truncated: truncatedFields.length > 0, truncatedFields }
 }
 
 /**
@@ -566,9 +564,10 @@ export const resolveConflictKeepServer = async (
         if (!config) return { ok: false, remaining: before, error: 'unsupported' }
         // 例外③前置：**必须读本地当前行**（解密失败也要在这里被发现 ⇒ fail-soft）
         let currentRecord: Record<string, unknown> | undefined
+        let currentEntity: Record<string, unknown> | undefined
         try {
             currentRecord = await config.getRecord(entityId)
-            if (currentRecord) await config.recordToEntity(currentRecord)
+            if (currentRecord) currentEntity = await config.recordToEntity(currentRecord)
         } catch {
             return { ok: false, remaining: before, error: 'decrypt-failed' }
         }
@@ -612,6 +611,8 @@ export const resolveConflictKeepServer = async (
         //   而 `taskEntityToRecord` / `taskCommentEntityToRecord` 会对数组做展开 ⇒ TypeError。
         //   ⇒ 必须先走**与 pull 同一条归一链**（`resToEntity` → `entityToRecord`）。
         let record: Record<string, unknown>
+        // 写回的实体（明文，已做收集箱桶归一）—— 审计取值用，⛔ 不取记录层形状
+        let resolvedEntity: Record<string, unknown>
         try {
             const entity = config.resToEntity(entry.serverCurrent) as unknown as Record<
                 string,
@@ -621,6 +622,7 @@ export const resolveConflictKeepServer = async (
             if (table === 'tasks') {
                 entity.projectId = toLocalProjectId(entity.projectId, userId)
             }
+            resolvedEntity = entity
             record = (await config.entityToRecord(entity, userId)) as Record<string, unknown>
         } catch {
             // 例外③：解密/转换失败 ⇒ fail-soft（不改行 + 不清条目 + 可见失败）
@@ -653,6 +655,15 @@ export const resolveConflictKeepServer = async (
             }
         )
         syncStatus.setConflictCount(conflictObjectCount(cleared))
+        // 旁路审计（事务之后；`D3`：「用云端的」内容来源 = 云端 ⇒ `source='pull'`，⛔ 不新增第 5 值）
+        if (table === 'tasks' && currentEntity) {
+            await recordRemoteWriteAudit({
+                entityId,
+                source: 'pull',
+                before: currentEntity,
+                after: resolvedEntity
+            })
+        }
         return { ok: true, remaining: conflictObjectCount(cleared) }
     })
 }
@@ -670,6 +681,10 @@ export const resolveConflictRetryLocal = async (
 ): Promise<ConflictResolutionResult> => {
     if (!userId) return { ok: false, remaining: 0 }
     let resolved = false
+    /** 延迟到 RMW 之后写的审计入参（写回前的实体值在锁内捕获） */
+    let pendingAudit:
+        | { entityId: string; before: Record<string, unknown>; after: Record<string, unknown> }
+        | undefined
     // 读-改-写同在 journal 锁内（含败方写回本地表的 `putRecord`/`markDirty`）⇒
     // 与后台 `appendConflict` 并发不丢条目（ADR §9.3）；无映射/条目不适用 ⇒ `null` ⇒ 不落盘
     const next = await withJournalRmw(userId, async ({ entries }) => {
@@ -696,17 +711,32 @@ export const resolveConflictRetryLocal = async (
         // 否则「partial base + 本次写 + 重试」会拼出「我的改动被静默取远端」路径。
         const updatedAt = nowCalibratedIso()
         const previousRecord = await config.getRecord(entityId)
-        const fieldBase = previousRecord
-            ? captureFieldBase(await config.recordToEntity(previousRecord), {
+        const previousEntity = previousRecord
+            ? await config.recordToEntity(previousRecord)
+            : undefined
+        const fieldBase = previousEntity
+            ? captureFieldBase(previousEntity, {
                   ...entry.loser,
                   updatedAt
               })
             : undefined
         const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
         await config.putRecordAndEnqueue(record, updatedAt, fieldBase)
+        // 旁路审计（`source='conflict-retry'`）：延迟到 RMW 完成后再写（⛔ 审计不当事务成员）
+        if (previousEntity) {
+            pendingAudit = {
+                entityId,
+                before: previousEntity,
+                after: { ...entry.loser, updatedAt }
+            }
+        }
         resolved = true
         return clearEntries()
     })
+    // 旁路审计：败方快照写回 = 一次**真实的本地写**（`D3`：「保留我的修改」⇒ `conflict-retry`）
+    if (resolved && pendingAudit) {
+        await recordRemoteWriteAudit({ ...pendingAudit, source: 'conflict-retry' })
+    }
     // T331/T346：成功恢复 ⇒ 同源刷新状态面计数（`remaining` = 剩余**对象数**）⇒ 徽标递减 / 归零
     if (resolved) syncStatus.setConflictCount(conflictObjectCount(next))
     return { ok: resolved, remaining: conflictObjectCount(next) }

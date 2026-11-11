@@ -331,8 +331,48 @@ export interface SyncCursorRecord {
     updatedAt: string
 }
 
+/** 审计日志的动作词表（`AC7`：墓碑/归档各 1 条、动作可读） */
+export type AuditAction = 'create' | 'update' | 'archive' | 'unarchive' | 'delete' | 'restore'
+
+/** 审计日志的来源词表（`R-4`：四值固定，⛔ 不新增；新增须 PRD 评审） */
+export type AuditSource = 'local-edit' | 'pull' | 'push-merge' | 'conflict-retry'
+
+/**
+ * 审计字段级 diff
+ * @description `from`/`to` 只能是**同步边界的实体明文**（⛔ 记录层的可自描述前缀形状，
+ *              否则界面会出现该前缀、且两侧形状不同会让判等恒假 —— `T676` 教训）。
+ */
+export interface AuditFieldDiff {
+    field: string
+    from: unknown
+    to: unknown
+}
+
+/**
+ * 变更审计日志记录（Dexie v5 新表 `auditLogs`；旁路追加、不参与裁决、纯本机）
+ * @see docs/adr/2026-11-10-audit-log-bypass-log.md（决策 1 / §2.1 形状）
+ */
+export interface AuditLogRecord {
+    /** 自增主键 = 插入序（同毫秒亦有稳定序；不拿业务时间戳排序） */
+    seq?: number
+    userId: string
+    /** 首版只 `tasks`（`R-8`） */
+    entity: string
+    entityId: string
+    action: AuditAction
+    source: AuditSource
+    /** 字段级 diff；非 `update` 类为空数组（`AC7`：墓碑/归档不产字段变更噪声） */
+    fields: AuditFieldDiff[]
+    /** 写审计时的本机时间（⛔ 不是行的 `updatedAt` —— 远端时间戳会漂） */
+    at: string
+    truncated?: boolean
+    truncatedFields?: string[]
+}
+
 /**
  * 各业务表名（用于 upgrade 迁移与到期清理）
+ * @description ⛔ 审计表**不进本清单**：本常量与离线进入门（有业务数据才允许离线进入）共用，
+ *              加进去会改变离线门语义（审计清库走显式名单追加，见 M4）。
  */
 export const BUSINESS_TABLES = [
     'projects',
@@ -369,6 +409,7 @@ export class NaoTodoLocalDatabase extends Dexie {
     deletionSchedules!: Table<DeletionScheduleRecord, string>
     syncQueue!: Table<SyncQueueRecord, string>
     syncCursor!: Table<SyncCursorRecord, string>
+    auditLogs!: Table<AuditLogRecord, number>
 
     constructor() {
         super('nao-todo-desktop')
@@ -447,6 +488,31 @@ export class NaoTodoLocalDatabase extends Dexie {
             deletionSchedules: '&id',
             syncQueue: '&id, userId, table, retryCount',
             syncCursor: '&id, userId'
+        })
+        // v5：新增变更审计日志表（A 档 / Issue #346）
+        // · **只增表 ⇒ 空升级**（无数据搬迁，⛔ 不写 `.upgrade()`；同一版本重复 open 天然幂等）
+        // · 既有 15 表 stores 逐字不改 ⇒ 老库升级后业务表零变化
+        // · 索引：`++seq`（插入序 / keyset 分页）· `userId`（清库 + 每用户计数）·
+        //   `[userId+entity+entityId]`（按实体取最近 N 条：复合键相同 ⇒ 迭代序退化为 seq 序）·
+        //   `[userId+at]`（M4 的 90 天 / 条数淘汰预留：淘汰必须按时间而非插入序）
+        // · 版本 +1 ⇒ 回滚不是「库打不开」的硬故障（dexie@4.4.5 静默适配，实测见 t697-ac5）
+        this.version(5).stores({
+            projects: '&id, userId, deletedAt, archivedAt',
+            projectPreferences: '&id, userId, projectId',
+            tags: '&id, userId, deletedAt',
+            tagPreferences: '&id, userId, tagId',
+            tasks: '&id, userId, parentTaskId, projectId, state, startAt, endAt, archivedAt, starMarkAt, givenUpAt, remindAt, deletedAt',
+            taskCheckItems: '&id, userId, taskId',
+            taskComments: '&id, userId, taskId',
+            pomodoros: '&id, userId, archivedAt, deletedAt',
+            pomodoroRecords: '&id, userId, sessionId, pomodoroId, taskId, startAt, endAt',
+            users: '&id, userId',
+            userConfigs: '&id, userId',
+            meta: '&id',
+            deletionSchedules: '&id',
+            syncQueue: '&id, userId, table, retryCount',
+            syncCursor: '&id, userId',
+            auditLogs: '++seq, userId, [userId+entity+entityId], [userId+at]'
         })
     }
 }
