@@ -2,19 +2,24 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick, provide, ref } from 'vue'
-import { NueButton, NueCollapse, NueCollapseItem, NueDiv, NueEmpty, NueIcon, NueText } from 'nue-ui'
+import { NueButton, NueDialog, NueDiv, NueEmpty, NueText } from 'nue-ui'
 import { messages, t } from '@nao-todo/shared/locales'
-import { TASK_DETAILS_CONTEXT_KEY, TASK_HISTORY_CONTEXT_KEY } from '../../context'
-import HistoryPanel from '../history.vue'
+import { TASK_HISTORY_CONTEXT_KEY } from '../../context'
+import TaskHistoryDialog from '../../task-history-dialog.vue'
 
 /**
  * T706 · 面板**真挂载**复核（QA 自写探针；⛔ 不 stub 被测组件，只注入 provider）
+ *
+ * **载体变更（`T713`，`R-10` / `AC12` / `D8`）**：内联面板 `main/history.vue` 已迁为
+ * `task-history-dialog.vue`（对话框 + `props`）。本文件只改**import 与挂载方式**：
+ * 直接真挂载对话框组件（`modelValue: true` + `taskId`），断言其传送至 `document.body` 的内容；
+ * **全部内容类断言逐字保留**（详见各用例）。
  *
  * 独立于 `t697-ac3` 的复核点（PM T706 #5）：
  * ① 13 个 `history.*` 键**中英齐备**（值非空、同键集）；
  * ② **可见文本**无内部词：`source` / `action` / `field` / `seq` / `plain:` / `local-edit` /
  *    `push-merge` / `conflict-retry` / `fieldBase` / `revision`（注意：类名含 `__source` 等属实现细节，
- *    判据是**用户可见文本**，故用 `text()` 而非 `html()`；`plain:` 额外在 `html()` 上也判一次）；
+ *    判据是**用户可见文本**，故用 `textContent` 而非 `innerHTML`；`plain:` 额外在 `innerHTML` 上也判一次）；
  * ③ 非表格式：无 `<table>` / `nue-table`；
  * ④ `unavailable` 与「可用但 0 条」**都**显示「暂无变更记录」，且**都不**显示「加载失败」；
  * ⑤ 来源 / 动作 / 字段一律中文（复用字段标签 + 13 键）。
@@ -22,11 +27,9 @@ import HistoryPanel from '../history.vue'
 
 const NUE = {
     'nue-button': NueButton,
-    'nue-collapse': NueCollapse,
-    'nue-collapse-item': NueCollapseItem,
+    'nue-dialog': NueDialog,
     'nue-div': NueDiv,
     'nue-empty': NueEmpty,
-    'nue-icon': NueIcon,
     'nue-text': NueText
 }
 
@@ -60,25 +63,31 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-const mountPanel = async (page: ProbePage): Promise<VueWrapper> => {
-    const load = vi.fn(async (_taskId: string, _beforeSeq?: number) => page)
+/**
+ * 真挂载对话框（`NueDialog` 传送至 body ⇒ 返回对话框根元素，后续断言以它为准）
+ * @param page 固定页（或自定义 `load`，见「更早」用例）
+ */
+const mountPanel = async (
+    page: ProbePage | ((taskId: string, beforeSeq?: number) => Promise<ProbePage>)
+): Promise<HTMLElement> => {
+    const load =
+        typeof page === 'function'
+            ? vi.fn(page)
+            : vi.fn(async (_taskId: string, _beforeSeq?: number) => page)
     const Host = defineComponent({
-        components: { HistoryPanel },
+        components: { TaskHistoryDialog },
         setup() {
-            provide(TASK_DETAILS_CONTEXT_KEY, { vo: ref({ id: 'task-qa' }) } as never)
             provide(TASK_HISTORY_CONTEXT_KEY, { load } as never)
-            return {}
+            const visible = ref(true)
+            return { visible, load }
         },
-        template: '<history-panel />'
+        template: `<task-history-dialog v-model="visible" task-id="task-qa" />`
     })
-    wrapper = mount(Host, { global: { components: NUE } })
+    wrapper = mount(Host, { attachTo: document.body, global: { components: NUE } })
     await flush()
-    const collapse = wrapper.findComponent(NueCollapse)
-    if (collapse.exists()) {
-        collapse.vm.$emit('update:modelValue', ['history'])
-        await flush()
-    }
-    return wrapper
+    const dialog = document.body.querySelector<HTMLElement>('.nue-dialog--task-history')
+    expect(dialog, '对话框必须真挂载（⛔ 不 stub 被测组件）').toBeTruthy()
+    return dialog!
 }
 
 const SAMPLE: ProbePage = {
@@ -146,9 +155,9 @@ describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词
         expect(zhHistory.length).toBeLessThanOrEqual(13)
     })
 
-    it('展开后：中文标题 / 字段标签 / 值 / 来源可读；可见文本无内部词；非表格式', async () => {
-        const mounted = await mountPanel(SAMPLE)
-        const text = mounted.text()
+    it('打开后：中文标题 / 字段标签 / 值 / 来源可读；可见文本无内部词；非表格式', async () => {
+        const dialog = await mountPanel(SAMPLE)
+        const text = dialog.textContent ?? ''
 
         expect(text).toContain(t('history.title'))
         expect(text).toContain(t('sync.conflict.field.description'))
@@ -161,15 +170,15 @@ describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词
         for (const token of INTERNAL_TOKENS) {
             expect(text, `可见文本不得出现内部词 ${token}`).not.toContain(token)
         }
-        const html = mounted.html()
+        const html = dialog.innerHTML
         expect(html).not.toContain('plain:')
         expect(html).not.toContain('<table')
         expect(html).not.toContain('nue-table')
     })
 
     it('unavailable（老库无历史）⇒「暂无变更记录」，且不显示「加载失败」', async () => {
-        const mounted = await mountPanel({ items: [], hasMore: false, unavailable: true })
-        const text = mounted.text()
+        const dialog = await mountPanel({ items: [], hasMore: false, unavailable: true })
+        const text = dialog.textContent ?? ''
 
         expect(text).toContain(t('history.title'))
         expect(text).toContain(t('history.empty'))
@@ -177,8 +186,8 @@ describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词
     })
 
     it('可用但 0 条 ⇒ 同样「暂无变更记录」，且不显示「加载失败」', async () => {
-        const mounted = await mountPanel({ items: [], hasMore: false, unavailable: false })
-        const text = mounted.text()
+        const dialog = await mountPanel({ items: [], hasMore: false, unavailable: false })
+        const text = dialog.textContent ?? ''
 
         expect(text).toContain(t('history.empty'))
         expect(text).not.toContain(t('history.loadFailed'))
@@ -198,33 +207,26 @@ describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词
             hasMore: _beforeSeq === undefined,
             unavailable: false
         }))
-        const Host = defineComponent({
-            components: { HistoryPanel },
-            setup() {
-                provide(TASK_DETAILS_CONTEXT_KEY, { vo: ref({ id: 'task-qa' }) } as never)
-                provide(TASK_HISTORY_CONTEXT_KEY, { load } as never)
-                return {}
-            },
-            template: '<history-panel />'
-        })
-        wrapper = mount(Host, { global: { components: NUE } })
-        await flush()
+        let dialog = await mountPanel(load)
 
-        const more = wrapper
-            .findAll('button')
-            .find((node) => node.text().includes(t('history.more')))
+        const moreButtons = (): HTMLButtonElement[] =>
+            Array.from(dialog.querySelectorAll<HTMLButtonElement>('button'))
+        const more = moreButtons().find((node) =>
+            (node.textContent ?? '').includes(t('history.more'))
+        )
         expect(more, 'hasMore 时必须给出「更早」入口').toBeTruthy()
         expect(load).toHaveBeenCalledTimes(1)
         expect(load.mock.calls[0]?.[1]).toBeUndefined()
 
-        await more!.trigger('click')
+        more!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await flush()
+        dialog = document.body.querySelector<HTMLElement>('.nue-dialog--task-history')!
 
         expect(load).toHaveBeenCalledTimes(2)
         expect(load.mock.calls[1]?.[1], '「更早」必须以最旧一条的 seq 作 keyset 游标').toBe(7)
         // 续页后不再声称「还有更早」
         expect(
-            wrapper.findAll('button').some((node) => node.text().includes(t('history.more')))
+            moreButtons().some((node) => (node.textContent ?? '').includes(t('history.more')))
         ).toBe(false)
     })
 })
