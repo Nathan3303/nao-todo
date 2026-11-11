@@ -19,6 +19,7 @@ import type { Table } from 'dexie'
 import { pickUnexpectedDroppedFields } from './dropped-fields'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { localDatabase, type SyncQueueRecord } from '../persistence-local/db/local-database'
+import type { AuditAction } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import {
     projectEntityToRecord,
@@ -51,6 +52,12 @@ import { setServerTimeOffset } from './sync-config'
 import { toLocalProjectId, toPushProjectId, syncPayloadMatchesServer } from './sync-normalize'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
 import { appendConflict, countConflicts, valuesEqual } from './conflict-journal'
+import {
+    deriveAuditAction,
+    diffAuditFields,
+    recordAudit,
+    recordRemoteWriteAudit
+} from './audit-log'
 import { pickChangedFields } from './edit-overwrite'
 import {
     isMergeDomainField,
@@ -67,7 +74,7 @@ import {
     isQueueOverLimit,
     isRetryDue
 } from './sync-retry'
-import { isNotDeleted } from '../persistence-local/utils'
+import { isAbsentStamp, isNotDeleted } from '../persistence-local/utils'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 import { createPullBroadcast } from './pull-broadcast'
 
@@ -723,6 +730,70 @@ export class SyncService {
     }
 
     /**
+     * 拉取落库后的审计记账（pull 4 支共用；**旁路**，在业务写完成之后调用）
+     *
+     * @description **两级筛选**（`T696` §4.2）：
+     *              ① **记录层预筛（零解密）**：写前记录行 vs 写后记录行逐字段比较（忽略集同源）⇒
+     *                 为空直接返回 —— 这是挡住 `DEF-147`（回拉窗口内未变化行被无条件重写）的主流量的第一层；
+     *              ② **实体层精筛 + 取明文值**：两侧实体都做收集箱桶归一（`toLocalProjectId`，`R-9` /
+     *                 `DEF-159`）后 `diffAuditFields` ⇒ 仍为空才不记；取值一律实体明文（⛔ 记录层形状）。
+     *              动作按**落地动作**派生：远端墓碑 ⇒ `delete`（`fields` 空，`AC7`）、远端恢复 ⇒ `restore`、
+     *              归档时间变化 ⇒ `archive` / `unarchive`、首见该行 ⇒ `create`、其余 ⇒ `update`。
+     *              `at` 由 `recordAudit` 取本机校时（`AC18`：⛔ 不用远端 `updatedAt`）。
+     *
+     * @param previousRecord 写前本地记录行（缺失 = 首见该行）
+     * @param nextRecord 写后记录行（调用方已有则传入，省一次转换）
+     */
+    private async auditPulledRecord(
+        config: SyncTableConfig,
+        entityId: string,
+        remoteEntity: Record<string, unknown>,
+        previousRecord: Record<string, unknown> | undefined,
+        userId: string,
+        nextRecord?: Record<string, unknown>
+    ): Promise<void> {
+        // R-8：首版只记 `tasks`（其余实体按同一 helper 逐个接入）
+        if (config.table !== 'tasks') return
+        const after = {
+            ...remoteEntity,
+            projectId: toLocalProjectId(remoteEntity.projectId, userId)
+        }
+        const record =
+            nextRecord ??
+            ((await this.buildPulledRecord(config, remoteEntity, userId)) as Record<
+                string,
+                unknown
+            >)
+        // ① 记录层预筛（零解密）：未变化行（DEF-147 重放）在这里就被挡掉
+        if (previousRecord && pickChangedFields(previousRecord, record).length === 0) return
+        // ② 实体层精筛（明文 + 收集箱桶归一）
+        const before = previousRecord ? await config.recordToEntity(previousRecord) : undefined
+        const action = this.derivePulledAction(before, after)
+        const fields =
+            action === 'create' || action === 'delete' || !before
+                ? []
+                : diffAuditFields(before, after)
+        if (action === 'update' && fields.length === 0) return
+        await recordAudit({ entityId, action, source: 'pull', fields })
+    }
+
+    /**
+     * 拉取侧动作派生
+     * @description 墓碑 / 恢复优先（`AC7` 六值里这两类不产字段噪声），其余按归档时间派生。
+     */
+    private derivePulledAction(
+        before: Record<string, unknown> | undefined,
+        after: Record<string, unknown>
+    ): AuditAction {
+        if (!before) return 'create'
+        const wasDeleted = !isAbsentStamp(before.deletedAt as string | null | undefined)
+        const isDeletedNow = !isAbsentStamp(after.deletedAt as string | null | undefined)
+        if (!wasDeleted && isDeletedNow) return 'delete'
+        if (wasDeleted && !isDeletedNow) return 'restore'
+        return deriveAuditAction(before, after)
+    }
+
+    /**
      * 以服务端回执版本写回该行 per-row base（§9.1.6 写回点）
      * @description `applied`/`noop`/`stale` 回执均带 `serverUpdatedAt`；`stale` 时即为库中当前版本，
      *              写回后使下次 push 以新 base 命中。仅更新 base 字段（不改业务字段/不触发 markDirty）。
@@ -868,6 +939,15 @@ export class SyncService {
                         fieldBase: retiredBase
                     })
                 }
+            })
+        }
+        // 旁路审计（`source='pull'`）：合并结果相对本地的真实变化（`mergedFields` 中与本地不等者）
+        if (written && businessChanged) {
+            await recordRemoteWriteAudit({
+                entityId,
+                source: 'pull',
+                before: local,
+                after: { ...local, ...mergedFields }
             })
         }
         // T683 / M6（NFR 可观测）：合并已应用次数 + 结构化事件（⛔ 不含业务值）
@@ -1037,6 +1117,15 @@ export class SyncService {
             })
         }
         if (written) this.notifyDataChanged()
+        // 旁路审计（`source='push-merge'`）：合并带入的远端字段相对本地的真实变化；无业务变化 ⇒ 0 条
+        if (handled && written && businessChanged) {
+            await recordRemoteWriteAudit({
+                entityId: item.entityId,
+                source: 'push-merge',
+                before: local,
+                after: { ...local, ...mergedFields }
+            })
+        }
         // T683 / M6（NFR 可观测）：合并已应用次数 + 结构化事件（⛔ 不含业务值）
         if (handled && (businessChanged || conflicts.length > 0)) {
             syncStatus.reportFieldMerge()
@@ -1487,6 +1576,8 @@ export class SyncService {
                     await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
+                    // 旁路审计（`source='pull'`，动作按落库动作派生：墓碑 ⇒ delete / 归档 ⇒ archive）
+                    await this.auditPulledRecord(config, id, entity, localRecord, userId)
                 } else if (remoteDeleted) {
                     // A1 墓碑硬约束（T640 Q2）：远端为墓碑时**不得**走本地胜分支 ——
                     //   否则下一步 push 的 base 恰等于墓碑版本，服务端判 Overwrite 并清 `deleted_at`
@@ -1508,6 +1599,8 @@ export class SyncService {
                     await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
+                    // 旁路审计：墓碑支（`fields` 空，`AC7`）
+                    await this.auditPulledRecord(config, id, entity, localRecord, userId)
                 } else {
                     // T326 / RC-3 / AC-T325-3：本地胜也把 base 收敛到服务端当前版本
                     //（否则 base 恒旧 ⇒ OCC 下下一次 push 必然 stale）。仅改 base：不动业务字段、不出队。
@@ -1531,6 +1624,8 @@ export class SyncService {
                 const record = await this.buildPulledRecord(config, entity, userId)
                 const rawTable = this.rawTableOf(config)
                 let didWrite = false
+                // 写前记录行（审计的记录层预筛用；`DEF-147` 的重放行在这里零解密即可判定无变化）
+                let previousRecord: Record<string, unknown> | undefined
                 await localDatabase.transaction(
                     'rw',
                     rawTable,
@@ -1540,11 +1635,18 @@ export class SyncService {
                             `${userId}:${config.table}:${id}`
                         )
                         if (stillQueued) return
+                        previousRecord = (await rawTable.get(id)) as
+                            | Record<string, unknown>
+                            | undefined
                         await rawTable.put(record)
                         didWrite = true
                     }
                 )
-                if (didWrite) written += 1
+                if (didWrite) {
+                    written += 1
+                    // 旁路审计（`source='pull'`；两级筛选在 helper 内：记录层预筛 → 实体层精筛）
+                    await this.auditPulledRecord(config, id, entity, previousRecord, userId, record)
+                }
             }
         }
         // 推进游标（keyset：只前进不后退；尾页无 nextCursor 时推进到本批最大 updatedAt，

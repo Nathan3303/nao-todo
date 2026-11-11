@@ -239,6 +239,28 @@ export const recordAudit = async (input: AuditAppendInput): Promise<number | nul
 export const appendAudit = recordAudit
 
 /**
+ * 云端来源的「写回本地」审计（推送字段合并 / 两个冲突恢复动作共用）
+ *
+ * @description 判据与 `local-edit` 同源：**实体层 diff 非空**或动作变化（归档 / 取消归档）才记 1 条
+ *              ⇒ 同值写回 0 条（`R-2` / `AC1`）；来源由调用方按 `D3` 映射（「用云端的」= `pull`、
+ *              「保留我的修改」= `conflict-retry`、推送合并 = `push-merge`）。
+ *              ⚠️ 单独命名而⛔ 不在调用点直接用 `recordAudit`：源级守卫要求 `conflict-journal.ts` 内
+ *              不出现 `recordAudit`（防「一次冲突记账 + 一次审计」重复），而恢复动作是**真实的本地写回**
+ *              （另一次写）⇒ 经本门写入，全仓唯一写入口仍是本模块。
+ */
+export const recordRemoteWriteAudit = async (input: {
+    entityId: string
+    source: AuditSource
+    before: object
+    after: object
+}): Promise<void> => {
+    const action = deriveAuditAction(input.before, input.after)
+    const fields = diffAuditFields(input.before, input.after)
+    if (action === 'update' && fields.length === 0) return
+    await recordAudit({ entityId: input.entityId, action, source: input.source, fields })
+}
+
+/**
  * 读某任务的变更历史（`seq` 降序 = 最新在前）
  * @param entityId 任务 ID
  * @param beforeSeq keyset 游标：只取 `seq < beforeSeq` 的条目（⛔ 不用 offset，插入序会漂）
