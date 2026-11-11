@@ -152,7 +152,9 @@ export const deriveAuditAction = (before: object, after: object): AuditAction =>
  *              写 no-op），⛔ 不抛错（ADR §2.5）。
  */
 const hasAuditTable = (): boolean =>
-    localDatabase.tables.some((table) => table.name === AUDIT_TABLE)
+    // 防护：无 IndexedDB 的环境（node 测试 / Dexie 未初始化）下 `tables` 可能为 `undefined`
+    // ⇒ 按「不可用」处理（读走 unavailable / 写 no-op），⛔ 不抛错
+    (localDatabase.tables ?? []).some((table) => table.name === AUDIT_TABLE)
 
 /** UTF-8 字节数（「1 KB 预算」按字节而非字符口径；实现与截断同源：`text-snapshot`） */
 const byteLength = utf8ByteLength
@@ -267,6 +269,16 @@ export const appendAudit = recordAudit
 export const pruneAuditLog = async (
     userId: string = localSession.requireCurrentUserId()
 ): Promise<number> => {
+    // 裁切是维护动作：**永不 reject**（调用方均为 `void`；无 IndexedDB 的环境不得产生 unhandled rejection）
+    try {
+        return await pruneAuditLogInner(userId)
+    } catch {
+        return 0
+    }
+}
+
+/** `pruneAuditLog` 的实现（外层统一包一层 try/catch 以保「永不 reject」） */
+const pruneAuditLogInner = async (userId: string): Promise<number> => {
     if (!hasAuditTable()) return 0
     const table = localDatabase.auditLogs
     let evicted = 0
