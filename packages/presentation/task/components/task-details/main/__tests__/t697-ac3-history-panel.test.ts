@@ -5,12 +5,16 @@ import { createPinia, setActivePinia } from 'pinia'
 import { computed, defineComponent, nextTick, provide, ref, type InjectionKey } from 'vue'
 import {
     NueButton,
+    NueButtonGroup,
     NueCollapse,
     NueCollapseItem,
     NueContainer,
     NueContent,
+    NueDialog,
     NueDiv,
     NueDivider,
+    NueDropdown,
+    NueDropdownItem,
     NueEmpty,
     NueFooter,
     NueHeader,
@@ -18,6 +22,8 @@ import {
     NueInput,
     NueMain,
     NueProgress,
+    NueSelect,
+    NueSelectOption,
     NueText,
     NueTextarea
 } from 'nue-ui'
@@ -27,9 +33,18 @@ import { useTasksStore } from '../../../../stores'
 import useTaskViewObject from '../../use-task-view-object'
 import * as detailsContext from '../../context'
 import DetailsMain from '../index.vue'
+import DetailsFooter from '../../footer/index.vue'
 
 /**
  * T697 / A 档 M0 —— **AC3 界面真挂载**（⛔ stub 不算证据）+ AC10 部分（非表格式 / 无内部词）
+ *
+ * **载体变更（`T713`，用户 2026-11-11 决定 / PRD `R-10`·`AC12`·`D8`）**：变更记录不再内联在详情正文，
+ * 改为 Footer「更多」菜单项「变更历史」→ **对话框**。本文件仅改**入口与挂载载体**：
+ * `DetailsMain` + `DetailsFooter` 一起真挂载（生产 `details.vue` 的同一组合），经「更多」菜单打开对话框后
+ * 在**对话框 DOM** 上断言；**全部内容类断言逐字保留**（中文标签 / 旧值→新值 / 无内部词 / 非表格式 /
+ * `unavailable` 空态 / 「更早」入口）。⛔ 未放宽任何内容断言（`AC9` 定向豁免仅限载体指向）。
+ *
+ * 同批新增独立复核：`t713-qa-history-dialog-probe.test.ts`（⛔ 不复用 `t712-*` 夹具）。
  *
  * 纪律（AGENTS.md 前端验证纪律②）：真实挂载生产详情主面板 `task-details/main/index.vue`，
  * 只 stub 与「变更历史」无关的兄弟板块（评论 / 事件 / 番茄 / 子任务 / 标签栏）。
@@ -89,12 +104,16 @@ const historyText = (key: string): string => t(key as never)
 
 const NUE = {
     'nue-button': NueButton,
+    'nue-button-group': NueButtonGroup,
     'nue-collapse': NueCollapse,
     'nue-collapse-item': NueCollapseItem,
     'nue-container': NueContainer,
     'nue-content': NueContent,
+    'nue-dialog': NueDialog,
     'nue-div': NueDiv,
     'nue-divider': NueDivider,
+    'nue-dropdown': NueDropdown,
+    'nue-dropdown-item': NueDropdownItem,
     'nue-empty': NueEmpty,
     'nue-footer': NueFooter,
     'nue-header': NueHeader,
@@ -102,6 +121,8 @@ const NUE = {
     'nue-input': NueInput,
     'nue-main': NueMain,
     'nue-progress': NueProgress,
+    'nue-select': NueSelect,
+    'nue-select-option': NueSelectOption,
     'nue-text': NueText,
     'nue-textarea': NueTextarea
 }
@@ -114,6 +135,14 @@ const UNRELATED_STUBS = {
     'details-main-sub-tasks': true,
     'task-tag-bar': true
 }
+
+/** 「变更历史」对话框（`NueDialog` 传送至 body 弹层池 ⇒ 断言以 `document.body` 为准） */
+const historyDialogEl = (): HTMLElement | null =>
+    document.body.querySelector<HTMLElement>('.nue-dialog--task-history')
+
+/** 菜单项：由 footer 的「更多」下拉渲染（`data-executeid` 为既有实现，⛔ 非新增） */
+const historyMenuOption = (): HTMLElement | null =>
+    document.body.querySelector<HTMLElement>('[data-executeid="history"]')
 
 const flush = async (): Promise<void> => {
     for (let index = 0; index < 8; index += 1) {
@@ -236,7 +265,7 @@ const mountDetails = async (
     } as unknown as TaskUseCase
 
     const Host = defineComponent({
-        components: { DetailsMain },
+        components: { DetailsMain, DetailsFooter },
         setup() {
             const api = useTaskViewObject(
                 taskUseCase,
@@ -248,11 +277,18 @@ const mountDetails = async (
                 detailsContext.TASK_DETAILS_CONTEXT_KEY,
                 makeDetailsContext(api.task, api) as never
             )
+            // Footer（导出/复制/变更历史）依赖预上下文（useExportTask）
+            provide(detailsContext.TASK_DETAILS_PRE_CONTEXT_KEY, {
+                subTaskUseCase: { list: vi.fn(async () => [{ taskIds: [] }, null]) },
+                taskCheckItemUseCase: { listByTask: vi.fn(async () => [[], null]) },
+                getTag: () => undefined,
+                getProjectName: () => ''
+            } as never)
             // 缺失键时 provide 一个无效键 ⇒ 面板不渲染（M5 后自动生效）
             provide((HISTORY_CONTEXT_KEY ?? '') as never, { load } as never)
             return {}
         },
-        template: `<details-main />`
+        template: `<details-main /><details-footer />`
     })
 
     wrapper = mount(Host, {
@@ -263,29 +299,26 @@ const mountDetails = async (
     return { wrapper, load }
 }
 
-/** 展开折叠面板（默认折叠，arch §9）：优先驱动 `NueCollapse`，其次点标题 */
-const expandHistory = async (target: VueWrapper): Promise<void> => {
-    const collapse = target.findComponent(NueCollapse)
-    if (collapse.exists()) {
-        collapse.vm.$emit('update:modelValue', ['history'])
-        await flush()
-        return
-    }
-    const header = target
-        .findAll('*')
-        .find((node) => node.text().includes(historyText('history.title')))
-    if (header) {
-        await header.trigger('click')
-        await flush()
-    }
+/**
+ * 打开「变更历史」对话框（入口：Footer「更多」菜单项，`T713` / `R-10`）
+ * @description 载体变更后的**唯一**入口；对话框内容传送至 `document.body` ⇒ 后续断言均以返回值为准。
+ */
+const openHistoryDialog = async (): Promise<HTMLElement> => {
+    const option = historyMenuOption()
+    expect(option, '「更多」菜单必须有「变更历史」入口（R-10）').toBeTruthy()
+    option!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flush()
+    const dialog = historyDialogEl()
+    expect(dialog, '点「变更历史」菜单项 ⇒ 对话框必须打开').toBeTruthy()
+    return dialog!
 }
 
 /**
- * 前置：面板必须真的挂载（否则「不含内部词 / 非表格式」这类否定断言会在空壳上假绿）
+ * 前置：对话框必须真的打开（否则「不含内部词 / 非表格式」这类否定断言会在空壳上假绿）
  * @description 与 `0 条审计` 同型的陷阱：否定式断言必须配一个肯定式存在断言。
  */
-const expectPanelMounted = (target: VueWrapper): void => {
-    expect(target.text(), '详情面板必须出现「变更历史」区块（AC3）').toContain(
+const expectDialogMounted = (dialog: HTMLElement): void => {
+    expect(dialog.textContent, '对话框必须出现「变更历史」标题（AC3）').toContain(
         historyText('history.title')
     )
 }
@@ -312,21 +345,22 @@ const SAMPLE_PAGE: HistoryPage = {
     unavailable: false
 }
 
-describe('T697 / AC3 变更历史面板（真实挂载生产详情面板）', () => {
-    it('面板挂载 ⇒ 出现「变更历史」标题，并按 taskId 调 load', async () => {
-        const { wrapper: mounted, load } = await mountDetails(SAMPLE_PAGE)
+describe('T697 / AC3 变更历史（真实挂载生产详情 — Footer「更多」→ 对话框）', () => {
+    it('打开对话框 ⇒ 出现「变更历史」标题，并按 taskId 调 load', async () => {
+        const { load } = await mountDetails(SAMPLE_PAGE)
 
-        expectPanelMounted(mounted)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
         expect(load).toHaveBeenCalled()
         expect(load.mock.calls[0]?.[0]).toBe(TASK_ID)
     })
 
-    it('展开后时间线可读：字段用中文标签、旧值→新值可见、来源用中文（⛔ 裸露 source 值）', async () => {
-        const { wrapper: mounted } = await mountDetails(SAMPLE_PAGE)
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+    it('打开后时间线可读：字段用中文标签、旧值→新值可见、来源用中文（⛔ 裸露 source 值）', async () => {
+        await mountDetails(SAMPLE_PAGE)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        const text = mounted.text()
+        const text = dialog.textContent ?? ''
         // 字段中文标签（复用既有字段标签表 ⇒ 与冲突面板同一份文案）
         expect(text).toContain(t('sync.conflict.field.description'))
         expect(text).toContain(t('sync.conflict.field.priority'))
@@ -339,11 +373,11 @@ describe('T697 / AC3 变更历史面板（真实挂载生产详情面板）', ()
     })
 
     it('不出现内部词与技术键名（C 端红线 / R-7 / AC3）', async () => {
-        const { wrapper: mounted } = await mountDetails(SAMPLE_PAGE)
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+        await mountDetails(SAMPLE_PAGE)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        const html = mounted.html()
+        const html = dialog.innerHTML
         for (const term of [
             'fieldBase',
             'revision',
@@ -360,27 +394,27 @@ describe('T697 / AC3 变更历史面板（真实挂载生产详情面板）', ()
         expect(html).not.toContain('>priority<')
     })
 
-    it('非表格式排版（AC10）：面板内无 nue-table / <table> / grid 类名', async () => {
-        const { wrapper: mounted } = await mountDetails(SAMPLE_PAGE)
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+    it('非表格式排版（AC10）：对话框内无 nue-table / <table> / grid 类名', async () => {
+        await mountDetails(SAMPLE_PAGE)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        const html = mounted.html()
+        const html = dialog.innerHTML
         expect(html).not.toContain('nue-table')
         expect(html).not.toContain('<table')
         expect(html).not.toMatch(/class="[^"]*\bgrid\b[^"]*"/)
     })
 
     it('老数据 / 表不可用（unavailable）⇒ 显示「暂无变更记录」，不报错、不显示错误态', async () => {
-        const { wrapper: mounted } = await mountDetails({
+        await mountDetails({
             items: [],
             hasMore: false,
             unavailable: true
         })
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        const text = mounted.text()
+        const text = dialog.textContent ?? ''
         expect(text, '老数据无历史 ⇒ 必须显示「暂无变更记录」空态').toContain(
             historyText('history.empty')
         )
@@ -390,25 +424,25 @@ describe('T697 / AC3 变更历史面板（真实挂载生产详情面板）', ()
     })
 
     it('空历史（可用但 0 条）⇒ 同样显示「暂无变更记录」', async () => {
-        const { wrapper: mounted } = await mountDetails({
+        await mountDetails({
             items: [],
             hasMore: false,
             unavailable: false
         })
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        expect(mounted.text(), '0 条历史 ⇒ 必须显示「暂无变更记录」空态').toContain(
+        expect(dialog.textContent, '0 条历史 ⇒ 必须显示「暂无变更记录」空态').toContain(
             historyText('history.empty')
         )
     })
 
     it('有更多 ⇒ 显示「更早」入口（分页不丢入口）', async () => {
-        const { wrapper: mounted } = await mountDetails({ ...SAMPLE_PAGE, hasMore: true })
-        expectPanelMounted(mounted)
-        await expandHistory(mounted)
+        await mountDetails({ ...SAMPLE_PAGE, hasMore: true })
+        const dialog = await openHistoryDialog()
+        expectDialogMounted(dialog)
 
-        expect(mounted.text(), 'hasMore ⇒ 必须给出「更早」分页入口').toContain(
+        expect(dialog.textContent, 'hasMore ⇒ 必须给出「更早」分页入口').toContain(
             historyText('history.more')
         )
     })

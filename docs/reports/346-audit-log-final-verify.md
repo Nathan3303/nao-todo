@@ -298,3 +298,88 @@ sha256sum -c /tmp/mut.sha
 | `t706-qa-spam-probe.test.ts`      | 三条护栏更名固化（A/B/C）；断言未变                                                       |
 | `t706-qa-no-idb-probe.test.ts`    | `it.fails` → 正常断言；主用例扩到「四入口全覆盖」                                         |
 | `t706-qa-prune-cap-probe.test.ts` | **新增**（6 例：限幅 / 分块 spy / 过期路径收敛 / 写入驱动收敛 / 重叠尾值 / 保存路径延迟） |
+
+## 11. `T713` 入口变更后复验（正文内联 → Footer「更多」+ 对话框）
+
+- 触发：用户 2026-11-11 决定（PRD `176ff738` 的 `R-10` / `AC12` / 决策 `D8`）——变更记录不再内联在详情正文，
+  改为 Footer「更多」菜单项「变更历史」→ **对话框**；实现 = `T712`（`1521e753`）。
+- 我的落点：① 守住 `T713` 派单的 `AC9` **定向豁免**（只改 11 条用例的**载体指向**）② **独立复核** `T712`（⛔ 不采信 `t712-*`）。
+- 结论：**通过**。11 条用例重挂载体后全绿（内容类断言**逐字未动**）；独立探针 8 例全绿且 4 条变异逐条 kill；
+  全量门禁 0 红。⛔ 未改任何生产代码（`footer/index.vue` / `main/index.vue` 变异后 `sha256sum -c` 逐字节还原）。
+
+### 11.1 11 条用例：哪些换了载体、哪些逐字未动
+
+**a) `t697-ac3-history-panel.test.ts`（7 例；改前 7/7 全红于 `expectPanelMounted` ⇒ 改后 7/7 绿）**
+
+| #   | 用例                            | 载体改动（仅此）                                                                                                        | 逐字未动的内容断言                                               |
+| :-- | :------------------------------ | :---------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
+| 1   | 标题 + 按 `taskId` 调 `load`    | `mount(DetailsMain)` → `DetailsMain` + `DetailsFooter` 同挂；`expectPanelMounted(正文)` → `expectDialogMounted(对话框)` | `load` 被调用 + `load.mock.calls[0][0] === 'task-1'`             |
+| 2   | 时间线可读                      | 删 `expandHistory`（对话框无折叠）；文本来源 `wrapper.text()` → `dialog.textContent`                                    | 字段中文标签 ×2 · `旧描述` / `新描述` · 来源中文（local / pull） |
+| 3   | 无内部词                        | HTML 来源 `wrapper.html()` → `dialog.innerHTML`                                                                         | 7 个内部词清单 + `>description<` / `>priority<` 两条键名裸露断言 |
+| 4   | 非表格式（AC10）                | 同上                                                                                                                    | `nue-table` / `<table` / `grid` 类名三条                         |
+| 5   | `unavailable` ⇒「暂无变更记录」 | 文本来源同上                                                                                                            | 含 `history.empty` · **不含** `history.loadFailed`               |
+| 6   | 空历史（0 条）⇒ 同上            | 同上                                                                                                                    | 含 `history.empty`                                               |
+| 7   | 有更多 ⇒「更早」入口            | 同上                                                                                                                    | 含 `history.more`                                                |
+
+> 仅**夹具**扩充：`NueDialog` / `NueDropdown` / `NueDropdownItem` / `NueSelect` / `NueSelectOption` /
+> `NueButtonGroup` 进全局注册表 + 提供 `TASK_DETAILS_PRE_CONTEXT_KEY`（footer 的 `useExportTask` 依赖）
+> ⇒ 是「让真实 footer 能挂起来」的最小接线，**未放宽任何断言**。
+
+**b) `t706-qa-history-panel-probe.test.ts`（5 例；改前整文件**收集失败** ⇒ 改后 5/5 绿）**
+
+- 载体：`import HistoryPanel from '../history.vue'` → `import TaskHistoryDialog from '../../task-history-dialog.vue'`；
+  `<history-panel />`（内联、默认折叠、需驱动 `NueCollapse`）→ `<task-history-dialog v-model="visible" task-id="task-qa" />`
+  （打开即展开、内容传送至 `document.body`）；断言载体 `wrapper.text()/html()/findAll('button')` →
+  对话框元素 `textContent` / `innerHTML` / `querySelectorAll('button')`。
+- **逐字未动**：① 「13 键中英齐备」整条（**与载体无关**，只去掉不再需要的 mount 依赖）；② 内部词 11 个 token 清单；
+  ③ 非表格式三条；④ `unavailable` / 0 条两条空态断言；⑤ 「更早」按最旧 `seq`（= 7）续页 + 续页后不再给出入口。
+- 附带：`NueEmpty` 进全局注册表（`LoadingError` 的空态内部依赖它；⛔ 非断言放宽）。
+
+### 11.2 独立复核 `T712`（新文件 `t713-qa-history-dialog-probe.test.ts`，8 例全绿）
+
+自建夹具（不复用 `t712-*`）：真挂载生产 `main/index.vue` / `footer/index.vue` / `task-history-dialog.vue` / `NueDialog`。
+
+| #   | PM 复核项                | 断言（可观测代价 / 边界值）                                                                                               | 结果  |
+| :-- | :----------------------- | :------------------------------------------------------------------------------------------------------------------------ | :---- |
+| 1   | 正文无区块 + **不取数**  | `.task-history` 不存在 · 正文文本不含 `history.title` · **`load` 调用数 = 0**                                             | ✅    |
+| 2   | 入口在「更多」且**同级** | 菜单项存在且文案 = `history.title`；`parentElement` 与「导出」/「复制任务」**同一父节点**                                 | ✅    |
+| 3   | 三路关闭 + 焦点归还      | 底部按钮 / × / Esc **各一条用例**：关闭后 `.nue-dialog--task-history` = null 且 `document.activeElement === 「更多」按钮` | ✅ ×3 |
+| 4   | 刷新不打断               | `vo` 整体换新对象 ⇒ 对话框元素**同一 DOM 节点** · 条目数不变（2）· 仍含 `旧描述` · **`load` 仍 1 次**                     | ✅    |
+| 5   | 无 provider 不出死入口   | 菜单项 = null · 对话框未挂载（`v-if` 双守卫口径）                                                                         | ✅    |
+| 6   | i18n 仍 ≤13 键           | `history.*` 键集**恰等于**既有 13 键（不是「≤13」而是精确集合 ⇒ 第 14 个即红），中英一致                                  | ✅    |
+| 7   | `AC9` 三条护栏 A/B/C     | `t706-qa-spam-probe.test.ts` 定向复跑 **10/10 绿**（本次改动不碰写路径）                                                  | ✅    |
+
+**焦点落点确认（PM 问询项）**：归还到**常驻的「更多」触发按钮**是**合理**落点，无需变更。
+理由：菜单项随下拉关闭一起卸载（返回一个已卸载的 `inner-dropdown-option` 会丢焦点），
+而「菜单按钮 → 关闭后焦点回菜单按钮」正是 WAI-ARIA `menu button` 的标准行为；
+实测三路关闭后 `activeElement` 均稳定等于该按钮。
+
+### 11.3 探针有牙（4 条变异逐条 kill，`sha256sum -c` 逐字节还原 4/4 OK）
+
+| 变异                                               | 目标文件 · 位置                              | 被杀用例                 | 红因（摘）                                    |
+| :------------------------------------------------- | :------------------------------------------- | :----------------------- | :-------------------------------------------- |
+| 去掉菜单项 `v-if="historyProvider"`                | `footer/index.vue` · 菜单项                  | ⑤ 无 provider 不出死入口 | 未接线端仍渲染出「变更历史」菜单项            |
+| 摘掉关闭后焦点归还（`el.focus()` 整段）            | `footer/index.vue` · `watch(historyVisible)` | ③a / ③b / ③c             | `document.activeElement` 不再等于「更多」按钮 |
+| 把菜单项移到「删除 / 放弃」分组                    | `footer/index.vue` · 模板                    | ② 同级                   | `parentElement` 与「导出」/「复制任务」不同   |
+| `task-history-dialog` 加 `:key="vo"`（刷新即重挂） | `footer/index.vue` · 模板                    | ④ 刷新不打断             | 对话框 DOM 节点被替换 + `load` 变成 2 次      |
+| 正文回插 `<div class="task-history">`（人工回退）  | `main/index.vue` · 模板                      | ① 正文无区块             | `.task-history` 存在且正文出现「变更历史」    |
+
+> 说明：「取数调用数 = 0」是**直接计数**判据（任意 eager 调用即红），与上面 ① 的 DOM 判据同例并存。
+
+### 11.4 全量门禁（洁净前提：`pgrep -af vitest` 无并发进程 · `git status --porcelain` 仅本档 3 个测试文件）
+
+| 项                   | 结果                                                                                                                      |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| 全仓 `vp test --run` | **rc=0** · 文件 **445**（444 passed / 1 skipped）· 用例 **3465**（3459 passed / 6 skipped）· **红 0** · 281.66s           |
+| `vp check`           | **rc=0**（1981 文件格式 · 1580 文件 lint/类型 0 error）                                                                   |
+| 五守卫               | `guard:ddd` / `guard:mobile-imports` / `guard:barrel-imports` / `guard:gate-pathspec` / `guard:test-location` **rc=0 ×5** |
+| 双端 build           | `webapp build` rc=0 · `desktop:build` rc=0                                                                                |
+| 移动端红线           | `git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**                                            |
+
+### 11.5 本档文件清单（全部 QA 自有测试文件，⛔ 零生产代码改动）
+
+| 文件                                                          | 变更                                                                                                               |
+| :------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------- |
+| `main/__tests__/t697-ac3-history-panel.test.ts`               | 7 例改载体（入口/断言来源），内容断言逐字未动                                                                      |
+| `main/__tests__/t706-qa-history-panel-probe.test.ts`          | 5 例改 import 与挂载方式，内容断言逐字未动（含 13 键那条）                                                         |
+| `task-details/__tests__/t713-qa-history-dialog-probe.test.ts` | **新增 8 例**：独立复核 `T712`（正文不取数 / 同级入口 / 三路关闭焦点 / 刷新不打断 / 无 provider 无死入口 / 13 键） |
