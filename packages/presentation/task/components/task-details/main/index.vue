@@ -11,7 +11,6 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context.js'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
-import DetailsMainHistory from './history.vue'
 import DetailsMainPomodoroInfo from './pomodoro-info.vue'
 import DetailsRow from './row.vue'
 import DetailsMainSubTasks from './subtasks.vue'
@@ -147,8 +146,6 @@ const createCommentHandler = async (content: string) => {
                 <nue-div vertical style="padding: 0 1rem 1rem">
                     <details-main-events />
                 </nue-div>
-                <!-- 任务详情变更历史（A 档审计日志；默认折叠；无 provider 时整块不渲染） -->
-                <details-main-history />
                 <!-- 任务详情子任务（仅顶层任务可有一级子任务，子任务详情不渲染；深度限制）。
                      无论模块是否渲染都保留 tasks-details-view__subtasks 的弹性空隙，
                      使标签栏/评论区始终贴住面板底部（子任务任务仅占位不渲染内容） -->

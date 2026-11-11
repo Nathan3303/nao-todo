@@ -4,11 +4,12 @@ import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { TaskProjectSelector } from '../../project-selector'
-import { inject, ref, watch } from 'vue'
+import { inject, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import { TASK_DETAILS_CONTEXT_KEY, TASK_HISTORY_CONTEXT_KEY } from '../context'
 import TaskExportDialog from '../export-dialog.vue'
+import TaskHistoryDialog from '../task-history-dialog.vue'
 import useExportTask from '../use-export-task'
 
 const {
@@ -40,6 +41,22 @@ watch(exportVisible, (visible) => {
 
 // 复制对话框内「编辑后」文本（AC2）；对话框未编辑时即本次生成文本
 const handleCopy = (text: string) => void copyMarkdown(text)
+
+// @context 变更历史数据源（A 档审计日志 · T712）：缺失 ⇒ 菜单项与对话框都不渲染
+// （与旧内联面板同一守卫口径：未接线端不出现死入口）
+const historyProvider = inject(TASK_HISTORY_CONTEXT_KEY, null)
+const historyVisible = ref(false)
+/** 「更多」触发按钮：对话框关闭后焦点归还于此（`R-10` / AC12） */
+const moreTriggerRef = ref<ComponentPublicInstance | null>(null)
+
+watch(historyVisible, (visible) => {
+    if (visible) return
+    // Esc / × / 底部按钮三路关闭统一在此归还焦点（菜单项随下拉关闭已卸载，故归还常驻的触发按钮）
+    void nextTick(() => {
+        const el = moreTriggerRef.value?.$el
+        if (el instanceof HTMLElement) el.focus()
+    })
+})
 
 const openParentTaskSelector = () => {
     if (!vo.value) return
@@ -79,6 +96,10 @@ const handleDropdownExecute = async (executeId: string) => {
             exportVisible.value = true
             break
         }
+        case 'history':
+            // D8 / R-10：入口收进「更多」，以对话框呈现（正文不再内联）
+            historyVisible.value = true
+            break
         case 'move-to-subtask':
             openParentTaskSelector()
             break
@@ -116,7 +137,7 @@ const handleDropdownExecute = async (executeId: string) => {
             @execute="handleDropdownExecute"
         >
             <template #trigger="{ trigger }">
-                <nue-button icon="more" theme="small" @click="trigger">
+                <nue-button ref="moreTriggerRef" icon="more" theme="small" @click="trigger">
                     {{ t('common.more') }}
                 </nue-button>
             </template>
@@ -150,6 +171,12 @@ const handleDropdownExecute = async (executeId: string) => {
                     :title="t('task.details.export.button')"
                     icon="share"
                     execute-id="export-task"
+                />
+                <inner-dropdown-option
+                    v-if="historyProvider"
+                    :title="t('history.title')"
+                    icon="time"
+                    execute-id="history"
                 />
                 <inner-dropdown-option
                     :title="t('task.details.moveToSubTask')"
@@ -186,6 +213,7 @@ const handleDropdownExecute = async (executeId: string) => {
         @retry="retry"
         @copy="handleCopy"
     />
+    <task-history-dialog v-if="historyProvider" v-model="historyVisible" :task-id="vo?.id ?? ''" />
 </template>
 
 <style scoped>

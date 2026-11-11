@@ -1,41 +1,43 @@
 <script setup lang="ts">
 /**
- * 任务详情「变更历史」面板（A 档审计日志 · `T704` / AC3 / AC10）
+ * 任务详情「变更历史」对话框（A 档审计日志 · `T712` / `R-10` / `AC12`）
  *
- * @description C 端形态（`DESIGN.md` / AGENTS.md §产品定位）：**时间线卡片**，非表格式排版；
- *              默认折叠；空态 / 不可用态 / 错误态走既有 `LoadingError`（⛔ 不自绘空态）。
- *              文案：字段名复用下沉到 `packages/shared` 的字段标签（与冲突面板同一份），
- *              面板框架文案只用 13 个 `history.*` 键（`R-7` / `D2`），⛔ 不出现内部词。
- *              数据源：`TASK_HISTORY_CONTEXT_KEY`（端侧 `app.ts` 一处 provide；缺失 ⇒ 不渲染）。
- * @see docs/prds/2026-11-10-audit-log.md（AC3 / AC10 / R-7）
- * @see docs/reports/T696-audit-log-arch-review.md（§9 界面）
+ * @description 入口 = Footer「更多」菜单项「变更历史」（`D8`，⛔ 详情正文不再内联）：
+ *              查阅型信息「用时打开、看完关闭」。本组件 = 对话框壳 + 时间线内容。
+ *              - C 端形态：时间线**卡片**（非表格式），点击区 ≥ 40px；三态复用 `LoadingError`
+ *              - 关闭三路：Esc / `×`（`NueDialog` 原生）· 底部「关闭」按钮；**焦点归还**由触发方
+ *                （footer）负责 —— 对话框不持有触发项引用
+ *              - 打开按 `taskId`（entityId）加载；关闭即卸载内容并清空本组件状态（`generation`
+ *                丢弃在途响应）⇒ 无残留
+ *              - `R-10` 硬要求③：打开期间详情页自动刷新（`vo` 换新对象、`taskId` 不变）
+ *                **不重挂、不清空**列表 —— 加载只由「打开 / 换任务」触发
+ *              - 文案：字段名复用 `conflict-field-labels`（与冲突面板同一份）；框架文案只用
+ *                既有 `history.*`（13 键）与 `common.close`，⛔ 不新增键、不裸露内部词
+ * @see docs/prds/2026-11-10-audit-log.md（R-10 / AC12 / AC3）
  */
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import { t, type LocaleKey } from '@nao-todo/shared/locales'
 import { fieldLabel } from '@nao-todo/shared/utils/conflict-field-labels'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import { computed, inject, ref, watch } from 'vue'
-import {
-    TASK_DETAILS_CONTEXT_KEY,
-    TASK_HISTORY_CONTEXT_KEY,
-    type TaskHistoryItem
-} from '../context'
+import { TASK_HISTORY_CONTEXT_KEY, type TaskHistoryItem } from './context'
 
-const details = inject(TASK_DETAILS_CONTEXT_KEY, null)
+defineOptions({ name: 'TaskHistoryDialog' })
+
+const props = withDefaults(defineProps<{ modelValue: boolean; taskId?: string }>(), {
+    taskId: ''
+})
+
+const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
+
 const history = inject(TASK_HISTORY_CONTEXT_KEY, null)
-
-/** 折叠状态（默认折叠 = 空数组）；`name` 固定 `history`，供程序化展开 */
-const opened = ref<string[]>([])
 
 const items = ref<TaskHistoryItem[]>([])
 const loading = ref(false)
 const error = ref('')
-const unavailable = ref(false)
 const hasMore = ref(false)
-/** 切任务时丢弃过期响应（防旧任务结果覆盖新任务） */
+/** 切换任务 / 关闭时丢弃过期响应（防旧任务结果覆盖新任务） */
 let generation = 0
-
-const taskId = computed(() => details?.vo.value?.id ?? '')
 
 /** 来源 → 文案键（⛔ 不把原始来源值放进 DOM） */
 const SOURCE_KEYS: Record<TaskHistoryItem['source'], LocaleKey> = {
@@ -133,14 +135,13 @@ const formatValue = (field: string, value: unknown): string => {
  * @param beforeSeq keyset 游标（缺省 = 最新一页）；「更早」传当前最旧一条的 `seq`
  */
 const load = async (beforeSeq?: number): Promise<void> => {
-    if (!history || !taskId.value) return
+    if (!history || !props.taskId) return
     const current = generation
     loading.value = true
     error.value = ''
     try {
-        const page = await history.load(taskId.value, beforeSeq)
+        const page = await history.load(props.taskId, beforeSeq)
         if (current !== generation) return
-        unavailable.value = page.unavailable === true
         hasMore.value = page.hasMore
         items.value = beforeSeq === undefined ? page.items : [...items.value, ...page.items]
     } catch {
@@ -159,34 +160,45 @@ const loadMore = async (): Promise<void> => {
     await load(oldest.seq)
 }
 
+/**
+ * 打开 / 换任务才加载；关闭即清空（无残留）
+ * @description 只依赖「是否打开」与 `taskId`（⛔ 不依赖详情页内容）⇒ 打开期间自动刷新
+ *              （`vo` 换新对象）不会重挂或清空列表（`R-10` 硬要求③）
+ */
 watch(
-    taskId,
-    (id) => {
+    () => [props.modelValue, props.taskId] as const,
+    ([isOpen]) => {
         generation += 1
         items.value = []
-        unavailable.value = false
         hasMore.value = false
         error.value = ''
-        if (id) void load()
+        loading.value = false
+        if (isOpen) void load()
     },
     { immediate: true }
 )
 
-/** 无 provider（未接线端 / 测试未注入）⇒ 整个区块不渲染（不报错） */
-const visible = computed(() => history !== null && taskId.value !== '')
+const requestClose = (): void => emit('update:modelValue', false)
+
+const hasContent = computed(() => items.value.length > 0)
 </script>
 
 <template>
-    <nue-div v-if="visible" class="task-history">
-        <nue-collapse v-model="opened">
-            <nue-collapse-item name="history" :title="t('history.title')" theme="task-history">
-                <loading-error
-                    :loading="loading"
-                    :error="error.length > 0"
-                    :empty="!loading && !error && items.length === 0"
-                    :empty-message="t('history.empty')"
-                    :error-message="t('history.loadFailed')"
-                >
+    <nue-dialog
+        :model-value="props.modelValue"
+        :title="t('history.title')"
+        theme="task-history"
+        @update:model-value="(value) => emit('update:modelValue', Boolean(value))"
+    >
+        <template #content>
+            <loading-error
+                :loading="loading"
+                :error="error.length > 0"
+                :empty="!loading && !error && !hasContent"
+                :empty-message="t('history.empty')"
+                :error-message="t('history.loadFailed')"
+            >
+                <nue-div class="task-history">
                     <nue-div class="task-history__list">
                         <nue-div
                             v-for="item in items"
@@ -239,30 +251,46 @@ const visible = computed(() => history !== null && taskId.value !== '')
                     >
                         {{ t('history.more') }}
                     </nue-button>
-                </loading-error>
-            </nue-collapse-item>
-        </nue-collapse>
-    </nue-div>
+                </nue-div>
+            </loading-error>
+        </template>
+        <template #footer>
+            <nue-div flex="1" justify="flex-end">
+                <nue-button theme="primary" @click="requestClose">
+                    {{ t('common.close') }}
+                </nue-button>
+            </nue-div>
+        </template>
+    </nue-dialog>
 </template>
+
+<style>
+/* NueDialog 传送至 body 弹层池 ⇒ 宿主级样式需非 scoped */
+.nue-dialog.nue-dialog--task-history {
+    width: min(92vw, 32rem);
+}
+
+.nue-dialog--task-history .nue-dialog__content {
+    padding: 0;
+}
+</style>
 
 <style scoped>
 .task-history {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--nue-gap-sm);
     width: 100%;
-    padding: 0 1rem;
-    box-sizing: border-box;
-
-    &:deep(.nue-collapse-item__title) {
-        font-size: var(--nue-text-sm);
-        color: var(--nue-primary-color-700);
-    }
 }
 
 .task-history__list {
     flex-direction: column;
     align-items: stretch;
     gap: var(--nue-gap-sm);
-    padding: var(--nue-padding-sm) 0;
     width: 100%;
+    /* 查阅型信息：框内滚动，标题与底部按钮常驻 */
+    max-height: min(58vh, 26rem);
+    overflow: auto;
 }
 
 /* C 端形态：卡片式时间线条目（非表格式），点击区 ≥ 40px */
