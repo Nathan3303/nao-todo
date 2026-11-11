@@ -30,6 +30,7 @@ import {
 import { localSession } from '../persistence-local/session/local-session'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 import { CONFLICT_SNAPSHOT_TEXT_LIMIT } from './conflict-journal'
+import { pickChangedFields } from './edit-overwrite'
 import { nowCalibratedIso } from './sync-config'
 
 /** 审计表名（ADR 决策 1：同库新表） */
@@ -87,6 +88,43 @@ export interface AuditAppendInput {
     source: AuditSource
     /** 已算好的字段级 diff（数组顺序即落库顺序；非 `update` 类传空数组） */
     fields?: readonly AuditFieldDiff[]
+}
+
+/**
+ * 由 `action` 表达的字段（⛔ 不进 `fields`）
+ * @description 归档 / 删除是**动作**而不是**内容改动** ⇒ 冻结口径：`delete` / `archive` /
+ *              `unarchive`（未搬收集箱）/ `restore` 四动作 `fields === []`（`AC7`「墓碑不产字段噪声」，
+ *              `T697` 红基线 §8-c）。这两个字段在实体层只是状态标记，取值由 `action` 唯一表达。
+ */
+const AUDIT_ACTION_FIELDS: ReadonlySet<string> = new Set(['archivedAt', 'deletedAt'])
+
+/**
+ * 挑出要记的字段级 diff（**实体层取值**）
+ * @description 判等与忽略集全部复用既有唯一口径（`pickChangedFields` → `valuesEqual` +
+ *              `SYNC_COMPARE_IGNORED_FIELDS`；⛔ 不新写比较逻辑、⛔ 不加第五张忽略表）；
+ *              顺序 = 传入对象的键序（调用方传**实体** ⇒ 本地可写字段即 `entityToPush` 推送键序，`R-3`）；
+ *              值 = 实体明文（⛔ 记录层形状，`T676` 教训）。
+ */
+export const diffAuditFields = (before: object, after: object): AuditFieldDiff[] => {
+    const left = before as Record<string, unknown>
+    const right = after as Record<string, unknown>
+    return pickChangedFields(left, right)
+        .filter((field) => !AUDIT_ACTION_FIELDS.has(field))
+        .map((field) => ({ field, from: left[field], to: right[field] }))
+}
+
+/**
+ * 由「归档时间」的前后变化派生动作
+ * @description 映射规则（`AC7`）：无→有 = `archive`、有→无 = `unarchive`、其余 = `update`。
+ *              另四值由各写点直给：新建 / 复制 ⇒ `create`、删除 / 级联删除 ⇒ `delete`、
+ *              恢复 ⇒ `restore`、脱归档 ⇒ `unarchive`。
+ */
+export const deriveAuditAction = (before: object, after: object): AuditAction => {
+    const wasArchived = Boolean((before as { archivedAt?: unknown }).archivedAt)
+    const isArchivedNow = Boolean((after as { archivedAt?: unknown }).archivedAt)
+    if (!wasArchived && isArchivedNow) return 'archive'
+    if (wasArchived && !isArchivedNow) return 'unarchive'
+    return 'update'
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
+import { recordAudit } from '../../persistence-sync/audit-log'
 import { captureFieldBase } from '../../persistence-sync/field-base'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { putWithSyncBase } from './put-with-sync-base'
@@ -33,6 +34,9 @@ export const cascadeProjectArchive = async (
         const now = nowCalibratedIso()
         const projectRecord = await db.projects.get(projectId)
         if (!projectRecord || projectRecord.userId !== userId) return '项目不存在'
+
+        // 本次真实改动的任务 id（审计在**事务之后**写：⛔ 审计不进业务事务）
+        const auditedTaskIds: string[] = []
 
         await db.transaction('rw', db.projects, db.tasks, db.syncQueue, async () => {
             // 1. 清单行：仅当状态确实要变时写（PA-6）
@@ -80,8 +84,16 @@ export const cascadeProjectArchive = async (
                     db.syncQueue,
                     fieldBase
                 )
+                auditedTaskIds.push(taskRecord.id)
             }
         })
+
+        // 旁路审计（`R-8` 只记 `tasks`，每实体 1 条）：动作由 `action` 唯一表达
+        // ⇒ `fields` 恒为空 ⇒ ⛔ 不会出现记录层的可自描述前缀值（`T697` 风险 ② 结构上不成立），
+        // 也避免批量归档时为取明文而做 N 次解密。
+        for (const taskId of auditedTaskIds) {
+            await recordAudit({ entityId: taskId, action, source: 'local-edit' })
+        }
         return null
     } catch (err) {
         return String(err)
