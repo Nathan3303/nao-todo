@@ -268,7 +268,7 @@ describe('T706 探针 ②：DEF-159 收集箱桶归一 ⇒ 3 轮 0 条（变异�
     })
 })
 
-describe('T706 探针 ⑨：收集箱 + 真实变更 ⇒ `fields` 不得混入 projectId（删实体层归一 ⇒ 必红）', () => {
+describe('T706 永久护栏 A（T708 固化）：收集箱 + 真实变更 ⇒ `fields` 恰 [description]（删实体层归一 ⇒ 必红）', () => {
     beforeEach(resetState)
 
     it('收集箱任务远端只改 description ⇒ fields 恰为 [description]（不产假 projectId 变更）', async () => {
@@ -288,7 +288,7 @@ describe('T706 探针 ⑨：收集箱 + 真实变更 ⇒ `fields` 不得混入 p
     })
 })
 
-describe('T706 探针 ⑧：记录层预筛存在性（删预筛 ⇒ 本例红；只靠解密次数可观测）', () => {
+describe('T706 永久护栏 B（T708 固化）：记录层预筛存在性 —— 解密次数 = 0（删预筛 ⇒ 本例红）', () => {
     beforeEach(resetState)
 
     it('未变化行重放 1 轮：审计 0 条 **且** 不解密（预筛把「相同记录」挡在解密之外）', async () => {
@@ -419,7 +419,7 @@ describe('T706 探针 ⑥：有界（变异「去淘汰」必须红）', () => {
     })
 })
 
-describe('T706 探针 ⑦：`hasMore` 边界（独立发现：恰好一页时必须是 false）', () => {
+describe('T706 永久护栏 C（T708 固化）：`hasMore` 恰好一页（5 条）⇒ false（`>`→`>=` 变异 ⇒ 必红）', () => {
     beforeEach(resetState)
 
     it('恰好 5 条（= 默认页大小）⇒ 首页 5 条且 hasMore=false', async () => {

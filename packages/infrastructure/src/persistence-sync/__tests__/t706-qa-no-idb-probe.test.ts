@@ -45,7 +45,7 @@ afterEach(() => {
 })
 
 describe('T706 / M6 修复 ①：无 IndexedDB 环境零 unhandled rejection', () => {
-    it('启动裁切 `void pruneAuditLog(uid)` + 三个读写入口 ⇒ 全部安全降级且无未处理拒绝', async () => {
+    it('四个入口（record / load / count / prune）全部安全降级 + 0 unhandled rejection', async () => {
         // 前置自检：本环境确实没有 IndexedDB（否则本例无意义）
         expect((globalThis as { indexedDB?: unknown }).indexedDB).toBeUndefined()
 
@@ -62,7 +62,8 @@ describe('T706 / M6 修复 ①：无 IndexedDB 环境零 unhandled rejection', (
             })
         ).resolves.toBeNull()
 
-        // ③ 读入口：不可用态（不报错）
+        // ③ 读入口：不可用态（不报错）—— record / load / count / prune 四入口全覆盖
+        await expect(countAudit(USER_ID)).resolves.toBe(0)
         await expect(loadAudit('no-idb-task')).resolves.toEqual({
             items: [],
             hasMore: false,
@@ -77,12 +78,18 @@ describe('T706 / M6 修复 ①：无 IndexedDB 环境零 unhandled rejection', (
     })
 
     /**
-     * 已知缺口（T706 独立复验发现，**P3 / 当前无生产调用点**）：
-     * `countAudit` 只判了 `hasAuditTable()`（schema 已声明 ⇒ true），没有兜住 `MissingAPIError`
-     * ⇒ 无 IndexedDB 环境下会 **reject**。`pruneAuditLog` / `recordAudit` / `loadAudit` 三处都已兜住，
-     * 唯此处不对称。⛔ 本档不改生产代码 ⇒ 用 `it.fails` 锁住现状（**修复后本用例会失败**，届时改为普通 `it`）。
+     * 原缺口（`T706` 复验发现，**P3 / 当时无生产调用点**）：`countAudit` 未兜住 `MissingAPIError`
+     * ⇒ 无 IndexedDB 环境会 **reject**（其余三入口早已兜住，唯此处不对称）。
+     * `T707`（`6f9ead2e`）已修 ⇒ 本用例从 **`it.fails` 改回正常断言**（`T708`）。
+     *
+     * 改前 / 改后证据（同一条断言 `resolves.toBe(0)`）：
+     * - **改前**（HEAD `006819ad`）：**reject** `MissingAPIError: IndexedDB API missing` ⇒ `it.fails` 通过；
+     *   本次复验用「临时回退 `countAudit` 实现（含 `sha256sum -c` 逐字节还原）」重放，红因仍是该异常；
+     * - **改后**（HEAD `6f9ead2e`）：同一断言 **resolves 0**（显式 userId + 缺省参数两路径）⇒ 本 `it` 绿。
      */
-    it.fails('已知缺口（P3）：countAudit 在无 IndexedDB 环境下未兜底 ⇒ MissingAPIError', async () => {
+    it('countAudit 在无 IndexedDB 环境下按不可用返回 0（T707 修复回归守卫）', async () => {
         await expect(countAudit(USER_ID)).resolves.toBe(0)
+        // 缺省参数路径同样不得抛（无会话 ⇒ 0）
+        await expect(countAudit()).resolves.toBe(0)
     })
 })
