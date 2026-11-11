@@ -29,9 +29,9 @@ import {
 } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
-import { CONFLICT_SNAPSHOT_TEXT_LIMIT } from './conflict-journal'
 import { pickChangedFields } from './edit-overwrite'
 import { nowCalibratedIso } from './sync-config'
+import { SNAPSHOT_TEXT_LIMIT, truncateTextValue, utf8ByteLength } from './text-snapshot'
 
 /** 审计表名（ADR 决策 1：同库新表） */
 export const AUDIT_TABLE = 'auditLogs'
@@ -41,10 +41,10 @@ export const AUDIT_ENTITY_TASKS = 'tasks'
 
 /**
  * 单值文本截断上限
- * @description 复用 journal 的 512 口径（⛔ 另造字面量；同 `buildConflictSnapshot` 语义：
- *              `truncated: true` + `truncatedFields: [字段名]`）
+ * @description 与冲突记账快照共用**唯一实现**（`text-snapshot`）：`truncated: true` +
+ *              `truncatedFields: [字段名]` 同语义（`R-5` 沿用 journal 口径）。
  */
-export const AUDIT_VALUE_TEXT_LIMIT = CONFLICT_SNAPSHOT_TEXT_LIMIT
+export const AUDIT_VALUE_TEXT_LIMIT = SNAPSHOT_TEXT_LIMIT
 
 /**
  * 单条序列化字节预算（UTF-8，`C5` / `AC6`）
@@ -55,8 +55,27 @@ export const AUDIT_ENTRY_BYTE_BUDGET = 1024
 /** 面板默认每页条数（M5「更早」由调用方传更大窗口） */
 export const AUDIT_PAGE_SIZE = 5
 
+/** 每用户保留上限（条数界，`R-5`） */
+export const AUDIT_LIMIT = 1000
+
+/** 每用户保留期（天，时间界，`R-5`） */
+export const AUDIT_RETENTION_DAYS = 90
+
+/** 淘汰调度防抖（ms）：一批写入只清一次，且**不阻塞**保存路径（`T696` §8.1） */
+const AUDIT_PRUNE_DEBOUNCE_MS = 500
+
+/** 一天毫秒数 */
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** `at` 恒为 ISO-8601 字符串 ⇒ 这两个界覆盖全部合法值（用于按 `[userId+at]` 扫全某用户） */
+const AUDIT_AT_LOWER_BOUND = ''
+const AUDIT_AT_UPPER_BOUND = '\uffff'
+
 /** 支撑「按实体取最近 N 条」的复合索引（键相同 ⇒ 迭代序退化为 `seq` 序，`reverse()` 即最新在前） */
 const AUDIT_ENTITY_INDEX = '[userId+entity+entityId]'
+
+/** 淘汰用索引：淘汰必须按**时间**而非插入序（时钟只前进且插入序与时间序同向，但保留期语义可读） */
+const AUDIT_AT_INDEX = '[userId+at]'
 
 /** 条目级预算降级后的取值占位符（arch §8.2：先降值、再降字段） */
 const AUDIT_DEGRADED_VALUE = '[已截断]'
@@ -135,15 +154,8 @@ export const deriveAuditAction = (before: object, after: object): AuditAction =>
 const hasAuditTable = (): boolean =>
     localDatabase.tables.some((table) => table.name === AUDIT_TABLE)
 
-/** UTF-8 字节数（「1 KB 预算」按字节而非字符口径） */
-const byteLength = (value: unknown): number =>
-    new TextEncoder().encode(JSON.stringify(value)).length
-
-/** 单值截断（非字符串原样返回） */
-const truncateText = (value: unknown): unknown =>
-    typeof value === 'string' && value.length > AUDIT_VALUE_TEXT_LIMIT
-        ? value.slice(0, AUDIT_VALUE_TEXT_LIMIT)
-        : value
+/** UTF-8 字节数（「1 KB 预算」按字节而非字符口径；实现与截断同源：`text-snapshot`） */
+const byteLength = utf8ByteLength
 
 /** 值级截断 + 登记被截断字段名 */
 const truncateValues = (
@@ -151,8 +163,8 @@ const truncateValues = (
 ): { fields: AuditFieldDiff[]; truncatedFields: string[] } => {
     const truncatedFields: string[] = []
     const next = fields.map((diff) => {
-        const from = truncateText(diff.from)
-        const to = truncateText(diff.to)
+        const from = truncateTextValue(diff.from)
+        const to = truncateTextValue(diff.to)
         if (from !== diff.from || to !== diff.to) truncatedFields.push(diff.field)
         return { field: diff.field, from, to }
     })
@@ -223,7 +235,10 @@ export const recordAudit = async (input: AuditAppendInput): Promise<number | nul
             truncated.fields,
             truncated.truncatedFields
         )
-        return Number(await localDatabase.auditLogs.add(record))
+        const seq = Number(await localDatabase.auditLogs.add(record))
+        // 有界淘汰（R-5）：追加成功后**异步**触发，⛔ 不 await（保存路径不得出现可感延迟）
+        schedulePrune(userId)
+        return seq
     } catch (err) {
         logStructured('error', STRUCTURED_LOG_EVENTS.AUDIT_RECORD_FAILED, {
             entity: AUDIT_ENTITY_TASKS,
@@ -237,6 +252,79 @@ export const recordAudit = async (input: AuditAppendInput): Promise<number | nul
 
 /** 派单口径的别名（唯一写入口的名字以 `recordAudit` 为准，见本文件源级守卫） */
 export const appendAudit = recordAudit
+
+/**
+ * 有界淘汰（`R-5` / `AC6`）：每用户 ≤**1000 条** 且 ≤**90 天**，先到者淘汰
+ *
+ * @description 两条界都走 `[userId+at]` 索引（淘汰按**时间**而非插入序 —— 保留期语义可读）：
+ *              ① **时间界**：`at < now - 90d` 先删（按时间升序 range + `bulkDelete`）；
+ *              ② **条数界**：仍超上限 ⇒ 按 `at` 升序删最旧的 `(count - AUDIT_LIMIT)` 条。
+ *              ⛔ 只删本用户（`userId` 是索引首列）；⛔ 不删「同一次追加的新行」（新行 `at` 最新）。
+ *              失败不影响任何业务写（调用方均为 `void`）—— 审计是旁路。
+ * @param userId 缺省取当前会话用户
+ * @returns 实际删除条数
+ */
+export const pruneAuditLog = async (
+    userId: string = localSession.requireCurrentUserId()
+): Promise<number> => {
+    if (!hasAuditTable()) return 0
+    const table = localDatabase.auditLogs
+    let evicted = 0
+    // ① 时间界：`at < cutoff`（左开区间含空串界，右开因此界不含）
+    const cutoff = new Date(Date.now() - AUDIT_RETENTION_DAYS * DAY_MS).toISOString()
+    const expiredKeys = await table
+        .where(AUDIT_AT_INDEX)
+        .between([userId, AUDIT_AT_LOWER_BOUND], [userId, cutoff], true, false)
+        .primaryKeys()
+    if (expiredKeys.length > 0) {
+        await table.bulkDelete(expiredKeys)
+        evicted += expiredKeys.length
+    }
+    // ② 条数界（最旧的 `count - 上限` 条）
+    const total = await table.where('userId').equals(userId).count()
+    if (total > AUDIT_LIMIT) {
+        const oldestKeys = await table
+            .where(AUDIT_AT_INDEX)
+            .between([userId, AUDIT_AT_LOWER_BOUND], [userId, AUDIT_AT_UPPER_BOUND], true, false)
+            .limit(total - AUDIT_LIMIT)
+            .primaryKeys()
+        if (oldestKeys.length > 0) {
+            await table.bulkDelete(oldestKeys)
+            evicted += oldestKeys.length
+        }
+    }
+    if (evicted > 0) {
+        logStructured('info', STRUCTURED_LOG_EVENTS.AUDIT_ENTRY_EVICTED, { userId, count: evicted })
+    }
+    return evicted
+}
+
+/** 待执行的淘汰定时器（每用户最多 1 个 ⇒ 防抖 + 单飞） */
+const pruneTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/**
+ * 调度一次淘汰（防抖 + 单飞）
+ * @description 一批写入（级联归档 200 条等）只会清一次；定时器到期才真正查询+删除，
+ *              ⇒ 保存路径只多一次 `set` 开销（毫秒级以下），不出现可感延迟。
+ *              裁切自身失败只丢日志、不影响任何业务写。
+ */
+const schedulePrune = (userId: string): void => {
+    if (pruneTimers.has(userId)) return
+    pruneTimers.set(
+        userId,
+        setTimeout(() => {
+            pruneTimers.delete(userId)
+            void pruneAuditLog(userId).catch(() => {
+                // 裁切是维护动作：失败不向任何调用方传播（审计旁路姿态）
+            })
+        }, AUDIT_PRUNE_DEBOUNCE_MS)
+    )
+}
+
+/**
+ * 审计表是否可用（供清库等非审计模块判存在性；与读写路径同一判据）
+ */
+export const isAuditTableAvailable = (): boolean => hasAuditTable()
 
 /**
  * 云端来源的「写回本地」审计（推送字段合并 / 两个冲突恢复动作共用）

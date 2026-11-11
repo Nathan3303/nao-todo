@@ -17,6 +17,7 @@ import {
 import { localSession } from '../persistence-local/session/local-session'
 import { findConflictEntity } from './conflict-entity-registry'
 import { recordRemoteWriteAudit } from './audit-log'
+import { SNAPSHOT_TEXT_LIMIT, truncateSnapshotValues } from './text-snapshot'
 import { captureFieldBase } from './field-base'
 import { nowCalibratedIso } from './sync-config'
 import { toLocalProjectId } from './sync-normalize'
@@ -38,8 +39,11 @@ const CONFLICT_JOURNAL_SUFFIX = 'conflict-journal'
 /** 某用户冲突记账在 `meta` 表中的主键 */
 export const conflictJournalId = (userId: string): string => `${userId}:${CONFLICT_JOURNAL_SUFFIX}`
 
-/** 快照文本字段截断上限（R-H：>512 字符截断并标记；T643 / A3） */
-export const CONFLICT_SNAPSHOT_TEXT_LIMIT = 512
+/** 快照文本字段截断上限（R-H：>512 字符截断并标记；T643 / A3）
+ * @description 实现与字节口径已下沉 `text-snapshot`（与变更审计共用唯一实现，`T703`）；
+ *              本导出保持不变以维持公开 API。
+ */
+export const CONFLICT_SNAPSHOT_TEXT_LIMIT = SNAPSHOT_TEXT_LIMIT
 
 /** 记录层元字段（非业务内容 ⇒ 不进快照；R-H「禁整行复制」） */
 const SNAPSHOT_EXCLUDED_FIELDS: ReadonlySet<string> = new Set([
@@ -62,18 +66,11 @@ export interface ConflictSnapshot {
 export const buildConflictSnapshot = (
     value: Record<string, unknown> | null | undefined
 ): ConflictSnapshot => {
-    const snapshot: Record<string, unknown> = {}
-    const truncatedFields: string[] = []
-    for (const [field, raw] of Object.entries(value ?? {})) {
-        if (SNAPSHOT_EXCLUDED_FIELDS.has(field)) continue
-        if (typeof raw === 'string' && raw.length > CONFLICT_SNAPSHOT_TEXT_LIMIT) {
-            snapshot[field] = raw.slice(0, CONFLICT_SNAPSHOT_TEXT_LIMIT)
-            truncatedFields.push(field)
-            continue
-        }
-        snapshot[field] = raw
-    }
-    return { snapshot, truncated: truncatedFields.length > 0, truncatedFields }
+    const { values, truncatedFields } = truncateSnapshotValues(
+        value ?? {},
+        SNAPSHOT_EXCLUDED_FIELDS
+    )
+    return { snapshot: values, truncated: truncatedFields.length > 0, truncatedFields }
 }
 
 /**

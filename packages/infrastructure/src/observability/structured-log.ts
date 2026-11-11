@@ -75,6 +75,8 @@ export const STRUCTURED_LOG_EVENTS = {
     SYNC_JOURNAL_RECORD_FAILED: 'sync.journal.record-failed',
     /** 审计日志写入失败（`R-1` / `AC4`：旁路失败 ⇒ 只记日志，业务写不阻断；⛔ 不含业务值） */
     AUDIT_RECORD_FAILED: 'audit.record.failed',
+    /** 审计条目被淘汰（`R-5`：条数 / 保留期有界；只记条数，⛔ 不含业务值） */
+    AUDIT_ENTRY_EVICTED: 'audit.entry.evicted',
     /** T683 / M6：字段级合并已应用（仅计数，**不含业务值**） */
     SYNC_FIELD_MERGE_APPLIED: 'sync.field-merge.applied',
     /** 运行级不可达防御（存储/加解密等意外异常） */
