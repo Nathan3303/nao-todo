@@ -1,22 +1,22 @@
 # T697 · A 档审计日志 **M0 红基线 + 覆盖清单**（Issue #346）
 
-- 状态：**已交付（M0）** · 更新：2026-11-10 · Owner：qa（`T697`）
+- 状态：**已交付（M0）· T699 修订后（M1 落地口径）** · 更新：2026-11-11 · Owner：qa（`T697`）
 - 分支：`feat/346-audit-log` · 基线 HEAD：`9af77cb3`（核过：`git log --oneline -1`，未 rebase / 未 force）
 - 范围：**只加测试 + 本报告**（⛔ 未改生产代码 / 未改 `docs/prds/` `docs/adr/` `docs/reports/T696-*` `docs/tasks-state.md` `docs/reports/defect-pool.md`）
 - 上游依据：`docs/prds/2026-11-10-audit-log.md`（R-1…R-9 / AC1–AC11）· `docs/adr/2026-11-10-audit-log-bypass-log.md` · `docs/reports/T696-audit-log-arch-review.md`（§3.1 落点 / §4 防刷屏 / §8 有界 / §10 红基线 / §13 D1–D7）
 
 ## 0. 结论先行（数字口径）
 
-| 指标                           | 实测                                                       | 命令 / 说明                                                                                  |
-| :----------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
-| 新增测试文件                   | **9 个 + 1 个夹具**                                        | 见 §1                                                                                        |
-| 用例数                         | **52**                                                     | `pnpm exec vp test --run <9 文件>`                                                           |
-| 红                             | **44**                                                     | 全部为**AC 级断言失败**（见 §2），**零**「模块不存在 / 收集失败」                            |
-| 绿（因实现缺失而绿，**弱绿**） | **8**                                                      | 均为「0 条 / 不得出现」型断言（见 §6），必须靠 M6 变异 ②③ 证明其判别力                       |
-| `vp check`                     | **rc=0**（1964 文件格式 OK · 1568 文件 lint+type 0 error） | `pnpm exec vp check`                                                                         |
-| 既有守卫                       | **rc=0 ×4**                                                | `guard:test-location` / `guard:barrel-imports` / `guard:ddd` / `guard:gate-pathspec`         |
-| 受影响面回归                   | **67 文件 / 524 例 / 0 红**                                | `pnpm exec vp test --run packages/infrastructure/src/persistence-sync --exclude '**/t697-*'` |
-| AC9「既有用例零改动」          | **改动 0 行**                                              | `git diff --name-only HEAD` 为空（本档只新增未跟踪文件）                                     |
+| 指标                  | 实测                                                       | 命令 / 说明                                                                                  |
+| :-------------------- | :--------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
+| 新增测试文件          | **9 个 + 1 个夹具**                                        | 见 §1                                                                                        |
+| 用例数                | **54**（M0 52 + T699 补 2）                                | `pnpm exec vp test --run <9 文件>`                                                           |
+| 红                    | **36**（M0 44 → M1 落地后 36）                             | 全部为**AC 级断言失败**（见 §2），**零**「模块不存在 / 收集失败」                            |
+| 绿                    | **18**（M0 8 弱绿 → M1 后 18）                             | M1（表 + 读写接口）落地后：迁移 4 · 源级守卫 5 · 读接口 2 · 0 条型 7 ⇒ 见 §11                |
+| `vp check`            | **rc=0**（1964 文件格式 OK · 1568 文件 lint+type 0 error） | `pnpm exec vp check`                                                                         |
+| 既有守卫              | **rc=0 ×4**                                                | `guard:test-location` / `guard:barrel-imports` / `guard:ddd` / `guard:gate-pathspec`         |
+| 受影响面回归          | **67 文件 / 524 例 / 0 红**                                | `pnpm exec vp test --run packages/infrastructure/src/persistence-sync --exclude '**/t697-*'` |
+| AC9「既有用例零改动」 | **改动 0 行**                                              | `git diff --name-only HEAD` 为空（本档只新增未跟踪文件）                                     |
 
 > 口径纪律：本档**不 import** 尚不存在的 `persistence-sync/audit-log.ts`。审计一律经**测试侧探针**读
 > （`t697-audit-harness.ts`：表不存在 ⇒ 返回 `[]`），因此每条红都是
@@ -194,7 +194,7 @@
 ## 10. 复现
 
 ```bash
-# 红基线（9 文件 / 52 例 / 44 红 / 8 弱绿）
+# 红基线（9 文件 / 54 例 / 36 红 / 18 绿 —— M1 落地后；M0 原始为 52 / 44 / 8）
 pnpm exec vp test --run \
   packages/infrastructure/src/persistence-sync/__tests__/t697-ac1-local-edit.test.ts \
   packages/infrastructure/src/persistence-sync/__tests__/t697-ac11-pull-spam.test.ts \
@@ -217,3 +217,42 @@ pnpm exec vp test --run packages/infrastructure/src/persistence-sync --exclude '
 # AC9 证据（应为空）
 git diff --name-only HEAD
 ```
+
+## 11. T699 修订留痕（M1 落地后的口径修正 + 新面补齐）
+
+- 背景：M1（`3a40ed5d`「表结构 + 版本升级 + 读写接口」）落地后，本档 9 个文件的实测变为
+  **52 例 / 36 红 / 16 绿**；rd-fe 的变异 B 暴露出两处 M0 口径问题，PM 于 **T699** 裁定如下。
+
+### 11.1 `create` 要记账（PM 2026-11-11 裁定；PRD R-3 已补，`69d1ec52`）
+
+- 口径：**「创建一条任务」是一次真实变更，历史里必须能看到**（M0 时我把「create 不记账」当成了前提）。
+- 修法（**改夹具不改断言**）：`t697-ac1-local-edit.test.ts` 的 `seedTask()` 在 `create` 后 `clearAudit()`
+  （`keepCreateAudit: true` 仅供「create ⇒ 1 条」那条用），与 `AC4` / `AC6` 既有写法一致。
+- ⛔ 未放宽任何断言（`toBe(0)` 仍是 `toBe(0)`）；「改 3 字段恰 1 条 / 同值连写 1 条 / 空哨兵 0 条 / AC7 四条」
+  断言**逐字保留**，只是基线不再混入 `create` 那条。
+- 「create ⇒ 1 条 `action=create` + `fields=[]`」用例**保留并标注**为 PM 裁定口径（不再视为「不记账」）。
+
+### 11.2 M1 新面补 2 例（`t697-ac5-migration.test.ts` → `describe('读接口 loadAudit')`）
+
+| #   | 用例                                                                                                     | 判据                                                                                                                        | 现状               |
+| :-- | :------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- | :----------------- |
+| N1  | 表不可用（老库 / 旧版本连接）⇒ `unavailable:true` + `items` 空 + `hasMore:false`，不抛错                 | `await loadAudit(id)` **深等于** `{items:[],hasMore:false,unavailable:true}`；**反例**：空数组 + `unavailable:false` ⇒ 必红 | ✅ 绿（M1 已实现） |
+| N2  | keyset 分页：7 条 ⇒ 首页 5 条（`seq` 降序）+ `hasMore:true`；`beforeSeq` 取下一页 2 条 + `hasMore:false` | 首页长度 = `AUDIT_PAGE_SIZE`、`seq` 严格降序、两页合并 7 条且 `Set` 去重后仍 7（**无重复无遗漏**）                          | ✅ 绿（M1 已实现） |
+
+> N1 的「表不可用」用 `vi.spyOn(localDatabase, 'tables', 'get')` 打桩（Dexie 的 `tables` 只反映**已声明**
+> schema，`close()` 不会清空 `_allTables`，故不能靠关连接模拟）；打桩后 `hasAuditTable()` 为 false 才走到该分支。
+
+### 11.3 修订后数字（诚实口径）
+
+- **54 例 / 36 红 / 18 绿**（`pnpm exec vp test --run <9 文件>`）。
+- **红数仍为 36，不是 34**：`create` 记账属 **M2 接线**（本批未接任何业务写入点，`recordAudit` 仍零调用点），
+  故 6 条 AC1/AC7 用例继续红是**预期**；+2 新例直接绿（M1 已实现 `loadAudit`）⇒ 红数不变、总数 +2。
+- 绿数 8 → 18 的来源：迁移 4 条 + 源级守卫 5 条（M1 已产出 `audit-log.ts` 且只走实体明文）+
+  读接口 2 条 + 0 条型 7 条（AC1 空哨兵 1 · AC11 四例 · AC2 空哨兵 1 · retry 幂等 1）。
+
+### 11.4 追加变异设计（锁 M1 新面；执行仍归 M6）
+
+| #   | 变异                            | 文件 · 符号                                                                                  | 改法                                                                    | 期望红                                                                             |
+| :-- | :------------------------------ | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| 8   | 表不可用用空数组冒充            | `persistence-sync/audit-log.ts` · `loadAudit` 的 `unavailablePage` / `!hasAuditTable()` 分支 | 缺表时 `return { items: [], hasMore: false, unavailable: false }`       | `T697 / AC5 读接口 loadAudit … > 表不可用（老库 / 旧版本连接）⇒ unavailable:true…` |
+| 9   | 分页改 offset（或漏 `+1` 探测） | 同上 · `loadAudit` 的 `keys.slice(start, start + limit + 1)`                                 | 改为 `slice(start, start + limit)`（不探测下一条 ⇒ `hasMore` 恒 false） | `… > keyset 分页：7 条 ⇒ 首页 5 条…+hasMore=true`                                  |

@@ -8,6 +8,7 @@ import {
     AUDIT_ACTIONS,
     AUDIT_SOURCES,
     USER_ID,
+    clearAudit,
     countAudit,
     readAudit,
     resetAuditState
@@ -27,8 +28,12 @@ import { makeTaskVO } from '../../persistence-local/__tests__/local-repos-test-h
  * - **AC7**：删除 / 归档 / 取消归档 / 恢复各 **1 条**，`action` 正确，且**墓碑/归档动作不产字段噪声**
  *   （`fields` 为空数组；`archivedAt`/`deletedAt` 不进 `fields`）——见 T696 §3.1 落点表备注；
  * - **R-4**：来源四值固定。
+ *
+ * ⚠️ **`create` 也记账（PM 2026-11-11 裁定，PRD R-3 已补）**：「创建一条任务」是一次真实变更。
+ * 因此**造数后必须清审计**（`seedTask()` 内 `clearAudit()`），否则本文件所有「改动后恰 1 条 / 空哨兵 0 条」
+ * 的断言会被 `create` 那条污染。⛔ 不允许把断言放宽成 `≤1` 之类。
  * @see docs/prds/2026-11-10-audit-log.md（AC1 / AC7 / R-2 / R-3 / R-4）
- * @see docs/reports/T696-audit-log-arch-review.md（§3.1 落点 / §10.1 AC1 判据）
+ * @see docs/reports/346-audit-log-red-baseline.md（§11 T699 修订留痕）
  */
 
 /** `tasks` 推送键序（= 审计 `fields` 的稳定顺序；由生产单一事实源派生，⛔ 不硬编码副本） */
@@ -36,10 +41,19 @@ const TASK_FIELD_ORDER = Object.keys(
     SYNC_TABLES.find((config) => config.table === 'tasks')!.entityToPush({})
 )
 
-const seedTask = async (overrides: Parameters<typeof makeTaskVO>[0] = {}): Promise<string> => {
+/**
+ * 造一条已存在任务（**默认清掉 `create` 产生的审计**）
+ * @param options.keepCreateAudit `true` ⇒ 保留 `create` 条目（只给「create ⇒ 1 条」用例用）
+ * @description PM 2026-11-11 裁定：`create` 要记账 ⇒ 后续「改动前后差量」类断言必须先清基线。
+ */
+const seedTask = async (
+    overrides: Parameters<typeof makeTaskVO>[0] = {},
+    options: { keepCreateAudit?: boolean } = {}
+): Promise<string> => {
     const repo = newLocalTaskRepository()
     const [task, err] = await repo.create(makeTaskVO(overrides))
     expect(err).toBeNull()
+    if (!options.keepCreateAudit) await clearAudit()
     return task!.id
 }
 
@@ -110,8 +124,9 @@ describe('T697 / AC1 本机编辑：1 条记录 + 字段级 diff + 稳定顺序'
         expect(await countAudit()).toBe(0)
     })
 
-    it('create ⇒ 1 条 action=create 且 fields 为空数组（新建不产字段噪声）', async () => {
-        const id = await seedTask({ name: 'C1-created' })
+    it('create ⇒ 1 条 action=create 且 fields 为空数组（新建不产字段噪声；PM 2026-11-11 裁定创建也记账）', async () => {
+        // 本用例**保留** create 条目（唯一允许不清基线的地方）
+        const id = await seedTask({ name: 'C1-created' }, { keepCreateAudit: true })
 
         const entries = await readAudit()
         expect(entries).toHaveLength(1)

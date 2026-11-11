@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
-import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import Dexie from 'dexie'
 import { localDatabase } from '../../persistence-local/db/local-database'
+import { localSession } from '../../persistence-local/session/local-session'
+import { AUDIT_PAGE_SIZE, loadAudit, recordAudit } from '../audit-log'
 import { countAudit, requireAuditTable, tableNames, USER_ID } from './t697-audit-harness'
 
 /**
@@ -200,5 +202,58 @@ describe('T697 / AC5 降级路径实测：dexie@4.4.5 用旧版本打开新版�
         expect(v4Db.tables.map((table) => table.name)).not.toContain('auditLogs')
         // ④ 旧版本 schema 与升级前逐字一致（无隐式结构漂移）
         expect(schemaOf(v4Db)).toEqual(v4SchemaBefore)
+    })
+})
+describe('T697 / AC5 读接口 `loadAudit`（T699 补：不可用态 + keyset 分页，M1 新面）', () => {
+    beforeEach(async () => {
+        localSession.setCurrentUserId(USER_ID)
+        await localDatabase.open()
+    })
+
+    it('表不可用（老库 / 旧版本连接）⇒ unavailable:true + items 空 + hasMore:false，且不抛错', async () => {
+        // 复现「当前 schema 里没有 auditLogs」：Dexie 的 `tables` 只反映**已声明** schema
+        // （close() 不会清空 `_allTables`）⇒ 用 getter 打桩走 `!hasAuditTable()` 分支。
+        // 反例（本用例要抓的走偏）：实现用「空数组 + unavailable:false」冒充不可用 ⇒ 必红。
+        const spy = vi.spyOn(localDatabase, 'tables', 'get').mockReturnValue([])
+        try {
+            await expect(loadAudit('task-unavailable')).resolves.toEqual({
+                items: [],
+                hasMore: false,
+                unavailable: true
+            })
+        } finally {
+            spy.mockRestore()
+        }
+    })
+
+    it('keyset 分页：7 条 ⇒ 首页 5 条（seq 降序）+ hasMore=true；beforeSeq 取下一页 2 条 + hasMore=false（无重复无遗漏）', async () => {
+        const entityId = 'task-paging'
+        for (let index = 1; index <= 7; index += 1) {
+            const seq = await recordAudit({
+                entityId,
+                action: 'update',
+                source: 'local-edit',
+                fields: [{ field: 'name', from: `v${index - 1}`, to: `v${index}` }]
+            })
+            expect(seq, `第 ${index} 条应写入成功（表可用）`).toBeTypeOf('number')
+        }
+
+        const first = await loadAudit(entityId, undefined, AUDIT_PAGE_SIZE)
+        expect(first.unavailable).toBe(false)
+        expect(first.items).toHaveLength(AUDIT_PAGE_SIZE)
+        expect(first.hasMore).toBe(true)
+        const firstSeqs = first.items.map((item) => item.seq)
+        // seq 降序 = 最新在前（⛔ 不用 offset 分页）
+        expect(firstSeqs).toEqual([...firstSeqs].sort((left, right) => right - left))
+
+        const second = await loadAudit(entityId, firstSeqs[firstSeqs.length - 1], AUDIT_PAGE_SIZE)
+        expect(second.items).toHaveLength(2)
+        expect(second.hasMore).toBe(false)
+
+        const allSeqs = [...firstSeqs, ...second.items.map((item) => item.seq)]
+        expect(new Set(allSeqs).size, '分页不得重复').toBe(7)
+        expect(allSeqs, '分页不得遗漏，且整体仍为 seq 降序').toEqual(
+            [...allSeqs].sort((left, right) => right - left)
+        )
     })
 })
