@@ -167,6 +167,8 @@ describe('T697 / AC7 墓碑与归档动作：1 条 + action 正确 + 无字段�
     it('取消归档 ⇒ 1 条 action=unarchive，fields 为空（清单仍存活 ⇒ 不搬收集箱）', async () => {
         const id = await seedTask()
         await patch(id, { archivedAt: new Date().toISOString() })
+        // 前置写「归档」本身即 1 条 audit ⇒ 清基线，只量被测动作（T701；断言逐字未动）
+        await clearAudit()
 
         const [result, err] = await newLocalTaskRepository().unarchive(id)
         expect(err).toBeNull()
@@ -181,6 +183,8 @@ describe('T697 / AC7 墓碑与归档动作：1 条 + action 正确 + 无字段�
     it('恢复 ⇒ 1 条 action=restore，fields 为空（deletedAt 复原不产字段噪声）', async () => {
         const id = await seedTask()
         expect(await newLocalTaskRepository().remove(id)).toBeNull()
+        // 前置写「删除」本身即 1 条 audit ⇒ 清基线，只量被测动作（T701；断言逐字未动）
+        await clearAudit()
         const err = await newLocalTaskRepository().restore(id)
         expect(err).toBeNull()
 
