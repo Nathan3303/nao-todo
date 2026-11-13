@@ -437,7 +437,7 @@ const browser = spawn(
 
 const wsUrl = await new Promise((resolve, reject) => {
   let buffer = ''
-  const timer = setTimeout(() => reject(new Error('Chromium 启动超时')), 30000)
+  const timer = setTimeout(() => reject(new Error('Chromium 启动超时（60s）')), 60000)
   browser.stderr.on('data', (chunk) => {
     buffer += chunk.toString()
     const match = buffer.match(/DevTools listening on (ws:\/\/\S+)/)
@@ -839,7 +839,25 @@ interface RenderResult {
     logs: string[]
 }
 
-const runRenderProbe = (indexPath: string): Promise<RenderResult> => {
+/**
+ * 跑一次渲染探针；**进程级失败自动重试**（共享 CI runner 上偶发 `Chromium 启动超时` —— 实测一轮 flake）。
+ * @description 只重试「子进程没跑起来 / CDP 连不上 / 崩溃」这类环境失败；
+ *              ⚠️ 用例断言在测试进程内做，重试**不可能**掩盖断言失败。
+ */
+const runRenderProbe = async (indexPath: string, attempts = 3): Promise<RenderResult> => {
+    const failures: string[] = []
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            return await runRenderProbeOnce(indexPath)
+        } catch (error) {
+            failures.push(`#${attempt}: ${(error as Error).message.split('\n')[0]}`)
+            if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 1500))
+        }
+    }
+    throw new Error(`渲染探针连续 ${attempts} 次失败：\n${failures.join('\n')}`)
+}
+
+const runRenderProbeOnce = (indexPath: string): Promise<RenderResult> => {
     const scriptPath = join(PROBE_DIR, 'probe.mjs')
     writeFileSync(scriptPath, PROBE_SCRIPT, 'utf8')
 
