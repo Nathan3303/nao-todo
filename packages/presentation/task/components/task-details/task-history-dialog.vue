@@ -11,9 +11,10 @@
  *                ⛔ **不出现左侧色条 / 竖线 / 时间轴轨道**（原四条 `border-left` 已删）；
  *                ⛔ 不出现表格 / 网格线（C 端红线），组内只靠 8px 留白分隔
  *              - 按天轻分组（今天 / 昨天 / 更早）：组标题小字 + 组间 16px 留白；
- *                「更早」组标题**本身即分页入口**（`hasMore` 时是按钮，否则纯文本）
+ *                分页入口 = 列表末尾的独立「更早的记录」按钮（`hasMore` 时才渲染，
+ *                ⛔ 不把组标题当按钮用）
  *              - 整行可点（原生 `button` ⇒ Tab 可达、Enter 展开）；长值单行省略 +
- *                `title` 给全文，展开后换行显示结构化字段差异
+ *                `title` 给全文，展开后换行显示结构化字段差异（展开区有高度上限 + 内滚）
  *              - 关闭三路：Esc / `×`（`NueDialog` 原生）· 底部「关闭」按钮；**焦点归还**由触发方
  *                （footer）负责 —— 对话框不持有触发项引用
  *              - 打开按 `taskId`（entityId）加载；关闭即卸载内容并清空本组件状态（`generation`
@@ -164,7 +165,12 @@ const itemKey = (item: TaskHistoryItem): string => String(item.seq ?? item.at)
 /** 展开的条目（长值 / 多字段差异逐行显示；关闭或换任务即清空） */
 const expandedKeys = ref<Set<string>>(new Set())
 const isExpanded = (item: TaskHistoryItem): boolean => expandedKeys.value.has(itemKey(item))
+
+/** 只有带字段差异的条目才可展开（`archive` / `delete` / `restore` 等墓碑动作 `fields` 为空 ⇒ 无内容可展开） */
+const canExpand = (item: TaskHistoryItem): boolean => item.fields.length > 0
+
 const toggle = (item: TaskHistoryItem): void => {
+    if (!canExpand(item)) return
     const key = itemKey(item)
     const next = new Set(expandedKeys.value)
     if (next.has(key)) next.delete(key)
@@ -299,7 +305,7 @@ const hasContent = computed(() => items.value.length > 0)
                                         `task-history__entry--${sourceTone(item.source)}`,
                                         { 'is-expanded': isExpanded(item) }
                                     ]"
-                                    :aria-expanded="isExpanded(item)"
+                                    :aria-expanded="canExpand(item) ? isExpanded(item) : undefined"
                                     :title="summaryText(item)"
                                     @click="toggle(item)"
                                 >
@@ -342,7 +348,11 @@ const hasContent = computed(() => items.value.length > 0)
                                             </span>
                                         </span>
                                     </span>
-                                    <span class="task-history__toggle" aria-hidden="true">
+                                    <span
+                                        v-if="canExpand(item)"
+                                        class="task-history__toggle"
+                                        aria-hidden="true"
+                                    >
                                         {{
                                             isExpanded(item)
                                                 ? t('sync.conflict.collapse')
@@ -423,9 +433,12 @@ const hasContent = computed(() => items.value.length > 0)
     text-align: left;
 }
 
-/* 「更早的记录」分页入口（复用既有 `history.more`；组标题另有专用键） */
+/* 「更早的记录」分页入口（复用既有 `history.more`；组标题另有专用键）
+   点击区 ≥40px（DESIGN §3）：`pure` 会把 `small` 的 28px 高度归零（实测 17px）⇒ 显式给足 */
 .task-history__more {
     align-self: flex-start;
+    min-height: 40px;
+    padding: 0 var(--nue-padding-xs);
     font-size: var(--nue-text-xs);
     color: var(--nue-secondary-text-color);
 }
@@ -536,17 +549,21 @@ const hasContent = computed(() => items.value.length > 0)
     white-space: nowrap;
 }
 
+/*
+ * 展开后面的**主文案仍保持 1 行省略**（全文看下方可滚的字段差异区）—— 否则长值会在主文案里
+ * 无限换行，一条就顶满列表（实测 450px = 列表可视高的 108%）
+ */
 .task-history__entry.is-expanded .task-history__summary {
-    overflow: visible;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 }
 
-/* 展开后：字段差异逐行（`create` 只有新值） */
+/* 展开后：字段差异逐行（`create` 只有新值）；高度上限 + 内滚 ⇒ 一条不把列表顶满 */
 .task-history__detail {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    max-height: 6.5rem;
+    overflow: auto;
     font-size: var(--nue-text-xs);
     color: var(--nue-secondary-text-color);
 }
