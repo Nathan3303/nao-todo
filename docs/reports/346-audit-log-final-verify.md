@@ -383,3 +383,133 @@ sha256sum -c /tmp/mut.sha
 | `main/__tests__/t697-ac3-history-panel.test.ts`               | 7 例改载体（入口/断言来源），内容断言逐字未动                                                                      |
 | `main/__tests__/t706-qa-history-panel-probe.test.ts`          | 5 例改 import 与挂载方式，内容断言逐字未动（含 13 键那条）                                                         |
 | `task-details/__tests__/t713-qa-history-dialog-probe.test.ts` | **新增 8 例**：独立复核 `T712`（正文不取数 / 同级入口 / 三路关闭焦点 / 刷新不打断 / 无 provider 无死入口 / 13 键） |
+
+## 12. `T717` 活动流改造后复验（`D9` / `AC13`，2026-11-13）
+
+- 触发：用户 2026-11-12 要求「去掉左侧线条、参考业界历史记录类展示」⇒ PRD 新增 `D9` / `AC13`（活动流行式），
+  `R-7` 的 i18n 预算随之 **13 → 16**（按天分组的 3 个组标题专用键）。
+- 分支 `nao/M20261112-history-feed` · 实现提交 **`ad075695`**（rd-fe `T716`，5 文件 +586/−124）。
+- 我的落点：① 把 3 处「`history.*` 键数」断言改到 16（只动阈值与中文标签，**不放宽任何断言形态**）
+  ② **独立复核 8 项**（⛔ 不采信 `t716-*` 自测；不采信 rd-fe 报的对比度表）。
+- 结论：**通过**。8 项全部达成且有独立证据；附 3 条非阻塞发现（1 条点击区不达 40px、1 条超长值展开会顶掉上下文、1 条文档内注释与实现不一致）。
+
+### 12.1 阈值 13 → 16（3 处，`git diff` 逐行可核，⛔ 无其它断言改动）
+
+| 文件                                                                       | 行          | 改动                                                                                                                           |
+| :------------------------------------------------------------------------- | :---------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared/locales/__tests__/t697-audit-history-locale-keys.test.ts` | 37          | `MAX_NEW_KEYS = 13` → `16`（+ 一行注释说明是 `D9` 组标题）                                                                     |
+| 同上                                                                       | 59/67/70    | describe/it/断言消息里的 `≤13` → `≤16`（**同一断言的标签文字**，非新断言）                                                     |
+| `.../task-details/main/__tests__/t706-qa-history-panel-probe.test.ts`      | 129/155     | `toBeLessThanOrEqual(13)` → `(16)`（+ 一行注释；键集一致性断言逐字未动）                                                       |
+| `.../task-details/__tests__/t713-qa-history-dialog-probe.test.ts`          | 363/377/387 | **PM 追认的第 3 处**：`toEqual(<恰 13 键>)` → 期望数组补 3 个 `history.group.*`；仍是**精确集合**（第 17 个即红），`en` 同数组 |
+
+> 说明：`t713` 第 ⑥ 条是「恰等于」判据，预算一改必红（rd-fe 未列出，属我面），故按 PM 授权同批改到 16；
+> 判据强度不变（仍是 `toEqual` 精确集合，⛔ 未降级为 `toContain`/`toBeLessThanOrEqual`）。
+
+### 12.2 独立复核 8 项（自写 2 个文件，13 例；⛔ 零生产代码改动）
+
+- `task-details/__tests__/t717-qa-history-feed-verify.test.ts`（jsdom，**8 例**）：结构 / 语义 / i18n / C 端红线
+- `task-details/__tests__/t717-qa-history-feed-render.test.ts`（**真 Vite 构建 + 真 Vue + 真主题 + headless Chromium**，**5 例**）：
+  几何 / 计算样式 / 真 hover / 真 Tab / 真 Enter / 渲染后对比度。缺 Chromium 的环境（CI）自动 skip。
+
+| #   | PM 复核项             | 判据（可观测代价 / 边界值）                                                                                                                                                    | 实测                                                                                                                                                                                      | 结果                                                                                                                                                    |
+| :-- | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 样式零命中            | 组件样式**声明**级 `border-left` / `border-inline-start` / `linear-gradient` / `::before                                                                                       | ::after`竖线 = **0**；渲染后每行`borderLeftWidth`、`::before/::after` 边框宽、`box-shadow` 均 = 0                                                                                         | 声明确认：`border-left` 出现 2 次**全在注释**（「原四条已删」），声明 **0**；渲染 4/4 行 `border-left: 0px`、伪元素 `content: none`、`box-shadow: none` | ✅  |
+| 2   | 行高 ≥44px、整行可点  | 渲染后 `getBoundingClientRect().height`；行宽 vs 对话框宽；点击徽标 / 主文案 / 时间三处各展开一次                                                                              | 4/4 行 **44.00px**；行宽 464 = 对话框 512 − padding；三种位置点击均展开/收起                                                                                                              | ✅                                                                                                                                                      |
+| 3   | 展开 + 省略           | 折叠态 `scrollWidth > clientWidth` 且 `text-overflow: ellipsis`/`white-space: nowrap`/`overflow: hidden`；`title` = 全文；**真 Enter** 展开后 `white-space: normal` 且不再溢出 | 折叠 `scrollWidth 1607 > clientWidth 326`；`title` 与主文案**逐字相等**；Enter：`aria-expanded false→true→false`，差异块 2 行，展开后 `311 == 311`（真换行）                              | ✅                                                                                                                                                      |
+| 4   | 对比度（渲染后 8 组） | `getComputedStyle` 取色后按 WCAG 公式算；文本 ≥4.5、徽标/焦点环 ≥3；**4 来源 × 浅/深 = 8 组**                                                                                  | 见 §12.3（最低：徽标浅色 **4.95**、文本浅色 **5.74**；深色 **7.17 / 6.11**）                                                                                                              | ✅                                                                                                                                                      |
+| 5   | 三重冗余 / 去色       | 4 来源的符号、文案、色修饰**三通道两两互异**；灰度公式给出 4 色灰度亮度与两两差；灰度下符号:徽标仍需 ≥4.5                                                                      | 符号 `✎ ☁ ⇄ ↺` 4/4 互异；文案 4/4 互异；灰度 **51.0 / 99.5 / 85.5 / 56.2**（`✎`↔`↺` 差 **5.2** ⇒ 颜色塌缩）⇒ 靠符号+文案仍可两两区分；符号灰度对比 4.95–12.63                             | ✅                                                                                                                                                      |
+| 6   | 不回归                | 三路关闭各一次（底部 / × / Esc）后 `v-model` 必为 false 且内容清空；键盘 Tab 焦点落行 + `:focus-visible`；打开期间父级重渲染 **同一 DOM 节点**、条目数不变、`load` 仍 **1** 次 | 三路关闭 3/3；Tab 8 次后焦点落在行（`focus-visible=true`，`outline 2px solid rgb(77,77,77)`）；重渲染 2 次：节点同一、4 条不变、`load` = 1（另：`t713` 8 例复跑全绿，含焦点归还「更多」） | ✅                                                                                                                                                      |
+| 7   | C 端红线              | 无 `<table>` / `nue-table` / `role=table                                                                                                                                       | grid`/`tr,td,th`/ 类名含 grid/table；样式无`display: grid`                                                                                                                                | 5 条全 0 命中                                                                                                                                           | ✅  |
+| 8   | i18n 16 键            | `history.*` 键集**恰等于** 16（多/少即红），zh/en 键集一致；组标题 3 键两两互异、⛔ 不挪用 `settings.sessionYesterday` / `calendar.today`                                      | 16 = 16（zh/en 同集）；3 组标题互异；挪用在**代码体**中 0 命中（注释里的「⛔ 不得挪用」是说明）                                                                                           | ✅                                                                                                                                                      |
+
+### 12.3 渲染后对比度（`getComputedStyle` 取色 → WCAG 公式，浅 / 深各 1 轮）
+
+| 通道（取色对象）                                                         | 浅色（白底 `#fff`） | 深色（弹层底 `#1a1a1a`） | 门槛       | 结论 |
+| :----------------------------------------------------------------------- | :------------------ | :----------------------- | :--------- | :--- |
+| 主文案（`--nue-primary-text-color`）                                     | **12.63**           | **10.84**                | ≥4.5       | ✅   |
+| 右侧时间 / 展开·收起 / 组标题 / 差异文字（`--nue-secondary-text-color`） | **5.74**            | **6.11**                 | ≥4.5       | ✅   |
+| 主文案在 **hover 底**（`--nue-primary-color-100`）                       | **10.12**           | **9.42**                 | ≥4.5       | ✅   |
+| 徽标 `✎` 本机修改（填 `primary-800`）                                    | **12.63**           | **10.84**                | ≥3（图形） | ✅   |
+| 徽标 `☁` 同步自云端（填 `success-90`）                                   | **4.95**            | **10.77**                | ≥3         | ✅   |
+| 徽标 `⇄` 已合并（填 `warning-90`）                                       | **6.67**            | **9.26**                 | ≥3         | ✅   |
+| 徽标 `↺` 恢复我的修改（填 `error-90`）                                   | **8.97**            | **7.17**                 | ≥3         | ✅   |
+| 徽标**符号**：填色（白 / 近黑）                                          | 4.95–12.63          | 7.17–10.84               | ≥4.5       | ✅   |
+| 焦点环（`primary-700`，2px）                                             | **8.45**            | 8.30                     | ≥3（图形） | ✅   |
+
+- 与 rd-fe 自测的对照：其报「徽标填色:行底 最低 **4.95**（浅）/ **7.17**（深）」= 与我实测**逐位一致**；
+  文本其报「5.74 / 6.11」，我实测深色为 **6.11**（若按行**自身底色** `#262626` 量则 5.31，仍 ≥4.5）——**口径差异，不是缺陷**。
+- 深色 hover 底（`#262626`）与弹层底（`#1a1a1a`）**不同** ⇒ 深色下 hover 也有可见底色（实测变化，非「token 撞色」）。
+
+### 12.4 灰度模拟（去色后是否还能两两区分）
+
+| 来源           | 符号 | 徽标填色（浅）   | 灰度亮度 |
+| :------------- | :--- | :--------------- | :------- |
+| 本机修改       | `✎`  | `rgb(51,51,51)`  | **51.0** |
+| 同步自云端     | `☁`  | `rgb(23,130,23)` | **99.5** |
+| 已合并云端修改 | `⇄`  | `rgb(138,77,15)` | **85.5** |
+| 恢复了我的修改 | `↺`  | `rgb(138,36,15)` | **56.2** |
+
+- 两两灰度差：`✎/↺ = 5.2`（**颜色通道塌缩**，红绿色盲/去色后不可靠颜色区分）· 其余 29–48。
+- 因此「三重冗余」的**承重通道 = 符号 + 文案**：4 个符号互异、4 条中文来源文案互异，且每行主文案以来源中文开头（灰度下仍可读）。
+  ⇒ `AC13` 的「不靠颜色也能区分」**成立**；⚠️ 前提是**不得**把徽标符号去掉或把来源文案从主文案里删掉（变异已守，见 §12.5 M7）。
+
+### 12.5 探针有牙（7 条变异逐条 kill，`sha256sum -c` 逐字节还原 7/7 OK）
+
+| #   | 变异（生产组件 · 最小单点改写）                                                  | 被杀用例                                     | 红因（摘）                                                              |
+| :-- | :------------------------------------------------------------------------------- | :------------------------------------------- | :---------------------------------------------------------------------- |
+| M1  | `min-height: 44px` → `40px`                                                      | 渲染①行高                                    | `行高必须 ≥44（实测 40）`                                               |
+| M2  | `.task-history__entry` 回插 `border-left: 3px solid`                             | jsdom①声明级 **+** 渲染①                     | 声明级 `not.toMatch(/border-left:/)`；`border-left 必须为 0（实测 3）`  |
+| M3  | `summary` 的 `overflow/text-overflow/white-space` 三件套 → `text-overflow: clip` | 渲染①省略                                    | `expected 'clip' to be 'ellipsis'`                                      |
+| M4  | 删除 `:focus-visible` 的 `outline: 2px`                                          | 渲染②焦点环                                  | `焦点环必须可见（≥2px）: expected 1`                                    |
+| M5  | 徽标 `success-90` → `success-30`（浅）/ (同一处)                                 | 渲染④对比度 **+** ⑤灰度                      | `徽标(☁) vs 行底色 ≥3（实测 1.53）`                                     |
+| M6  | 删掉行的 `:title="summaryText(item)"`                                            | jsdom③                                       | ``title` 必须给全文: expected ''`                                       |
+| M7  | `@click="toggle(item)"` → `@click="() => undefined"`                             | 渲染②真 Enter **+** jsdom②点徽标/主文案/时间 | `真按 Enter 必须展开: false`；`点 .task-history__badge 必须展开: false` |
+
+### 12.6 两条 PM 指定「由我判」的观察（⛔ 未改生产代码，仅建议）
+
+1. **分页按钮 `nue-button--pure`（「更早的记录」）像不像「卡片套卡片」** —— **不构成**。渲染后实测：
+   `border 1px solid` 但**边框色 alpha = 0**（`color(srgb -0.15 -0.15 -0.15 / 0)`）⇒ **肉眼无边框**；`border-radius: 0`、无阴影、背景透明。
+   ⚠️ 附带真问题（**非本次引入**，`T713` 起就是 `pure,small`）：该按钮渲染高 **17px**，低于 `DESIGN.md` §3「可点控件 ≥40px」。
+   最小方案（建议 RD 侧）：`.task-history__more { min-height: 40px; padding: 0 var(--nue-padding-xs); }` —— 只加内边距与最小高，不动 token/组件。
+2. **展开后超长值会不会顶掉上下文** —— **会**（实测数据）：单条展开后行高 **268px**（1 长描述 + 1 优先级），
+   列表可视高 `min(58vh, 26rem)=416px` ⇒ 一条展开占 **64%** 可视高；若描述达数千字，行高会继续线性增长（当前 `overflow-wrap: anywhere` 全展开）。
+   判断：**不阻塞本单**（查阅型信息、且列表可滚），但极端长文本会失去上下文。最小方案（建议）：
+   给差异块加上限 + 块内滚动 —— `.task-history__detail { max-height: 6.5rem; overflow: auto; }`（约 3 行 × 2 字段）；
+   ⛔ 不建议 `line-clamp`（会把「展开 = 看到完整值」变成又一层省略，与 `AC13` 冲突）。
+3. 文档内一致性（P3）：组件头注释写「『更早』组标题**本身即分页入口**」，实际实现是组后独立的
+   `nue-button.task-history__more`（组标题始终是 `<p>`）。**注释与实现不一致**，建议 RD 侧改注释（⛔ 非行为问题）。
+
+### 12.7 门禁（洁净前提：`pgrep -af vitest` 无并发进程 · `git status --porcelain` 仅本档 6 个文件）
+
+| 项                   | 结果                                                                                                                      |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| 全仓 `vp test --run` | **rc=0** · 文件 **448**（447 passed / 1 skipped）· 用例 **3484**（3478 passed / 6 skipped）· **红 0** · 302.08s           |
+| `vp check`           | **rc=0**（格式 + lint + 类型 0 error）                                                                                    |
+| 五守卫               | `guard:ddd` / `guard:mobile-imports` / `guard:barrel-imports` / `guard:gate-pathspec` / `guard:test-location` **rc=0 ×5** |
+| 移动端红线           | `git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**                                            |
+
+### 12.8 本档文件清单（全部 QA 自有测试 + 本报告，⛔ 零生产代码改动）
+
+| 文件                                                                       | 变更                                                                                                               |
+| :------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| `packages/shared/locales/__tests__/t697-audit-history-locale-keys.test.ts` | 阈值 13 → 16（+ 注释 + 同断言的中文标签）                                                                          |
+| `.../task-details/main/__tests__/t706-qa-history-panel-probe.test.ts`      | 阈值 13 → 16（+ 注释；键集一致性逐字未动）                                                                         |
+| `.../task-details/__tests__/t713-qa-history-dialog-probe.test.ts`          | 期望数组补 3 个 `history.group.*`（仍是精确集合）                                                                  |
+| `.../task-details/__tests__/t717-qa-history-feed-verify.test.ts`           | **新增 8 例**（jsdom：样式声明零命中 / 整行可点 / 展开语义 / 三重冗余 / 三路关闭 / 刷新不重挂 / C 端红线 / 16 键） |
+| `.../task-details/__tests__/t717-qa-history-feed-render.test.ts`           | **新增 5 例**（真渲染：行高 / 省略真溢出 / 真 Enter / 真 hover / 渲染后对比度 8 组 / 灰度）                        |
+| `docs/reports/346-audit-log-final-verify.md`                               | 本节 §12                                                                                                           |
+
+**复现**（本机有 Chromium 才跑渲染探针；无则自动 skip）：
+
+```text
+# 结构与语义（jsdom，8 例）
+pnpm exec vp test --run packages/presentation/task/components/task-details/__tests__/t717-qa-history-feed-verify.test.ts
+
+# 渲染后实测（真 Vite 构建 + headless Chromium，5 例；产物落 $TMPDIR/t717-render-probe.json）
+pnpm exec vp test --run packages/presentation/task/components/task-details/__tests__/t717-qa-history-feed-render.test.ts
+
+# 阈值/键集三条 + 回归面
+pnpm exec vp test --run packages/shared/locales/__tests__/t697-audit-history-locale-keys.test.ts \
+  packages/presentation/task/components/task-details/__tests__ \
+  packages/presentation/task/components/task-details/main/__tests__/t706-qa-history-panel-probe.test.ts
+```

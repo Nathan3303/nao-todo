@@ -33,8 +33,8 @@ const PANEL_KEYS = [
     'history.action.restore'
 ] as const
 
-/** 新增键上限（R-7：≤13；超了必须报 PM） */
-const MAX_NEW_KEYS = 13
+/** 新增键上限（R-7：≤16；超了必须报 PM）。13 → 16 = `D9` 按天分组的 3 个组标题专用键（`history.group.today/yesterday/earlier`） */
+const MAX_NEW_KEYS = 16
 
 /** 内部词黑名单（C 端红线） */
 const INTERNAL_TERMS = [
@@ -56,7 +56,7 @@ const en = enUS as unknown as Record<string, string>
 const keysWithPrefix = (messages: Record<string, string>, prefix: string): string[] =>
     Object.keys(messages).filter((key) => key.startsWith(prefix))
 
-describe('T697 / R-7 变更历史面板文案键：齐备 + 双语言 + ≤13', () => {
+describe('T697 / R-7 变更历史面板文案键：齐备 + 双语言 + ≤16', () => {
     it('13 个框架键在 zh / en 全部齐备且非空', () => {
         for (const key of PANEL_KEYS) {
             expect(zh[key], `zh-CN 缺少 ${key}`).toBeTruthy()
@@ -64,10 +64,10 @@ describe('T697 / R-7 变更历史面板文案键：齐备 + 双语言 + ≤13', 
         }
     })
 
-    it('新增键 ≤13（R-7 上限；超了报 PM，⛔ 不得静默超）', () => {
+    it('新增键 ≤16（R-7 上限；超了报 PM，⛔ 不得静默超）', () => {
         const zhKeys = keysWithPrefix(zh, 'history.')
         const enKeys = keysWithPrefix(en, 'history.')
-        expect(zhKeys.length, '「变更历史」面板新增键不得超过 13 个').toBeLessThanOrEqual(
+        expect(zhKeys.length, '「变更历史」面板新增键不得超过 16 个').toBeLessThanOrEqual(
             MAX_NEW_KEYS
         )
         // 双语言键集合一致（en 不得缺键/多键）

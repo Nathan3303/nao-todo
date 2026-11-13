@@ -126,7 +126,7 @@ const INTERNAL_TOKENS = [
 ]
 
 describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词 + 非表格式', () => {
-    it('13 个 history.* 键在 zh / en 齐备、非空、键集一致（R-7 ≤13）', () => {
+    it('13 个 history.* 键在 zh / en 齐备、非空、键集一致（R-7 ≤16）', () => {
         const zh = messages['zh-CN'] as unknown as Record<string, string>
         const en = messages['en-US'] as unknown as Record<string, string>
         const keys = [
@@ -152,7 +152,8 @@ describe('T706 / 面板真挂载：13 键中英齐备 + 可见文本无内部词
         const zhHistory = Object.keys(zh).filter((key) => key.startsWith('history.'))
         const enHistory = Object.keys(en).filter((key) => key.startsWith('history.'))
         expect(enHistory.sort()).toEqual(zhHistory.sort())
-        expect(zhHistory.length).toBeLessThanOrEqual(13)
+        // `D9` 按天分组 ⇒ R-7 预算 13 → 16（组标题 3 个专用键）；键集一致性仍逐字保留
+        expect(zhHistory.length).toBeLessThanOrEqual(16)
     })
 
     it('打开后：中文标题 / 字段标签 / 值 / 来源可读；可见文本无内部词；非表格式', async () => {
