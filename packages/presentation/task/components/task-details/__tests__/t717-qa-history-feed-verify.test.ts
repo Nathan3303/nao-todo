@@ -329,6 +329,100 @@ describe('T717 / 活动流独立复核（jsdom 可判部分）', () => {
         expect(dialog.querySelector('tr,td,th')).toBe(null)
     })
 
+    it('⑨ T719：分页入口按**最旧 seq** 续页（keyset），`hasMore=false` 后消失', async () => {
+        const load = vi.fn(async (_taskId: string, beforeSeq?: number) =>
+            beforeSeq === undefined
+                ? PAGE
+                : {
+                      items: [
+                          {
+                              seq: 0,
+                              at: new Date(Date.now() - 9 * DAY).toISOString(),
+                              source: 'pull' as const,
+                              action: 'update' as const,
+                              fields: [{ field: 'name', from: 'a', to: 'b' }]
+                          }
+                      ],
+                      hasMore: false,
+                      unavailable: false
+                  }
+        )
+        const visible = ref(true)
+        const Host = defineComponent({
+            components: { TaskHistoryDialog },
+            setup() {
+                provide(TASK_HISTORY_CONTEXT_KEY, { load } as never)
+                return { visible }
+            },
+            template: `<task-history-dialog v-model="visible" task-id="task-t719" />`
+        })
+        wrapper = mount(Host, { attachTo: document.body, global: { components: NUE } })
+        await flush()
+        const dialog = document.body.querySelector<HTMLElement>('.nue-dialog--task-history')!
+        const more = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find((node) =>
+            (node.textContent ?? '').includes(t('history.more'))
+        )
+        expect(more, '`hasMore` 时必须有分页入口').toBeTruthy()
+
+        more!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flush()
+
+        expect(load, '点一次只续一页').toHaveBeenCalledTimes(2)
+        expect(load.mock.calls[1]?.[1], '续页游标必须 = 当前最旧一条的 seq（⛔ 不用 offset）').toBe(
+            1
+        )
+        const stillMore = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>('.nue-dialog--task-history button')
+        ).find((node) => (node.textContent ?? '').includes(t('history.more')))
+        expect(stillMore, '`hasMore=false` 后入口必须消失').toBe(undefined)
+    })
+
+    it('⑩ T718：`canExpand` —— 无字段差异的墓碑动作不渲染展开、不置 aria-expanded；有字段仍可展开', async () => {
+        const tombstone: TaskHistoryPage = {
+            items: [
+                {
+                    seq: 2,
+                    at: new Date().toISOString(),
+                    source: 'local-edit',
+                    action: 'archive',
+                    fields: []
+                },
+                {
+                    seq: 1,
+                    at: new Date(Date.now() - DAY).toISOString(),
+                    source: 'pull',
+                    action: 'update',
+                    fields: [{ field: 'name', from: '旧名', to: '新名' }]
+                }
+            ],
+            hasMore: false,
+            unavailable: false
+        }
+        const { dialog } = await mountDialog(tombstone)
+        const [deadRow, liveRow] = rows(dialog)
+        expect(deadRow, '夹具自检：两条').toBeTruthy()
+
+        // 无字段差异 ⇒ 不呈现「可展开」的任何暗示
+        expect(deadRow!.querySelector('.task-history__toggle'), '⛔ 不得出现死「展开」入口').toBe(
+            null
+        )
+        expect(
+            deadRow!.hasAttribute('aria-expanded'),
+            '⛔ 无内容可展开时不得置 aria-expanded（否则读屏会宣布可展开）'
+        ).toBe(false)
+        deadRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flush()
+        expect(deadRow!.querySelector('.task-history__detail'), '点了也不得渲染差异块').toBe(null)
+
+        // 有字段差异的条目仍可正常展开
+        expect(liveRow!.getAttribute('aria-expanded')).toBe('false')
+        expect(liveRow!.querySelector('.task-history__toggle')).toBeTruthy()
+        liveRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flush()
+        expect(liveRow!.getAttribute('aria-expanded')).toBe('true')
+        expect(liveRow!.querySelectorAll('.task-history__detail-row').length).toBe(1)
+    })
+
     it('⑧ i18n：`history.*` 恰 16 键（含 3 组标题），zh/en 键集一致；⛔ 不挪用其它键', () => {
         const expected = [
             'history.title',

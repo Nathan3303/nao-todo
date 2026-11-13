@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { execSync, spawn } from 'node:child_process'
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vite-plus/test'
@@ -82,7 +82,12 @@ const ITEMS = [
     }
 ]
 
-const PROBE_DIR = join(REPO, '.t717-render-probe')
+/**
+ * 探针工作目录**必须在仓库外**（PM T719 ④：留在工作区会带进 Chromium profile 的 json，
+ * 把全仓 `vp check` 拖成假红）；裸模块靠 `node_modules` 软链回到仓库解析。
+ */
+const PROBE_DIR = join(tmpdir(), 't717-render-probe')
+const NODE_MODULES_LINK = join(PROBE_DIR, 'node_modules')
 
 const PAGE_SCRIPT = String.raw`
 window.__events = []
@@ -129,6 +134,8 @@ window.__qa = (() => {
       const rect = row.getBoundingClientRect()
       return {
         symbol: (badge ? badge.textContent : '').trim(),
+        title: row.getAttribute('title') || '',
+        summaryText: (summary ? summary.textContent : '').trim(),
         expanded: row.getAttribute('aria-expanded'),
         height: Math.round(rect.height * 100) / 100,
         width: Math.round(rect.width * 100) / 100,
@@ -243,6 +250,7 @@ window.__qa = (() => {
       return {
         activeTag: active ? active.tagName + '.' + (Array.from(active.classList).join('.') || '-') : 'none',
         isRow: active ? active.matches('button.task-history__entry') : false,
+        isDetail: active ? active.matches('.task-history__detail') : false,
         focusVisible: active ? active.matches(':focus-visible') : false,
         outlineWidth: px(style.outlineWidth),
         outlineColor: style.outlineColor,
@@ -267,6 +275,26 @@ window.__qa = (() => {
         height: Math.round(row.getBoundingClientRect().height * 100) / 100
       }
     },
+    detailInfo: () => {
+      const detail = document.querySelector('.task-history__detail')
+      if (!detail) return null
+      const style = getComputedStyle(detail)
+      return {
+        clientHeight: detail.clientHeight,
+        scrollHeight: detail.scrollHeight,
+        maxHeight: style.maxHeight,
+        overflowY: style.overflowY,
+        scrollTop: Math.round(detail.scrollTop),
+        tabIndex: detail.tabIndex,
+        text: (detail.textContent || '').slice(0, 200)
+      }
+    },
+    /** 对话框内**实际在滚**的容器（overflow-y:auto|scroll 且内容溢出）—— 用于判「无双层滚动条」 */
+    scrollables: () =>
+      Array.from(document.querySelectorAll('.nue-dialog--task-history *')).filter((el) => {
+        const style = getComputedStyle(el)
+        return /auto|scroll/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 1
+      }).map((el) => (el.className || el.tagName).toString().slice(0, 60)),
     events: () => window.__events.slice(-12),
     focusRow: (index) => {
       if (!rows()[index]) return false
@@ -309,8 +337,10 @@ import 'nue-ui-theme-shadlike/dist/index.css'
 import TaskHistoryDialog from '${join(REPO, 'packages/presentation/task/components/task-details/task-history-dialog.vue')}'
 import { TASK_HISTORY_CONTEXT_KEY } from '${join(REPO, 'packages/presentation/task/components/task-details/context')}'
 
+const ALL_ITEMS = ${JSON.stringify(items)}
+const rowLimit = Number(new URLSearchParams(location.search).get('rows') || ALL_ITEMS.length)
 const PAGE = {
-    items: ${JSON.stringify(items)},
+    items: ALL_ITEMS.slice(0, rowLimit),
     hasMore: true,
     unavailable: false
 }
@@ -351,7 +381,7 @@ const raf = () => new Promise((resolve) => requestAnimationFrame(() => resolve(n
 const ready = async () => {
     for (let attempt = 0; attempt < 200; attempt += 1) {
         await raf()
-        if (document.querySelectorAll('button.task-history__entry').length >= 4) {
+        if (document.querySelectorAll('button.task-history__entry').length >= rowLimit) {
             // 入场动画会改 transform ⇒ 等它走完（240ms）再量，坐标才稳定
             await new Promise((resolve) => setTimeout(resolve, 500))
             return true
@@ -359,7 +389,10 @@ const ready = async () => {
     }
     return false
 }
-window.__qaReady = ready()
+window.__qaIsReady = false
+ready().then((ok) => {
+    window.__qaIsReady = ok
+})
 ${PAGE_SCRIPT}
 `
 }
@@ -477,7 +510,7 @@ try {
 
   let ready = false
   for (let attempt = 0; attempt < 150; attempt++) {
-    const value = await evaluate('typeof window.__qaReady === "undefined" ? null : window.__qaReady')
+    const value = await evaluate('window.__qaIsReady === true')
     if (value === true) {
       ready = true
       break
@@ -522,12 +555,84 @@ try {
   await evaluate('window.__qa.blur()')
   await pause(150)
 
-  // 展开态（点击展开，用于量「差异文字」颜色与行高）——与 Enter 路径分开，避免焦点底色污染底色
+  // 展开态（点击展开，用于量「差异文字」颜色、行高、展开区上限与内滚）——与 Enter 路径分开，避免焦点底色污染底色
   await evaluate('window.__qa.clickRow(0)')
-  await pause(300)
+  await pause(350)
   const expanded = await evaluate('window.__qa.measure()')
+  const detailBefore = await evaluate('window.__qa.detailInfo()')
+  const scrollablesExpanded = await evaluate('window.__qa.scrollables()')
+
+  // 内滚的**键盘可达性**：Tab 直到焦点落到展开区（若可达），再按真 ArrowDown 看 scrollTop 是否变化
+  let detailFocus = null
+  for (let attempt = 0; attempt < 25; attempt++) {
+    await tab(sessionId)
+    await pause(60)
+    const info = await evaluate('window.__qa.focusInfo()')
+    if (info.isDetail) {
+      detailFocus = info
+      break
+    }
+  }
+  let detailAfter = detailBefore
+  if (detailFocus) {
+    for (let step = 0; step < 4; step++) {
+      await send(
+        'Input.dispatchKeyEvent',
+        { type: 'rawKeyDown', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
+        sessionId
+      )
+      await send(
+        'Input.dispatchKeyEvent',
+        { type: 'keyUp', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
+        sessionId
+      )
+      await pause(120)
+    }
+    detailAfter = await evaluate('window.__qa.detailInfo()')
+  }
   await evaluate('window.__qa.clickRow(0)')
   await pause(250)
+
+  // 第二场景：同样内容、更少记录（列表**不**溢出）⇒ 验证「无双层滚动条」按设计成立
+  const { targetId: secondId } = await send('Target.createTarget', {
+    url: 'file://' + pagePath + '?rows=2'
+  })
+  const { sessionId: secondSession } = await send('Target.attachToTarget', {
+    targetId: secondId,
+    flatten: true
+  })
+  await send('Page.enable', {}, secondSession)
+  await send('Runtime.enable', {}, secondSession)
+  const evaluate2 = async (expression) => {
+    const result = await send(
+      'Runtime.evaluate',
+      { expression, awaitPromise: true, returnByValue: true },
+      secondSession
+    )
+    if (result.exceptionDetails) {
+      throw new Error('第二场景脚本异常：' + JSON.stringify(result.exceptionDetails).slice(0, 300))
+    }
+    return result.result ? result.result.value : undefined
+  }
+  let secondReady = false
+  for (let attempt = 0; attempt < 150; attempt++) {
+    const value = await evaluate2('window.__qaIsReady === true')
+    if (value === true) {
+      secondReady = true
+      break
+    }
+    await pause(100)
+  }
+  if (!secondReady) throw new Error('第二场景未就绪')
+  const secondaryRows = await evaluate2('window.__qa.rowCount()')
+  await evaluate2('window.__qa.clickRow(0)')
+  await pause(350)
+  const secondary = {
+    rows: secondaryRows,
+    scrollables: await evaluate2('window.__qa.scrollables()'),
+    detail: await evaluate2('window.__qa.detailInfo()'),
+    list: (await evaluate2('window.__qa.measure()')).list
+  }
 
   await evaluate('window.__qa.setDark()')
   await pause(350)
@@ -560,6 +665,8 @@ try {
     },
     collapsedSummary: before.summary,
     expandedSummary: afterEnter.summary,
+    detail: { before: detailBefore, after: detailAfter, focus: detailFocus, scrollables: scrollablesExpanded },
+    secondary,
     logs: logs.slice(0, 20)
   }
 } finally {
@@ -573,6 +680,8 @@ process.exit(0)
 
 interface RenderRow {
     symbol: string
+    title: string
+    summaryText: string
     expanded: string | null
     height: number
     width: number
@@ -623,6 +732,16 @@ interface RenderMeasure {
     dialog: { width: number } | null
 }
 
+interface DetailInfo {
+    clientHeight: number
+    scrollHeight: number
+    maxHeight: string
+    overflowY: string
+    scrollTop: number
+    tabIndex: number
+    text: string
+}
+
 interface RenderResult {
     light: RenderMeasure
     dark: RenderMeasure
@@ -658,6 +777,25 @@ interface RenderResult {
         clientWidth: number
         whiteSpace: string
         overflow: string
+    }
+    /** 展开区（`T718`：`max-height: 6.5rem` + 内滚）的实测 + 键盘可达性 + 滚动容器枚举 */
+    detail: {
+        before: DetailInfo | null
+        after: DetailInfo | null
+        focus: {
+            activeTag: string
+            isRow: boolean
+            isDetail: boolean
+            focusVisible: boolean
+        } | null
+        scrollables: string[]
+    }
+    /** 第二场景（`?rows=2`：列表**不**溢出）—— 判「无双层滚动条」的正面边界 */
+    secondary: {
+        rows: number
+        scrollables: string[]
+        detail: DetailInfo | null
+        list: RenderMeasure['list']
     }
     logs: string[]
 }
@@ -730,10 +868,11 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
     beforeAll(() => {
         rmSync(PROBE_DIR, { recursive: true, force: true })
         mkdirSync(PROBE_DIR, { recursive: true })
+        symlinkSync(join(REPO, 'node_modules'), NODE_MODULES_LINK, 'dir')
     })
 
     afterAll(() => {
-        // 排障用：`T717_KEEP=1` 保留产物（默认清理）
+        // 排障用：`T717_KEEP=1` 保留产物（默认清理；目录本就在仓库外，残留也不污染工作区）
         if (!process.env.T717_KEEP) rmSync(PROBE_DIR, { recursive: true, force: true })
     })
 
@@ -796,11 +935,24 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 `长值必须真溢出（scrollWidth ${longRow.summary!.scrollWidth} > clientWidth ${longRow.summary!.clientWidth}）`
             ).toBeGreaterThan(longRow.summary!.clientWidth)
 
-            expect(measured.expandedSummary.whiteSpace, '展开后必须真换行').toBe('normal')
+            // `T719` 契约修订（PM 裁定）：展开后主文案**仍单行省略**，全文在下方 `detail` 内滚区
+            // （展开换行时单条 = 108% 可视高，正是要修的现象；且替代方案会有双层滚动条 + 同值显示两遍）
+            // 「无信息丢失」前提①：折叠时 `title` = 主文案全文（逐字相等），且含完整长值
+            expect(longRow.title, '`title` 必须与主文案逐字相等（全文兜底）').toBe(
+                longRow.summaryText
+            )
+            expect(longRow.title, '`title` 必须包含完整长值（不截断）').toContain(
+                '这是一段非常长的描述文本'
+            )
+
+            expect(
+                measured.expandedSummary.whiteSpace,
+                '展开后主文案仍须 nowrap（T719 契约）'
+            ).toBe('nowrap')
             expect(
                 measured.expandedSummary.scrollWidth,
-                '展开后不得再溢出（不再省略）'
-            ).toBeLessThanOrEqual(measured.expandedSummary.clientWidth + 1)
+                '展开后主文案仍真溢出（全文走 title + detail 内滚区，⛔ 不丢信息）'
+            ).toBeGreaterThan(measured.expandedSummary.clientWidth)
         },
         PROBE_TIMEOUT
     )
@@ -820,6 +972,92 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
             expect(measured.keyboard.detailRows, '展开后逐字段差异').toBeGreaterThanOrEqual(2)
             expect(measured.keyboard.detailText, '展开后的差异文案可读').toContain('旧描述')
             expect(measured.keyboard.afterSecondEnter, '再按 Enter 必须收起').toBe('false')
+        },
+        PROBE_TIMEOUT
+    )
+
+    it(
+        'T719 抽验 T718：分页按钮 ≥40px（浅/深）· detail ≤6.5rem + 内滚可键盘滚 · 单条 ≤35% 可视高 · 无双层滚动条',
+        async () => {
+            const measured = await probe()
+
+            // ① 分页「更早的记录」：点击区 ≥40px（`pure` 会把 small 的 28px 归零 ⇒ 显式 min-height）
+            for (const [theme, view] of [
+                ['浅色', measured.light],
+                ['深色', measured.dark]
+            ] as const) {
+                expect(view.more, `${theme}：有 hasMore 就必须渲染分页入口`).toBeTruthy()
+                expect(
+                    view.more!.height,
+                    `${theme} 分页按钮高必须 ≥40px（实测 ${view.more!.height}）`
+                ).toBeGreaterThanOrEqual(40)
+            }
+
+            // ② 展开区：高度被 ≤6.5rem(104px) 约束、真溢出（内滚有意义）、overflow-y: auto
+            const before = measured.detail.before
+            expect(before, '展开后必须有字段差异区').toBeTruthy()
+            expect(before!.maxHeight, 'detail 必须声明 max-height: 6.5rem').toBe('104px')
+            expect(before!.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
+            expect(
+                before!.clientHeight,
+                `detail 渲染高必须 ≤104（实测 ${before!.clientHeight}）`
+            ).toBeLessThanOrEqual(104)
+            expect(
+                before!.scrollHeight,
+                `detail 必须真溢出（scrollHeight ${before!.scrollHeight} > clientHeight ${before!.clientHeight}）`
+            ).toBeGreaterThan(before!.clientHeight)
+
+            // ③ 单条展开高度 ≤35% **可视高**（= 列表设计上限 `min(58vh, 26rem)`；内容不足时另报内容高口径）
+            const listCap = Number.parseFloat(measured.light.list!.maxHeight) || 0
+            const listContent = measured.light.list!.clientHeight
+            const expandedRowHeight = measured.expanded.detail!.rowHeight
+            // eslint-disable-next-line no-console
+            console.log(
+                `\n[T719 单条展开] ${expandedRowHeight}px = ${((expandedRowHeight / listCap) * 100).toFixed(1)}% 设计可视高（${listCap}px）· ${((expandedRowHeight / listContent) * 100).toFixed(1)}% 当前内容高（${listContent}px）\n`
+            )
+            expect(listCap, '列表必须有设计上限（max-height）').toBeGreaterThan(0)
+            expect(
+                expandedRowHeight / listCap,
+                `单条展开 ${expandedRowHeight}px 必须 ≤35% 设计可视高（${listCap}px）`
+            ).toBeLessThanOrEqual(0.35)
+
+            // ④ 键盘可滚：Tab 能进 detail（可聚焦），真 ↓ 使 scrollTop 增加，且能滚到底看到结尾
+            expect(
+                measured.detail.focus,
+                'Tab 必须能把焦点送进可滚的差异区（否则键盘用户无法滚动）'
+            ).toBeTruthy()
+            const after = measured.detail.after!
+            expect(
+                after.scrollTop,
+                `真 ArrowDown 必须让 detail 滚动（scrollTop ${after.scrollTop}）`
+            ).toBeGreaterThan(0)
+            expect(
+                after.scrollTop + after.clientHeight,
+                '滚到底必须能看到内容结尾（无信息丢失）'
+            ).toBeGreaterThanOrEqual(after.scrollHeight - 2)
+
+            // ⑤ 无双层滚动条 —— **两个边界都钉住**（PM：判据必须带边界值）
+            //   a) 列表内容未溢出（rows=2）⇒ 只有 detail 在滚 = 1 个滚动容器 ⇒ 设计目标成立
+            //   b) 列表内容已溢出（rows=4，本夹具）⇒ 列表 + detail 同时可滚 = 2 个
+            //      ⇒ 这是**真实边界**（列表满时展开任意一条都会出现第二层），已作为 P3 发现上报 PM，
+            //        故此处显式钉住实际行为，⛔ 不用「只测能过的那种」蒙过去
+            expect(measured.secondary.rows, '第二场景夹具自检：必须只有 2 条').toBe(2)
+            expect(
+                measured.secondary.scrollables,
+                `列表未溢出时只允许 detail 一个滚动容器（实测 ${JSON.stringify(measured.secondary.scrollables)}）`
+            ).toEqual(['task-history__detail'])
+
+            expect(
+                measured.detail.scrollables.length,
+                `列表已溢出时按现状是 2 个滚动容器（实测 ${JSON.stringify(measured.detail.scrollables)}）`
+            ).toBe(2)
+            expect(measured.detail.scrollables).toContain('task-history__list')
+            expect(measured.detail.scrollables).toContain('task-history__detail')
+            // 边界自证：列表 content 真的超过设计上限，才可能出现第二层
+            expect(
+                measured.expanded.list!.scrollHeight,
+                '列表已溢出的判定依据：scrollHeight 必须 > max-height 上限'
+            ).toBeGreaterThan(Number.parseFloat(measured.light.list!.maxHeight))
         },
         PROBE_TIMEOUT
     )
