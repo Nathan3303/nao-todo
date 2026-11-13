@@ -56,7 +56,11 @@ const ITEMS = [
         action: 'update',
         fields: [
             { field: 'description', from: '旧描述', to: LONG_VALUE },
-            { field: 'priority', from: 'medium', to: 'high' }
+            { field: 'priority', from: 'medium', to: 'high' },
+            // 补足 5 个字段：内容高度必须**确定超过 6.5rem 上限**（⛔ 不能靠「本地字体刚好超了」）
+            { field: 'state', from: 'todo', to: 'done' },
+            { field: 'name', from: '旧名', to: LONG_VALUE },
+            { field: 'startAt', from: null, to: '2026-11-13T00:00:00.000Z' }
         ]
     },
     {
@@ -274,6 +278,18 @@ window.__qa = (() => {
         },
         height: Math.round(row.getBoundingClientRect().height * 100) / 100
       }
+    },
+    /** 等 detail 的 scrollHeight 稳定（连续两次采样相同）——防「半布局帧」量到偏小值 */
+    waitDetailStable: async () => {
+      let last = -1
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const detail = document.querySelector('.task-history__detail')
+        const value = detail ? detail.scrollHeight : 0
+        if (value > 0 && value === last) return value
+        last = value
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+      return last
     },
     detailInfo: () => {
       const detail = document.querySelector('.task-history__detail')
@@ -565,6 +581,7 @@ try {
   // 展开态（点击展开，用于量「差异文字」颜色、行高、展开区上限与内滚）——与 Enter 路径分开，避免焦点底色污染底色
   await evaluate('window.__qa.clickRow(0)')
   await pause(350)
+  const stableHeight = await evaluate('window.__qa.waitDetailStable()')
   const expanded = await evaluate('window.__qa.measure()')
   const detailBefore = await evaluate('window.__qa.detailInfo()')
   const scrollablesExpanded = await evaluate('window.__qa.scrollables()')
@@ -582,7 +599,7 @@ try {
   }
   let detailAfter = detailBefore
   if (detailFocus) {
-    for (let step = 0; step < 4; step++) {
+    for (let step = 0; step < 14; step++) {
       await send(
         'Input.dispatchKeyEvent',
         { type: 'rawKeyDown', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
@@ -641,6 +658,7 @@ try {
   const secondaryRows = await evaluate2('window.__qa.rowCount()')
   await evaluate2('window.__qa.clickRow(0)')
   await pause(350)
+  await evaluate2('window.__qa.waitDetailStable()')
   const secondary = {
     rows: secondaryRows,
     scrollables: await evaluate2('window.__qa.scrollables()'),
@@ -679,7 +697,13 @@ try {
     },
     collapsedSummary: before.summary,
     expandedSummary: afterEnter.summary,
-    detail: { before: detailBefore, after: detailAfter, focus: detailFocus, scrollables: scrollablesExpanded },
+    detail: {
+      before: detailBefore,
+      after: detailAfter,
+      focus: detailFocus,
+      scrollables: scrollablesExpanded,
+      stableHeight
+    },
     secondary,
     logs: logs.slice(0, 20)
   }
@@ -803,6 +827,7 @@ interface RenderResult {
             focusVisible: boolean
         } | null
         scrollables: string[]
+        stableHeight: number
     }
     /** 第二场景（`?rows=2`：列表**不**溢出）—— 判「无双层滚动条」的正面边界 */
     secondary: {
@@ -1007,18 +1032,32 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 ).toBeGreaterThanOrEqual(40)
             }
 
-            // ② 展开区：高度被 ≤6.5rem(104px) 约束、真溢出（内滚有意义）、overflow-y: auto
+            // ② 展开区：高度被 `max-height: 6.5rem` 约束、真溢出（内滚有意义）、overflow-y: auto
+            //    ⚠️ 上限的 px 值**依赖根字号**（本地 16px ⇒ 104px，CI 实测 96px）⇒ 一律从计算样式取，
+            //    ⛔ 不硬编码 104；判据 = 「clientHeight 恰好等于 min(内容高, 上限)」且「内容确实超过上限」
             const before = measured.detail.before
             expect(before, '展开后必须有字段差异区').toBeTruthy()
-            expect(before!.maxHeight, 'detail 必须声明 max-height: 6.5rem').toBe('104px')
+            const capPx = Number.parseFloat(before!.maxHeight)
+            expect(
+                capPx,
+                `detail 必须声明像素级 max-height（实测 ${before!.maxHeight}）`
+            ).toBeGreaterThan(0)
             expect(before!.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
             expect(
                 before!.clientHeight,
-                `detail 渲染高必须 = 上限 104（内容已超限；实测 ${before!.clientHeight}）`
-            ).toBe(104)
+                '死窗口守卫：detail 必须有真实布局高度（0 = 无布局视口，⛔ 不是「设计成立」）'
+            ).toBeGreaterThan(0)
             expect(
                 before!.scrollHeight,
-                `detail 必须真溢出（scrollHeight ${before!.scrollHeight} > clientHeight ${before!.clientHeight}）`
+                `夹具必须确定溢出：内容高 ${before!.scrollHeight} 必须 > 上限 ${capPx}（否则本例不成立）`
+            ).toBeGreaterThan(capPx)
+            expect(
+                before!.clientHeight,
+                `上限必须真的在起作用：clientHeight=${before!.clientHeight} 必须 = min(${before!.scrollHeight}, ${capPx})`
+            ).toBe(Math.min(before!.scrollHeight, capPx))
+            expect(
+                before!.scrollHeight,
+                '真溢出 ⇒ 被截断（scrollHeight > clientHeight）'
             ).toBeGreaterThan(before!.clientHeight)
 
             // ③ 单条展开高度 ≤35% **可视高**（= 列表设计上限 `min(58vh, 26rem)`；内容不足时另报内容高口径）
@@ -1057,17 +1096,25 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 measured.secondary.list?.clientHeight ?? 0,
                 `第二场景列表必须真有布局高度（clientHeight=${measured.secondary.list?.clientHeight}）`
             ).toBeGreaterThan(0)
+            const secondaryDetail = measured.secondary.detail
+            const secondaryCap = Number.parseFloat(secondaryDetail?.maxHeight ?? '')
             expect(
-                measured.secondary.detail?.clientHeight,
-                `第二场景 detail 必须被 6.5rem 截到 104px（实测 ${measured.secondary.detail?.clientHeight}）`
-            ).toBe(104)
-            expect(measured.secondary.detail?.overflowY, 'detail 必须 overflow-y: auto').toBe(
-                'auto'
-            )
+                secondaryCap,
+                `第二场景 detail 必须有像素级上限（实测 ${secondaryDetail?.maxHeight}）`
+            ).toBeGreaterThan(0)
             expect(
-                measured.secondary.detail?.scrollHeight ?? 0,
-                '第二场景 detail 必须真溢出（否则「内滚」没有观测对象）'
-            ).toBeGreaterThan(measured.secondary.detail?.clientHeight ?? 0)
+                secondaryDetail?.clientHeight ?? 0,
+                '第二场景 detail 必须有真实布局高度（0 = 死窗口）'
+            ).toBeGreaterThan(0)
+            expect(secondaryDetail?.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
+            expect(
+                secondaryDetail!.clientHeight,
+                `第二场景上限必须真的在起作用：clientHeight=${secondaryDetail!.clientHeight} 必须 = min(${secondaryDetail!.scrollHeight}, ${secondaryCap})`
+            ).toBe(Math.min(secondaryDetail!.scrollHeight, secondaryCap))
+            expect(
+                secondaryDetail!.scrollHeight,
+                `第二场景夹具必须确定溢出：内容高 ${secondaryDetail!.scrollHeight} > 上限 ${secondaryCap}`
+            ).toBeGreaterThan(secondaryCap)
             expect(
                 measured.light.list!.clientHeight,
                 '第一场景列表必须真有布局高度（0 = 死窗口，⛔ 不是「设计成立」）'
