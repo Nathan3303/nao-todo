@@ -1109,6 +1109,9 @@ export interface LocaleMessages {
     'history.action.unarchive': string
     'history.action.delete': string
     'history.action.restore': string
+    'history.group.today': string
+    'history.group.yesterday': string
+    'history.group.earlier': string
 }
 
 export type LocaleKey = keyof LocaleMessages

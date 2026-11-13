@@ -1137,7 +1137,10 @@ const zhCN: LocaleMessages = {
     'history.action.archive': '归档',
     'history.action.unarchive': '取消归档',
     'history.action.delete': '删除',
-    'history.action.restore': '恢复'
+    'history.action.restore': '恢复',
+    'history.group.today': '今天',
+    'history.group.yesterday': '昨天',
+    'history.group.earlier': '更早'
 }
 
 export default zhCN
