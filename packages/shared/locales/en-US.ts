@@ -1169,7 +1169,10 @@ const enUS: LocaleMessages = {
     'history.action.archive': 'archived',
     'history.action.unarchive': 'unarchived',
     'history.action.delete': 'deleted',
-    'history.action.restore': 'restored'
+    'history.action.restore': 'restored',
+    'history.group.today': 'Today',
+    'history.group.yesterday': 'Yesterday',
+    'history.group.earlier': 'Earlier'
 }
 
 export default enUS

@@ -360,7 +360,7 @@ describe('T713 / 独立复核：变更历史入口（「更多」→ 对话框�
         expect(dialogEl(), '未接线端不得挂载对话框').toBe(null)
     })
 
-    it('⑥ i18n 仍恰 13 个 history.* 键（无第 14 个，中英键集一致）', () => {
+    it('⑥ i18n 恰 16 个 history.* 键（无第 17 个，中英键集一致；`D9` 后 13 → 16）', () => {
         const expected = [
             'history.title',
             'history.empty',
@@ -374,7 +374,11 @@ describe('T713 / 独立复核：变更历史入口（「更多」→ 对话框�
             'history.action.archive',
             'history.action.unarchive',
             'history.action.delete',
-            'history.action.restore'
+            'history.action.restore',
+            // `D9` 按天即可分组的 3 个组标题专用键（R-7 预算 13 → 16；仍为精确集合 ⇒ 第 17 个即红）
+            'history.group.today',
+            'history.group.yesterday',
+            'history.group.earlier'
         ].sort()
         const zh = Object.keys(messages['zh-CN'] as unknown as Record<string, string>)
             .filter((key) => key.startsWith('history.'))
@@ -383,7 +387,7 @@ describe('T713 / 独立复核：变更历史入口（「更多」→ 对话框�
             .filter((key) => key.startsWith('history.'))
             .sort()
 
-        expect(zh, 'history.* 键集必须恰为既有 13 键（新增第 14 个 ⇒ 红）').toEqual(expected)
+        expect(zh, 'history.* 键集必须恰为 16 键（新增第 17 个 ⇒ 红）').toEqual(expected)
         expect(en, 'en-US 键集必须与 zh-CN 一致').toEqual(expected)
     })
 })
