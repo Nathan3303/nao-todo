@@ -495,6 +495,13 @@ try {
   const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
   await send('Page.enable', {}, sessionId)
   await send('Runtime.enable', {}, sessionId)
+  // 显式视口 + 置前：⛔ 不靠「新 target 恰好拿到布局视口」这种运气（CI 上会静默变 0×0）
+  await send('Page.bringToFront', {}, sessionId)
+  await send(
+    'Emulation.setDeviceMetricsOverride',
+    { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false },
+    sessionId
+  )
 
   const evaluate = async (expression) => {
     const result = await send(
@@ -603,6 +610,13 @@ try {
   })
   await send('Page.enable', {}, secondSession)
   await send('Runtime.enable', {}, secondSession)
+  // ⛔ 关键：新 target 默认**没有布局视口**（clientHeight/scrollHeight 全 0）⇒ 置前 + 显式视口
+  await send('Page.bringToFront', {}, secondSession)
+  await send(
+    'Emulation.setDeviceMetricsOverride',
+    { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false },
+    secondSession
+  )
   const evaluate2 = async (expression) => {
     const result = await send(
       'Runtime.evaluate',
@@ -1000,8 +1014,8 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
             expect(before!.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
             expect(
                 before!.clientHeight,
-                `detail 渲染高必须 ≤104（实测 ${before!.clientHeight}）`
-            ).toBeLessThanOrEqual(104)
+                `detail 渲染高必须 = 上限 104（内容已超限；实测 ${before!.clientHeight}）`
+            ).toBe(104)
             expect(
                 before!.scrollHeight,
                 `detail 必须真溢出（scrollHeight ${before!.scrollHeight} > clientHeight ${before!.clientHeight}）`
@@ -1035,6 +1049,29 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 after.scrollTop + after.clientHeight,
                 '滚到底必须能看到内容结尾（无信息丢失）'
             ).toBeGreaterThanOrEqual(after.scrollHeight - 2)
+
+            // ⑤-0 **死窗口守卫（PM T721 硬要求）**：先证「布局是真的」再判滚动条
+            //     CI 上曾出现：DOM 查得到、`.click()` 也生效，但 clientHeight/scrollHeight 全 0
+            //     ⇒ `scrollables()` 命中 0 个 ⇒ 「只允许一个滚动容器」被**静默伪装成成立**
+            expect(
+                measured.secondary.list?.clientHeight ?? 0,
+                `第二场景列表必须真有布局高度（clientHeight=${measured.secondary.list?.clientHeight}）`
+            ).toBeGreaterThan(0)
+            expect(
+                measured.secondary.detail?.clientHeight,
+                `第二场景 detail 必须被 6.5rem 截到 104px（实测 ${measured.secondary.detail?.clientHeight}）`
+            ).toBe(104)
+            expect(measured.secondary.detail?.overflowY, 'detail 必须 overflow-y: auto').toBe(
+                'auto'
+            )
+            expect(
+                measured.secondary.detail?.scrollHeight ?? 0,
+                '第二场景 detail 必须真溢出（否则「内滚」没有观测对象）'
+            ).toBeGreaterThan(measured.secondary.detail?.clientHeight ?? 0)
+            expect(
+                measured.light.list!.clientHeight,
+                '第一场景列表必须真有布局高度（0 = 死窗口，⛔ 不是「设计成立」）'
+            ).toBeGreaterThan(0)
 
             // ⑤ 无双层滚动条 —— **两个边界都钉住**（PM：判据必须带边界值）
             //   a) 列表内容未溢出（rows=2）⇒ 只有 detail 在滚 = 1 个滚动容器 ⇒ 设计目标成立

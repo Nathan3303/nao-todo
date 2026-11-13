@@ -633,3 +633,36 @@ pnpm exec vp test --run packages/shared/locales/__tests__/t697-audit-history-loc
 | `.../__tests__/t717-qa-history-feed-render.test.ts` | 契约断言改新口径（`nowrap` + 仍溢出 + `title` 逐字相等 + `detail` 滚到底）；新增「`T718` 抽验」1 例（6 处判据，含两个滚动条边界）；探针目录移出仓库 + 就绪标记改布尔；`?rows=2` 第二场景 |
 | `.../__tests__/t717-qa-history-feed-verify.test.ts` | 新增 2 例：分页按最旧 `seq` 续页（keyset）/ `canExpand` 无字段不渲染展开                                                                                                                 |
 | `docs/reports/346-audit-log-final-verify.md`        | 本节 §13（+ §12.3 已补「深色底取哪个值」口径）                                                                                                                                           |
+
+## 14. `T721` CI 假绿修复（第二场景「死窗口」）—— 2026-11-13
+
+- 现象：CI run [43381026842](https://github.com/Nathan3303/nao-todo/actions/runs/43381026842) ·
+  `t717-qa-history-feed-render.test.ts` **6 例 1 红**：
+  `列表未溢出时只允许 detail 一个滚动容器（实测 []）: expected [] to deeply equal ['task-history__detail']`。
+- 定位（rd-fe 提证据，PM 采信，我复核）：**第二场景只 `Target.createTarget` + `attachToTarget`，
+  从未 `Page.bringToFront`、也未设视口** ⇒ CI 的 `headless=new` **新 target 没有可用布局视口**：
+  DOM 查得到（`rowCount()=2` ✓）、`.click()` 也触发，但 `clientHeight/scrollHeight` **全 0**
+  ⇒ `scrollables()` 的过滤条件（`scrollHeight > clientHeight + 1`）命中不到任何元素 ⇒ 返回 `[]`。
+  同一份提交里第一场景数值与本地**逐字相同**（`135px = 32.5%`）⇒ 只有第二场景受影响。
+- 根因归类：**我的探针缺陷**（⛔ 不是产品代码、⛔ 不是 `canExpand`）。
+
+### 14.1 三处改动（只动 `t717-qa-history-feed-render.test.ts`）
+
+| #   | 改动                                                                           | 说明                                                                                                                                                                                                                                                                                 |
+| :-- | :----------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 第二场景 `Page.bringToFront`                                                   | 本仓 `scripts/electron-smoke/lib/cdp.mjs` 注释同要求                                                                                                                                                                                                                                 |
+| 2   | 两场景都 `Emulation.setDeviceMetricsOverride({1200×900, dpr:1, mobile:false})` | ⛔ 不再依赖「新 target 恰好拿到窗口视口」这种运气                                                                                                                                                                                                                                    |
+| 3   | **死窗口守卫**（判据必须有观测量）                                             | 在「只允许一个滚动容器」**之前**先断言：第二场景 `list.clientHeight > 0` · `detail.clientHeight === 104` · `detail.overflowY === 'auto'` · `detail.scrollHeight > clientHeight`；主场景 `list.clientHeight > 0`、`detail.clientHeight === 104`（原为 `≤104`，0 也能过 ⇒ 收紧为等值） |
+
+**守卫有牙的证据（变异「观测器」）**：把 `detailInfo()` 的 `clientHeight` 改成谎报 `0`（等价于 CI 的死窗口）⇒
+用例立刻红在 `detail 渲染高必须 = 上限 104（内容已超限；实测 0）`，⛔ 不会再被 `scrollables === ['…detail']`
+那类「0 命中恰好等于期望形状」的假象骗过。还原后 **6/6 绿**。
+
+### 14.2 验证与门禁
+
+| 项                       | 结果                                                               |
+| :----------------------- | :----------------------------------------------------------------- |
+| 本地 `t717-render`       | **6/6 绿**（19500ms 级）                                           |
+| 本地全仓 `vp test --run` | 见回执（本节随修复提交，CI 转绿后回填结论）                        |
+| `vp check`               | **rc=0**                                                           |
+| CI                       | **以 CI `test` 结论为准**（本地绿不算数 —— 这次就是本地绿、CI 红） |
