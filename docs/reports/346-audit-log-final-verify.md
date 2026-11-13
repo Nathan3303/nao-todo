@@ -676,6 +676,7 @@ pnpm exec vp test --run packages/shared/locales/__tests__/t697-audit-history-loc
 | `vp check`                  | **rc=0**                                                                                                                                                                                             |
 | **CI `test`（`0bf12310`）** | ✅ **success** · [run 43386056400](https://github.com/Nathan3303/nao-todo/actions/runs/43386056400) · 文件 **449**（448 pass / 1 skip）· 用例 **3489**（3483 pass / 6 skip）· **failed 0** · 178.58s |
 | CI `check`                  | ✅ **success**（同 run）                                                                                                                                                                             |
+| **CI（HEAD `66361666`）**   | ✅ **success** · [run 43388438416](https://github.com/Nathan3303/nao-todo/actions/runs/43388438416) · `test` 449 文件（448 pass / 1 skip）· 3489 例（3483 pass / 6 skip）· 0 红 · `check` 绿         |
 
 > **结论**：两轮 CI 红都是**探针自身**问题（无布局视口 / rem 换算硬编码），与产品代码无关；修完后 CI 与本地数字
 > **逐项相同**（449 文件 / 3489 例 / 0 红）⇒ 口径已对齐，后续同类批次用「本地全绿 + CI 绿」双证放行。
