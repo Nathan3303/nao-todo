@@ -2,6 +2,20 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.20.2] - 2026-11-13
+
+变更历史活动流改造（用户 2026-11-12 决定 · PRD `D9` / `AC13` · 代码 PR #351 · 发版说明 `docs/releases/v1.20.2.md`）：
+
+- **形态**：删除 `border-left` / 竖线 / 时间轴轨道，改**活动流行式** —— 每行 = 20px 圆形来源徽标（符号 ✎/☁/⇄/↺ + 语义四色 + 来源文字，三重冗余）+ 主文案 `来源 · 字段名: 旧 → 新` + 右侧时间（`tabular-nums`）；按今天 / 昨天 / 更早**轻分组**，组间 16px 留白、空组不渲染。
+- **交互/a11y**：整行为原生 `button`（Tab 可达、`aria-expanded`、Enter/点击展开）；hover/focus 只用主题 token（`--nue-primary-color-100` / `-700`）；长值折叠单行省略 + `title` 全文 + 展开后 `detail` 内滚。
+- **两处实测修复**：① 分页「更早的记录」点击高 17px → **40px**；② 展开单条从 **450px（108% 可视高）** 降到 **135px（32.5%）**，`detail` 上限 `6.5rem` 可滚。
+- **死交互修复**：墓碑动作（`fields` 为空）不渲染展开、不置 `aria-expanded`。
+- **i18n**：新增 3 个专用分组键（`history.group.today|yesterday|earlier`），`R-7` 预算 13 → **16**；⛔ 未挪用 `settings.sessionYesterday` 之类无关键。
+- **对比度（渲染后实测，qa 独立复算）**：主文案 12.63/10.84 · 次要 5.74/6.11 · 徽标最低 4.95/7.17（浅/深）· 焦点环 8.45/8.30。
+- **门禁**：全仓 **449 文件 / 3489 例 / 3483 通过 / 6 跳过 / 0 红** · `vp check` 0 error · 五守卫 rc=0 · 移动端红线 0 行；变异 7 条全 kill + 逐字节还原。
+- **过程**：两轮 CI 红均为**探针写法**（新 target 缺 `Page.bringToFront`；`6.5rem` 硬编码 104）⇒ 已写进 `AGENTS.md`「几何类判据两条硬前提」。
+- **Tag `v1.20.2`** · root / `apps/web` / `apps/desktop` `1.20.1 → 1.20.2`（PATCH）· `presentation` `0.11.1 → 0.12.0` · `shared` `1.5.0 → 1.6.0`。**服务端无改动，无需部署。**
+
 ## [v1.20.1] - 2026-11-11
 
 变更历史入口调整（用户 2026-11-11 决定 · PRD `D8` / `R-10` / `AC12` · 代码 PR #349 · 发版说明 `docs/releases/v1.20.1.md`）：
