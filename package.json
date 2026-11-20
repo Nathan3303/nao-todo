@@ -7,6 +7,9 @@
     "private": true,
     "type": "module",
     "packageManager": "pnpm@11.18.0",
+    "engines": {
+        "node": ">=24.20.0"
+    },
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
         "mobileapp": "pnpm --filter @nao-todo/mobileapp",
@@ -26,8 +29,6 @@
         "axios": "^1.15.2",
         "dayjs": "^1.11.21",
         "dexie": "^4.4.2",
-        "markdown-it": "^14.2.0",
-        "moment": "^2.30.1",
         "nanoid": "^5.1.11",
         "nue-ui": "1.15.3",
         "nue-ui-iconfont": "0.2.6",
@@ -38,7 +39,6 @@
         "vue-router": "^5.0.7"
     },
     "devDependencies": {
-        "@configurajs/vite-plus": "^0.2.6",
         "@nao-todo/desktopapp": "workspace:*",
         "@nao-todo/domain-built-in-project": "workspace:*",
         "@nao-todo/domain-identity": "workspace:*",
@@ -53,27 +53,17 @@
         "@nao-todo/shared": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
         "@rollup/plugin-terser": "^0.4.4",
-        "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",
-        "@types/markdown-it": "^14.1.2",
         "@types/node": "^20.19.41",
-        "@types/validator": "^13.15.10",
         "@vue/test-utils": "^2.5.0",
-        "@vue/tsconfig": "^0.5.1",
-        "cross-env": "^7.0.3",
-        "font-slice": "^1.0.2",
         "globals": "^15.15.0",
         "jsdom": "^30.0.1",
-        "nue-ui-resolver": "0.4.0",
         "rollup-plugin-visualizer": "^5.14.0",
         "typescript": "~5.4.5",
         "vite": "catalog:",
         "vite-plus": "catalog:",
         "vue-tsc": "^2.2.12"
     },
-    "workspaces": [
-        "packages/*"
-    ],
     "devEngines": {
         "packageManager": {
             "name": "pnpm",

@@ -33,7 +33,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  # 与开发机一致（本地为 v24.20.0；release.yaml 打包用 24.18.0，二者同为 24.x）
+                  # 版本单一来源 = 仓库根的 .node-version（与 package.json 的 engines.node 同口径）
                   node-version: '24.20.0'
 
             - name: Install pnpm
