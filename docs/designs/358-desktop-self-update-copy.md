@@ -2,6 +2,7 @@
 
 > 配套设计稿：`docs/designs/358-desktop-self-update.md`。落点：`packages/shared/locales/{types,zh-CN,en-US}.ts` **三处齐备**（`LocaleKey` 联合类型 + 中英各一）。
 > 命名：`settings.update.<语义>`；插值沿用既有风格 `{version}` / `{count}` / `{percent}`。
+> **表格形式说明**：本文件按 `deliverable-docs.md §七` 例外 ③（机器可读 / 需被解析的结构化清单）保留表格 —— 内容即将逐行落入 `locales`，列固定为 key / zh-CN / en-US。
 > 复用既有键：`common.retry`（重试）、`common.cancel`（取消）。⛔ 面向用户禁出现 `updater` / `autoUpdater` / `sha512` / 内部编号 / 本机路径。
 
 ## 一、分组与版本行
