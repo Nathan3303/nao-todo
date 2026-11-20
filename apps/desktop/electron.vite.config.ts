@@ -19,12 +19,27 @@ const cspDevRelaxPlugin = (): Plugin => ({
     transformIndexHtml: (html) => html.replace(DESKTOP_CSP_POLICY, DESKTOP_CSP_POLICY_DEV)
 })
 
+/**
+ * 主进程 / preload 的「只去注释」压缩选项
+ * @description 这两段默认不压缩 ⇒ 打进的 asar 里能直接读到源码注释（含内部编号 R5/R13/T654 等）。
+ *              此处仅关闭注释输出（`compress` / `mangle` 全关，变量名与语句结构不变），
+ *              并开 `beautify`：terser 重排版默认会把整份压成单行 ⇒ 崩溃栈行号退化为 `:1:列`。
+ *              体积代价可忽略：main 16.7KB → 17.8KB / preload 2.0KB → 1.9KB。
+ */
+const stripCommentsOnly = {
+    compress: false,
+    mangle: false,
+    format: { comments: false, beautify: true }
+}
+
 export default defineConfig({
     main: {
-        plugins: [externalizeDepsPlugin()]
+        plugins: [externalizeDepsPlugin()],
+        build: { minify: 'terser', terserOptions: stripCommentsOnly }
     },
     preload: {
-        plugins: [externalizeDepsPlugin()]
+        plugins: [externalizeDepsPlugin()],
+        build: { minify: 'terser', terserOptions: stripCommentsOnly }
     },
     renderer: {
         // 应用版本号（设置页展示）：desktop 复用 web 源码，构建期从本包 package.json 注入桌面端版本

@@ -14,7 +14,17 @@
 - **✅ 派单全部回执（2026-11-20）**：`T730` rd-infra（`756a4b78` 锁 Node 24.20.0 + 删 10 死依赖 + 删 npm `workspaces` 遗留字段 · `05af32cb` localStorage 兜底改「继承 `Storage.prototype`」（保住全仓 8 个 `vi.spyOn(Storage.prototype, …)` 判据）· `b7c0d0c0` 删 `pnpm-workspace.yaml` 死豁免）· `T731` rd-fe（`a2a1b95d` 删死组件/死配置/调试日志 · `5456da0f` `to` 判据升级为 props 级 · `5f4d66d9` 修回被带走的 float-aside 全局规则 · `8d5e1b09` 该规则的源级守卫）。
 - **`T732` qa 独立复验 = 有条件 PASS（`7476e1e0`）**：逐 AC 成立；**独立证伪出新 P2** —— 删 `float-aside.vue` 连带删掉一条仍被 2 个抽屉使用的全局 CSS（构建产物 A/B：web/desktop `nue-drawer--float-aside` 命中 1 → 0）⇒ 已由 `5f4d66d9` 修回、`8d5e1b09` 加守卫（3 条断言各做过变异，全红）。另登记 `DEF-163`（移动端 JSDoc 悬空引用，红线待授权）· `DEF-164`（`engines` 无强制力，PM 裁定维持现状挂账）。
 - **🎯 批末门禁（PM 亲自跑，node 24.20.0，工作区 0）**：`vp test --run` **451 文件 / 3494 例 / 3488 通过 / 6 跳过 / 0 红**（EXIT=0）· `vp check` **1989 文件格式 OK · 1583 文件 0 error** · 五守卫 rc=0 · `webapp build` rc=0 与 `desktop:build` rc=0（两端产物 `nue-drawer--float-aside` 各命中 **1**）· 移动端红线 **0 行**。
-- **待办**：push 分支 → PR → RD 合并 → 发版决策（本批含 `pnpm-lock` −227 包与测试 setup 新增，建议 PATCH）。
+- **✅ 工程治理批已合并（2026-11-20）**：PR **#355 MERGED** ⇒ squash **`8f564ab5`**（`787b301b..origin/main` = 1、Issue **#354 CLOSED**、CI `check` + `test` 双绿、远端分支已删）；**qa `T732` = 有条件 PASS 且条件已闭环**（`P2 closed`）。发版决策待用户（建议 PATCH `v1.20.3`）。
+
+## 一之二、2026-11-20 追加：桌面端打包产物残留源码注释（用户实报）
+
+- **现象**：`apps/web/dist` 与 `apps/desktop/out/renderer` 的注释为 **0**，但 **`out/main/index.js`（492 行未压缩）与 `out/preload/index.js`（45 行）注释原样保留**，含内部编号 `R5/R13/T654` 与测试文件名 ⇒ electron-builder 打进 asar 后可直接读到。
+- **根因**：`apps/desktop/electron.vite.config.ts` 只给 `renderer` 配了 terser，`main` / `preload` 两段**没有 `build` 配置**。
+- **修复（分支 `fix/desktop-dist-comments` · 2 提交）**：`f9fc66b9` 给 main/preload 补 `minify: terser` + `compress:false / mangle:false / format:{comments:false, beautify:true}`（**beautify 是 rd-infra 的增补**：terser 即使不压缩也会重排成单行 ⇒ 崩溃栈退化成 `:1:col`；+4.5KB 换行号可读，PM 采纳）· `c201f0e3` 加两层守卫（`apps/desktop/src/__tests__/dist-comments-config.test.ts` 真读配置对象断言 + `scripts/guard-dist-comments.mjs` 扫产物，接在 `desktop:build` 之后）。
+- **运行性证据（不是「构建 rc=0」）**：用 `scripts/electron-smoke/lib/cdp.mjs` 直连**构建产物**启动 —— 窗口存活 → `window.desktopAPI` 10 键、`ipcRenderer`/`require` 未泄漏 → IPC 往返 `getShellStatus()` / `setTrayTooltip()` → 可见性通道回放 → `quit()` 优雅退出；console error 0。
+- **PM 复验**：`desktop:build`（含守卫）rc=0（116 产物、注释 9 条全为打包器标注/第三方 banner、无中文注释、无内部编号）· `vp check` 1990 格式 OK / 1585 文件 0 error · `vp test --run apps/desktop` 21 文件 / 189 例 0 红 · 变异（`format.comments:true` 重建）守卫 **exit 1** ⇒ 判据有牙。
+- **口径提醒**：`desktop:build` 现在「构建 + 守卫」两段，rc=0 不再等价于「仅仅编译通过」；`.github/workflows/**` 未动。
+- **待办**：push → PR → RD 合并 → 与上一批一并决定发版（建议 PATCH `v1.20.3`）。
 
 ## 二、上一批次终态
 
