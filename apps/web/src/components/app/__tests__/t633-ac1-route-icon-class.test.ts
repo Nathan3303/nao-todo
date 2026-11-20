@@ -23,6 +23,10 @@ import AppAsideV2 from '../aside-v2/aside-v2.vue'
  * 覆盖面：能低成本真实挂载的 `AppAsideV2`（4 项主导航图标）走运行期断言；
  * 其余入口（`aside-v2` 自身源码形态 / `aside-v2-drawer` / `pomodoro/indicator`）
  * 成本高（需大上下文），走**源级写法断言**（写错同样会红）。
+ *
+ * 注：`nue-ui@1.15.3` 的 `nue-link` 把 `to` 只甸 `router-link`、**不落 DOM** ⇒ 「是否误用 `to`
+ * 而非 `route`」**不得**用 DOM 断言（`a[to]` 恒 0，无区分力）；该判据由 `t603-nav-a11y`
+ * 的 AC4①a 用 **props 级**断言守（`route` 有值且 `to` 未传）。
  */
 
 // 侧栏会挂载设置对话框（与主题类断言无关的独立子树，且自带 UI/服务依赖）⇒ 只隔离它，
