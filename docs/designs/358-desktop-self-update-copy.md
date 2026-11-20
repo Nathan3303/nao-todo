@@ -75,10 +75,11 @@
 
 | key                                                                 | zh-CN              | en-US                         |
 | :------------------------------------------------------------------ | :----------------- | :---------------------------- |
-| `settings.update.hint.available`                                    | 有可用更新         | Update available              |
 | `settings.update.settingsWithUpdate`（齿轮 `aria-label` / tooltip） | 设置 · 有可用更新  | Settings · update available   |
 | `settings.update.a11y.progress`（`aria-valuetext`）                 | 已下载 {percent}%  | {percent}% downloaded         |
 | `settings.update.a11y.progressUnknown`                              | 正在下载，进度未知 | Downloading, progress unknown |
+
+> ⛔ `settings.update.hint.available` 已删除（PM 裁决 · 无界面入口）：弱提示的可访问名 / tooltip 统一用 `settings.update.settingsWithUpdate`；代码侧已于 `415d8e35` 同步删净。
 
 ## 七、写作约束（交付校核）
 
