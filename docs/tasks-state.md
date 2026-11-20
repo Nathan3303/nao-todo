@@ -36,7 +36,7 @@
 - **需求**：Desktop 端内置「检查更新 + 立即更新」（用户 2026-11-20 提出；5 项澄清已答：Linux/Windows 原地更新 · macOS 与 deb 降级下载页 · 启动静默检查 + 手动入口 · 下载完提示重启/稍后 · 未同步改动需护栏）。
 - **PRD**：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13 · RICE ≈0.29 · Must）。**分支** `feat/358-desktop-self-update`（自 `origin/main` `7cd26fb5`）。
 - **开工确认（用户 2026-11-20）**：按卡开工 · arch 与 uiux 并行 · 设计稿验收模型 = **A 用户本人确认** · 范围**全量照 PRD**（含启动静默检查与侧栏弱提示）。
-- **回执**：`T733` arch **done** `4a4d26ac` ⇒ `docs/adr/2026-11-20-desktop-self-update.md`（选官方 `electron-updater` 6.x + GitHub Releases 唯一源；构建/CI **本期不改**；平台矩阵 = 纯环境判定；护栏复用既有 `useSyncStatus()`；`autoDownload` / `autoInstallOnAppQuit` = false；坏包 = 撤资产 + 发更高 PATCH）· `T735` qa **done** ⇒ 接缝定稿 = **2 主接缝 + 1 轮一次性证据（不进 CI）** + 6 条可测性前置（已写入 PRD §七）· `T734` uiux 在制。
+- **回执**：`T733` arch **done** `4a4d26ac` ⇒ `docs/adr/2026-11-20-desktop-self-update.md`（选官方 `electron-updater` 6.x + GitHub Releases 唯一源；构建/CI **本期不改**；平台矩阵 = 纯环境判定；护栏复用既有 `useSyncStatus()`；`autoDownload` / `autoInstallOnAppQuit` = false；坏包 = 撤资产 + 发更高 PATCH；`T733b` `fc64c6c0` 补 QA 六条可测性前置，**全部可满足**）· `T735` qa **done** ⇒ 接缝定稿 = **2 主接缝 + 1 轮一次性证据（不进 CI）** + 6 条可测性前置（已写入 PRD §七）· `T734` uiux 在制。
 - **待办**：uiux 设计稿 → 用户设计稿验收（模型 A）→ rd-infra（内核/端口/平台判定）+ rd-fe（面板/i18n）→ qa 复验 → PM 验收 → RD 合并 → 发布（MINOR）。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 

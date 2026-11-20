@@ -78,7 +78,7 @@
 ## 七、AC
 
 - 验证接缝（QA 已确认 2026-11-20）：2 个主接缝 + 1 轮一次性证据 —— ① 主进程更新内核（`apps/desktop/src/main/updater/`，electron 零依赖，`checker`/`downloader`/`installer`/`env`/`syncGuard` 五端口全注入 + 单一可订阅状态机）；② 「关于 / 更新」块组件 + 单一窄 hook `use-desktop-updater`（web 桩 / desktop 真实现双装配，用例注入假状态）；③ 构建产物 + 本地假源端到端**只作一次性证据、不进 CI 门禁**（仓库无 Electron E2E 基建）。
-- 可测性前置（QA 提出，arch 须在 ADR 逐条确认可满足）：更新内核不 import `electron` · 若用 `electron-updater` 必须整体包在端口后（测试不得触达真实网络）· 安装形态判定抽纯函数（`platform` / `APPIMAGE` / `isPackaged` 入参）· `useDesktopUpdater` 走独立模块路径（不塞进 `@/hooks` 聚合）· 24h 缓存与结果历史走传入目录的 fs 面、用例用真 temp dir · 下载进度 / 中断 / 校验失败必须经回调可观测。
+- 可测性前置（QA 提出，arch 已于 `fc64c6c0` 逐条确认**全部可满足**、无替代项）：更新内核不 import `electron` · 若用 `electron-updater` 必须整体包在端口后（测试不得触达真实网络）· 安装形态判定抽纯函数（`platform` / `APPIMAGE` / `isPackaged` 入参）· `useDesktopUpdater` 走独立模块路径（不塞进 `@/hooks` 聚合）· 24h 缓存与结果历史走传入目录的 fs 面、用例用真 temp dir · 下载进度 / 中断 / 校验失败必须经回调可观测。
 - 可观测代价（QA 已标）：「未点重启前 `installer` 调用数 = 0」· 「同步护栏取消后 `installer` 仍 0 且已下载状态保留」· 「检查失败后请求计数 +1 且不得出现『已是最新』」· 24h 缓存按 `23:59:59.999` / `24:00:00.000` 边界计请求数。
 
 ### 主路径
