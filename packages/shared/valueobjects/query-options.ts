@@ -47,7 +47,6 @@ export class QueryOptionsValueObject {
             if (!Object.prototype.hasOwnProperty.call(this.options, key)) continue
             // 2.1 获取值
             const value = this.options[key]
-            // console.log(key, value)
             // 2.2 判断值是否为空
             if (value === void 0 || value === null || value === '') continue
             // 2.3 判断是否有 eachHandler，如果有则交给 eachHandler 处理
@@ -65,7 +64,6 @@ export class QueryOptionsValueObject {
         }
         // 3. 拼接查询字符串并返回
         const queryString = queryPairs.join('&')
-        // console.log(queryPairs, queryString)
         return queryString
     }
 }

@@ -29,7 +29,6 @@ export const useResponsiveFlag = () => {
             const w = responsiveWidths[idx]
             if (!w) return
             if (width > w) continue
-            // console.log(width, w)
             flag.value = idx - 1
             return
         }
@@ -42,7 +41,6 @@ export const useResponsiveFlag = () => {
             for (const entry of entries) {
                 const width = entry.contentRect.width
                 checker(width)
-                // console.log(width, flag.value)
                 // responsiveFlag.width = width
             }
         })
@@ -57,7 +55,6 @@ export const useResponsiveFlag = () => {
 
     // @onUsed 在开始时检测一次
     // checker(window.document.body.clientWidth)
-    // console.log(responsiveFlag)
 
     // @returns
     return { flag }

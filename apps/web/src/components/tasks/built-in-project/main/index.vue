@@ -98,7 +98,6 @@ const createTask = () => {
             ? builtInProject.value.createTaskOptions()
             : builtInProject.value?.createTaskOptions
     if (!createTaskOptions) return
-    console.log(createTaskOptions)
     dialogManager.open(TASK_CREATOR_DIALOG_KEY, createTaskOptions)
 }
 

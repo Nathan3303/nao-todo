@@ -96,7 +96,6 @@ const useProjectView = (props: ProjectViewProps) => {
     const isHideCompletedAlready = computed(() => {
         if (!preference.value) return false
         const state = projectsStore.getPreferenceGetTasksOption('state')
-        // console.log(state)
         return state == 'todo,in-progress'
     })
 

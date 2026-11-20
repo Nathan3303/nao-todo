@@ -64,7 +64,6 @@ const createSubscriber = (): Subscriber => {
             return
         }
         callbacks.forEach((callback) => {
-            console.log('[Subscriber/emit]', eventName, ...args)
             ;(callback as (...args: unknown[]) => void)(...args)
         })
     }
