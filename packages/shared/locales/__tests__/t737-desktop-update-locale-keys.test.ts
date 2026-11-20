@@ -51,7 +51,6 @@ const REQUIRED_KEYS = [
     'settings.update.guard.body',
     'settings.update.guard.syncFirst',
     'settings.update.guard.updateAnyway',
-    'settings.update.hint.available',
     'settings.update.settingsWithUpdate',
     'settings.update.a11y.progress',
     'settings.update.a11y.progressUnknown'

@@ -377,7 +377,6 @@ const zhCN: LocaleMessages = {
     'settings.update.guard.body': '还有 {count} 项改动等待同步。更新会重启应用，建议先同步完成。',
     'settings.update.guard.syncFirst': '先同步再更新',
     'settings.update.guard.updateAnyway': '仍要更新',
-    'settings.update.hint.available': '有可用更新',
     'settings.update.settingsWithUpdate': '设置 · 有可用更新',
     'settings.update.a11y.progress': '已下载 {percent}%',
     'settings.update.a11y.progressUnknown': '正在下载，进度未知',

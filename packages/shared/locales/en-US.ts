@@ -390,7 +390,6 @@ const enUS: LocaleMessages = {
         "{count} change(s) are still waiting to sync. Updating restarts the app, so it's best to sync first",
     'settings.update.guard.syncFirst': 'Sync, then update',
     'settings.update.guard.updateAnyway': 'Update anyway',
-    'settings.update.hint.available': 'Update available',
     'settings.update.settingsWithUpdate': 'Settings · update available',
     'settings.update.a11y.progress': '{percent}% downloaded',
     'settings.update.a11y.progressUnknown': 'Downloading, progress unknown',

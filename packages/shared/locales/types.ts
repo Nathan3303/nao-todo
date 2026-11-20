@@ -364,7 +364,6 @@ export interface LocaleMessages {
     'settings.update.guard.body': string
     'settings.update.guard.syncFirst': string
     'settings.update.guard.updateAnyway': string
-    'settings.update.hint.available': string
     'settings.update.settingsWithUpdate': string
     'settings.update.a11y.progress': string
     'settings.update.a11y.progressUnknown': string
