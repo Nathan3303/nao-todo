@@ -16,13 +16,14 @@
         "webapp": "pnpm --filter @nao-todo/webapp",
         "prepare": "vp config",
         "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
-        "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
+        "desktop:build": "pnpm --filter @nao-todo/desktopapp build && node scripts/guard-dist-comments.mjs",
         "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist",
         "guard:ddd": "node scripts/guard-domain-isolation.mjs",
         "guard:gate-pathspec": "node scripts/guard-gate-pathspec.mjs",
         "guard:barrel-imports": "node scripts/guard-barrel-imports.mjs",
         "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs",
-        "guard:test-location": "node scripts/guard-test-location.mjs"
+        "guard:test-location": "node scripts/guard-test-location.mjs",
+        "guard:dist-comments": "node scripts/guard-dist-comments.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
