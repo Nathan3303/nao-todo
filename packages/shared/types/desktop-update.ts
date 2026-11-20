@@ -94,6 +94,15 @@ export interface DesktopUpdateStatus {
 }
 
 /**
+ * 「安装并重启」的载荷（AC9 二次确认）
+ * @description `force: true` = 用户在「有改动还没同步」确认框里点了「仍要更新」。
+ *              ⛔ 不携带队列数量/内容：护栏数量由渲染层从既有 `useSyncStatus()` 取（不双源）。
+ */
+export interface DesktopUpdateInstallOptions {
+    force?: boolean
+}
+
+/**
  * preload 暴露的更新通道（`window.desktopAPI.update`，invoke 为主 + 单订阅）
  * @description 全部方法**可选**（`DesktopBridge.update?`）：容旧 preload / Web 桩 / 测试注入。
  *              抛错语义：调用失败 ⇒ promise reject（主进程侧统一 `try/catch` 后转 `failed` 状态，
@@ -107,7 +116,7 @@ export interface DesktopUpdateBridge {
     /** 开始下载（`installMode === 'in-place'` 时可用；AC2） */
     download(): Promise<DesktopUpdateStatus>
     /** 安装并重启（只有用户显式触发；未点之前 `installer` 调用数恒为 0；AC2 / AC9） */
-    restartToInstall(): Promise<void>
+    restartToInstall(options?: DesktopUpdateInstallOptions): Promise<void>
     /** 打开更新下载页（系统浏览器；AC4 / AC7 的降级出口） */
     openDownloadPage(): Promise<void>
     /**
