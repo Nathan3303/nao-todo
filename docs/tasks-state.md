@@ -30,7 +30,8 @@
 
 - **范围**：两批合并后的事实（工程治理 PR #355 `8f564ab5` + 产物注释 PR #356 `1fad3ff4`）；用户 2026-11-20「发」= 授权发版。
 - **分支** `nao/release-v1.20.3`：版本 root / `apps/web` / `apps/desktop` `1.20.2 → 1.20.3`；`CHANGELOG.md` + `docs/releases/v1.20.3.md`；内部包无公共 API 变化（注释与测试面）⇒ **不 bump**。
-- **待办**：PR → RD 合并 → 注解 tag `v1.20.3` 指向 main 合并提交 → Release（正文与 `docs/releases/v1.20.3.md` 归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核。
+- **✅ 已发布 `v1.20.3`（2026-11-20，批次终态）**：发版 PR **#357** ⇒ squash **`7cd26fb5`**（`1fad3ff4..origin/main` = 1 条、CI `check` 42s + `test` 3m21s 双绿、squash 树与 PR head `ed7a5285` 逐字节一致）；**注解 tag `v1.20.3`** 指向 `7cd26fb5`（peeled 已核一致）；**Release 已发布**（非 draft / 非 prerelease · 标题裸 `v1.20.3` · 正文与 `docs/releases/v1.20.3.md` **归一化逐字一致 2944/2944**）· **8 项产物齐全**（`x64.exe` / `arm64.dmg` / `arm64-mac.zip` / `x86_64.AppImage` / `amd64.deb` + 三份 `latest*.yml`，三份 `curl` 实核均 `1.20.3`）· 打包 run `44726528735` **success**（4m44s，三平台 build + release 全绿）。版本落地已核：root / `apps/web` / `apps/desktop` **1.20.3**（内部包无公共 API 变化，未 bump）。**服务端零改动、无需部署**。
+- **批次终态**：无在制任务、无打开 PR/Issue（除 `DEF-163` 待用户授权）。
 
 ## 二、上一批次终态
 
