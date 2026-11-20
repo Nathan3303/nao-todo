@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type RouteRecordRaw } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
+import { ref } from 'vue'
 import { nueUI } from '@/nue-ui-register'
 import { APP_CONTEXT_KEY } from '@/context'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import AppAside from '../aside/aside.vue'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import AppAsideV2 from '../aside-v2/aside-v2.vue'
 
 /**
  * T633 AC1② · **图标型**导航入口的 `nue-link--route-icon` 类真实存在
@@ -18,10 +20,25 @@ import AppAside from '../aside/aside.vue'
  * （`h(NueLink, …)`），**不覆盖真实调用点** —— 因此把真实入口写坏，`t603` 仍会绿。
  * 本文件补的正是这条：真实组件 + 真实调用点。
  *
- * 覆盖面：能低成本真实挂载的 `AppAside`（4 项主导航图标）走运行期断言；
- * 其余 4 处图标入口（`float-aside` / `aside-v2` / `aside-v2-drawer` / `pomodoro/indicator`）
+ * 覆盖面：能低成本真实挂载的 `AppAsideV2`（4 项主导航图标）走运行期断言；
+ * 其余入口（`aside-v2` 自身源码形态 / `aside-v2-drawer` / `pomodoro/indicator`）
  * 成本高（需大上下文），走**源级写法断言**（写错同样会红）。
+ *
+ * 注：`nue-ui@1.15.3` 的 `nue-link` 把 `to` 只甸 `router-link`、**不落 DOM** ⇒ 「是否误用 `to`
+ * 而非 `route`」**不得**用 DOM 断言（`a[to]` 恒 0，无区分力）；该判据由 `t603-nav-a11y`
+ * 的 AC4①a 用 **props 级**断言守（`route` 有值且 `to` 未传）。
  */
+
+// 侧栏会挂载设置对话框（与主题类断言无关的独立子树，且自带 UI/服务依赖）⇒ 只隔离它，
+// ⛔ 不隔离任何导航元素（`nue-link` 均真实挂载）
+vi.mock('@/components/settings/dialog', async () => {
+    const { ref } = await import('vue')
+    return {
+        AppSettingsDialog: { name: 'AppSettingsDialog', render: () => null },
+        open: ref(false),
+        openSettingsDialog: vi.fn()
+    }
+})
 
 const stub = { template: '<div />' }
 
@@ -64,8 +81,6 @@ const MAIN_NAV_LINKS = [
 ]
 
 const ICON_ENTRY_SOURCES = [
-    '/apps/web/src/components/app/aside/aside.vue',
-    '/apps/web/src/components/app/aside/float-aside.vue',
     '/apps/web/src/components/app/aside-v2/aside-v2.vue',
     '/apps/web/src/components/app/aside-v2/aside-v2-drawer.vue',
     '/packages/presentation/pomodoro/components/indicator/indicator.vue'
@@ -73,8 +88,6 @@ const ICON_ENTRY_SOURCES = [
 
 const sources = import.meta.glob(
     [
-        '/apps/web/src/components/app/aside/aside.vue',
-        '/apps/web/src/components/app/aside/float-aside.vue',
         '/apps/web/src/components/app/aside-v2/aside-v2.vue',
         '/apps/web/src/components/app/aside-v2/aside-v2-drawer.vue',
         '/packages/presentation/pomodoro/components/indicator/indicator.vue'
@@ -97,7 +110,7 @@ afterEach(() => {
 })
 
 describe('T633 AC1② · 图标型入口真实挂载后带 --route / --route-icon', () => {
-    it('AppAside 的 4 个主导航图标项均有两个主题类（漏 route-icon 即红）', async () => {
+    it('AppAsideV2 的 4 个主导航图标项均有两个主题类（漏 route-icon 即红）', async () => {
         const pinia = createPinia()
         setActivePinia(pinia)
         const router = buildRouter()
@@ -105,17 +118,27 @@ describe('T633 AC1② · 图标型入口真实挂载后带 --route / --route-ico
         await router.push('/tasks')
         await router.isReady()
 
-        const wrapper = mount(AppAside, {
+        const wrapper = mount(AppAsideV2, {
             attachTo: document.body,
             global: {
                 plugins: [pinia, router, nueUI],
                 provide: {
-                    [APP_CONTEXT_KEY as symbol]: { routerLinks: MAIN_NAV_LINKS }
+                    [APP_CONTEXT_KEY as symbol]: { routerLinks: MAIN_NAV_LINKS },
+                    [INDEX_VIEW_CONTEXT_KEY as symbol]: {
+                        isDisplayAside: ref(true),
+                        isUseFloatAside: ref(false),
+                        switchDisplayAside: vi.fn(),
+                        asideWidth: ref(300),
+                        handleResizeAside: vi.fn()
+                    }
                 }
             }
         })
         wrappers.push(wrapper)
         await flushPromises()
+
+        // 重定向自证：挂载的确为 aside-v2（v1 无此齿轮按钮）⇒ 防「删了 v1 而测试静默挂空壳」
+        expect(wrapper.find('#AppAsideSettingsGearBtn').exists()).toBe(true)
 
         const anchors = wrapper.findAll('a')
         expect(anchors).toHaveLength(4)
@@ -133,7 +156,7 @@ describe('T633 AC1② · 图标型入口真实挂载后带 --route / --route-ico
     })
 })
 
-describe('T633 AC1② · 其余 4 处图标入口的写法（源级，防同一类静默失效）', () => {
+describe('T633 AC1② · 其余 3 处图标入口的写法（源级，防同一类静默失效）', () => {
     it.each(ICON_ENTRY_SOURCES)('%s 的 nue-link 使用对象语法且含 route-icon', (path) => {
         const source = sources[path]
         expect(source, `未读到源码：${path}`).toBeTruthy()

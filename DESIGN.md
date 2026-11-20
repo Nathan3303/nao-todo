@@ -203,7 +203,7 @@
 - 文案位于 `packages/shared/locales/{types,zh-CN,en-US}.ts`，**三处齐备**（`LocaleKey` 联合类型 + 中英各一）。
 - 键命名：`模块.区域.语义`（如 `sync.conflict.metaTable`）；字段标签 `sync.conflict.field.<name>`。
 - **死键守护**：`apps/web/src/components/sync/__tests__/conflict-ux.test.ts` 静态扫描组件源码（`.vue` + 同目录 `.ts`）校验「组件引用的键均已定义」且「零死键」。
-- **字段名 → 可读标签**：新增字段在 `apps/web/src/components/sync/conflict-field-labels.ts` 的 `FIELD_LABEL_KEYS` 增一行 + 上述三处加键；未映射字段走 `humanizeField` 可读回退（⛔ 不裸露 raw `/camelCase`）。
+- **字段名 → 可读标签**：新增字段在 `packages/shared/utils/conflict-field-labels.ts` 的 `FIELD_LABEL_KEYS` 增一行 + 上述三处加键；未映射字段走 `humanizeField` 可读回退（⛔ 不裸露 raw `/camelCase`）。
 
 ---
 
@@ -251,7 +251,7 @@
 
 ## 参考
 
-- 冲突面板实现：`apps/web/src/components/sync/{conflict-dialog,conflict-list}.vue` · `conflict-diff.ts` · `conflict-field-labels.ts`
+- 冲突面板实现：`apps/web/src/components/sync/{conflict-dialog,conflict-list}.vue` · `conflict-diff.ts` · 字段标签 `packages/shared/utils/conflict-field-labels.ts`
 - 状态占位组件：`packages/shared/components/loading-error/loading-error.vue`
 - 主题 token：`nue-ui-theme-shadlike`（`--nue-*`，light：`--nue-dark-switch:0`）
 - 走查证据：`docs/qa/2026-09-28-t337-conflict-visual-seed.md`

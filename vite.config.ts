@@ -16,7 +16,9 @@ export default defineConfig({
         // 使「以源码文本断言样式」的用例（`import.meta.glob('../*.css', { query: '?raw' })`）恒读到空内容。
         // 仅放行 `*.css?raw`（其余 CSS 行为不变：不注入样式、不产生 jsdom CSS 解析噪声）。
         css: { include: [/\.css\?raw$/] },
-        include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts']
+        include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts'],
+        // 全局 setup：Node ≥ 26 下 vitest 的 jsdom 环境不再注入 localStorage（详见 setup 文件抬头）。
+        setupFiles: ['./vitest.setup.ts']
     },
     staged: {
         '*': 'vp check --fix'

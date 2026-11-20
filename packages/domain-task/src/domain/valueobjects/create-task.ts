@@ -107,6 +107,5 @@ export class CreateTaskValueObject {
         this.startAt = endAt.isAfter(time)
             ? time.toISOString()
             : endAt.subtract(1, 'm').toISOString()
-        // console.log(this.startAt)
     }
 }

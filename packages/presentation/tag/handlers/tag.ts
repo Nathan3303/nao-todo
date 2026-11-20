@@ -122,7 +122,6 @@ export class TagHandler {
         // 1. 获取当前偏好设置
         const preference = this.tagsStore.getTagPreference()
         if (!preference) return '标签偏好设置不存在'
-        // console.log('savePreference', preference)
         // 2. 配置标签ID
         preference.tagId = tagId
         // 3. 调用用例

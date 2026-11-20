@@ -28,7 +28,8 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: 24.18.0
+                  # 与 .node-version（24.20.0）保持一致；勿改单侧
+                  node-version: 24.20.0
 
             - name: Install pnpm
               run: npm install -g pnpm@11.18.0

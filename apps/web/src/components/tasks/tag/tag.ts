@@ -93,7 +93,6 @@ const useTagView = (props: TagViewProps) => {
     const isHideCompletedAlready = computed(() => {
         if (!preference.value) return false
         const state = tagsStore.getPreferenceGetTasksOption('state')
-        // console.log(state)
         return state == 'todo,in-progress'
     })
 

@@ -124,7 +124,6 @@ export class ProjectHandler {
         // 1. 获取当前偏好设置
         const preference = this.projectStore.getProjectPreference()
         if (!preference) return '项目偏好设置不存在'
-        // console.log('savePreference', preference)
         // 2. 配置项目ID
         preference.projectId = projectId
         // 3. 调用用例

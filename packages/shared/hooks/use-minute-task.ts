@@ -28,7 +28,6 @@ export const useMinuteTask = (task: () => void, options?: UseMinuteTaskOptions) 
      */
     const callTask = (diffTime: number, callback: () => void) => {
         taskTimerId = setTimeout(() => {
-            // console.log('[UseMinuteTask] Task run. Diff time is: (' + diffTime + 'ms)')
             requestIdleCallback(() => {
                 task()
                 callback()

@@ -16,7 +16,7 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import pomodoroRoutes from '@/views/index/pomodoro/routes'
 import tasksRoutes from '@/views/index/tasks/routes'
-import AppAside from '../aside/aside.vue'
+import AppAsideV2 from '../aside-v2/aside-v2.vue'
 import PomodoroAside from '../../pomodoro/aside/aside.vue'
 import PomodoroHeader from '../../pomodoro/header/header.vue'
 import TasksAside from '../../tasks/aside/aside.vue'
@@ -33,6 +33,17 @@ import TasksAside from '../../tasks/aside/aside.vue'
  * 状态：**绿**（依赖升级后 AC1/AC3/AC4 全部成立）。
  * 变异易感：把任一调用点的 `theme` 写错（空格分项 / 漏 `route-icon`）⇒ 对应 AC1 类名断言红。
  */
+
+// 侧栏会挂载设置对话框（与导航断言无关的独立子树，且自带 UI/服务依赖）⇒ 只隔离它，
+// ⛔ 不隔离任何导航元素（`nue-link` / `pomodoro-indicator` 均真实挂载）
+vi.mock('@/components/settings/dialog', async () => {
+    const { ref } = await import('vue')
+    return {
+        AppSettingsDialog: { name: 'AppSettingsDialog', render: () => null },
+        open: ref(false),
+        openSettingsDialog: vi.fn()
+    }
+})
 
 const stub = { template: '<div />' }
 
@@ -145,12 +156,19 @@ const mountAppAside = async () => {
     await router.push('/tasks')
     await router.isReady()
     const wrapper = track(
-        mount(AppAside, {
+        mount(AppAsideV2, {
             attachTo: document.body,
             global: {
                 plugins: [pinia, router, nueUI],
                 provide: {
-                    [APP_CONTEXT_KEY as symbol]: { routerLinks: MAIN_NAV_LINKS }
+                    [APP_CONTEXT_KEY as symbol]: { routerLinks: MAIN_NAV_LINKS },
+                    [INDEX_VIEW_CONTEXT_KEY as symbol]: {
+                        isDisplayAside: ref(true),
+                        isUseFloatAside: ref(false),
+                        switchDisplayAside: vi.fn(),
+                        asideWidth: ref(300),
+                        handleResizeAside: vi.fn()
+                    }
                 }
             }
         })
@@ -273,8 +291,10 @@ const mountPomodoroHeader = async () => {
 }
 
 describe('T603 AC1 · 静态调用点渲染的 <a> 均有非空 href = router.resolve(path).href', () => {
-    it('AC1① 主导航 4 项（任务 / 日历 / 番茄钟 / 搜索）—— 真实 AppAside 挂载', async () => {
+    it('AC1① 主导航 4 项（任务 / 日历 / 番茄钟 / 搜索）—— 真实 AppAsideV2 挂载', async () => {
         const { wrapper, router } = await mountAppAside()
+        // 重定向自证：挂载的确为 aside-v2（v1 无此齿轮按钮）⇒ 防「删了 v1 而测试静默挂空壳」
+        expect(wrapper.find('#AppAsideSettingsGearBtn').exists()).toBe(true)
         const expected = MAIN_NAV_ROUTES.map(
             (route) => (router.resolve(route) as unknown as { href: string }).href
         )
@@ -416,9 +436,22 @@ describe('T603 AC4 · 负向（无 to="[object Object]" 残留 + 点击仍走 SP
         expect(wrapper.html(), label).not.toContain('[object Object]')
     }
 
-    it('AC4①a AppAside 无 `to` 属性残留、无 `[object Object]`', async () => {
+    it('AC4①a AppAsideV2 无 `to` 属性残留、无 `[object Object]`，且 `nue-link` 走 route 形态', async () => {
         const { wrapper } = await mountAppAside()
-        expectNoLegacyTo('AppAside', wrapper)
+        expectNoLegacyTo('AppAsideV2', wrapper)
+        // 判据补强（2026-11-20 体检 §判据维度）：`nue-ui@1.15.3` 的 `nue-link` 同时收 `route` / `to`，
+        // 而 `to` 只喂 `router-link`、**不落 DOM** ⇒ 上面的 `a[to]` 断言杀不掉「误用 `to`」（实测
+        // `:route` → `:to` 后本文件 13/13 全绿）⇒ 改用 **props 级**判据（可观测事实，非源码字符串猜测）。
+        const links = wrapper.findAllComponents({ name: 'NueLink' })
+        expect(links.length, '前置：主导航须渲染出 nue-link').toBe(4)
+        links.forEach((link, index) => {
+            const detail = `第 ${index + 1} 个 nue-link props：${JSON.stringify(link.props())}`
+            expect(link.props('route'), `${detail}（缺 route ⇒ 导航不是 route 形态）`).toBeTruthy()
+            expect(
+                link.props('to'),
+                `${detail}（误用 to：to 不落 DOM，DOM 断言杀不掉）`
+            ).toBeUndefined()
+        })
     })
 
     it('AC4①b nue-link 无 `to` 属性残留、无 `[object Object]`', async () => {

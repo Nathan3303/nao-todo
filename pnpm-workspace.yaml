@@ -17,6 +17,5 @@ catalog:
     vite: npm:@voidzero-dev/vite-plus-core@0.2.6
     vite-plus: 0.2.6
 minimumReleaseAgeExclude:
-    - nue-ui-resolver@0.3.0
     - nue-ui@1.11.0
     - nue-ui-theme-shadlike@0.13.28

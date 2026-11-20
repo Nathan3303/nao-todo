@@ -351,7 +351,6 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         (newTask) => {
             if (!newTask) return
             taskViewObjectToSetterVO(newTask)
-            // console.log(vo)
         },
         { deep: true, immediate: true }
     )
