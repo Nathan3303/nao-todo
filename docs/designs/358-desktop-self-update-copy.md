@@ -18,24 +18,25 @@
 
 ## 二、状态行（与设计稿 §5 一一对应）
 
-| key                                   | zh-CN                         | en-US                                                     |
-| :------------------------------------ | :---------------------------- | :-------------------------------------------------------- |
-| `settings.update.idle`                | 还没检查过更新                | Not checked yet                                           |
-| `settings.update.available`           | 有新版本 {version}            | Version {version} is available                            |
-| `settings.update.availableHint`       | 下载约 {size}，装好后重启生效 | About {size} to download. It takes effect after a restart |
-| `settings.update.availableHintNoSize` | 装好后重启生效                | Takes effect after a restart                              |
-| `settings.update.updateNow`           | 立即更新                      | Update now                                                |
-| `settings.update.downloading`         | 正在下载更新…                 | Downloading update…                                       |
-| `settings.update.downloadingSize`     | 已下载 {done} / {total}       | {done} of {total} downloaded                              |
-| `settings.update.downloadingPercent`  | 已下载 {percent}%             | {percent}% downloaded                                     |
-| `settings.update.ready`               | 更新已就绪                    | Update ready                                              |
-| `settings.update.readyHint`           | 重启应用后生效                | Restart the app to finish                                 |
-| `settings.update.restartNow`          | 立即重启更新                  | Restart and update                                        |
-| `settings.update.later`               | 稍后                          | Later                                                     |
-| `settings.update.upToDate`            | 已是最新 {version}            | You're on the latest version ({version})                  |
-| `settings.update.justUpdated`         | 已更新到 {version}            | Updated to {version}                                      |
-| `settings.update.justUpdatedHint`     | 这是本次启动装好的新版本      | Installed during this launch                              |
-| `settings.update.openDownloadPage`    | 打开下载页                    | Open download page                                        |
+| key                                   | zh-CN                          | en-US                                                      |
+| :------------------------------------ | :----------------------------- | :--------------------------------------------------------- |
+| `settings.update.idle`                | 还没检查过更新                 | Not checked yet                                            |
+| `settings.update.idleHint`            | 点「检查更新」看看有没有新版本 | Use "Check for updates" to see if there is a newer version |
+| `settings.update.available`           | 有新版本 {version}             | Version {version} is available                             |
+| `settings.update.availableHint`       | 下载约 {size}，装好后重启生效  | About {size} to download. It takes effect after a restart  |
+| `settings.update.availableHintNoSize` | 装好后重启生效                 | Takes effect after a restart                               |
+| `settings.update.updateNow`           | 立即更新                       | Update now                                                 |
+| `settings.update.downloading`         | 正在下载更新…                  | Downloading update…                                        |
+| `settings.update.downloadingSize`     | 已下载 {done} / {total}        | {done} of {total} downloaded                               |
+| `settings.update.downloadingPercent`  | 已下载 {percent}%              | {percent}% downloaded                                      |
+| `settings.update.ready`               | 更新已就绪                     | Update ready                                               |
+| `settings.update.readyHint`           | 重启应用后生效                 | Restart the app to finish                                  |
+| `settings.update.restartNow`          | 立即重启更新                   | Restart and update                                         |
+| `settings.update.later`               | 稍后                           | Later                                                      |
+| `settings.update.upToDate`            | 已是最新 {version}             | You're on the latest version ({version})                   |
+| `settings.update.justUpdated`         | 已更新到 {version}             | Updated to {version}                                       |
+| `settings.update.justUpdatedHint`     | 这是本次启动装好的新版本       | Installed during this launch                               |
+| `settings.update.openDownloadPage`    | 打开下载页                     | Open download page                                         |
 
 ## 三、失败态（原因 + 动作）
 
