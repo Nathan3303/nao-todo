@@ -8,6 +8,7 @@ import { computed, onBeforeUnmount, shallowRef, type ComponentPublicInstance } f
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
 import { useSettingsEntry } from './use-settings-entry'
 import { useAppAsideV2 } from './use-aside'
+import { useDesktopUpdater } from '@/hooks/use-desktop-updater'
 
 defineOptions({ name: 'AppAsideV2Drawer' })
 
@@ -43,6 +44,12 @@ onBeforeUnmount(() => {
 
 // @composable 设置齿轮（打开走 hostReady 闸门；关窗焦点归还当前变体齿轮）
 const { setGearButton, openSettings } = useSettingsEntry()
+
+// T737：弱提示与 rail 变体同源（设备级已看过即消；Web / 移动端恒不渲染）
+const { hintVisible: updateHintVisible } = useDesktopUpdater()
+const settingsLabel = computed(() =>
+    updateHintVisible.value ? t('settings.update.settingsWithUpdate') : t('nav.settings')
+)
 </script>
 
 <template>
@@ -99,11 +106,17 @@ const { setGearButton, openSettings } = useSettingsEntry()
                         :ref="setGearButton"
                         type="button"
                         class="aside-gear-btn"
-                        :aria-label="t('nav.settings')"
-                        :title="t('nav.settings')"
+                        :aria-label="settingsLabel"
+                        :title="settingsLabel"
                         @click="openSettings()"
                     >
                         <nue-icon name="ntd-settings" />
+                        <span
+                            v-if="updateHintVisible"
+                            class="aside-gear-btn__ring"
+                            data-update-hint="drawer"
+                            aria-hidden="true"
+                        />
                     </button>
                 </nue-div>
             </nue-footer>

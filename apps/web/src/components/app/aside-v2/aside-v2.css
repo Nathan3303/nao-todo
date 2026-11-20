@@ -45,6 +45,7 @@
 /* 设置齿轮（rail / 抽屉两变体共用外观；摆放由各自容器决定） */
 .aside-gear-btn {
     display: inline-flex;
+    position: relative;
     align-items: center;
     justify-content: center;
     /* 与上部 icon-link 图标同尺寸（route-icon 字号 = text-2xl） */
@@ -59,6 +60,21 @@
     &:hover {
         color: var(--nue-primary-color-900);
     }
+}
+
+/* T737「可更新」弱提示：齿轮右上 6px 空心环（1.5px 描边，外扩 1px + 1px 底色遮罩不粘连）。
+   ⛔ 红色/脉冲/改齿轮色/扩命中区；无填充、无动效（设计稿 §3）；rail 与抽屉两变体同源。 */
+.aside-gear-btn__ring {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    box-sizing: border-box;
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid var(--nue-secondary-text-color);
+    border-radius: 50%;
+    background: var(--nue-primary-color-0);
+    pointer-events: none;
 }
 
 .nue-drawer--app-aside-v2 {

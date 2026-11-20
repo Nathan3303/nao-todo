@@ -7,7 +7,8 @@ import { AppSettingsDialog } from '@/components/settings/dialog'
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
 import { useSettingsEntry } from './use-settings-entry'
 import { t } from '@nao-todo/shared/locales'
-import { onBeforeUnmount, shallowRef, type ComponentPublicInstance } from 'vue'
+import { computed, onBeforeUnmount, shallowRef, type ComponentPublicInstance } from 'vue'
+import { useDesktopUpdater } from '@/hooks/use-desktop-updater'
 
 defineOptions({ name: 'AppAsideV2' })
 
@@ -29,6 +30,12 @@ const {
 // —— SHELL-01 设置对话框（桌面端）——
 // T521：齿轮绑定 + 关窗焦点归还收敛到两变体共用的单一来源（见 use-settings-entry.ts）
 const { setGearButton, openSettings } = useSettingsEntry()
+
+// T737：有可用更新且该版本未在设置看过 ⇒ 齿轮右上 6px 空心弱提示（Web / 移动端恒不渲染）
+const { hintVisible: updateHintVisible } = useDesktopUpdater()
+const settingsLabel = computed(() =>
+    updateHintVisible.value ? t('settings.update.settingsWithUpdate') : t('nav.settings')
+)
 
 // —— SHELL-02 轨道底部注入点（desktop 同步状态组件的 Teleport 宿主）——
 // 函数 ref 用稳定引用（避免每次重渲染先置空再置位引发消费侧反复卸载）；卸载兜底清空。
@@ -101,17 +108,23 @@ defineExpose({ switchDisplayAside })
                     :ref="setRailBottomSlot"
                     class="aside-rail-bottom-slot"
                 />
-                <nue-tooltip :content="t('nav.settings')" placement="right-center" size="small">
+                <nue-tooltip :content="settingsLabel" placement="right-center" size="small">
                     <button
                         id="AppAsideSettingsGearBtn"
                         :ref="setGearButton"
                         type="button"
                         class="aside-gear-btn"
-                        :aria-label="t('nav.settings')"
-                        :title="t('nav.settings')"
+                        :aria-label="settingsLabel"
+                        :title="settingsLabel"
                         @click="openSettings()"
                     >
                         <nue-icon name="ntd-settings" />
+                        <span
+                            v-if="updateHintVisible"
+                            class="aside-gear-btn__ring"
+                            data-update-hint="rail"
+                            aria-hidden="true"
+                        />
                     </button>
                 </nue-tooltip>
             </nue-div>
