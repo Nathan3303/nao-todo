@@ -25,7 +25,7 @@
 - **R2**：左 `[符号 18px 槽] 状态文字 13/600` + 第二行 `补充说明 12px 次要色`；动作区右对齐，主按钮 `primary`（近黑底白字）、次按钮 `ghost`/`outline`。
 - **进度条**：高 **3px**、宽 240、圆角 2；轨 `--nue-primary-color-100`、完成 `-900`；右侧跟百分比 12/600；**不带语义色**（绿/红会被读成成败）。
 - **符号**：只用字符 `– … ↑ ↓ ✓ ×`（定宽 18px + `tabular-nums`）；⛔ emoji / 自绘图标。**状态色**（三重冗余之一）：有新版本 `warning-90`｜已就绪·已是最新 `success-90`｜失败 `error-90`｜中性·进行中 `--nue-secondary-text-color`。
-- **侧栏弱提示**：齿轮右上 **5px 空心环 / 1.25px 描边**（`--nue-secondary-text-color`，无填充、无动效），rail 与抽屉两变体同时具备（DESIGN §4.6）；显示 = 有可用更新 **且** 该版本未在设置看过（设备级 `lastSeenUpdateVersion`）；⛔ 红点/脉冲/toast/改齿轮色/扩命中区；Web 与移动端不渲染。
+- **侧栏弱提示**：齿轮右上 **6px 空心环 / 1.5px 描边**，外扩 1px 并垫 1px 底色遮罩（不与图标线粘连；`--nue-secondary-text-color`，无填充、无动效），rail 与抽屉两变体同时具备（DESIGN §4.6）；显示 = 有可用更新 **且** 该版本未在设置看过（设备级 `lastSeenUpdateVersion`）；⛔ 红点/脉冲/toast/改齿轮色/扩命中区；Web 与移动端不渲染。
 
 ## 4 token（颜色仍全取 `nue-*`，不引第二套色板）
 
@@ -76,5 +76,5 @@
 ## 9 实现契约 · 坑 · AC
 
 - **测试钩子**：R2 根挂 `data-setting-id="update-status"` + `data-update-state="<枚举>"` + `data-update-platform-degraded="true|false"`；R1 保留 `data-setting-id="version"` / `data-setting-action="check-update"`。
-- **坑**：① 主题**无强调色**（brand hue 0 + s0 ⇒ 纯灰阶），「有新版本」只能 warning；② 语义文字叠任何 tint 底掉到 4 以下（success-90 on 灰 100 = **3.97**，次要文字 on 灰 100 = **4.40**）⇒ 要么无底、要么升 `-100`；③ `--nue-link-color` 浅色 **1.50** 不能当链接色；④ `LoadingError` 的 empty/error = `nue-empty` + 6rem 插画，塞进卡片会破版；⑤ 已就绪期检查按钮只 disabled 无理由 ⇒ 被读成卡死（AC11）；⑥ 状态行高度不恒定 ⇒ 下载完成时按钮跳位（动作区预留 `min-width`）；⑦ 百分比进 `aria-live` 会刷屏；⑧ 平台降级别新增状态；⑨ 体积未知不得编 MB；⑩ 边框 1.61:1 只可装饰，承载语义要另给 ≥3 的描边。
+- **坑**：① 主题**无强调色**（brand hue 0 + s0 ⇒ 纯灰阶），「有新版本」只能 warning；② 语义文字叠任何 tint 底掉到 4 以下（success-90 on 灰 100 = **3.97**，次要文字 on 灰 100 = **4.40**）⇒ 要么无底、要么升 `-100`；③ `--nue-link-color` 浅色 **1.50** 不能当链接色；④ `LoadingError` 的 empty/error = `nue-empty` + 6rem 插画，塞进卡片会破版；⑤ 已就绪期检查按钮只 disabled 无理由 ⇒ 被读成卡死（AC11）；⑥ 状态行高度不恒定 ⇒ 下载完成时按钮跳位（动作区预留 `min-width`）；⑦ 百分比进 `aria-live` 会刷屏；⑧ 平台降级别新增状态；⑨ 体积未知不得编 MB；⑩ 边框 1.61:1 只可装饰，承载语义要另给 ≥3 的描边；⑪ ⛔ 图标位不得用「方块描边」占位 —— 14px 圆角灰描边方块与**未勾选复选框中**同形，会被读成表单控件（本稿 v2 内部评审实际踩到，改为 `nue-icon` 同名线稿图标：账户 / 外观 / 提醒 / 数据 / 齿轮 / 同步 / chevron）。
 - **AC 对照**：AC1 →`available`｜AC2 →`ready`+§7｜AC3 →P1｜AC4 →`failed`｜AC5 →`failed`（校验未过单列）｜AC6 →`up-to-date` 无主按钮｜AC7 →§5 平台降级｜AC8 →R1 hint 复用缓存时间、不新增请求｜AC9 →§7｜AC10 →整块 `v-if="isDesktop"`、Web 行不变｜AC11 →P3｜AC12 →§8 + `LoadingError` 落点（含受控偏离）｜AC13 → 双语键值见 copy 文件。
