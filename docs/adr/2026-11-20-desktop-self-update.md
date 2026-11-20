@@ -41,7 +41,10 @@
 ## 限制与已知边界
 
 - **更新源（现状够用，本期不改配置/CI）**：`app-update.yml` 与 `latest*.yml` 已由现有构建产出，`--publish never` + workflow 上挂资产成立；可选加固（非前提）= 显式 `publish` 字段锁定 owner/repo ＋ 发布检查项加「tag = `package.json` = `latest*.yml` 三者版本一致」（改 CI 需 `workflow` scope，先报 PM）。
-- **平台能力矩阵（判定 = 纯环境读取，不做「试一次失败再降级」）**：Windows NSIS = 原地（`platform === 'win32'`）；Linux AppImage = 原地（`platform === 'linux' && process.env.APPIMAGE`）；Linux deb（无 `APPIMAGE`）= 下载页；macOS（ad-hoc）= 下载页。
+- **平台能力矩阵（判定 = 纯函数 `resolveInstallMode({ platform, appimage, isPackaged })`，不做「试一次失败再降级」）**：Windows NSIS = 原地（`platform === 'win32'`）；Linux AppImage = 原地（`linux && appimage`）；Linux deb（无 `appimage`）= 下载页；macOS（ad-hoc）= 下载页；环境读取只发生在调用点，判定本身零 IO、零 `electron` 依赖 ⇒ AC7 可单测、不上真机。
+- **可测性前置（QA `T735` 六条，逐条确认「可满足」）①–②**：更新内核**不 import `electron`**（只依赖端口与纯函数）—— 可满足；`electron-updater` 实例**只出现在 adapter 层**（整体包在端口后），单测不触真实 `net` ⇒ AC5/AC7 自动化面**不收缩** —— 可满足。
+- **可测性前置 ③–④**：安装形态判定 = 上条纯函数（`platform`/`appimage`/`isPackaged` 显式入参，AC7 不上真机）—— 可满足；`useDesktopUpdater` **独立模块路径**（不进 `@/hooks` 聚合，避免整包 mock）—— 可满足。
+- **可测性前置 ⑤–⑥**：24h 缓存 + 结果历史走「**传入目录的 fs 面**」（同 `app-settings.ts` 范式，用例用真 temp dir）—— 可满足；下载进度 / 中断 / 校验失败**经回调可观测**（adapter 暴露中断注入点，不吞在 updater 内部）—— 可满足。
 - **数据护栏**：复用既有 `useSyncStatus()`（`pendingCount` / `failedCount` / `syncing` / `paused`），**不新建状态源**；判定在渲染层，主进程只执行安装动作。
 - **启动不阻断**：能力探测不联网；检查延后 ≥10s 且全链路 `try/catch`，失败只落状态；更新器初始化任何异常都不得影响窗口创建。
 - **坏包回滚**：撤回资产 + 发更高 PATCH（同版本重发无效）；紧急可把 Release 置为 prerelease/draft 使其不再是最新源；已发 tag 不删。安装期失败（NSIS 退出码非 0 / AppImage 替换失败）须保留旧版可启动 —— 由 QA 真机验一次「下载后不替换、重启仍可用」。
