@@ -2,6 +2,20 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.20.3] - 2026-11-20
+
+全仓体检治理批 + 桌面产物去注释（发版说明 `docs/releases/v1.20.3.md` · 体检报告 `docs/reports/2026-11-20-project-audit.md` · PR #355 / #356）：
+
+- **锁 Node 版本**：新增 `.node-version` = `24.20.0`（与 CI / release 对齐，release 原 24.18.0）+ `engines.node`；新增 `vitest.setup.ts` 在「DOM 环境且拿不到可用 `localStorage`」时补到 `Storage.prototype`（继承原型 ⇒ `vi.spyOn(Storage.prototype, …)` 仍有效）。背景：Node 26 暴露 Web Storage 访问器 ⇒ jsdom 不再注入 `localStorage` ⇒ **95 文件 / 597 例假红**（Node 24 下 0 红）。
+- **依赖清理**：移除 10 个全仓 0 引用依赖（`moment` / `markdown-it` / `@types/markdown-it` / `@types/validator` / `@vue/tsconfig` / `@configurajs/vite-plus` / `@rushstack/eslint-patch` / `cross-env` / `font-slice` / `nue-ui-resolver`），`pnpm-lock.yaml` **−227 包**；删 root `workspaces` 遗留字段与 `pnpm-workspace.yaml` 的 `nue-ui-resolver@0.3.0` 死豁免。
+- **死代码 / 死配置**：删 `apps/web/src/components/app/aside/**`（生产 0 引用）与 `VITE_SHOW_UNIMPLEMENTED_FEATURES`（定义 + 4 个 `.env`）；清 2 处生产 `console.log` + 14 处注释日志。
+- **假保险巡检**：`t603` / `t633` 由已死的 v1 侧栏改挂真实 `aside-v2`（断言未放宽，另加「确为 v2」自证）；`AC4①a` 的 `to` 残留判据在 `nue-ui@1.15.3` 下失效 ⇒ 升级为 props 级。
+- **真回归修复（qa 独立证伪）**：删 `float-aside.vue` 连带删掉仍被 2 个抽屉使用的全局 CSS `.nue-drawer--float-aside .nue-drawer__header{display:none}` ⇒ 收敛到 `apps/web/src/themes/drawer.css` + 源级守卫（规则块 / 消费方令牌 / 载体入口三条断言，均做变异）。
+- **桌面产物去注释**：`electron.vite.config.ts` 的 `main` / `preload` 原无 `build` 配置 ⇒ 产物未压缩且带全部注释（含 `R5`/`R13`/`T654` 与测试文件名）并被打进 `app.asar`。现补 terser（`compress:false / mangle:false / format:{comments:false, beautify:true}`，只去注释、崩溃栈保行号）；守卫两层：`dist-comments-config.test.ts`（真读配置）+ `scripts/guard-dist-comments.mjs`（扫产物，接在 `desktop:build` 后，变异 `comments:true` ⇒ exit 1）。
+- **文档**：`AGENTS.md` 机制 pin / 角色卡对齐 `0.26.0`；缺陷池 11 条状态回写 + `DEF-143` 行内重复去重 + 新增 `DEF-163`/`DEF-164`；`DESIGN.md` 字段标签路径；`tasks-state.md` 精简（历史归档 `docs/archive/`）。
+- **门禁**（node 24.20.0）：全仓 **451 文件 / 3494 例 / 3488 通过 / 6 跳过 / 0 红** · `vp check` **1990 格式 OK / 1585 文件 0 error** · 五守卫 rc=0 · 双端构建 rc=0 · 移动端红线 0 行。
+- **版本**：root / `apps/web` / `apps/desktop` `1.20.2 → 1.20.3`（PATCH）；内部包无公共 API 变化（注释与测试面），未 bump。
+
 ## [v1.20.2] - 2026-11-13
 
 变更历史活动流改造（用户 2026-11-12 决定 · PRD `D9` / `AC13` · 代码 PR #351 · 发版说明 `docs/releases/v1.20.2.md`）：

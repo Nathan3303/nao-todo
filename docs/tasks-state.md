@@ -24,7 +24,13 @@
 - **运行性证据（不是「构建 rc=0」）**：用 `scripts/electron-smoke/lib/cdp.mjs` 直连**构建产物**启动 —— 窗口存活 → `window.desktopAPI` 10 键、`ipcRenderer`/`require` 未泄漏 → IPC 往返 `getShellStatus()` / `setTrayTooltip()` → 可见性通道回放 → `quit()` 优雅退出；console error 0。
 - **PM 复验**：`desktop:build`（含守卫）rc=0（116 产物、注释 9 条全为打包器标注/第三方 banner、无中文注释、无内部编号）· `vp check` 1990 格式 OK / 1585 文件 0 error · `vp test --run apps/desktop` 21 文件 / 189 例 0 红 · 变异（`format.comments:true` 重建）守卫 **exit 1** ⇒ 判据有牙。
 - **口径提醒**：`desktop:build` 现在「构建 + 守卫」两段，rc=0 不再等价于「仅仅编译通过」；`.github/workflows/**` 未动。
-- **待办**：push → PR → RD 合并 → 与上一批一并决定发版（建议 PATCH `v1.20.3`）。
+- **✅ 产物注释修复已合并（2026-11-20）**：PR **#356 MERGED** ⇒ squash **`1fad3ff4`**（CI `check` + `test` 双绿、分支已删）。
+
+## 一之三、`v1.20.3` 发版（PATCH · 在制）
+
+- **范围**：两批合并后的事实（工程治理 PR #355 `8f564ab5` + 产物注释 PR #356 `1fad3ff4`）；用户 2026-11-20「发」= 授权发版。
+- **分支** `nao/release-v1.20.3`：版本 root / `apps/web` / `apps/desktop` `1.20.2 → 1.20.3`；`CHANGELOG.md` + `docs/releases/v1.20.3.md`；内部包无公共 API 变化（注释与测试面）⇒ **不 bump**。
+- **待办**：PR → RD 合并 → 注解 tag `v1.20.3` 指向 main 合并提交 → Release（正文与 `docs/releases/v1.20.3.md` 归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核。
 
 ## 二、上一批次终态
 
