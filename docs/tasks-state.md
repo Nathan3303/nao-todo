@@ -26,11 +26,18 @@
 - **口径提醒**：`desktop:build` 现在「构建 + 守卫」两段，rc=0 不再等价于「仅仅编译通过」；`.github/workflows/**` 未动。
 - **✅ 产物注释修复已合并（2026-11-20）**：PR **#356 MERGED** ⇒ squash **`1fad3ff4`**（CI `check` + `test` 双绿、分支已删）。
 
-## 一之三、`v1.20.3` 发版（PATCH · 在制）
+## 一之三、`v1.20.3` 发版（PATCH · ✅ 已发布 2026-11-20）
 
 - **范围**：两批合并后的事实（工程治理 PR #355 `8f564ab5` + 产物注释 PR #356 `1fad3ff4`）；用户 2026-11-20「发」= 授权发版。
-- **分支** `nao/release-v1.20.3`：版本 root / `apps/web` / `apps/desktop` `1.20.2 → 1.20.3`；`CHANGELOG.md` + `docs/releases/v1.20.3.md`；内部包无公共 API 变化（注释与测试面）⇒ **不 bump**。
-- **待办**：PR → RD 合并 → 注解 tag `v1.20.3` 指向 main 合并提交 → Release（正文与 `docs/releases/v1.20.3.md` 归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核。
+- **已闭环（2026-11-20 实核）**：发版 PR **#357** ⇒ squash **`7cd26fb5`** · 注解 tag `v1.20.3` 指向该合并提交 · Release 已发布（8 产物含三份 `latest*.yml`）。
+
+## 一之四、桌面端应用内自我更新（`feat` · 在制 · Issue #358）
+
+- **需求**：Desktop 端内置「检查更新 + 立即更新」（用户 2026-11-20 提出；5 项澄清已答：Linux/Windows 原地更新 · macOS 与 deb 降级下载页 · 启动静默检查 + 手动入口 · 下载完提示重启/稍后 · 未同步改动需护栏）。
+- **PRD**：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13 · RICE ≈0.29 · Must）。**分支** `feat/358-desktop-self-update`（自 `origin/main` `7cd26fb5`）。
+- **开工确认（用户 2026-11-20）**：按卡开工 · arch 与 uiux 并行 · 设计稿验收模型 = **A 用户本人确认** · 范围**全量照 PRD**（含启动静默检查与侧栏弱提示）。
+- **派单**：`T733` arch-designer（架构评审 + ADR：updater 取舍 / publish 配置 / 签名降级 / 数据护栏接缝 / 坏包回滚）· `T734` uiux-designer（`docs/designs/358-desktop-self-update.md`）· `T735` qa（确认验证接缝，候选 3 个）。RD 派单待设计稿由用户验收后。
+- **待办**：接缝确认 → ADR → 设计稿 → 用户设计稿验收 → rd-infra / rd-fe → qa 复验 → PM 验收 → RD 合并 → 发布（MINOR）。
 
 ## 二、上一批次终态
 
