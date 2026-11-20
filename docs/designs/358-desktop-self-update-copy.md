@@ -6,15 +6,16 @@
 
 ## 一、分组与版本行
 
-| key                                   | zh-CN                  | en-US                                |
-| :------------------------------------ | :--------------------- | :----------------------------------- |
-| `settings.update.title`               | 关于与更新             | About & updates                      |
-| `settings.update.desc`                | 当前版本与更新状态     | Your version and update status       |
-| `settings.update.currentVersion`      | 当前版本 {version}     | Version {version}                    |
-| `settings.update.lastChecked`         | 上次检查：{time}       | Last checked: {time}                 |
-| `settings.update.check`               | 检查更新               | Check for updates                    |
-| `settings.update.checking`            | 正在检查更新…          | Checking for updates…                |
-| `settings.update.checkBlockedByReady` | 重启应用后即可再次检查 | You can check again after restarting |
+| key                              | zh-CN              | en-US             |
+| :------------------------------- | :----------------- | :---------------- |
+| `settings.update.title`          | 关于与更新         | About & updates   |
+| `settings.update.currentVersion` | 当前版本 {version} | Version {version} |
+
+> ⛔ 本块**不使用副标题**：原 `settings.update.desc`（「当前版本与更新状态」）已移除 —— 与卡片内容同义重复，分组由卡片承担（设计稿 §3）。
+> | `settings.update.lastChecked` | 上次检查：{time} | Last checked: {time} |
+> | `settings.update.check` | 检查更新 | Check for updates |
+> | `settings.update.checking` | 正在检查更新… | Checking for updates… |
+> | `settings.update.checkBlockedByReady` | 重启应用后即可再次检查 | You can check again after restarting |
 
 ## 二、状态行（与设计稿 §5 一一对应）
 
