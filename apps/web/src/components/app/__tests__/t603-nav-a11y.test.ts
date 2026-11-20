@@ -440,7 +440,7 @@ describe('T603 AC4 · 负向（无 to="[object Object]" 残留 + 点击仍走 SP
         const { wrapper } = await mountAppAside()
         expectNoLegacyTo('AppAsideV2', wrapper)
         // 判据补强（2026-11-20 体检 §判据维度）：`nue-ui@1.15.3` 的 `nue-link` 同时收 `route` / `to`，
-        // 而 `to` 只甸 `router-link`、**不落 DOM** ⇒ 上面的 `a[to]` 断言杀不掉「误用 `to`」（实测
+        // 而 `to` 只喂 `router-link`、**不落 DOM** ⇒ 上面的 `a[to]` 断言杀不掉「误用 `to`」（实测
         // `:route` → `:to` 后本文件 13/13 全绿）⇒ 改用 **props 级**判据（可观测事实，非源码字符串猜测）。
         const links = wrapper.findAllComponents({ name: 'NueLink' })
         expect(links.length, '前置：主导航须渲染出 nue-link').toBe(4)

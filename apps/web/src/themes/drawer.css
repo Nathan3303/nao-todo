@@ -5,3 +5,11 @@
     --nue-overlay-close-animation-duration: var(--nue-animation-duration-short);
     background-color: hsl(from var(--nue-primary-color-700) h s l / 0.48);
 }
+
+/* `theme="float-aside"` 的消费方（任务多选面板 / 任务详情浮层）不使用抽屉标题栏：
+   隐藏 nue-drawer 的空 header，否则会多出一条空标题行 + 关闭按钮。
+   ⚠️ 该规则原先写在已删除的 `components/app/aside/float-aside.vue` 的全局 <style> 里，
+   删死组件时被连带删除（T731 → T732 复验），故收敛到全局抽屉主题文件（web / desktop 共用）。 */
+.nue-drawer.nue-drawer--float-aside .nue-drawer__header {
+    display: none;
+}
