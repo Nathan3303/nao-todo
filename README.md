@@ -99,8 +99,10 @@ nao-todo/
 
 ### 环境要求
 
-- Node.js >= 24
+- Node.js **>= 24.20.0**（精确版本见仓根 `.node-version`；**不要**用 Node 26.x 跑测试——见下条）
 - pnpm >= 8（推荐 11，见根 `package.json` 的 `packageManager` 字段）
+
+> **Node 版本为什么写死**：Node 26 在 `globalThis` 上暴露了 Web Storage 访问器（无 `--localstorage-file` 时取值即 `undefined`），vitest 的 jsdom 环境因此不再注入 `localStorage` ⇒ 全仓会出现 **95 文件 / 597 例假红**（同一代码在 24.20.0 下 0 红）。仓内已加 `vitest.setup.ts` 兜底（仅当 DOM 环境且 `localStorage` 不可用时注入 `Storage.prototype` 方法）让 26 也能跑绿，但**门禁与 CI 的权威版本仍是 24.20.0**。
 
 ### 安装与运行
 
