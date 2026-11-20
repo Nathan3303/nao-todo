@@ -62,14 +62,14 @@
 
 ## 五、数据护栏（卡 A，AC9）
 
-| key                                                          | zh-CN                                                         | en-US                                                                                              |
-| :----------------------------------------------------------- | :------------------------------------------------------------ | :------------------------------------------------------------------------------------------------- |
-| `settings.update.guard.title`                                | 有改动还没同步                                                | Some changes haven't synced                                                                        |
-| `settings.update.guard.body`                                 | 还有 {count} 项改动等待同步。更新会重启应用，建议先同步完成。 | {count} change(s) are still waiting to sync. Updating restarts the app, so it's best to sync first |
-| `settings.update.guard.syncFirst`                            | 先同步再更新                                                  | Sync, then update                                                                                  |
-| `settings.update.guard.updateAnyway`                         | 仍要更新                                                      | Update anyway                                                                                      |
-| `settings.update.guard.bodyRisk`（文案 B，仅当重启会丢队列） | 这 {count} 项改动会在重启时丢失，且无法恢复。                 | These {count} change(s) will be lost when the app restarts, and can't be recovered                 |
-| `settings.update.guard.updateAnywayRisk`（文案 B）           | 仍然更新（会丢失改动）                                        | Update anyway (changes will be lost)                                                               |
+| key                                  | zh-CN                                                         | en-US                                                                                              |
+| :----------------------------------- | :------------------------------------------------------------ | :------------------------------------------------------------------------------------------------- |
+| `settings.update.guard.title`        | 有改动还没同步                                                | Some changes haven't synced                                                                        |
+| `settings.update.guard.body`         | 还有 {count} 项改动等待同步。更新会重启应用，建议先同步完成。 | {count} change(s) are still waiting to sync. Updating restarts the app, so it's best to sync first |
+| `settings.update.guard.syncFirst`    | 先同步再更新                                                  | Sync, then update                                                                                  |
+| `settings.update.guard.updateAnyway` | 仍要更新                                                      | Update anyway                                                                                      |
+
+> **卡 A 文案已定稿（arch 2026-11-20 读码）**：未同步队列**跨重启保留**（Dexie `syncQueue` → 冷启动重推）⇒ 采用软提示文案 A；原文案 B（「会丢失且无法恢复」）**作废删除**。⛔ 面向用户**不出现**「失败 / 失败项」（`failedCount` 为内存态、重启清零）；数量取队列长度。
 
 ## 六、侧栏弱提示与无障碍
 
