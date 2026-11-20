@@ -44,6 +44,8 @@
 
 **3.2 死组件：`apps/web/src/components/app/aside/**`**
 
+> ⚠️ **实测教训（qa 独立复验发现）**：`float-aside.vue` 的 `<style>` 里带一条**全局**规则 `.nue-drawer--float-aside .nue-drawer__header{display:none}`，而 `theme="float-aside"` 在 `task-multi-select-panel.vue` / `float-details.vue` 两处**仍存活** ⇒ **「组件零引用」不等于「组件里的全局样式零引用」**。删死组件时必须一并检查其 `<style>` 是否有跨组件生效的选择器（本批首轮删除即漏掉此条，已按 qa 证据修回）。
+
 - 生产零引用（`views/index/index.vue` 用的是 `<app-aside-v2-adapter />`）；`app/index.ts` 仍 `export * from './aside'`。
 - **但两个测试仍挂载它**：`app/__tests__/t603-nav-a11y.test.ts`（主导航 4 项 a11y）与 `app/__tests__/t633-ac1-route-icon-class.test.ts`（路由图标双主题类）⇒ 断言验的是用户看不到的组件，属**假保险**。
 - 处理原则：**先重定向到 `aside-v2` 再删**（不得先删测试以免丢失覆盖）；若 `aside-v2` 不满足原断言，**不得放宽断言**，按真实缺陷上报。
@@ -63,7 +65,7 @@ root `package.json` 的 `"workspaces": ["packages/*"]` 是 npm 遗留，与 `pnp
 ## 四、P3 · 卫生
 
 - 生产代码里的调试日志 2 处：`apps/web/src/components/tasks/built-in-project/main/index.vue:101`（`console.log(createTaskOptions)`）· `packages/shared/hooks/use-subscriber.ts:67`（每次事件 `emit` 都打）。构建已 `terser drop_console:['log']`，故只污染 dev 控制台。
-- 注释掉的 `console.log` 12 处（噪声，无功能影响）。
+- 注释掉的 `console.log` **14 处**（初稿写 12 处，rd-fe 实删后按实测更正；噪声，无功能影响）。
 - 本地构建产物 `apps/web/stats.html`（824 KB）· `apps/desktop/stats.html`（833 KB）：已在 `.gitignore`，未入库，仅占磁盘。
 - `docs/tasks-state.md` 已达 896 行，与本文件自述「保持精简、已终签批次只留一行」冲突（仍保留 2026-09 起的整段批次史）。
 - 运行期文档引用失效：`tasks-state` 31 处 · `defect-pool` 7 处（历史 ADR/PRD 内的失效引用不追）。
