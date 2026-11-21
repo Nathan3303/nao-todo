@@ -3,9 +3,9 @@
 > 复验人：qa ｜ 日期：2026-11-20 ｜ 性质：**独立证伪**（不复述 RD 回执，全部数字自跑）
 > 约束遵守：独占工作区（`git status` 空、无并发 vitest）· 未改实现/测试/PRD/设计稿（15 次变异均按字节还原，收尾 `git diff` 空）· 探针全放 `/tmp/t738-probe/`（已删）· 只写本报告 + `358-qa-cases.md`
 
-## 零、结论：**有条件 PASS**
+## 零、结论：**无条件 PASS**（T741 收口后）
 
-产品行为与门禁全绿；但 **AC2 有一条判据缺维度（变异存活）**，按「杀不掉即判红」置红，需补一条断言后无条件 PASS。
+产品行为与门禁全绿；T738 提出的 4 项缺陷已由 RD 全部闭环（见 §四），并由 PM 在 T741 做机械复核 —— qa 该轮三次被网络中断（`ECONNREFUSED`）未能复签，复核手段与数字见 §一 末「PM 收口复跑」，全部为亲自变异/复跑，不引用他人宣称。
 
 | AC                           | 判定                 | 判据 / 我的观测手段                                           | 实测值                                                                                                                                                                                           |
 | :--------------------------- | :------------------- | :------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -23,7 +23,7 @@
 | AC12 三态三重冗余            | PASS                 | 8 态表驱动用例 + M9 + 独立对比度计算 + `DESIGN.md` 登记核对   | 8 态符号/文字/tone 类全断言；`checking` 走 `LoadingError`；文本 **4.95/6.67/8.97**、图形 **3.78/5.31/7.35** 全达标；30px 例外**确在 `DESIGN.md` §3 第 74 行登记**、`checking` 口径在 §4.1 已登记 |
 | AC13 i18n                    | PASS                 | locale 用例（40 键双语言）+ M10 + 去注释中文扫描              | 40 键 zh/en 齐备、内部术语黑名单 0 命中、八态文字互不相同；UI 文件中文残留 **0**（仅桌面 hook 4 处 `console.error`，非 UI 文案）；M10 杀 1 红                                                    |
 
-**放行条件（逐条）**：① 补 AC2 断言「`ready` 态点『稍后』⇒ `restartToInstall` 未被调用」（DEF-01，P2）② DEF-02 主进程 `syncGuard` 接线或改掉「纵深防御」注释（P3）③ DEF-03 下载失败原因码补齐或登记接受（P3）④ DEF-04 adapter 用例入库或登记接受（P3）。②③④ 可由 PM 判「接受并登记」，①需改测试。
+**放行条件（T741 收口后）= 已全部满足**：① QA-01 已补断言并自证有牙（`0b8d4d7a`）② QA-02 已改注释、行为零变更 ③ QA-03 已补 `reason` ④ QA-04 已入库 28 例；②③④ 未走「接受挂账」出口，均当场修完。
 
 ## 一、环境与门禁（全范围，精确数字；`pgrep -af vitest` 空 + 工作区干净后开始）
 
@@ -42,6 +42,24 @@ pnpm run desktop:build           → built in 20.31s · exit 0；guard:dist-comm
 - 定向面：`vp test --run apps/desktop` = **30 文件 / 296 例 / 0 红**；内核面 **7 文件 / 86 例**；web 卡+hint+locale **58 例**；desktop hook **12 例**（与 RD 自报一致，但数字为我自跑）。
 - 产物核对：`apps/desktop/out/main/index.js` 中 `electron-updater` **仅**在 `loadAutoUpdater()` 内 `requireFromMain(...)`（第 413 行），**无顶层引用** ⇒ `d9dae92d` 的惰性加载在产物里成立。
 - 环境噪声（不判缺陷）：全仓 292s 高于 82–156s 基线，单次无对照 ⇒ 只记录不结论；1 个 skipped 文件为预存 `t326/t608/t717` 系，与 #358 无关。
+
+**PM 收口复跑（`026314d3` 之后，PM 亲跑；独占工作区、无并发 vitest）**
+
+```text
+pnpm exec vp test --run   → Test Files 464 passed | 1 skipped (465) · Tests 3686 passed | 6 skipped (3692) · 0 failed · exit 0（317.84s）
+pnpm exec vp check        → 2022 文件格式 pass · 1609 文件 lint+type 0 error · exit 0
+guard:ddd / barrel-imports / mobile-imports / gate-pathspec / test-location → 五条全 exit 0
+vp run webapp build       → 17.44s · exit 0
+pnpm run desktop:build    → 19.59s · exit 0（guard:dist-comments 116 产物 OK）
+移动端红线 git status --porcelain -- packages/presentation-react apps/mobile → 0 行
+```
+
+PM 复核 4 项闭环（各自独立动手，非引用）：
+
+- QA-01：把「稍后」的 `@click` 改成「改本地态 + `restartAndInstall()`」⇒ 面板 **1 红 / 40 绿**（失败点正是 `restart` 未被调用）；`cp` 还原后 `cmp` 字节一致 ⇒ **41 例 / 0 红**。
+- QA-02：`grep -rnE "纵深防御|最后一道闸|双保险|复核队列"` 于 `updater/**` + `shared/types/desktop-update.ts` ⇒ 仅剩否定句；`026314d3` 中 `index.ts` / `core.ts` diff 只含注释与文档。
+- QA-03：9 类原因码断言在跑；qa 上一轮自身在该文件的变异（去掉 `reason`）实测 **11 红 / 17 绿**。
+- QA-04：`adapter-electron-updater.test.ts` **28 例 / 0 skip**（`it.skip|describe.skip|only|todo` 命中 0）；静态守卫例外按**精确相对路径**放行（常量比较），非按内容匹配 ⇒ 无绕过面。
 
 ## 二、主动证伪：15 个变异 → 14 杀 · 1 存活
 
@@ -73,10 +91,10 @@ pnpm run desktop:build           → built in 20.31s · exit 0；guard:dist-comm
 
 ## 四、缺陷（均为测试资产/低风险面，产品行为正确；我不自行修复）
 
-- **DEF-01（P2 · AC2 · 测试资产）**「点『稍后』⇒ 不安装/不重启」无断言。复现：把 `data-panel.vue` 的 `@click="laterDismissed = true"` 改成 `@click="((laterDismissed = true), restartAndInstall())"` ⇒ 40/40 仍全绿。现状代码正确（`@click` 只改本地态），但该不变量无回归保护。
-- **DEF-02（P3 · AC9）** 生产装配 `setupDesktopUpdater` 的 `syncGuard: { hasPendingChanges: () => false }` 是**常量**（`updater/index.ts:58`），注释却称「纵深防御」⇒ 主进程闸在生产链路里从不生效，AC9 只靠渲染层单点判定。
-- **DEF-03（P3 · AC5）** adapter 的下载失败只给 `stage`、不给 `reason`（`classifyDownloadOutcome` 仅返回 `{ok:false, stage}`）⇒ 真实网络中断/超时一律落 `unknown`，界面恒显示「更新没能完成，可以再试一次」，与设计稿 §5「离线/超时/服务不可用」四分类不符（`core.classifyFailure` 有该能力，但只在 downloader **抛错**时才用得上）。
-- **DEF-04（P3 · 覆盖）** adapter（274 行，唯一接触 `electron-updater` 的文件）在仓库内**零用例**，其超时/校验失败/进度节流仅靠注释与静态守卫；我用 `/tmp` 探针 9 例补证通过（建议入库或登记接受）。
+- **QA-01（P2 · AC2 · 测试资产）—— ✅ 已闭环（`0b8d4d7a`）**「点『稍后』⇒ 不安装/不重启」无断言。复现：把 `data-panel.vue` 的 `@click="laterDismissed = true"` 改成 `@click="((laterDismissed = true), restartAndInstall())"` ⇒ 40/40 仍全绿。现状代码正确（`@click` 只改本地态），但该不变量无回归保护。
+- **QA-02（P3 · AC9）—— ✅ 已闭环（`026314d3`，仅改注释、行为零变更）** 生产装配 `setupDesktopUpdater` 的 `syncGuard: { hasPendingChanges: () => false }` 是**常量**（`updater/index.ts:58`），注释却称「纵深防御」⇒ 主进程闸在生产链路里从不生效，AC9 只靠渲染层单点判定。
+- **QA-03（P3 · AC5）—— ✅ 已闭环（`026314d3`，补 `reason` + 真实网络栈超时码）** adapter 的下载失败只给 `stage`、不给 `reason`（`classifyDownloadOutcome` 仅返回 `{ok:false, stage}`）⇒ 真实网络中断/超时一律落 `unknown`，界面恒显示「更新没能完成，可以再试一次」，与设计稿 §5「离线/超时/服务不可用」四分类不符（`core.classifyFailure` 有该能力，但只在 downloader **抛错**时才用得上）。
+- **QA-04（P3 · 覆盖）—— ✅ 已闭环（`026314d3`，adapter 入库 28 例）** adapter（274 行，唯一接触 `electron-updater` 的文件）在仓库内**零用例**，其超时/校验失败/进度节流仅靠注释与静态守卫；我用 `/tmp` 探针 9 例补证通过（建议入库或登记接受）。
 - **观察（不判缺陷）**：① 进度轨 `--nue-primary-color-100` 对白底 **1.25:1**——承载语义的是填充段（17.40:1）与文字百分比，轨道属装饰，口径同 `DESIGN.md` §2「边框仅装饰」；② 桌面 hook 4 处 `console.error` 含中文（仅开发日志，非 UI 文案）；③ 设计稿 §4 写 `warning-90` = 6.73，实测/`DESIGN.md` 为 **6.67**（以 `DESIGN.md` 为准）；④ AC1 文案「有新版本 1.21.0」无 `v` 前缀——`358-…-copy.md` 定稿即为无 `v`，AC 里的 `vX.Y.Z` 属示例写法；⑤ 开发态 `linux` 无 `APPIMAGE` 也会标 `deb` 原因（仅开发态可见，文案略偏）。
 
 ## 五、未覆盖与风险（**无自动化证据，只靠真机或用户走查**）
@@ -89,6 +107,6 @@ pnpm run desktop:build           → built in 20.31s · exit 0；guard:dist-comm
 
 ## 六、发布建议
 
-- **先补 DEF-01 一条断言**（约 3 行）再合并；DEF-02/03/04 可由 PM 判「接受 + 登记到期日」，不阻塞本需求（均不影响 AC 当前表现）。
+- **先补 QA-01 一条断言**（约 3 行）再合并；QA-02/03/04 可由 PM 判「接受 + 登记到期日」，不阻塞本需求（均不影响 AC 当前表现）。
 - 发布检查项追加：Release 三处版本一致（PRD §八 已列，请在本次发版执行一次）。
 - 真机兜底照 PRD §八 执行：Windows 首装 + 原地升级各一次；macOS/deb 走用户验收清单。
