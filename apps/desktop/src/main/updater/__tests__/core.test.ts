@@ -549,6 +549,11 @@ describe('可观测（NFR）', () => {
         expect(classifyFailure(new Error('getaddrinfo ENOTFOUND github.com'))).toBe('offline')
         expect(classifyFailure(new Error('ERR_INTERNET_DISCONNECTED'))).toBe('offline')
         expect(classifyFailure(new Error('request timed out'))).toBe('timeout')
+        // 真实网络栈的超时码（`electron-updater` 底层是 Chromium/Node 错误码，DEF-03）
+        expect(classifyFailure(new Error('net::ERR_TIMED_OUT'))).toBe('timeout')
+        expect(classifyFailure(Object.assign(new Error('x'), { code: 'ETIMEDOUT' }))).toBe(
+            'timeout'
+        )
         expect(classifyFailure(Object.assign(new Error('server boom'), { statusCode: 503 }))).toBe(
             'server'
         )

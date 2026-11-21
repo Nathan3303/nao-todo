@@ -68,7 +68,13 @@ export interface UpdaterEnvPort {
     openDownloadPage(): Promise<void> | void
 }
 
-/** 同步护栏端口（AC9 最后一道闸：渲染层确认后仍由主进程复核队列） */
+/**
+ * 同步护栏端口（AC9）
+ * @description 语义 = 「安装前队列里还有没有未同步改动」。⚠️ **生产装配恒返回 `false`**
+ *              （见 `index.ts`：主进程读不到渲染层队列，接上需新增 IPC，超出本期范围）
+ *              ⇒ 生产链路的护栏**只有渲染层一道**；本端口的 `pending-sync` 分支当前只由
+ *              单测覆盖（结构性保障，不是运行期防线）。
+ */
 export interface UpdaterSyncGuardPort {
     hasPendingChanges(): boolean
 }
@@ -138,7 +144,12 @@ export const classifyFailure = (error: unknown): DesktopUpdateFailureReason => {
     ) {
         return 'offline'
     }
-    if (/ETIMEDOUT|ESOCKETTIMEDOUT|timeout|timed out/i.test(probe)) return 'timeout'
+    if (
+        /ETIMEDOUT|ESOCKETTIMEDOUT|ERR_TIMED_OUT|ERR_CONNECTION_TIMED_OUT|timeout|timed out/i.test(
+            probe
+        )
+    )
+        return 'timeout'
     if (statusCode >= 500) return 'server'
     if (/404|403|ENOENT|not found|cannot find|ERR_UPDATER_/i.test(probe)) return 'server'
     return 'unknown'
@@ -376,6 +387,7 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         if (current.state !== 'ready' || installing)
             return { installed: false, blocked: 'not-ready' }
         // AC9：未同步队列非空且用户未二次确认 ⇒ 不安装（安装器调用数保持 0，已下载状态保留）
+        // ⚠️ 生产装配的 `syncGuard` 恒 `false` ⇒ 该分支在生产链路上不触发（护栏在渲染层）
         if (installOptions.force !== true && syncGuard.hasPendingChanges()) {
             return { installed: false, blocked: 'pending-sync' }
         }

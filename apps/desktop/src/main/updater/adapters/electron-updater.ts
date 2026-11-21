@@ -7,19 +7,23 @@
  *              ① 强制 `autoDownload=false` + `autoInstallOnAppQuit=false`（安装时机由用户决定）；
  *              ② 检查请求超时 ≤10s（PRD §六），超时后取消底层检查；
  *              ③ 把 `download-progress` 事件归一成 0–100 整数百分比（≤2 次/秒节流，设计稿 §7），
- *                 并把中断 / 校验失败（sha512）区分成不同阶段（AC5）。
+ *                 并把中断 / 校验失败（sha512）区分成不同阶段（AC5）；下载失败的**原因码**
+ *                 复用内核 `classifyFailure` 收窄（离线 / 超时 / 服务不可用 / 磁盘 / 未知）——
+ *                 `electron-updater` 的下载失败是 **reject 而非抛出到调用方**，不在这里收窄
+ *                 就会一律落 `unknown`，界面只能给「可以再试一次」（DEF-03）。
  * @see docs/adr/2026-11-20-desktop-self-update.md（决策 / 可测性前置 ①②⑥）
  * @see docs/prds/2026-11-20-desktop-self-update.md（AC2 / AC5 / §六 性能）
  */
 import { createRequire } from 'node:module'
 import { app, shell } from 'electron'
-import type {
-    UpdaterCheckerPort,
-    UpdaterDownloadOutcome,
-    UpdaterDownloaderPort,
-    UpdaterEnvPort,
-    UpdaterInstallerPort,
-    UpdaterProgress
+import {
+    classifyFailure,
+    type UpdaterCheckerPort,
+    type UpdaterDownloadOutcome,
+    type UpdaterDownloaderPort,
+    type UpdaterEnvPort,
+    type UpdaterInstallerPort,
+    type UpdaterProgress
 } from '../core'
 
 /** 更新下载页（Release 最新页；macOS / deb 的降级出口，AC4 / AC7） */
@@ -173,11 +177,18 @@ const normalizeProgress = (progress: DownloadProgressLike): UpdaterProgress => {
     return { downloadedBytes: transferred, totalBytes: total, percent }
 }
 
+/**
+ * 下载失败归一：阶段 + **原因码**
+ * @description 阶段：校验未过单独成态（AC5：校验失败不得进「待重启」）；
+ *              原因码：复用内核 `classifyFailure`（⛔ 不另造一套），让界面能按设计稿 §5 区分
+ *              「离线 / 超时 / 服务不可用 / 磁盘不足 / 未知」。认不出的一律 `unknown`
+ *              （文案仍是「可以再试一次」，不会误导成「已是最新」）。
+ */
 const classifyDownloadOutcome = (error: unknown): UpdaterDownloadOutcome => {
     const message = error instanceof Error ? error.message : String(error)
     // 校验失败单独成态（AC5：校验未过不得进入待重启）
     const stage = /sha512|checksum|validate|corrupt/i.test(message) ? 'verify' : 'download'
-    return { ok: false, stage }
+    return { ok: false, stage, reason: classifyFailure(error) }
 }
 
 /**

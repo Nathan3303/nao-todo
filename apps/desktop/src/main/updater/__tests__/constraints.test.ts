@@ -11,6 +11,8 @@ import { describe, expect, it } from 'vite-plus/test'
  *              ① 更新内核（`core` / `state` / `version` / `install-mode` / `store` / `wiring` /
  *                 装配 `index`）**不 import `electron`** ⇒ 单测零主进程依赖；
  *              ② `electron-updater` **只出现在 `adapters/electron-updater.ts`** ⇒ 单测不触真实网络；
+ *                 （唯一例外：`__tests__/adapter-electron-updater.test.ts` 允许 import adapter，
+ *                 它必须同时 mock `electron` 与 `node:module` ⇒ 仍不加载真实依赖、不触网）
  *              ③ 判定类模块（`install-mode` / `version`）**零 IO**（不引 `node:` 内置模块）。
  *              判据只认**代码**（先剥注释）且只看**模块说明符**（引号包裹），
  *              注释里提到包名不算违规。
@@ -60,6 +62,12 @@ const listImplFiles = (): string[] => listTsFiles().filter((file) => !file.start
 /** 单测文件 */
 const listTestFiles = (): string[] => listTsFiles().filter((file) => file.startsWith('__tests__/'))
 
+/** 单测 import adapter 的判据（`from '…/adapters/…'`） */
+const ADAPTER_IMPORT = /\bfrom\s+['"][^'"]*adapters\//
+
+/** 唯一允许 import adapter 的单测（T740 / DEF-04：adapter 必须有入库用例） */
+const ADAPTER_TEST = '__tests__/adapter-electron-updater.test.ts'
+
 describe('硬约束 ①：内核不 import electron', () => {
     it.each(KERNEL_FILES)('%s 不引 electron', (file) => {
         expect(usesModule(code(file), 'electron')).toBe(false)
@@ -81,16 +89,35 @@ describe('硬约束 ②：electron-updater 只出现在 adapter', () => {
 
     it('除装配文件外无人 import adapter（单测不触真实网络 / 不加载 electron）', () => {
         const offenders = listImplFiles().filter(
-            (file) => file !== 'index.ts' && /\bfrom\s+['"][^'"]*adapters\//.test(code(file))
+            (file) => file !== 'index.ts' && ADAPTER_IMPORT.test(code(file))
         )
         expect(offenders).toEqual([])
     })
 
-    it.each(listTestFiles())('%s 不 import adapter / electron（单测零主进程依赖）', (file) => {
-        const source = code(file)
-        expect(/\bfrom\s+['"][^'"]*adapters\//.test(source)).toBe(false)
-        expect(/\bfrom\s+['"]electron['"]/.test(source)).toBe(false)
-        expect(/\brequire\s*\(\s*['"]electron['"]\s*\)/.test(source)).toBe(false)
+    it.each(listTestFiles().filter((file) => file !== ADAPTER_TEST))(
+        '%s 不 import adapter / electron（单测零主进程依赖）',
+        (file) => {
+            const source = code(file)
+            expect(ADAPTER_IMPORT.test(source)).toBe(false)
+            expect(/\bfrom\s+['"]electron['"]/.test(source)).toBe(false)
+            expect(/\brequire\s*\(\s*['"]electron['"]\s*\)/.test(source)).toBe(false)
+        }
+    )
+
+    /**
+     * adapter 用例的唯一例外（T740 / DEF-04）
+     * @description adapter 是唯一接触 `electron-updater` 的文件，必须有用例（QA DEF-04），
+     *              而它天生要 `import` adapter + `vi.mock('electron')`。例外**只给这一个文件**，
+     *              且该文件必须同时 mock `electron` 与 `node:module`（后者拦住真实 require）
+     *              ⇒ 「例外」不等于放松：换成任何其它文件 import adapter 仍会红。
+     */
+    it('adapter 用例是唯一触碰 adapter 的单测，且确实隔离了 electron / 真实 require', () => {
+        expect(listTestFiles().filter((file) => ADAPTER_IMPORT.test(code(file)))).toEqual([
+            ADAPTER_TEST
+        ])
+        const source = code(ADAPTER_TEST)
+        expect(/vi\.mock\(\s*['"]electron['"]\s*,/.test(source)).toBe(true)
+        expect(/vi\.mock\(\s*['"]node:module['"]\s*,/.test(source)).toBe(true)
     })
 })
 

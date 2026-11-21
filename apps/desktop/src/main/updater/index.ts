@@ -51,9 +51,15 @@ export const setupDesktopUpdater = (options: SetupDesktopUpdaterOptions): Deskto
         ...ports,
         store: createUpdateStore(options.dir),
         /**
-         * 同步护栏（AC9）：**判定权威在渲染层**（复用既有 `useSyncStatus()`，ADR 明确不新建状态源）。
-         * 主进程侧保留端口与 `force` 闸只是纵深防御：渲染层确认「仍要更新」才带 `force: true` 调安装，
-         * 未确认前根本不会调用 ⇒ 安装器调用数恒 0。
+         * 同步护栏（AC9）· **生产装配恒 `false`**
+         * @description ① 判定权威**只在渲染层**：渲染层按既有 `useSyncStatus()` 的
+         *              `pendingCount > 0` 弹确认框，用户确认后才带 `force: true` 调安装（ADR：
+         *              「判定在渲染层，主进程只执行安装动作」）；
+         *              ② 主进程**拿不到**渲染层的 Dexie 队列（要走 IPC 才能接上，超出本期范围），
+         *              所以这里恒返回 `false` —— **生产链路上本端口不构成第二道闸**，护栏只有
+         *              渲染层那一道；
+         *              ③ 内核 `pending-sync` 分支的价值 = 单测覆盖该不变量 + 将来若新增 IPC
+         *              的接线点（换成真实判定即可，内核无需改动）。
          */
         syncGuard: { hasPendingChanges: () => false },
         onError: options.onError
