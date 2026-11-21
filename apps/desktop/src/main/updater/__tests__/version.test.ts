@@ -28,6 +28,13 @@ describe('版本比较（AC6 判定表）', () => {
         expect(isNewerVersion('1.10.0', '1.9.0')).toBe(true)
     })
 
+    it('末段多一位数字不被字典序骗过（1.20.30 > 1.20.3）', () => {
+        expect(isNewerVersion('1.20.30', '1.20.3')).toBe(true)
+        // 字典序比较（'1.20.3' > '1.20.30'）会给出相反结论 ⇒ 这里必须为 false
+        expect(isNewerVersion('1.20.3', '1.20.30')).toBe(false)
+        expect(compareVersions('1.20.30', '1.20.3')).toBe(27)
+    })
+
     it('容忍前缀 v / V 与首尾空白（Release tag 惯例）', () => {
         expect(parseVersion('v1.21.0')).toEqual({ major: 1, minor: 21, patch: 0 })
         expect(isNewerVersion(' V2.0.0 ', '1.20.3')).toBe(true)

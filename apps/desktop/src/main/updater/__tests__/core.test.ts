@@ -177,6 +177,48 @@ describe('检查更新（AC1 / AC6 / AC4 / AC11）', () => {
         expect(harness.store.readCheck()).toBeNull()
     })
 
+    it.each([
+        {
+            name: '域名解析失败（ENOTFOUND）',
+            error: Object.assign(new Error('getaddrinfo ENOTFOUND github.com'), {
+                code: 'ENOTFOUND'
+            }),
+            reason: 'offline'
+        },
+        {
+            name: '更新源返错（HTTP 500）',
+            error: Object.assign(new Error('HttpError: 500 Internal Server Error'), {
+                statusCode: 500
+            }),
+            reason: 'server'
+        },
+        {
+            name: '请求超时（ETIMEDOUT）',
+            error: Object.assign(new Error('connect ETIMEDOUT 140.82.112.4:443'), {
+                code: 'ETIMEDOUT'
+            }),
+            reason: 'timeout'
+        }
+    ])(
+        'AC4：$name ⇒ failed(check)/$reason（请求计数 1，且从未出现「已是最新」）',
+        async ({ error, reason }) => {
+            const harness = createHarness()
+            harness.checker.check.mockRejectedValue(error)
+
+            const status = await harness.core.check({ manual: true })
+
+            expect(status.state).toBe('failed')
+            expect(status.failure).toEqual({ stage: 'check', reason })
+            expect(status.updateAvailable).toBe(false)
+            expect(harness.checker.check).toHaveBeenCalledTimes(1)
+            expect(harness.statuses.map((item) => item.state)).not.toContain('up-to-date')
+            expect(harness.store.readCheck()).toBeNull()
+            // 失败态仍给「打开下载页」出口（AC4 的第三个动作）
+            await harness.core.openDownloadPage()
+            expect(harness.openDownloadPage).toHaveBeenCalledTimes(1)
+        }
+    )
+
     it('AC4 + AC11：失败后再次手动检查仍可触发（按钮不永久禁用）', async () => {
         const harness = createHarness()
         harness.checker.check.mockRejectedValueOnce(new Error('boom'))
@@ -249,6 +291,27 @@ describe('下载与安装（AC2 / AC5 / AC9）', () => {
         // 重试：不必重新检查，直接从 failed 回到 downloading → ready
         const retried = await harness.core.download()
         expect(retried.state).toBe('ready')
+        expect(harness.downloader.download).toHaveBeenCalledTimes(2)
+    })
+
+    it('AC5：下载中断（连接断）⇒ failed(download)/offline，不进 ready、安装器 0、可重试', async () => {
+        const harness = createHarness()
+        await harness.core.check({ manual: true })
+        harness.downloader.download.mockResolvedValueOnce({
+            ok: false,
+            stage: 'download',
+            reason: 'offline'
+        })
+
+        const status = await harness.core.download()
+
+        expect(status.state).toBe('failed')
+        expect(status.failure).toEqual({ stage: 'download', reason: 'offline' })
+        expect(harness.statuses.map((item) => item.state)).not.toContain('ready')
+        expect(harness.store.readCheck()?.readyVersion).toBeUndefined()
+        expect(harness.installer.install).toHaveBeenCalledTimes(0)
+
+        expect((await harness.core.download()).state).toBe('ready')
         expect(harness.downloader.download).toHaveBeenCalledTimes(2)
     })
 
