@@ -11,8 +11,8 @@
  * @see docs/adr/2026-11-20-desktop-self-update.md（决策 / 可测性前置 ①②⑥）
  * @see docs/prds/2026-11-20-desktop-self-update.md（AC2 / AC5 / §六 性能）
  */
+import { createRequire } from 'node:module'
 import { app, shell } from 'electron'
-import { autoUpdater } from 'electron-updater'
 import type {
     UpdaterCheckerPort,
     UpdaterDownloadOutcome,
@@ -92,6 +92,19 @@ export interface CreateElectronUpdaterPortsOptions {
     timeoutMs?: number
     /** 进度推播最小间隔（缺省 500ms；用例可设 0） */
     progressIntervalMs?: number
+}
+
+/**
+ * 惰性加载 `electron-updater`
+ * @description ⛔ 不用顶层 `import`：主进程入口在 `whenReady` 之前就会加载本模块，
+ *              依赖缺失/损坏若发生在**模块加载期**，`try/catch` 兜不住（窗口都创建不了）。
+ *              放到调用点后，失败只让「更新器不可用」，符合 ADR「启动不阻断」。
+ */
+const requireFromMain = createRequire(__filename)
+
+const loadAutoUpdater = (): ElectronUpdaterLike => {
+    const loaded = requireFromMain('electron-updater') as { autoUpdater: ElectronUpdaterLike }
+    return loaded.autoUpdater
 }
 
 export interface ElectronUpdaterPorts {
@@ -175,7 +188,7 @@ const classifyDownloadOutcome = (error: unknown): UpdaterDownloadOutcome => {
 export const createElectronUpdaterPorts = (
     options: CreateElectronUpdaterPortsOptions = {}
 ): ElectronUpdaterPorts => {
-    const updater = options.updater ?? (autoUpdater as unknown as ElectronUpdaterLike)
+    const updater = options.updater ?? loadAutoUpdater()
     const shellLike: ShellLike = options.shell ?? { openExternal: (url) => shell.openExternal(url) }
     const appLike: AppLike = options.app ?? {
         isPackaged: app.isPackaged,
