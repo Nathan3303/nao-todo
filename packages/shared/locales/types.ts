@@ -326,6 +326,47 @@ export interface LocaleMessages {
     'settings.ia.permission.title': string
     'settings.ia.version.check': string
     'settings.ia.version.hint': string
+    // Settings · 关于与更新（T737 / Issue #358：仅桌面端渲染）
+    'settings.update.title': string
+    'settings.update.currentVersion': string
+    'settings.update.lastChecked': string
+    'settings.update.check': string
+    'settings.update.checking': string
+    'settings.update.checkBlockedByReady': string
+    'settings.update.idle': string
+    'settings.update.idleHint': string
+    'settings.update.available': string
+    'settings.update.availableHint': string
+    'settings.update.availableHintNoSize': string
+    'settings.update.updateNow': string
+    'settings.update.downloading': string
+    'settings.update.downloadingSize': string
+    'settings.update.downloadingPercent': string
+    'settings.update.ready': string
+    'settings.update.readyHint': string
+    'settings.update.restartNow': string
+    'settings.update.later': string
+    'settings.update.upToDate': string
+    'settings.update.justUpdated': string
+    'settings.update.justUpdatedHint': string
+    'settings.update.openDownloadPage': string
+    'settings.update.failedCheck': string
+    'settings.update.failedDownload': string
+    'settings.update.failedVerify': string
+    'settings.update.reason.offline': string
+    'settings.update.reason.timeout': string
+    'settings.update.reason.server': string
+    'settings.update.reason.disk': string
+    'settings.update.reason.unknown': string
+    'settings.update.manual.mac': string
+    'settings.update.manual.deb': string
+    'settings.update.guard.title': string
+    'settings.update.guard.body': string
+    'settings.update.guard.syncFirst': string
+    'settings.update.guard.updateAnyway': string
+    'settings.update.settingsWithUpdate': string
+    'settings.update.a11y.progress': string
+    'settings.update.a11y.progressUnknown': string
     'settings.userInfo': string
     'settings.passwordChange': string
     'settings.appSettings': string

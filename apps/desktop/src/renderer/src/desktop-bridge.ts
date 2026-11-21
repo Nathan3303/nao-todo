@@ -12,6 +12,7 @@ import type {
     DesktopAutostartStatus,
     DesktopTrayStatus
 } from '@nao-todo/webapp/src/hooks/use-desktop-shell'
+import type { DesktopUpdateBridge } from '@nao-todo/shared'
 
 /** `getShellStatus` 返回值（= 设置页「桌面常驻」块的数据源） */
 export interface DesktopShellStatusPayload {
@@ -42,6 +43,11 @@ export interface DesktopBridge {
      *              （`backgroundThrottling:false` 下 `visibilityState` 恒 `visible`，不得拿它冒充）。
      */
     onWindowVisibility?(callback: (visible: boolean) => void): () => void
+    /**
+     * 应用内自我更新（T736 / AC1–AC11；**可选**：容旧 preload / Web 环境 / 测试桩）
+     * @description 无此命名空间 ⇒ 渲染层整块不渲染（Web 端零变化，AC10）。
+     */
+    update?: DesktopUpdateBridge
 }
 
 /**
