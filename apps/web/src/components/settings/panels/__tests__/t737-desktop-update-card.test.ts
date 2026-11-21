@@ -323,7 +323,7 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(text(view)).not.toContain('MB')
     })
 
-    it('ready：主「立即重启更新」+ 次「稍后」；点「稍后」只去掉稍后、文案不变', async () => {
+    it('ready：主「立即重启更新」+ 次「稍后」；点「稍后」只改本地态（⛔ 不安装/不重启）', async () => {
         await setUpdate({
             state: 'ready',
             latestVersion: '1.21.0',
@@ -338,6 +338,24 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(action(view, 'later').exists()).toBe(false)
         expect(text(view)).toContain('更新已就绪')
         expect(action(view, 'restart').exists()).toBe(true)
+        // ⛔ 不变量（qa DEF-01）：「稍后」只改本地态 ⇒ 安装/重启通道调用 0 次；
+        // 已下载状态保留 = 仍为 ready、护栏不弹、主按钮还在
+        expect(mocks.restart).not.toHaveBeenCalled()
+        expect(r2(view).attributes('data-update-state')).toBe('ready')
+        expect(view.find('.sd-update-guard').exists()).toBe(false)
+    })
+
+    it('ready：点「立即重启更新」⇒ 安装/重启通道恰 1 次（反向对照，防「恒不调」也绿）', async () => {
+        await setUpdate({
+            state: 'ready',
+            latestVersion: '1.21.0',
+            updateAvailable: true
+        })
+        const view = mountPanel()
+        await action(view, 'restart').trigger('click')
+        await nextTick()
+        expect(mocks.restart).toHaveBeenCalledTimes(1)
+        expect(view.find('.sd-update-guard').exists()).toBe(false)
     })
 
     it('ready：检查按钮 disabled + 可见理由（P5：不得被检查结果覆盖已下载）', async () => {
