@@ -40,7 +40,12 @@
 - **用户设计稿验收（2026-11-20）＝ 通过**（模型 A）：Shadcn 桌面密度照旧、**按钮 30px 保留**、护栏取**文案 A（软提示）**。
 - **三项遗留裁决（PM，2026-11-20）**：① AC12 `LoadingError` 仅 `checking` 用，`idle`/`failed` 走 DESIGN §4.1「动作级内联」⇒ **受控偏离采纳**，但须在 `DESIGN.md` §4.1 登记；② 30px **只在本块登记例外**（不改 §3 全局口径、不推全仓 30px），须在 `DESIGN.md` §3 已登记例外段补一行；③ 护栏文案事实已由 arch `T733c` 读码给出 ⇒ **队列跨重启保留**（Dexie `nao-todo-desktop.syncQueue`，冷启动 `syncService.start()`→`pushAllInner()`→`syncTracker.listDirty()` 重推），但 **`failedCount` 是内存态、重启清零** ⇒ 护栏判据必须用「队列非空」，⛔ 不得用 `failedCount`；文案 A 维持且禁「失败」措辞。
 - **RD 派单（2026-11-20）**：`T736` rd-infra（主进程 electron 零依赖内核 + 五端口 + `resolveInstallMode` 纯函数 + preload 契约 + `electron-updater` 依赖；契约先落并通知 rd-fe；PR owner + Draft PR）· `T737` rd-fe（`data-panel` 版本行升级为卡 + `use-desktop-updater` 独立 hook + 卡 A + 侧栏 6px 弱提示 + i18n 双键）。Reviewer = qa。
-- **待办**：RD 回执 → 用户视觉走查（构建产物）+ qa 独立复验 → PM 逐 AC 验收 → RD 合并 → 发布（MINOR）→ 发版检查项加「tag = `package.json` = `latest*.yml` 三者一致」。
+- **RD 交付（2026-11-21）**：`T736` rd-infra（`84348874` 契约 · `f01d17a3` 内核五端口 + 八态 + adapter + preload · `d9dae92d` 惰性加载 · `354c9342` 装配去 electron · `0b3dd20f` 三条硬约束静态守卫）· `T737` rd-fe（`f3f3d939` 面板/hook/卡 A/弱提示/i18n · `415d8e35` 删死键）· **PR #359**（Draft，base main，46 文件）。
+- **qa 独立复验（`T738`，`docs/reports/358-qa-report.md`）＝ 有条件 PASS**：全仓 464 文件 / 3662 例 / 0 红；15 个变异 14 杀 1 存活 ⇒ 4 项缺陷（QA-01 P2 判据缺维度 · QA-02 P3 注释过度承诺 · QA-03 P3 下载失败无 reason · QA-04 P3 adapter 零用例）。
+- **缺陷闭环**：`T739` rd-fe `0b8d4d7a`（QA-01 补断言 + 反向对照，变异 1 红 40 绿）· `T740` rd-infra `026314d3`（QA-02 仅改注释 · QA-03 补 reason + 真实网络栈超时码 · QA-04 adapter 入库 28 例；三次变异 11/1/1 红）。
+- **qa 复签中断（如实记）**：`T741` 三轮均被模型网络 `ECONNREFUSED` 打断（非任务问题）；缺交的 `358-qa-cases.md` 已由该轮写入并入库，缺陷编号 `DEF-01…04` → `QA-01…04`（避免与缺陷池撞名），末次机械复核由 PM 执行并在报告 §一 末如实标注（**qa 未复签**）。
+- **批末门禁（PM 亲跑，`026314d3` 之后，独占无并发）**：`vp test --run` **465 文件 / 3692 例 / 3686 通过 / 6 跳过 / 0 红**（317.84s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` 17.44s rc=0 · `desktop:build` 19.59s rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
+- **待办**：用户视觉走查（清单已给）→ PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
 ## 二、上一批次终态
