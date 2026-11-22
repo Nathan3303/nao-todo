@@ -7,16 +7,18 @@
 
 ## 一、分组与版本行
 
-| key                              | zh-CN              | en-US             |
-| :------------------------------- | :----------------- | :---------------- |
-| `settings.update.title`          | 关于与更新         | About & updates   |
-| `settings.update.currentVersion` | 当前版本 {version} | Version {version} |
+| key                                   | zh-CN                                                | en-US                                                                                       |
+| :------------------------------------ | :--------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| `settings.update.title`               | 关于与更新                                           | About & updates                                                                             |
+| `settings.update.desc`                | 在应用内检查并安装新版本，下载时不会打断你正在做的事 | Updates are checked and installed in the app; downloading won't interrupt what you're doing |
+| `settings.update.currentVersion`      | 当前版本 {version}                                   | Version {version}                                                                           |
+| `settings.update.lastChecked`         | 上次检查：{time}                                     | Last checked: {time}                                                                        |
+| `settings.update.check`               | 检查更新                                             | Check for updates                                                                           |
+| `settings.update.checking`            | 正在检查更新…                                        | Checking for updates…                                                                       |
+| `settings.update.checkBlockedByReady` | 重启应用后即可再次检查                               | You can check again after restarting                                                        |
 
-> ⛔ 本块**不使用副标题**：原 `settings.update.desc`（「当前版本与更新状态」）已移除 —— 与卡片内容同义重复，分组由卡片承担（设计稿 §3）。
-> | `settings.update.lastChecked` | 上次检查：{time} | Last checked: {time} |
-> | `settings.update.check` | 检查更新 | Check for updates |
-> | `settings.update.checking` | 正在检查更新… | Checking for updates… |
-> | `settings.update.checkBlockedByReady` | 重启应用后即可再次检查 | You can check again after restarting |
+> **v4（2026-11-21 · T746，用户否决 v3）恢复副标题**：v3 曾删 `settings.update.desc`（理由：与卡片内容同义重复）。v4 不再有卡片、分组由**组头**承担，而设置面板 6/6 个组头都是「标题 + 一句说明」（`.sd-group__head`）—— 裸标题在面板里像没写完。新措辞**只回答用户真正关心的那一件**（会不会打断我），⛔ 不写「当前版本与更新状态」这类与标题同义的句子。
+> **顺带修正**：`lastChecked` / `check` / `checking` / `checkBlockedByReady` 四行此前误落在引用块内（不是表格行），v4 已并回表格，键值本身未变。
 
 ## 二、状态行（与设计稿 §5 一一对应）
 
@@ -39,6 +41,8 @@
 | `settings.update.justUpdated`         | 已更新到 {version}             | Updated to {version}                                       |
 | `settings.update.justUpdatedHint`     | 这是本次启动装好的新版本       | Installed during this launch                               |
 | `settings.update.openDownloadPage`    | 打开下载页                     | Open download page                                         |
+
+> **v4（2026-11-21）取用规则变更**：hint 从「每态必有一行」改为**可缺** —— `checking`（状态文字已说尽）与 `up-to-date`（时间在版本行 R1，⛔ 同一信息不在两块重复）**无 hint**；其余七态各占一行。理由：v3 靠卡内固定行高装下占位，v4 改为行向下生长，空占位行反而像缺内容。⛔ 不新建「—」占位文案。
 
 ## 三、失败态（原因；动作只有「打开下载页」）
 

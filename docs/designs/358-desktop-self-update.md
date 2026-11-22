@@ -1,80 +1,80 @@
 # 设计稿 · 桌面端应用内自我更新（T734 / Issue #358）
 
-- 需求：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13）· 分支 `feat/358-desktop-self-update` · 结论面：设置 →「数据与关于」→ **关于与更新**（仅桌面端）+ 侧栏「可更新」弱提示 + 重启前数据护栏确认
-- **视觉口径 v3（2026-11-22 用户走查反馈 · T743）**：v2 的「Shadcn 倾向 + 桌面密度」（控件 30px / 正文 13px / 卡片边框承托）不变；v3 只补三处 —— ① **对齐基准**（§3，用户实报 bug 的根因）② `failed` 态去**行内**`重试`（§5 / §7 / §9）③ 新增 **`unsupported`** 态（§5，AC4b）
-- **图源**：Penpot 文件 id `c9598d09-e215-814a-8008-f998c4b203f0`（文件「桌面端」）· 页 `设置页` · 9 画板（6×`880×440` 设置态 / `520×300` 护栏 / `470×300` rail / `470×300` 抽屉）· 图层名 `区块/角色`（`update / card`、`r2 / symbol`）。画板按内容裁切便于评审，**真实对话框仍 `min(960,92vw)×min(620,86vh)`**
-- 档位：① 结构化文字规格（BR4：① 成立即交付）· 验收模型 = 用户本人勾选，本稿不覆盖实现后视觉一致性（BR2a）· 双语键值见 `358-desktop-self-update-copy.md`
+- 需求：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13）· 分支 `feat/358-desktop-self-update` · 落点：设置 →「数据与关于」→ **关于与更新**（仅桌面端）+ 侧栏「可更新」弱提示 + 重启前数据护栏确认
+- **视觉口径 v4（2026-11-21 · T746）**：用户否决 v3，原话「还是很难看，不符合当前项目的风格」，并**点名参照任务列表主视图**（`packages/presentation/task/components/list/list.css` · `.nue-div--todo-list-main__row`）。v3 的病根 = 自造了**第三套盒子**（1px 边框 + radius 8 卡片 + 卡内 48/46px 定高 + 自定义 `sd-update__label` + 30px 特例控件），而面板既有语言是无边框平铺（`.sd-group` 注释原文）⇒ 同一面板里多出一个「外来件」。**v4 撤回整套盒式卡**，改用任务列表行的语言：**浅灰底行 + 6px 圆角 + 1px 透明边框占位 + 8/12px 内边距**；控件回归 `nue-button` 默认尺寸（36px）⇒ **30px 例外撤回**（`DESIGN.md` §3）。
+- 图源：沿用 Penpot 文件「桌面端」· 页 `设置页`；**v3 的 6 张卡式画板作废**，v4 画板清单见 §9（本轮无绘图 MCP 会话 ⇒ BR4 档位 ③ 作图指令，**未实际出图**，见「遗留」）
+- 档位：① 结构化文字规格（默认档，成立即交付）+ ③ 分步作图指令（§9 画板清单）· 验收 = 用户本人勾选走查清单（BR2a：本稿 PASS 只覆盖设计产物，不覆盖实现后视觉一致性）；A/B 两方案的「并排看」= 画板 + 现场切一行 CSS（B 只需删 3 条声明），比静态图更真
 
 ## 1 信息架构
 
-- 3 层封顶：`设置 › 数据与关于 › 关于与更新`；**不新增第 5 分类**（4 类 IA 与窄屏 4 段是既有契约，`settings-ia` 用例即契约）。
-- 落点：`data-panel.vue` 的 `data-setting-id="version"` 行在桌面端**升级为卡片分组**（锚点保留）；**Web 端该行逐字不变**（AC10：无空容器、无占位、无新增请求）。组内两行：**R1 版本行**（永不被状态替换：`当前版本 1.20.3` + `检查更新`）+ **R2 状态行**（状态机渲染，46/58px 定高）；R1 答「我在用哪版 / 能不能查」，R2 答「有没有新版 / 在做什么 / 我要做什么」。
+- 3 层封顶：`设置 › 数据与关于 › 关于与更新`；**不新增第 5 分类**（4 类 IA 与窄屏 4 段是既有契约）。
+- 落点：`data-panel.vue` 新增一个 **`.sd-group` 子分组**（桌面端才渲染），形态与「提醒 → 桌面常驻」（`reminder-panel.vue` 的 `data-setting-id="desktop-residency"`）**逐字同构** —— 那是「桌面专属设置」在既有语言里已有的写法，v4 以它为第一参照。组内两行：**R1 版本行**（永不被状态替换：`当前版本 1.20.3` + `检查更新`，答「我在用哪版 / 能不能查」）+ **R2 状态行**（状态机渲染，答「有没有新版 / 在做什么 / 我要做什么」）。
+- **R1 与 Web 版本行共用一套 DOM**（`v-if` 只切 handler 与 hint）：AC10「Web 行逐字不变」由此成为结构性保证，而不是靠两段标记对齐。
 
 ## 2 流程
 
-- **P1 主路径**（AppImage / Windows）：①`检查更新` → ②检查中（按钮 loading+disabled，≤10s）→ ③有新版本（带体积）→ ④`立即更新` → ⑤下载中（进度，**不阻塞**任务/番茄/同步）→ ⑥已就绪 `立即重启更新`/`稍后` → ⑦重启 → 本次启动已完成更新。
-- **P2 不支持应用内更新**（macOS / Linux deb / 未打包开发态）：⛔ **不发起任何更新器检查**（AC4b）⇒ 挂载即进 `unsupported`（§5），唯一动作 `打开下载页`；⛔ 无 ②③④ 各步、无`立即更新`（AC7）。
-- **P3 失败**：任一阶段失败 ⇒ `×` + 可读原因（只来自原因码映射，AC9b）+ **只**`打开下载页`；⛔ **无行内`重试`**（AC4）—— 想再试就回 R1 点`检查更新`，它**永久可再点**（AC4/5/11），⛔ 不是死路。
-- **P4 数据护栏**：仅「已就绪 → 立即重启更新」且**同步队列非空（`pendingCount > 0`）** ⇒ 卡 A（§7）；⛔ **不**用 `failedCount` 当触发（内存态、重启清零 ⇒ 判据会抖）；`取消` 回已就绪并**保留已下载**（AC9）。**P5 已就绪期检查按钮**：disabled + 可见理由（tooltip「重启应用后即可再次检查」），防检查结果覆盖已下载成果。
+- **P1 主路径**（AppImage / Windows）：①`检查更新` → ②检查中（按钮 loading + disabled，≤10s）→ ③有新版本（带体积）→ ④`立即更新` → ⑤下载中（进度，**不阻塞**任务 / 番茄 / 同步）→ ⑥已就绪 `立即重启更新` / `稍后` → ⑦重启 → 本次启动已完成更新。
+- **P2 不支持应用内更新**（macOS / Linux deb / 未打包开发态）：⛔ 不发起任何更新器检查（AC4b）⇒ 挂载即 `unsupported`，唯一动作 `打开下载页`；⛔ 无 ②③④、无`立即更新`（AC7）。
+- **P3 失败**：任一阶段失败 ⇒ `×` + 可读原因（只来自原因码映射，AC9b）+ **只** `打开下载页`；⛔ **无行内`重试`**（AC4）—— 再试 = 回 R1 点`检查更新`，它**永久可再点**（AC4/5/11），⛔ 不是死路。
+- **P4 数据护栏**：仅「已就绪 → 立即重启更新」且同步队列非空（`pendingCount > 0`）⇒ 卡 A（§7）；⛔ 不用 `failedCount` 当触发（内存态、重启清零）。**P5 已就绪期**：R1 检查按钮 disabled + 可见理由（tooltip「重启应用后即可再次检查」），防检查结果覆盖已下载成果。
 
-## 3 视觉规范（Shadcn 尺度 · 桌面密度 · 4 级字阶）
+## 3 视觉规范（v4：任务列表行的语言，不新造盒子）
 
-- **字阶**（层级走**字号 + 字重 + 颜色**三通道，不靠 1–2px 差）：面板标题 **19/600** · 面板副标题 **12/500 次要色**（**1.58×**，一眼可辨）· 分组标签 **13/600 次要色**（小号 + 字重当标签，不与内容争层级）· 卡片主角「当前版本」**15/600**（19/15 = **1.27×**）· 行标签·状态 **13** · 辅助 **12** · 对话框标题 **14/600**（chrome，静于面板标题）。控件 **30px** · 图标 14 · 圆角 卡 8 / 按钮 6 / 槽 3 · 卡内边距 16。
-- **间距台阶**（邻近性单调，数字即层级）：标签↔辅助 **4** ＜ 标题↔副标题 **6** ＜ 图标↔文字 / 按钮之间 **8** ＜ 分组标签↔卡片 **12** ＜ 卡内 R1↔R2 **1px 分隔线** ＜ 行↔行 **16** ＜ 副标题↔首行 **20** ＜ 组↔组 **36**。⛔ 不手摆像素：任何新元素必须落在这几档。
-- **更新块 = 无副标题的分组标签 + 边框卡**（`1px --nue-border-color` + radius 8）：分组靠**卡片本身**承担 ⇒ 不再写「当前版本与更新状态」这类与内容同义的副标题（同义重复 = 生成味）；⛔ 不加底色、不加阴影。
-- **对齐基准（v3 · 用户实报 bug 的根因，须逐项照做）**：更新块的**组标签**与**卡片（border-box 左缘）**必须与同面板既有行 `.sd-row` / `.sd-group__head` 的**内容左缘同基线**。
-    - **inset 的唯一来源 = 既有行的水平内边距**：宽 / 中档 `var(--nue-padding-sm)`；窄屏 `is-narrow` 档 `var(--nue-padding-2xs)`（`.sd-body.is-narrow .sd-row` / `.sd-group__head`，见 `settings/dialog/index.vue`）⇒ 更新块**取同一 token、随同一断点切换**，⛔ **不得写死 px**（走查量得 ≈9px 是该 token 在本机 root font-size 下的换算值，**不是设计值**）；⛔ **不得出现第二个边缘** —— 卡内 padding 16 属**卡片内部**、不参与外部对齐，不许用「把卡内 padding 加到 25」一类凑数法代替外部 inset。
-    - **可核判据（两档断点各测一次）**：`getBoundingClientRect().left` 满足「`.sd-row__label` ≡ `.sd-update__label`」「`.sd-row` 内容左缘 ≡ 卡片 border-box 左缘」，差 **≤0.5px**。
-- **R1**（48px）：左 `当前版本 1.20.3` **15/600**（块内主角，全稿唯一 15）+ 其下 12/500 上次检查时间；右 `检查更新`（outline：白底 + 1px 边 + 文本 `-800`，30px）。
-- **R2**（46/58px）：左 `[符号 18px 槽] 状态文字 13/600` + 第二行 `补充说明 12/500 次要色`；动作区右对齐（主 `primary` 近黑底白字 / 次 `ghost`·`outline`，30px，按钮间 8px），并预留 `min-width` 防切换跳位。
-- **进度条**：高 3px、宽 240、圆角 2；轨 `-100`、完成 `-900`；右侧百分比 12/600；**不带语义色**（绿/红会被读成成败结论）。
-- **符号与状态色**：只用字符 `– … ↑ ↓ ✓ ×`（18px 槽 + `tabular-nums`）；有新版本 `warning-90`｜已就绪·已是最新 `success-90`｜失败 `error-90`｜中性·进行中·不支持（`unsupported`）`--nue-secondary-text-color`。
-- **侧栏弱提示**：齿轮右上 **6px 空心环 / 1.5px 描边**，外扩 1px 并垫 1px 底色遮罩（不与图标线粘连；`--nue-secondary-text-color`，无填充、无动效）；rail 与抽屉两变体同时具备（DESIGN §4.6）；显示 = 有可用更新 **且** 该版本未在设置看过（设备级 `lastSeenUpdateVersion`）；⛔ 红点/脉冲/toast/改齿轮色/扩命中区；Web 与移动端不渲染。
+- **分两组件**：① 组头 = `.sd-group__head` 的既有口径（`<h3 class="sd-group__title">` 20/600 + `<p class="sd-group__desc">` 12/500 次要色），与「桌面常驻」同档；⛔ 不新增标题类（v3 的 `.sd-update__label` 删除）。② 两行 = `.sd-update__list`（`flex column`；`gap: var(--nue-gap-xs)` = 任务列表行距 0.5rem；组头↔首行沿用既有 `margin-bottom: 1rem`）。间距台阶仍单调：行内 4 ＜ 行↔行 8 ＜ 组头↔行 16 ＜ 组↔组 2.75rem。
+- **行（`.sd-update__row`）**：新增的类只有四个，全部是组合、⛔ 不含新色板 / 新字号 / 新断点 —— `.sd-update__list`（纯布局）· `.sd-update__row`（行样式，逐条取自任务列表行）· `.sd-update__actions`（动作簇 `flex` + `gap: var(--nue-gap-xs)` + `flex: none`）· `.sd-desktop-status.is-muted`（一档色，§4）。行样式：`background-color: var(--nue-primary-color-100)` · `border: 1px solid transparent`（只为几何稳定与「可切 hover」预留，默认不可见）· `border-radius: var(--nue-primary-radius)`（6px）· `min-height: var(--nue-box-size-md)`（40px，任务行的 `min-height: 40px`）· `padding: var(--nue-padding-xs) calc(var(--nue-padding-sm) - 1px)`（8/12 内边距取任务列表 **`--small` 变体**；减 1px 是边框宽度，使行内文字与 `.sd-group__title` / 既有 `.sd-row__label` **左缘同线**）· 宽度铺满 `.sd-group`。底色 + 6px 圆角 + ≥40px 行高，正是 v3 卡片缺的那口气。
+- **行不可点**：⛔ 整行不接管 click、不加 `cursor: pointer`、不加 `tabindex`；hover 反馈只由行内 `nue-button` 原生承担。**默认不加行 hover 描边**（任务行有 `&:hover{border-color: -500}`，但它是可点行）—— 不可点的行给描边 = 假 affordance。若走查时要更强的「块可操作」暗示，加这一行即切换（代价同上，留用户定）。
+- **对齐判据（口径沿用 v3，基准换到本层，≤0.5px）**：`.sd-group__title` / 面板既有 `.sd-row__label` / 新块行内 `.sd-row__label` 三者 `getBoundingClientRect().left` 差 ≤0.5px，宽 / 窄两档各测一次（窄屏用 `calc(var(--nue-padding-2xs) - 1px)` 跟档）。⛔ 不写死 px、⛔ 不留第二个边缘。
+- **R1**：`.sd-row__text`（`.sd-row__label` 14/`-900` + `.sd-row__hint` 12 + 右 `nue-button theme="secondary"` 36px `检查更新`）—— 与 Web 版本行同构，唯一的差别是 hint 文案与 handler。
+- **R2**：行内 `.sd-row__line`（左 `.sd-desktop-status`，右 `.sd-update__actions`（`flex`，`gap: var(--nue-gap-xs)`，`flex: none`））→ 可选 `.sd-row__hint` → 可选 `nue-progress`。**状态符号 + 文字 + 颜色三重冗余**：复用「桌面常驻」的 `.sd-desktop-status` / `__symbol` 家族与 `is-ok` / `is-warn` / `is-error`，新增 `is-muted` 一档（§4），并在 `__symbol` 上补 `min-width: 1em; text-align: center`（消掉 `– … ↑ ✓ ×` 宽度差带来的文字跳动，顺带修好桌面常驻状态的同类跳动）。
+- **不跳位（v4 机制三条，全部落在既有类上）**：① 文字恒左对齐、动作恒右对齐 ⇒ 动作宽度变化只影响右侧，**左侧文字永不移位**（⛔ **撤回 v3 的动作区 `min-width`**，它只为卡内居中服务）；② 首行 `.sd-row__line` 既有 `min-height: 2.5rem`（40px）> 按钮 36px ⇒ 九态首行几何恒定，按钮不上下跳；③ hint / 进度条挂在首行**下方、向下生长**，不回头推动首行。唯一会变高的是 R1（首次检查后 hint 出现，一次性、由用户自己触发），⛔ 不设空占位行。
+- **进度条**：`<nue-progress :stroke-width="2" hide-text>`（既有组件，先例 `task-details/main/index.vue`），只覆写两个组件变量（轨 `-500` / 填 `-900`，理由见 §4），百分比文字用 `.sd-row__hint` 旁挂（⛔ 不塞进 `aria-live`）。
+- **侧栏弱提示 / 卡 A 视觉不变**：齿轮右上 6px 空心环（v3 §3 末段逐字沿用）；卡 A 尺寸与按钮主次沿用 v3 §7。
+- **B 方案（备选，仅当 A 在面板里显得「像另一套列表」时启用）**：删掉 `.sd-update__row` 的底色 / 圆角 / 内边距三条声明，退回面板的无底色平铺行，其余不动。代价 = 回到 v3 走查前的观感（组内两行与「同步状态」无异、块感消失），换来与面板零冲突。切换成本 = 3 条 CSS 声明，画板见 `v4/B-*`，**由用户走查时定，⛔ 本稿不替代用户拍**。取舍一句：面板内已有两处 `-100` 底（`.sd-row__action`、`.sd-permission-notice`）⇒「有底色」不是新语言；但「底色 + 圆角 + 铺满」的行块在设置面板是首次，重量确实高于其它行 —— 正当化理由 = 本块是面板内**唯一带动作**的块。
 
-## 4 token（颜色仍全取 `nue-*`，不引第二套色板）
+## 4 token（颜色仍全取 `nue-*`，⛔ 不引第二套色板；**有底色行必须整体重算**）
 
-- **正文 / 标题**：`--nue-primary-color-900`（17.9）；**次要文字（hint、弱提示环、`unsupported` 符号）**：`--nue-secondary-text-color`（5.74）
-- **有新版本**：符号 `--nue-warning-color-80`（3.78）/ 文字 `-90`（6.73）；**已就绪 · 已是最新**：符号 `--nue-success-color-80`（3.78）/ 文字 `-90`（4.95）
-- **失败**：符号 `--nue-error-color-80`（7.35）/ 文字 `-90`（8.97）
-- **描边与焦点**：卡片/按钮 1px `--nue-border-color`（1.61，**仅装饰**）；焦点环 `2px --nue-primary-color-900` + 2px offset
-- ⛔ **禁用**：`--nue-link-color`（**1.50**）· `success-color-60`（2.36）· `success-90` 落灰底（**3.97**）· 次要文字落 `primary-100` 底（**4.40**）—— 均 <4.5；明暗双档只写变量名、⛔ 不写 hex（暗色由 `--nue-dark-switch` 重算）。
+- 行底 `--nue-primary-color-100`（实测基准：light 模式灰 90% = `#e6e6e6`；下例比值均以它为背景，白底值不可复用）。
+- **主文字** `-900` **13.94** ✓ ｜ **行内 hint 覆写 `--nue-primary-color-700`**（**6.77** ✓）—— ⛔ 不用 `--nue-secondary-text-color`：`-600` 压 `-100` 自测 **4.60**，仅超线 0.1 且与 `DESIGN.md` §4 记录的 **4.40** 口径打架 ⇒ 一律不当达标值（该 0.2 差异已记入「遗留」）。
+- **状态色（文字 + 同色符号）**：`ready`/`up-to-date`/`just-updated` = `success-color-100` **5.29**（**v3 的 `-90` 落灰底只剩 3.97 ✗，必须升一档**）· `available` = `warning-color-90` **5.34** · `failed` = `error-color-90` **7.19** · `idle`/`checking`/`downloading`/`unsupported` = `-700` **6.77**（新增 `.sd-desktop-status.is-muted`，与既有三档同源）。
+- **图形 ≥3**：符号同上逐项 ≥5.29 ✓；进度轨 `--nue-primary-color-500` **3.16** ✓（`-200` 只有 **1.29** ≈ 消失）、填 `-900` 与轨互比 **4.41** ✓。
+- **按钮**（`nue-button` 默认尺寸 36px = `--nue-box-size-df`）：主 `theme="primary"`（底 `-900` / 字 `-100` = **13.94**）· 次 `theme="secondary"`（底 `-200` / 字 `-800` = **7.87**）。⛔ 本块**不用** `ghost`（hover 底 `-100` 与行底同色 ⇒ 无反馈）、⛔ 不用 `.sd-row__action`（底 `-100` 与行底同色 ⇒ 按钮看不见）。
+- 数值口径：WCAG 2.x 相对亮度比，按主题变量公式 `hsl(色相, 饱和度, 亮度)` 换算（brand `hsl(0,0%)` / success `120,70%` / warning `30,80%` / error `10,80%`），light 模式，背景 `#e6e6e6`；暗色由 `--nue-dark-switch` 重算 ⇒ 稿内只写变量名，hex 仅作实测基准。
+- 焦点环 `2px --nue-primary-color-900` + 2px offset（在 `-100` 底上 13.94 ✓）；⛔ 禁用 `--nue-link-color`（白底 1.50）。
 
-## 5 状态（`data-update-state` 九态；符号 · 文字 · 补充说明 · 动作）
+## 5 状态（`data-update-state` 九态：符号 · 状态文字 · hint（可缺） · 动作）
 
-- **`unsupported`**（v3 新增 · AC4b）：`–` 次要（与 `idle` 同符号同色，**两者互斥**：该形态永不进 `checking`）｜ 当前安装方式不支持应用内更新 ｜ 一行原因（`degradedReason`：macOS / Linux deb / 未打包开发态 `dev`；形态未知 ⇒ 兜底句）｜ `打开下载页` **primary**；R1 `检查更新` 保持可点但**不发请求、态与文案不变**（AC4b 字面路径：`checkForUpdates` 调用数 = 0）。
-- **`idle`**：`–` 次要 ｜ 还没检查过更新 ｜ 「点『检查更新』看看有没有新版本」（⛔ 不重复 R1 的检查时间）｜ 无动作（① 在 R1）
-- **`checking`**：`…` 次要 + spinner ｜ 正在检查更新… ｜ — ｜ ① loading + disabled
-- **`available`**：`↑` warning ｜ 有新版本 1.21.0 ｜ 下载约 108 MB，装好后重启生效（体积未知 ⇒ 省前半句）｜ ②`立即更新` primary
-- **`downloading`**：`…` 次要 ｜ 正在下载更新… ｜ 已下载 46 MB / 108 MB（总量未知 ⇒ 只给百分比）+ 3px 条 + `42%` ｜ 无；① disabled
-- **`ready`**：`↓` success ｜ 更新已就绪 ｜ 重启应用后生效；点「稍后」⇒ 文案不变、去掉`稍后` ｜ ②`立即重启更新` + `稍后`
-- **`up-to-date` / `just-updated`**：`✓` success ｜ 已是最新 1.20.3 / 已更新到 1.21.0 ｜ 上次检查：{格式化绝对时间}（与 R1 同源，⛔ 不用「刚刚」类相对时间） / 这是本次启动装好的新版本 ｜ 无（无主按钮，AC6；不落盘）
-- **`failed`**：`×` error ｜ 没能检查更新 / 下载没完成 / 更新包校验没通过 ｜ 可读原因（离线 / 超时 / 服务不可用 / 磁盘空间不足 / 未知兜底），⛔ 不含路径、主机名、环境变量名、`electron-updater` 原文（AC9b）｜ **只** `打开下载页`（**primary**，v3 起由「次按钮」升级为主按钮；⛔ 无行内`重试`）。**再试路径（v3 · AC4/AC11，⛔ 不许做成死路）**：失败态**不提供**独立重试动作 ⇒ 再试 = **回 R1 点`检查更新`**（检查类失败：同一路径直查；下载 / 校验类失败：检查 → 有新版本 → `立即更新` 重下）⇒ 文案**不得**出现「再试一次 / 重试」这类把重试当动作的措辞，只描述事实（copy §三）。
-- **优先级**：`unsupported`（前置 gate、独占）＞ `ready` ＞ `downloading` ＞ `just-updated` ＞ `checking` ＞ `failed` ＞ `available` ＞ `up-to-date` ＞ `idle`；`ready` 期**不得**被检查结果覆盖（P5：R1 检查按钮 disabled + 可见理由）。
-- **`unsupported` 取代原「平台降级 = `available` 换动作」**（v3）：`installMode === 'download-page'`（macOS / deb / 未打包开发态）⇒ 直接 `unsupported`，⛔ 不再有 `checking` / `available` / `立即更新` 路径；`data-update-platform-degraded` 保留为派生布尔（= `installMode === 'download-page'`），状态组合不爆炸、测试面不 ×2。
-- **体积与进度（PRD §六 留白，本稿定稿）**：**显示**。下载前必给体积（已知时，避免流量敏感用户误点）；下载中给 `已下载 X% · a / b`；**总量未知不得写 MB**（⛔ 不显示 0 MB、不编数字），只给百分比或「正在下载」。
-- **`LoadingError` 落点（AC12）**：R2 是**动作状态行**、无区域级三态替换 ⇒ 仅 `checking` 用 `<loading-error :loading="true">`（`height:auto`），`idle` / `unsupported` / `failed` 走**动作级内联** —— **已登记于 `DESIGN.md` §4.1「已登记口径」段**（2026-11-20，PM 裁决采纳）；⛔ 边界：若将来把 R2 做成整块内容区（替换式三态），**必须**回 `LoadingError`。
+- **`unsupported`**（AC4b · 前置 gate、独占）：`–` muted ｜ 当前安装方式不支持应用内更新 ｜ hint = `manual.{mac|deb|dev|unknown}`（`degradedReason` 缺省 ⇒ `manual.unknown`，⛔ 不留空行）｜ `打开下载页` primary；R1 `检查更新` 保持可点但**零请求、态与文案不变**（`checkForUpdates` 调用数 = 0）。
+- **`idle`**：`–` muted ｜ 还没检查过更新 ｜ hint = 点「检查更新」看看有没有新版本 ｜ 无动作（① 在 R1）
+- **`checking`**：`…` muted ｜ 正在检查更新… ｜ **无 hint**（状态文字已说尽，⛔ 不重复）｜ ① loading + disabled
+- **`available`**：`↑` warn ｜ 有新版本 1.21.0 ｜ 下载约 108 MB，装好后重启生效（体积未知 ⇒ 省前半句）｜ `立即更新` primary
+- **`downloading`**：`…` muted ｜ 正在下载更新… ｜ hint = 已下载 46 MB / 108 MB（总量未知 ⇒ 只给百分比）+ 2px 进度条 ｜ 无动作；① disabled
+- **`ready`**：`↓` ok ｜ 更新已就绪 ｜ 重启应用后生效 ｜ `立即重启更新` primary + `稍后` secondary
+- **`up-to-date`**：`✓` ok ｜ 已是最新 1.20.3 ｜ **无 hint**（时间在 R1，⛔ 同一信息不在两块重复）｜ 无动作（AC6）
+- **`just-updated`**：`✓` ok ｜ 已更新到 1.21.0 ｜ 这是本次启动装好的新版本 ｜ 无动作（AC6）
+- **`failed`**：`×` error ｜ 没能检查更新 / 下载没完成 / 更新包校验没通过 ｜ 可读原因（离线 / 超时 / 服务不可用 / 磁盘不足 / 未知兜底），⛔ 不含路径、主机名、环境变量名、`electron-updater` 原文（AC9b）｜ **只** `打开下载页` primary（v3 已定，沿用；⛔ 无行内`重试`，再试走 R1，文案不写「再试一次」）
+- **优先级**：`unsupported` ＞ `ready` ＞ `downloading` ＞ `just-updated` ＞ `checking` ＞ `failed` ＞ `available` ＞ `up-to-date` ＞ `idle`；`ready` 期不得被检查结果覆盖（P5）。`data-update-platform-degraded` 保留为派生布尔（= `installMode === 'download-page'`），状态组合不爆炸。
+- **`LoadingError` 落点（AC12）**：R2 是**动作状态行**（由按钮驱动、结果恒占位，不替换内容区域）⇒ 仅 `checking` 用 `<loading-error :loading="true">`（`height:auto`），其余走动作级内联 —— 已登记 `DESIGN.md` §4.1「已登记口径」段；⛔ 若将来做成替换式整块内容区，**必须**回 `LoadingError`。
 
 ## 6 断点（按面板**可用宽**，非视口；真实对话框 960 − 左栏与边距 ≈ 660–690px）
 
-| 档  | 可用宽                     | 变化（水平对齐 inset 随档切换，见 §3 对齐基准）                                  |
-| :-- | :------------------------- | :------------------------------------------------------------------------------- |
-| 宽  | ≥520px                     | 卡内单行：左文字 + 右动作；inset = `--nue-padding-sm`                            |
-| 中  | 380–520px                  | 动作换到文字下方并右对齐；hint 允许 2 行；inset = `--nue-padding-sm`             |
-| 窄  | <380px（含 ≤445 窄屏形态） | 单列：主按钮 100% 宽、次按钮其下 6px；R2 高度自适应；inset = `--nue-padding-2xs` |
+- **宽 ≥520 / 中 380–520**：行内单行 —— 左文字块 + 右动作，`gap: var(--nue-gap-sm)`；hint 占整行宽、自然换行 ≤2 行，不挤压动作。
+- **窄 <380（含 ≤445 窄屏形态）**：`.sd-update__row` 水平内边距切 `calc(var(--nue-padding-2xs) - 1px)`（跟 `.sd-body.is-narrow` 既有档）；`.sd-row__line` 允许换行、`.sd-update__actions { flex-basis: 100%; justify-content: flex-end }` —— 按钮换到文字下方右对齐，**次序与尺寸不变**（主右、次左）。
+- ⛔ **撤回 v3 的容器查询三档**：卡已不存在，断点全部承接既有 `is-narrow`，`container-type` 不再需要。
 
 ## 7 可用性
 
-- **点击数**：齿轮 → 检查 → 立即更新 → 立即重启 = 4 击（与 PRD 关键路径同源）；`已是最新` 不出现`立即更新`。**反馈时限**：按下 ≤100ms 出 loading；≤1s spinner；>1s 给进度；进度刷新 ≤2 次/秒。**防误操作**：`仍要更新` 用危险样式、默认焦点在`先同步再更新`；`取消` 保留已下载（AC9）。
-- **「再试」不是按钮（v3 · AC4）**：`failed` 态只给`打开下载页`；再试的唯一入口是 R1 `检查更新`（永久可点、⛔ 不因失败进 disabled）—— RD 实现时 ⛔ 不要给 `failed` 添行内 action，文案侧同步删掉「再试一次」措辞（copy §三）。
-- **卡 A（`nue-dialog`，宽 `min(400px, 92vw)`、**高度自适应**——英文文案更长为常态，固定 400×210 会截断）**：标题「有改动还没同步」→ 正文「还有 N 项改动等待同步。」「更新会重启应用，建议先同步完成。」→ `先同步再更新`（primary）｜`仍要更新`（danger）｜`取消`（ghost）。**已定（arch 2026-11-20 读码）**：未同步队列**跨重启保留**（Dexie `syncQueue`，冷启动 `syncService.start()` → `pushAllInner()` → `syncTracker.listDirty()` 重推）⇒ **采用文案 A（软提示）**，风险措辞只描述「还没同步完成」，⛔ **不出现**「失败 / 失败项」字样（`failedCount` 是内存态、重启清零，写「失败」会自相矛盾）；正文数量取队列长度。
+- **点击数**：齿轮 → 检查 → 立即更新 → 立即重启 = 4 击（与 PRD 关键路径同源）；`已是最新` 不出现`立即更新`。**反馈时限**：按下 ≤100ms 出 loading；≤1s spinner；>1s 给进度；进度刷新 ≤2 次/秒。
+- **⛔ 行不可点**：本块的行不是列表条目，只有按钮可点 —— 不给 hover 描边（默认）/ 不用手型光标 / 不用整行 focus，避免用户「点行没反应」。
+- **卡 A（`nue-dialog`，宽 `min(400px, 92vw)`、高度自适应）**：标题「有改动还没同步」→「还有 N 项改动等待同步。」「更新会重启应用，建议先同步完成。」→ `先同步再更新`（primary，默认焦点）｜`仍要更新`（danger）｜`取消`（`ghost` —— 对话框白底上可用，本档不变量不适用于有底色行，见 §4）。未同步队列**跨重启保留**（Dexie `syncQueue` → 冷启动重推）⇒ 软提示口径，⛔ 不出现「失败 / 失败项」字样。**体积与进度**：**显示** —— 下载前必给体积（已知时）、下载中给 `已下载 X% · a / b`，总量未知不得写 MB、⛔ 不显示 0 MB。
 
 ## 8 无障碍
 
-- **对比度**：文本 `-90` 档 ≥4.5（4.95 / 6.73 / 8.97）；图形 `-80` 档 3.78 / 5.39 / 7.35 ≥3；`unsupported` 用次要文字色 **5.74** ✓；⛔ 不用 §4 禁用项（含「次要文字落灰底 4.40」）。
-- **键盘 · live 区 · 命中区**：①→②→次按钮 顺序可达，焦点环 2px + 2px offset；卡 A 焦点陷阱 + Esc 与焦点归还；读屏首帧（`loaded=false`）不得播报「已是最新」；状态行 `role="status"` + `aria-live="polite"` **只挂阶段文案节点**，百分比走 `progressbar` 的 `aria-valuenow/valuemin/valuemax/valuetext`（无总量 ⇒ `aria-valuetext="正在下载，进度未知"`）；命中区 **30px** —— **已在 `DESIGN.md` §3「已登记例外」段登记**（2026-11-20 · 仅本块，不改全局口径；键盘可达与 focus 可见不降级）。
+- **对比度**：全部按 §4 实测值交付 —— 文字 ≥5.29、图形 ≥3.16、按钮 ≥7.87 ⇒ 全项过 4.5 / 3；⛔ 白底值不得直接搬到 `-100` 底（`success-90` 3.97、`-600` 4.60 即此坑）。
+- **键盘 · live 区 · 命中区**：R1 按钮 → R2 主 → R2 次，顺序可达，焦点环 2px + 2px offset（`-900` 在 `-100` 底 13.94 ✓）；卡 A 焦点陷阱 + Esc 与焦点归还；读屏首帧（`loaded=false`）不得播报「已是最新」；`role="status"` + `aria-live="polite"` 只挂**状态文字节点**，百分比走 `progressbar` 的 `aria-valuenow/valuemin/valuemax/valuetext`（无总量 ⇒ `aria-valuetext="正在下载，进度未知"`）；符号 `aria-hidden`（文字已含语义）、与文字**同色同档** ⇒ 去色后仍靠字形 + 文字可辨。命中区：按钮 36px（`--nue-box-size-df`）、行高 ≥40px，**30px 例外作废**（`DESIGN.md` §3 撤回），键盘可达与 `focus-visible` 不降级。
 
-## 9 实现契约 · 坑 · AC
+## 9 实现契约 · 坑 · AC · 作图
 
-- **测试钩子**：R2 根挂 `data-setting-id="update-status"` + `data-update-state="<枚举>"`（含 `unsupported`）+ `data-update-platform-degraded="true|false"`；R1 保留 `data-setting-id="version"` / `data-setting-action="check-update"`；**契约增补（AC4b，供 RD 落地）**：`DesktopUpdateManualReason` 增 `'dev'`（未打包开发态），`resolveInstallMode` 须**先按 `isPackaged` 判 dev** 再按平台判 mac/deb（现状 `linux + !isPackaged` 会落到 `deb`，把开发态写成「deb 版由系统包管理」，与 AC4b 不符）；`degradedReason` 缺省 ⇒ 界面走 `manual.unknown` 兜底。
-- **坑**：① 主题**无强调色**（brand hue 0 + s0 ⇒ 纯灰阶），「有新版本」只能 warning；② 语义文字叠任何 tint 底掉到 4 以下（success-90 on 灰 100 = **3.97**，次要文字 on 灰 100 = **4.40**）⇒ 要么无底、要么升 `-100`；③ `--nue-link-color` 浅色 **1.50** 不能当链接色；④ `LoadingError` 的 empty/error = `nue-empty` + 6rem 插画，塞进卡片会破版；⑤ 已就绪期检查按钮只 disabled 无理由 ⇒ 被读成卡死（AC11）；⑥ 状态行高度不恒定 ⇒ 下载完成时按钮跳位（动作区预留 `min-width`）；⑦ 百分比进 `aria-live` 会刷屏；⑧ `unsupported` 是**前置 gate**，⛔ 不要再退化成「`available` 换动作」的布尔组合；⑨ 体积未知不得编 MB；⑩ 边框 1.61:1 只可装饰，承载语义要另给 ≥3 的描边；⑪ ⛔ 图标位不得用「方块描边」占位 —— 14px 圆角灰描边方块与**未勾选复选框中**同形，会被读成表单控件（本稿 v2 内部评审实际踩到，改为 `nue-icon` 同名线稿图标：账户 / 外观 / 提醒 / 数据 / 齿轮 / 同步 / 关闭）；⑫ 三级标题挤在 12–19px 内时**不要**再靠字号造层级（15 vs 13 = 1.15 肉眼无差）⇒ 分组标签降为「小号 + 600 + 次要色」，字号预算留给 H1 与块内主角；⑬ ⛔ **错误原文不外露（AC9b）**：界面文本只取原因码映射键，`electron-updater` 原文（如 `APPIMAGE env is not defined`）/ 环境变量名 / 文件路径 / 主机名只进本地日志，**且日志也不得含本机路径**；⑭ 更新块是另起的 DOM 行 ⇒ 极易丢掉 §3 的 inset（v3 实报 bug 即此），新加子块一律先核 §3 判据。
-- **AC 对照**：AC1 →`available`｜AC2 →`ready`+§7｜AC3 →P1｜AC4 →`failed`（只`打开下载页`，再试走 R1）｜AC4b →`unsupported`（挂载即展示、零请求、R1 点后态不变）｜AC5 →`failed`（校验未过单列，再试走 R1 重下）｜AC6 →`up-to-date` 无主按钮｜AC7 →§5 `unsupported`｜AC8 →R1 hint 复用缓存时间、不新增请求｜AC9 →§7｜AC9b →§5 `failed` 原因码映射 + 坑⑬｜AC10 →整块 `v-if="isDesktop"`、Web 行不变｜AC11 →P3 + R1 永久可点｜AC12 →§8 + `LoadingError` 落点（已登记 `DESIGN.md` §4.1）｜AC13 → 双语键值见 copy 文件（新增 `unsupported` / `manual.dev` / `manual.unknown`）。
+- **测试钩子**：R2 根 `data-setting-id="update-status"` + `data-update-state="<枚举>"`（含 `unsupported`）+ `data-update-platform-degraded`；R1 `data-setting-id="version"` / `data-setting-action="check-update"`；`DesktopUpdateManualReason` 增 `'dev'`，`resolveInstallMode` **先按 `isPackaged` 判 dev** 再判 mac/deb（v3 增补，沿用）。
+- **坑（v4 新增 ②③⑧，其余沿用 v3）**：① 主题无强调色（brand hue 0 + s0 ⇒ 纯灰阶），「有新版本」只能 warning；② **有底色行会作废全部白底实测值** —— 任何新增文字必须先算 `-100` 底比值，`success-90`(3.97) / `-600`(4.60) 是现成反例；③ **有底色行内 `.sd-row__action` 与 `ghost` 都不可用**（底色 / hover 底与行底同为 `-100` ⇒ 元素消失或零反馈），本块按钮只走 `primary` / `secondary`；④ ⛔ 错误原文不外露（AC9b，日志亦不含本机路径）；⑤ `unsupported` 是前置 gate，⛔ 不退化成「`available` 换动作」；⑥ 体积未知不得编 MB；⑦ 百分比不进 `aria-live`；⑧ **⛔ 行不得承接点击**（给 hover 描边等于承诺可点）；⑨ 新加子块先核 §3 对齐判据（v3 走查实报 bug 即此，v4 靠 `calc(...- 1px)` 兜住）；⑩ 块内不另设「主角字号」：组头沿用 `.sd-group__title`（20px）、行文字沿用 `.sd-row__label`（14px），层级靠**档位差 1.43×**；v3 的 15 vs 13 = 1.15× 肉眼无差，是「字号造层级」的失败样本。
+- **AC 对照**：AC1 →`available`｜AC2 →`ready` + §7｜AC3 →P1｜AC4 →`failed`（只`打开下载页`，再试走 R1）｜AC4b →`unsupported`（挂载即展示、零请求）｜AC5 →`failed`（校验未过单列）｜AC6 →`up-to-date` 无主按钮｜AC7 →§5 `unsupported`｜AC8 →R1 hint 复用缓存时间、不新增请求｜AC9 →§7｜AC9b →§5 `failed` 原因码映射 + 坑④｜AC10 →R1 与 Web 行共用一套 DOM｜AC11 →P3 + R1 永久可点｜AC12 →§5 `LoadingError` 落点｜AC13 →copy 文件（含 `unsupported` / `manual.dev` / `manual.unknown`）。
+- **Penpot 作图清单**（文件「桌面端」/ 页 `设置页`；图层命名 `区块/角色`，颜色一律绑 `nue-*` 同名变量，⛔ 不建第二套色板）：`v4/A-更新块-9态` = 9 张 `720×260`（组头 + 两行）；`v4/A-并排对照` = `1080×420` 三列（更新块 `ready` ｜ 同步状态行 ｜ 本地数据与安全折叠行）；`v4/A-三方对照` = `1080×360` 三行并排（更新块行 ｜ `.nue-div--todo-list-main__row` ｜ `.sd-row`），标注底色 `-100` / 圆角 6 / 行高 40；`v4/B-无底平铺` = 9 张同尺寸（行底透明，其余相同）；`v4/护栏` `520×300`、`v4/rail` 与 `v4/抽屉` `470×300`（沿用 v3 内容）。
