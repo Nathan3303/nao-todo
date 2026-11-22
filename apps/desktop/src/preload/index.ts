@@ -1,8 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { DesktopUpdateInstallOptions, DesktopUpdateStatus } from '@nao-todo/shared'
 import {
     DESKTOP_IPC_CHANNELS,
     DESKTOP_ONEWAY_CHANNELS,
     DESKTOP_POWER_EVENT_CHANNEL,
+    DESKTOP_UPDATE_CHANNELS,
+    DESKTOP_UPDATE_STATUS_CHANNEL,
     DESKTOP_WINDOW_VISIBILITY_CHANNEL
 } from '../main/ipc'
 
@@ -24,6 +27,16 @@ import {
 let lastWindowVisible: boolean | null = null
 ipcRenderer.on(DESKTOP_WINDOW_VISIBILITY_CHANNEL, (_event, visible: unknown) => {
     lastWindowVisible = visible === true
+})
+
+/**
+ * 最近一次更新状态（T736 / AC1–AC11）
+ * @description 同 `lastWindowVisible` 的理由：preload 在页面脚本之前执行，先在最早时刻缓存
+ *              主进程推播的状态；渲染层订阅时先回放，避开「主进程先推、渲染层后订」的初值空洞。
+ */
+let lastUpdateStatus: DesktopUpdateStatus | null = null
+ipcRenderer.on(DESKTOP_UPDATE_STATUS_CHANNEL, (_event, status: unknown) => {
+    if (status && typeof status === 'object') lastUpdateStatus = status as DesktopUpdateStatus
 })
 
 contextBridge.exposeInMainWorld('desktopAPI', {
@@ -54,5 +67,28 @@ contextBridge.exposeInMainWorld('desktopAPI', {
         // 回放已知初值（若已收到过）——订阅方无需再等下一次 show/hide
         if (lastWindowVisible !== null) callback(lastWindowVisible)
         return () => ipcRenderer.removeListener(DESKTOP_WINDOW_VISIBILITY_CHANNEL, listener)
+    },
+    /**
+     * 应用内自我更新（T736：invoke 为主 + 单订阅；载荷全为窄对象，⛔ 无任意路径/命令）
+     * @description 安装时机由用户显式触发（`restartToInstall`），下载完成不自动安装。
+     */
+    update: {
+        getStatus: (): Promise<DesktopUpdateStatus> =>
+            ipcRenderer.invoke(DESKTOP_UPDATE_CHANNELS.getStatus),
+        check: (): Promise<DesktopUpdateStatus> =>
+            ipcRenderer.invoke(DESKTOP_UPDATE_CHANNELS.check),
+        download: (): Promise<DesktopUpdateStatus> =>
+            ipcRenderer.invoke(DESKTOP_UPDATE_CHANNELS.download),
+        restartToInstall: (options?: DesktopUpdateInstallOptions): Promise<void> =>
+            ipcRenderer.invoke(DESKTOP_UPDATE_CHANNELS.install, options ?? {}),
+        openDownloadPage: (): Promise<void> =>
+            ipcRenderer.invoke(DESKTOP_UPDATE_CHANNELS.openDownloadPage),
+        onStatus: (callback: (status: DesktopUpdateStatus) => void) => {
+            const listener = (_event: unknown, status: DesktopUpdateStatus) => callback(status)
+            ipcRenderer.on(DESKTOP_UPDATE_STATUS_CHANNEL, listener)
+            // 回放已知初值：订阅方无需再等下一次状态变化（或先调 getStatus）
+            if (lastUpdateStatus) callback(lastUpdateStatus)
+            return () => ipcRenderer.removeListener(DESKTOP_UPDATE_STATUS_CHANNEL, listener)
+        }
     }
 })

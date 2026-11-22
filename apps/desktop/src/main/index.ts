@@ -11,6 +11,7 @@ import {
     shell
 } from 'electron'
 import { enforceSingleInstance } from './single-instance'
+import type { DesktopUpdateStatus } from '@nao-todo/shared'
 import {
     createAppLifecycle,
     shouldShowWindowOnReady,
@@ -30,8 +31,10 @@ import {
     DESKTOP_POWER_EVENT_CHANNEL,
     bindWindowVisibility,
     registerDesktopIpcHandlers,
-    registerDesktopTrayTooltipHandler
+    registerDesktopTrayTooltipHandler,
+    registerDesktopUpdateHandlers
 } from './ipc'
+import { setupDesktopUpdater, type DesktopUpdaterHandle } from './updater'
 
 /**
  * Windows toast 通知依赖 AppUserModelID，未设置则打包版系统通知不显示
@@ -95,6 +98,8 @@ let trayHandle: TrayHandle | null = null
 let trayStatus: TrayStatus = 'unsupported'
 /** 首次 `ready-to-show` 的显示决策是否已用掉（自启静默只针对开机那次） */
 let startupShowResolved = false
+/** 更新器句柄（初始化为 null：不可用时对外表现为一次可读失败，⛔ 不影响窗口创建） */
+let updaterHandle: DesktopUpdaterHandle | null = null
 
 /** 首次「收进托盘」提示文案（主进程不引 i18n 包：其依赖 vue-i18n，不该进主进程产物） */
 const trayHintText = (): string =>
@@ -181,6 +186,9 @@ const createWindow = (): BrowserWindow => {
     // 恒为 visible，不能拿它冒充「窗口在托盘里」）；可见性唯一信号 = 主进程 `show`/`hide` → IPC
     bindWindowVisibility(win)
 
+    // T736：页面加载完成后补推一次更新状态（preload 缓存可能落后于主进程真值）
+    updaterHandle?.bindWindow(win)
+
     if (isDev && process.env.ELECTRON_RENDERER_URL) {
         win.loadURL(process.env.ELECTRON_RENDERER_URL)
     } else {
@@ -211,6 +219,36 @@ const ensureAutostartIntent = (): void => {
     writeAppSettings(dir, {})
 }
 
+/**
+ * 更新器不可用时的降级状态（AC11：面板仍是可读失败 + 重试，⛔ 不静默空块）
+ * @description 只在装配抛错时出现；文案由渲染层按 `failed` + `reason: 'unknown'` 显示。
+ */
+const unavailableUpdateStatus = (): DesktopUpdateStatus => ({
+    state: 'failed',
+    currentVersion: app.getVersion(),
+    installMode: 'download-page',
+    failure: { stage: 'check', reason: 'unknown' },
+    updateAvailable: false
+})
+
+/**
+ * 装配更新器（ADR「启动不阻断」：任何异常只降级为不可用，⛔ 不得影响窗口创建）
+ */
+const setupUpdater = (): void => {
+    try {
+        updaterHandle = setupDesktopUpdater({
+            dir: userDataDir(),
+            getWindow: () => mainWindow,
+            onError: () => {
+                // 更新器内部异常只落本地（无遥测）：不弹窗、不阻断、不影响其它能力
+                // 入参已是脱敏摘要（只有原因码，AC9b）⇒ 日志不含本机路径 / 底层原文
+            }
+        })
+    } catch {
+        updaterHandle = null
+    }
+}
+
 /** 注册桌面端 IPC（4 个窄通道，来源受信校验） */
 const registerIpc = (): void => {
     registerDesktopIpcHandlers({
@@ -235,6 +273,23 @@ const registerIpc = (): void => {
         ipcMain,
         isTrustedUrl,
         setTrayTooltip: (text) => trayHandle?.setTooltip(text)
+    })
+
+    // T736：更新通道（invoke 为主；惰性读 `updaterHandle`，未装配时给可读失败态）
+    registerDesktopUpdateHandlers({
+        ipcMain,
+        isTrustedUrl,
+        updater: {
+            getStatus: () => updaterHandle?.getStatus() ?? unavailableUpdateStatus(),
+            check: () =>
+                updaterHandle?.check({ manual: true }) ??
+                Promise.resolve(unavailableUpdateStatus()),
+            download: () => updaterHandle?.download() ?? Promise.resolve(unavailableUpdateStatus()),
+            install: (options) =>
+                updaterHandle?.install(options) ??
+                Promise.resolve({ installed: false, blocked: 'not-ready' as const }),
+            openDownloadPage: () => updaterHandle?.openDownloadPage() ?? Promise.resolve()
+        }
     })
 }
 
@@ -278,7 +333,11 @@ if (isPrimaryInstance) {
 
         registerIpc()
         ensureAutostartIntent()
+        // 更新器装配在窗口创建**之前**完成（零网络、零磁盘写），但窗口创建不受其成败影响
+        setupUpdater()
         createWindow()
+        // 静默检查延后 ≥10s（NFR：不阻塞首屏），内部全链路 `try/catch`
+        updaterHandle?.start()
 
         // 休眠唤醒 ⇒ 通知渲染层补续会话（AC11：唤醒后自动补续）
         powerMonitor.on('resume', () => {

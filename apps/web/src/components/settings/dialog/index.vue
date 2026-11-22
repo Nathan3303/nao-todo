@@ -606,6 +606,9 @@ onUnmounted(unbindSettingsDialogHost)
 
 .sd-desktop-status__symbol {
     flex: none;
+    /* 符号宽度对齐：`– … ↑ ✓ ×` 字形宽不一 ⇒ 不给定宽时右侧文字逐态左右跳（v4 顺带修好本行同类跳动） */
+    min-width: 1em;
+    text-align: center;
     font-weight: 700;
 }
 
@@ -619,6 +622,11 @@ onUnmounted(unbindSettingsDialogHost)
 
 .sd-desktop-status.is-error {
     color: var(--nue-error-color-90);
+}
+
+/* 无结论的中性态（idle / checking / downloading / unsupported）：-700 压 -100 底 = 6.77 ✓ */
+.sd-desktop-status.is-muted {
+    color: var(--nue-primary-color-700);
 }
 
 /* 行内仅右对齐一个动作（如「退出 NaoTodo」） */

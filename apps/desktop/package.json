@@ -87,6 +87,7 @@
         "@nao-todo/presentation-identity": "workspace:*",
         "@nao-todo/shared": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
+        "electron-updater": "^6.8.11",
         "nue-ui": "1.15.3",
         "nue-ui-iconfont": "0.2.6",
         "nue-ui-theme-shadlike": "0.13.30",

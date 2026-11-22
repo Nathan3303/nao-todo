@@ -26,11 +26,34 @@
 - **口径提醒**：`desktop:build` 现在「构建 + 守卫」两段，rc=0 不再等价于「仅仅编译通过」；`.github/workflows/**` 未动。
 - **✅ 产物注释修复已合并（2026-11-20）**：PR **#356 MERGED** ⇒ squash **`1fad3ff4`**（CI `check` + `test` 双绿、分支已删）。
 
-## 一之三、`v1.20.3` 发版（PATCH · 在制）
+## 一之三、`v1.20.3` 发版（PATCH · ✅ 已发布 2026-11-20）
 
 - **范围**：两批合并后的事实（工程治理 PR #355 `8f564ab5` + 产物注释 PR #356 `1fad3ff4`）；用户 2026-11-20「发」= 授权发版。
-- **分支** `nao/release-v1.20.3`：版本 root / `apps/web` / `apps/desktop` `1.20.2 → 1.20.3`；`CHANGELOG.md` + `docs/releases/v1.20.3.md`；内部包无公共 API 变化（注释与测试面）⇒ **不 bump**。
-- **待办**：PR → RD 合并 → 注解 tag `v1.20.3` 指向 main 合并提交 → Release（正文与 `docs/releases/v1.20.3.md` 归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核。
+- **已闭环（2026-11-20 实核）**：发版 PR **#357** ⇒ squash **`7cd26fb5`** · 注解 tag `v1.20.3` 指向该合并提交 · Release 已发布（8 产物含三份 `latest*.yml`）。
+
+## 一之四、桌面端应用内自我更新（`feat` · 在制 · Issue #358）
+
+- **需求**：Desktop 端内置「检查更新 + 立即更新」（用户 2026-11-20 提出；5 项澄清已答：Linux/Windows 原地更新 · macOS 与 deb 降级下载页 · 启动静默检查 + 手动入口 · 下载完提示重启/稍后 · 未同步改动需护栏）。
+- **PRD**：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13 · RICE ≈0.29 · Must）。**分支** `feat/358-desktop-self-update`（自 `origin/main` `7cd26fb5`）。
+- **开工确认（用户 2026-11-20）**：按卡开工 · arch 与 uiux 并行 · 设计稿验收模型 = **A 用户本人确认** · 范围**全量照 PRD**（含启动静默检查与侧栏弱提示）。
+- **回执**：`T733` arch **done** `4a4d26ac` ⇒ `docs/adr/2026-11-20-desktop-self-update.md`（选官方 `electron-updater` 6.x + GitHub Releases 唯一源；构建/CI **本期不改**；平台矩阵 = 纯环境判定；护栏复用既有 `useSyncStatus()`；`autoDownload` / `autoInstallOnAppQuit` = false；坏包 = 撤资产 + 发更高 PATCH；`T733b` `fc64c6c0` 补 QA 六条可测性前置，**全部可满足**）· `T735` qa **done** ⇒ 接缝定稿 = **2 主接缝 + 1 轮一次性证据（不进 CI）** + 6 条可测性前置（已写入 PRD §七）· `T734` uiux **done**（`74094eb9`…`67a97f69`）：设计稿 73 行 + 双语文案 88 行 + `docs/designs/README.md` 索引，Penpot 9 画板（仓外）；AC1–AC13 逐条落点给出、AC12 一处受控偏离已自报。
+- **用户设计稿验收（2026-11-20）＝ 通过**（模型 A）：Shadcn 桌面密度照旧、**按钮 30px 保留**、护栏取**文案 A（软提示）**。
+- **三项遗留裁决（PM，2026-11-20）**：① AC12 `LoadingError` 仅 `checking` 用，`idle`/`failed` 走 DESIGN §4.1「动作级内联」⇒ **受控偏离采纳**，但须在 `DESIGN.md` §4.1 登记；② 30px **只在本块登记例外**（不改 §3 全局口径、不推全仓 30px），须在 `DESIGN.md` §3 已登记例外段补一行；③ 护栏文案事实已由 arch `T733c` 读码给出 ⇒ **队列跨重启保留**（Dexie `nao-todo-desktop.syncQueue`，冷启动 `syncService.start()`→`pushAllInner()`→`syncTracker.listDirty()` 重推），但 **`failedCount` 是内存态、重启清零** ⇒ 护栏判据必须用「队列非空」，⛔ 不得用 `failedCount`；文案 A 维持且禁「失败」措辞。
+- **RD 派单（2026-11-20）**：`T736` rd-infra（主进程 electron 零依赖内核 + 五端口 + `resolveInstallMode` 纯函数 + preload 契约 + `electron-updater` 依赖；契约先落并通知 rd-fe；PR owner + Draft PR）· `T737` rd-fe（`data-panel` 版本行升级为卡 + `use-desktop-updater` 独立 hook + 卡 A + 侧栏 6px 弱提示 + i18n 双键）。Reviewer = qa。
+- **RD 交付（2026-11-21）**：`T736` rd-infra（`84348874` 契约 · `f01d17a3` 内核五端口 + 八态 + adapter + preload · `d9dae92d` 惰性加载 · `354c9342` 装配去 electron · `0b3dd20f` 三条硬约束静态守卫）· `T737` rd-fe（`f3f3d939` 面板/hook/卡 A/弱提示/i18n · `415d8e35` 删死键）· **PR #359**（Draft，base main，46 文件）。
+- **qa 独立复验（`T738`，`docs/reports/358-qa-report.md`）＝ 有条件 PASS**：全仓 464 文件 / 3662 例 / 0 红；15 个变异 14 杀 1 存活 ⇒ 4 项缺陷（QA-01 P2 判据缺维度 · QA-02 P3 注释过度承诺 · QA-03 P3 下载失败无 reason · QA-04 P3 adapter 零用例）。
+- **缺陷闭环**：`T739` rd-fe `0b8d4d7a`（QA-01 补断言 + 反向对照，变异 1 红 40 绿）· `T740` rd-infra `026314d3`（QA-02 仅改注释 · QA-03 补 reason + 真实网络栈超时码 · QA-04 adapter 入库 28 例；三次变异 11/1/1 红）。
+- **qa 复签中断（如实记）**：`T741` 三轮均被模型网络 `ECONNREFUSED` 打断（非任务问题）；缺交的 `358-qa-cases.md` 已由该轮写入并入库，缺陷编号 `DEF-01…04` → `QA-01…04`（避免与缺陷池撞名），末次机械复核由 PM 执行并在报告 §一 末如实标注（**qa 未复签**）。
+- **批末门禁（PM 亲跑，`026314d3` 之后，独占无并发）**：`vp test --run` **465 文件 / 3692 例 / 3686 通过 / 6 跳过 / 0 红**（317.84s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` 17.44s rc=0 · `desktop:build` 19.59s rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
+- **用户走查第一轮（2026-11-21）＝ 三条实报**：① 「关于与更新」标签/卡片比同面板其它行**左移 12px**（根因：`sd-row`/`sd-group__head` 带 `--nue-padding-sm`，新块未带）② 界面出现 `APPIMAGE env is not defined, current application is not an AppImage` 这类更新器原文 ③ 检查失败不该让用户「重试」，应引导下载页。
+- **三条修复**：`T742` rd-fe `39a62102`（对齐：真实 Chromium 量 `rectLeft` 40/40/40，窄档 12/12/12，delta 0）· `T743` uiux `db696841`（稿 v3：对齐基准/`failed` 去重试/新增 `unsupported` 态 + 指出 `resolveInstallMode` 判定顺序 bug）· `T744` rd-infra `9b27e05e`（降级形态**零请求**（`checker.check` 调用数 0 有断言）· 状态载荷只留原因码、日志改脱敏摘要（原文含 `APPIMAGE`/路径/主机名零命中）· 判定先 `isPackaged` ⇒ `dev` · 变异 3 红 / 5 红）· `T745` rd-fe `1bf6e692`（渲染第九态 `unsupported` · `failed` 删行内「重试」、`打开下载页` 升 primary、R1 仍可点 · 变异 3 红 / 2 红）。PRD 同步：AC4 改、新增 AC4b / AC9b（`7598700c`）。
+- **第二轮批末门禁（PM 亲跑 `1bf6e692`，独占无并发）**：`vp test --run` **465 文件 / 3708 例 / 3702 通过 / 6 跳过 / 0 红**（435s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
+- **用户走查第二轮（2026-11-21）＝ 观感否决**：原话「还是很难看，不符合当前项目的风格」，点名参照**任务列表主视图**。诊断 = v3 自造了第三套盒子（1px 边框 + radius 8 + 卡内定高 + 自定义标签），而项目行语言是「有底色块 + 悬停描边 / 平铺行」。
+- **v4 设计稿 + 重写**：`T746` uiux `26503e02`/`2f5d5d96`（组头 + 两条有底色行，逐字对齐 `.nue-div--todo-list-main__row` 的 `--small` 变体；控件回 `nue-button` 36px，**30px 例外撤回**（`DESIGN.md` §3 同步撤登记）；灰底对比度全部重算：`success-100` 5.29 · hint `-700` 6.77 · 轨 `-500` 3.16）· `T747` rd-fe `eaed4fcb`（**重写**而非修补：删盒式卡整套、行 40 最小高/`-100` 底/6px 圆角/hover 描边、整行不可点；真实 Chromium 实测 行高 56、按钮 36、`rectLeft` 与同步行同 28、窄屏 8/3）。B 备选方案 = 删行底色/圆角/内边距三条声明（用户走查时定）。
+- **walkthrough 基建**：`T748` rd-infra `27e787dc`（开发态假更新源：`isPackaged === false` **且** `NAO_UPDATE_FAKE_FEED` 非空才生效，值为 JSON 配置绝对路径，每次点击重读 ⇒ 改文件即切场景；生产不生效有断言：端口对象同一性 + 配置文件零次读取 + 删守卫即 2 例红）。两处诚实偏离：① 假源把 env 报成「已打包 + win32」，否则 AC4b 前置 gate 恒 `unsupported`、其余八态物理不可达 ② `just-updated` 由「假安装后按真实重启语义重建内核」达成（生产路径不可达，`fake` 恒 `false`）。
+- **第三轮批末门禁（PM 亲跑 `27e787dc`，独占无并发）**：`vp test --run` **466 文件 / 3744 例 / 3738 通过 / 6 跳过 / 0 红**（348.67s）· `vp check` 2024 文件格式 pass + 1611 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0 · 移动端红线 **0 行**。
+- **待办**：用户 dev 走查九态（命令已给）→ 定 A/B → PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
+- **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
 ## 二、上一批次终态
 

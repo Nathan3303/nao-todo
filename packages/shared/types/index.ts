@@ -10,6 +10,9 @@ export type * from './golang'
 // 任务提醒事件类型（原 SSE 事件，T527 迁移）
 export type * from './reminder'
 
+// 桌面端应用内自我更新契约（状态机 / 安装形态 / preload 通道）
+export type * from './desktop-update'
+
 // 可空字符串 可空日期字符串
 export type NullableString = string | null
 export type NullableDateString = NullableString
