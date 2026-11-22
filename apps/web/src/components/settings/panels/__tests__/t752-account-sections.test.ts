@@ -289,13 +289,18 @@ describe('② 登录设备：组件内同名小标题不再出现', () => {
         expect(component).not.toContain('settings.sessionTitle')
     })
 
-    it('P：刷新按钮仍在（列表头保留，行为零改动）', async () => {
+    it('P：刷新按钮已移出列表头（T754：改由设置面板分区组头承接）', () => {
         const component = stripComments(
             sourceOf('/session-manager.vue', sessionManagerSources as Record<string, string>)
         )
-        // 图标按钮 + tooltip 名仍在（视觉不动：只删标题一行）
-        expect(component).toContain('icon="refresh"')
-        expect(component).toContain("t('settings.sessionRefresh')")
+        // 列表组件不再自带刷新图标按钮（否则面板内会出现两个刷新）
+        expect(component).not.toContain('icon="refresh"')
+        // 刷新能力以**最小面**暴露给宿主：`refresh()`（节流仍在组件内）
+        expect(component).toContain('defineExpose({ refresh: handleRefreshSessions })')
+        // 面板侧承接：图标 + tooltip 名（与改前同语义）
+        const panel = accountPanelSource()
+        expect(panel).toContain('icon="refresh"')
+        expect(panel).toContain("t('settings.sessionRefresh')")
     })
 })
 

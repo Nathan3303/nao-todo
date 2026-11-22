@@ -233,8 +233,10 @@ describe('AC4 间距台阶 L0–L6：每层一个唯一来源（源级）', () =
     })
 
     it('calc() 只出现在「容器已带行 gap」的两处（组头 / 子块）', () => {
+        // T754：旧 `.sd-danger-row` 的负内缩 calc 随「改库按钮」一并删除 ⇒ 4 → 3
+        // （剩：顶栏子块 / 组头 / 折叠行开关 三处负内缩或补齐）
         const calcs = [...dialogStyle.matchAll(/calc\(/g)]
-        expect(calcs.length, 'calc 数量变化请同步本用例与设计稿 §3d').toBe(4)
+        expect(calcs.length, 'calc 数量变化请同步本用例与设计稿 §3d').toBe(3)
         for (const selector of ['.sd-group__head', '.sd-subblock']) {
             expect(
                 declaration(selector, 'margin-top') + declaration(selector, 'margin-bottom')

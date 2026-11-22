@@ -421,6 +421,33 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.5;
 }
 
+/* 组头右侧动作（T754：账户「登录设备」的刷新按钮，用户要求与分区主标题同一行）：
+   仅本分区用 `--actions` 修饰符 ⇒ **其余三分区组头形态零变化**（仍是上面那条纵排规则）。
+   布局：标题/动作同一行（动作钉在标题行起点 ⇒ `rect.top` 与标题同基线）、副标题占满下方一行；
+   动作列 `auto` ⇒ 按钮右缘与组头内容右缘对齐（横轴内缩仍只由 `.sd-group` 的 `padding-inline` 提供）。 */
+.sd-group__head--actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        'title actions'
+        'desc actions';
+    /* 标题 ↔ 动作 = 8（L5 行内横向档 `--nue-gap-xs`；本仓主题下 `--nue-gap-sm` 为 12，取值以 8 为准） */
+    column-gap: var(--nue-gap-xs);
+    align-items: start;
+}
+
+.sd-group__head--actions > .sd-group__title {
+    grid-area: title;
+}
+
+.sd-group__head--actions > .sd-group__desc {
+    grid-area: desc;
+}
+
+.sd-group__head--actions > .sd-group__head-action {
+    grid-area: actions;
+}
+
 /* ===== 设置行：不画分隔线，靠行高 + 组内 gap 区分（L4）
    行自身 ⛔ 无 `padding-block`（纵向间距由 `.sd-group` 的 gap 唯一承担）、⛔ 无 `padding-inline`
    （横轴由 `.sd-group` 的 `padding-inline` 唯一承担）⇒ 文本统一落在同一左轴线。 ===== */
@@ -530,44 +557,19 @@ onUnmounted(unbindSettingsDialogHost)
     outline-offset: 1px;
 }
 
-/* ===== 危险区：无边框容器 ⇒ 区块标题 + 行内图标/文本 + 错误色 + 位置次序（多重可辨）
+/* ===== 危险区：无边框容器 ⇒ 区块标题 + 动作区 + 错误色 + 位置次序（多重可辨）
    ⛔ 无自身 `margin-top`：与上方块的间距 = `.sd-cat` 的 L2（唯一来源，旧版 44+24 叠成 68px 已删） ===== */
 .sd-group--danger .sd-group__title {
     color: var(--nue-error-color-90);
 }
 
-/* 危险行：可点行（hover 有底色）⇒ 与折叠开关同手法（负内缩 + 等量内边距），
-   文字落在 28px 左轴线、hover 面铺满组内容宽 */
-.sd-danger-row {
-    display: flex;
-    align-items: center;
-    gap: var(--nue-gap-xs);
-    box-sizing: border-box;
+/* 危险动作区（T754 用户第三轮）：两个动作收进**一个** `nue-div`（flex row、间距 8 = 本主题的
+   `--nue-gap-xs`，窄屏 wrap 不溢出）并改用库 `nue-button` ⇒ 本文件**不再**有自绘危险行规则
+   （旧 `.sd-danger-row` 的 hover/focus/disabled 三套手写态由主题原生四态接管）。
+   点击区保持改前的 40（`--nue-box-size-md`，AGENTS 界面原则 §2「更大点击区」），
+   ⛔ 不改文案 / 次序 / 二次确认流程。 */
+.sd-danger-actions .nue-button {
     min-height: var(--nue-box-size-md);
-    margin-inline: calc(var(--nue-padding-sm) * -1);
-    padding-inline: var(--nue-padding-sm);
-    border: 0;
-    border-radius: var(--nue-primary-radius);
-    background: transparent;
-    color: var(--nue-error-color-90);
-    font: inherit;
-    font-size: var(--nue-text-sm);
-    text-align: left;
-    cursor: pointer;
-}
-
-.sd-danger-row:hover {
-    background: var(--nue-error-color-10);
-}
-
-.sd-danger-row:focus-visible {
-    outline: 2px solid var(--nue-error-color-60);
-    outline-offset: -2px;
-}
-
-.sd-danger-row:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
 }
 
 /* 待注销态的危险区末行（#360 AC6）：数据删除时间 = 停用日 − 7 天。

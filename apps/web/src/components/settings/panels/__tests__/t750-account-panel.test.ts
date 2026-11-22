@@ -349,9 +349,12 @@ describe('AC3 密码常驻分区', () => {
         const groupGap = toPx(declaration('.sd-group', 'gap'))
         expect(subblock + groupGap).toBe(24)
         // 三个组内分区（资料 / 密码 / 登录设备）的组头必须挂上 `.sd-subblock`（⛔ 各自身带 margin）
+        // T754：登录设备组头多了右侧动作修饰符 ⇒ 按「class 属性含 sd-subblock」匹配（不锁 class 串次序）
         const panelSource = stripComments(sourceOf('/settings/panels/account-panel.vue'))
         const subblockHeads = [
-            ...panelSource.matchAll(/sd-subblock" data-settings-section="(\w+)"/g)
+            ...panelSource.matchAll(
+                /class="[^"]*\bsd-subblock\b[^"]*"\s+data-settings-section="(\w+)"/g
+            )
         ].map((match) => match[1])
         expect(subblockHeads).toEqual(['profile', 'password', 'devices'])
         // 分区内容块自身不带纵向间距 / 内边距
