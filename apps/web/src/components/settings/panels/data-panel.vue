@@ -379,8 +379,9 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                 <settings-local-data-notice v-if="localDataOpen" />
             </div>
 
-            <!-- 关于与更新（桌面端专属组头，与「桌面常驻」同构；Web 端不渲染 ⇒ AC10 零外溢） -->
-            <header v-if="isDesktopUpdater" class="sd-group__head sd-update__head">
+            <!-- 关于与更新（桌面端专属组头，与「桌面常驻」同构；Web 端不渲染 ⇒ AC10 零外溢）。
+                 块间距走 `sd-subblock`（#360 L2：组内子块 = 24，唯一来源），⛔ 不再自带 margin。 -->
+            <header v-if="isDesktopUpdater" class="sd-group__head sd-subblock">
                 <h3 class="sd-group__title">{{ t('settings.update.title') }}</h3>
                 <p class="sd-group__desc">{{ t('settings.update.desc') }}</p>
             </header>
@@ -582,11 +583,9 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
    控件回归 `nue-button` 默认尺寸（36px，`--nue-box-size-df`）⇒ 30px 例外已撤回（DESIGN §3）。
    颜色全取 `nue-*`；**底色 = -100 ⇒ 文字比值必须按 -100 底重算**（设计稿 §4）。 */
 
-/* 桌面专属组头：与上一块（本地数据与安全行）的间距 = `.sd-cat` 的块间距（2.75rem），
-   ⛔ 不加分隔线；组头 → 首行沿用 `.sd-group__head` 既有 `margin-bottom: 1rem` */
-.sd-update__head {
-    margin-top: 2.75rem;
-}
+/* 桌面专属组头：与上一块（本地数据与安全行）的间距 = `.sd-subblock`（#360 L2 = 24，唯一来源），
+   ⛔ 不加分隔线、⛔ 不再自带 `margin-top`（旧版 2.75rem 字面值与 44+24 叠加已删）；
+   组头 → 首行沿用 `.sd-group__head` 的 L3（16）。 */
 
 /* 行距 = 任务列表行距（0.5rem） */
 .sd-update__list {

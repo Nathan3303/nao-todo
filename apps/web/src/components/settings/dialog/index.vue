@@ -257,76 +257,81 @@ onUnmounted(unbindSettingsDialogHost)
     flex-direction: row;
 }
 
+/* 窄屏只多一条「段 ↔ 面板」间距（#360）：块内块外台阶与宽档**不分叉** ——
+   窄档不另开一套 padding / gap 副本（旧版三条覆盖 + `.sd-cat { gap: 2rem }` 已删，AC4/AC7）。 */
 .sd-body.is-narrow {
     flex-direction: column;
     gap: var(--nue-gap-xs);
 }
 
-/* 窄屏：单列平铺，块间距与首尾留白同步加大（与桌面同一视觉节奏，只是纵向） */
-.sd-body.is-narrow .sd-cat {
-    gap: 2rem;
-}
-
 .sd-body.is-narrow .sd-panel {
     flex: 1 1 auto;
     min-height: 0;
-    padding: var(--nue-padding-xs) 0 2rem;
 }
 
-.sd-body.is-narrow .sd-row {
-    padding: var(--nue-padding-xs) var(--nue-padding-2xs);
-}
-
-.sd-body.is-narrow .sd-group__head {
-    padding: 0 var(--nue-padding-2xs);
-}
+/* ===== 间距台阶（#360 AC4）：每层一个唯一来源，取值全部来自 `--nue-*`
+   L0 对话框外边距 = `--nue-padding-df`（`.nue-dialog` 主题 padding；本文件 ⛔ 不再叠加）
+   L1 栏间        = `--nue-padding-md`（`.sd-tabs` 的 `padding-inline-end`）
+   L2 块 ↔ 块     = `--nue-gap-lg`（`.sd-cat` 的 gap；组内子块 = `.sd-subblock`）
+   L3 组头 ↔ 首行  = `--nue-padding-df`（`.sd-group__head` 的 `margin-bottom` + 所在容器的行 gap）
+     组头内 标题 ↔ 说明 = `--nue-gap-2xs`
+   L4 行 ↔ 行     = `--nue-padding-xs`（`.sd-group` 的 gap；行自身 `padding-block: 0`）
+   L5 行内        = `--nue-gap-xs`（横向）/ `--nue-gap-2xs`（纵向）
+   L6 分区内元素   = `--nue-padding-sm`（有底色块的内边距，如密码块）
+   块内水平内缩（横轴）= `--nue-padding-sm`，唯一来源 `.sd-group` 的 `padding-inline`
+   ⚠️ 只有「容器已带行 gap」的两处用 `calc(目标 − 行 gap)` 补齐（组头、子块）—— 全文件仅此两处，
+      目标值仍由上面的唯一 token 决定；⛔ 不再逐块叠加内边距（旧版四层双层内边距已删）。 */
 
 /* ===== 左栏分类导航：竖排、定宽不收缩；每项 = 图标 + 名称（R2：副文本说明移到右侧组头） ===== */
 .sd-tabs {
     display: flex;
     flex-direction: column;
-    /* 只剩「图标 + 名称」一行 ⇒ 项间距从 0.75rem 收到 0.5rem（保持紧凑工具轨、又不黏成一块） */
+    /* 只剩「图标 + 名称」一行 ⇒ 项间距取 xs（保持紧凑工具轨、又不黏成一块） */
     gap: var(--nue-gap-xs);
     flex: none;
     width: 13rem;
-    padding: 0 1.25rem 0 0;
+    /* L1：与右侧面板的间距（唯一来源；面板侧 ⛔ 不再自己加左内边距） */
+    padding-inline-end: var(--nue-padding-md);
     overflow: auto;
 }
 
+/* 左栏项 = `nue-link--route` 的既有四态（#360 AC1：**无左侧竖线**，靠深填充 + 字重表达激活）。
+   四态取值逐条对齐 `nue-ui-theme-shadlike` 的 `.nue-link--route` + 本仓 `themes/link.css` 的焦点环：
+   透明 → hover `-200`（文字不变色）→ 激活 `-900` 底 + `-0` 字 + 600 → focus 环 `-600` + offset 2。 */
 .sd-tab {
     display: flex;
     align-items: center;
     gap: var(--nue-gap-xs);
     box-sizing: border-box;
     width: 100%;
-    /* 点击区 ≥44px；名称允许两行时随之增高（英文长分类名不截断） */
-    min-height: 2.75rem;
-    padding: var(--nue-padding-2xs) var(--nue-padding-sm);
-    border: 1px solid transparent;
+    /* 行级命中区 ≥40px；⛔ 不用固定 height（英文长分类名两行时随之长高，AC8） */
+    min-height: var(--nue-box-size-md);
+    padding-block: var(--nue-gap-2xs);
+    padding-inline: var(--nue-padding-sm);
+    border: 0;
     border-radius: var(--nue-primary-radius);
     background: transparent;
-    color: var(--nue-primary-color-700);
+    color: var(--nue-primary-text-color);
     font: inherit;
     font-size: var(--nue-text-sm);
     text-align: left;
     cursor: pointer;
 }
 
+/* hover 只换底、不换字色（不靠变色传达 hover） */
 .sd-tab:hover {
-    background: var(--nue-primary-color-100);
-    color: var(--nue-primary-color-900);
+    background: var(--nue-primary-color-200);
 }
 
 .sd-tab:focus-visible {
-    outline: 2px solid var(--nue-primary-color-500);
-    outline-offset: 1px;
+    outline: 2px solid var(--nue-primary-color-600);
+    outline-offset: 2px;
 }
 
-/* 选中态三重可辨：表面色 + 左侧强调竖线 + 字重（去色后仍可辨，满足 AGENTS.md 三态要求） */
+/* 选中态两通道（深填充 + 字重）+ 语义通道（`aria-selected`）：去色后仍可辨；⛔ 无竖线 / 无描边 */
 .sd-tab.is-active {
-    background: var(--nue-primary-color-100);
-    box-shadow: inset 2px 0 0 var(--nue-primary-color-600);
-    color: var(--nue-primary-color-900);
+    background: var(--nue-primary-color-900);
+    color: var(--nue-primary-color-0);
     font-weight: 600;
 }
 
@@ -344,20 +349,19 @@ onUnmounted(unbindSettingsDialogHost)
     flex: none;
 }
 
-/* ===== 右侧面板：平铺（无卡片、无边框），仅本区滚动；四周留白不在页面边缘贴边 ===== */
+/* ===== 右侧面板：平铺（无卡片、无边框），仅本区滚动。
+   ⛔ 无自身内边距（L0 由 `.nue-dialog` 的 `--nue-padding-df` 唯一承担；旧版 `12/20/24/40` 双层内边距已删） ===== */
 .sd-panel {
     flex: 1;
     min-height: 0;
-    /* 左 = 与左栏的间距（与左栏 1.25rem 右留白合计 2.5rem）；上/下留白保证首末块不贴边 */
-    padding: var(--nue-padding-sm) 1.5rem 2.5rem 1.25rem;
     overflow: auto;
 }
 
-/* 分类面板：块与块之间只用留白分隔（2.75rem ≈ 44px）；切分类仅一次淡入（尊重 reduced-motion） */
+/* 分类面板：块与块之间只用留白分隔（L2 = 24）；切分类仅一次淡入（尊重 reduced-motion） */
 .sd-cat {
     display: flex;
     flex-direction: column;
-    gap: 2.75rem;
+    gap: var(--nue-gap-lg);
     animation: sd-fade var(--nue-animation-duration-short) ease-out;
 }
 
@@ -371,18 +375,48 @@ onUnmounted(unbindSettingsDialogHost)
     }
 }
 
-/* ===== 分组：完全平铺（无边框 / 无底色 / 无圆角 / 无内边距盒） ===== */
+/* ===== 分组：完全平铺（无边框 / 无底色 / 无圆角 / 无内边距盒）
+   L4：组内「行 ↔ 行」间距**唯一来源** = 这里的 gap；行自身 `padding-block: 0`（旧版 8+8 叠成 16 已删）。
+   块内水平内缩**唯一来源** = `padding-inline`（旧版 `.sd-group__head` / `.sd-row` 各自的 12px 已删）。 ===== */
 .sd-group {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-padding-xs);
+    padding-inline: var(--nue-padding-sm);
 }
 
-/* 组头：大字号标题 + 一行说明；与首行之间 1rem 留白（不用分隔线） */
+/* 组内子块（L2）：与上一块的间距取「块 ↔ 块」档（24）；
+   减去所在 `.sd-group` 已提供的行 gap（8）⇒ 实际块间距 = 24（AC3 / AC4）。 */
+.sd-subblock {
+    margin-top: calc(var(--nue-gap-lg) - var(--nue-padding-xs));
+}
+
+/* 密码常驻分区（#360 AC3）：组级标题 + 有底色块，纵向按行 gap 排列（组头 ↔ 块 = L3 16） */
+.sd-password {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-padding-xs);
+}
+
+/* 有底色块：逐字复用 `.sd-permission-notice` 三件套（-100 底 / 6px 圆角 / 12px 内边距）——
+   面板内既有的「容器级浅底」语言，⛔ 不加描边 / 阴影 / 图标。
+   块内 label 由 `-600`（压 -100 = 4.60，仅超线 0.1）覆写为 `-700`（6.77 ✓，设计稿 §4）。 */
+.sd-password__body {
+    padding: var(--nue-padding-sm);
+    border-radius: var(--nue-primary-radius);
+    background: var(--nue-primary-color-100);
+}
+
+.sd-password__body .nue-text--label {
+    color: var(--nue-primary-color-700);
+}
+
+/* 组头：大字号标题 + 一行说明；与首行之间 L3 = 16（去掉所在容器已提供的行 gap 后补足） */
 .sd-group__head {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    margin-bottom: 1rem;
-    padding: 0 var(--nue-padding-sm);
+    gap: var(--nue-gap-2xs);
+    margin-bottom: calc(var(--nue-padding-df) - var(--nue-padding-xs));
 }
 
 .sd-group__title {
@@ -401,15 +435,17 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.5;
 }
 
-/* ===== 设置行：不画分隔线，靠行高 + 垂直留白区分（相邻行内容间距 = 8+8 px ≈ 1rem） ===== */
+/* ===== 设置行：不画分隔线，靠行高 + 组内 gap 区分（L4）
+   行自身 ⛔ 无 `padding-block`（纵向间距由 `.sd-group` 的 gap 唯一承担）、⛔ 无 `padding-inline`
+   （横轴由 `.sd-group` 的 `padding-inline` 唯一承担）⇒ 文本统一落在同一左轴线。 ===== */
 .sd-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--nue-gap-sm);
+    /* L5 行内横向（标签 ↔ 控件）= 8 */
+    gap: var(--nue-gap-xs);
     box-sizing: border-box;
-    min-height: 2.75rem;
-    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+    min-height: var(--nue-box-size-md);
 }
 
 .sd-row--stack {
@@ -426,14 +462,15 @@ onUnmounted(unbindSettingsDialogHost)
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--nue-gap-sm);
-    min-height: 2.5rem;
+    gap: var(--nue-gap-xs);
+    min-height: var(--nue-box-size-md);
 }
 
+/* L5：行内纵向 标签 ↔ 说明 = 4 */
 .sd-row__text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--nue-gap-2xs);
     min-width: 0;
 }
 
@@ -449,16 +486,16 @@ onUnmounted(unbindSettingsDialogHost)
     line-height: 1.5;
 }
 
-/* 行内折叠开关：原生 button（键盘可达）；hover/focus 用轻微底色，不画线 */
+/* 行内折叠开关：原生 button（键盘可达）；hover/focus 用轻微底色，不画线。
+   hover 面用「负内缩 + 等量内边距」铺满组内容宽，文字仍落在 28px 左轴线（净位移 0）。 */
 .sd-row__toggle {
     display: flex;
     align-items: center;
     gap: var(--nue-gap-xs);
     box-sizing: border-box;
-    width: 100%;
-    min-height: 2.5rem;
-    margin-left: calc(var(--nue-padding-2xs) * -1);
-    padding: 0 var(--nue-padding-2xs);
+    min-height: var(--nue-box-size-md);
+    margin-inline: calc(var(--nue-padding-sm) * -1);
+    padding-inline: var(--nue-padding-sm);
     border: 0;
     border-radius: var(--nue-primary-radius);
     background: transparent;
@@ -486,7 +523,7 @@ onUnmounted(unbindSettingsDialogHost)
 .sd-row__action {
     flex: none;
     box-sizing: border-box;
-    min-height: 2.5rem;
+    min-height: var(--nue-box-size-md);
     padding: 0 var(--nue-padding-sm);
     border: 0;
     border-radius: var(--nue-primary-radius);
@@ -507,24 +544,22 @@ onUnmounted(unbindSettingsDialogHost)
     outline-offset: 1px;
 }
 
-/* ===== 危险区：无边框容器 ⇒ 更大的上方留白 + 区块标题 + 行内图标/文本 + 错误色（四重可辨） ===== */
-.sd-group--danger {
-    /* 与上方常规块之间再加 1.5rem（合计 4.25rem ≈ 68px），位置本身即是警示通道 */
-    margin-top: var(--nue-gap-lg);
-}
-
+/* ===== 危险区：无边框容器 ⇒ 区块标题 + 行内图标/文本 + 错误色 + 位置次序（多重可辨）
+   ⛔ 无自身 `margin-top`：与上方块的间距 = `.sd-cat` 的 L2（唯一来源，旧版 44+24 叠成 68px 已删） ===== */
 .sd-group--danger .sd-group__title {
     color: var(--nue-error-color-90);
 }
 
+/* 危险行：可点行（hover 有底色）⇒ 与折叠开关同手法（负内缩 + 等量内边距），
+   文字落在 28px 左轴线、hover 面铺满组内容宽 */
 .sd-danger-row {
     display: flex;
     align-items: center;
     gap: var(--nue-gap-xs);
     box-sizing: border-box;
-    width: 100%;
-    min-height: 2.75rem;
-    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+    min-height: var(--nue-box-size-md);
+    margin-inline: calc(var(--nue-padding-sm) * -1);
+    padding-inline: var(--nue-padding-sm);
     border: 0;
     border-radius: var(--nue-primary-radius);
     background: transparent;
@@ -549,6 +584,14 @@ onUnmounted(unbindSettingsDialogHost)
     cursor: not-allowed;
 }
 
+/* 待注销态的危险区末行（#360 AC6）：数据删除时间 = 停用日 − 7 天。
+   取 `--nue-error-color-90`（白底 8.97 ✓，与危险区标题同档）；不满足条件时整行不渲染（AC5）。 */
+.sd-deletion-deadline {
+    color: var(--nue-error-color-90);
+    font-size: var(--nue-text-sm);
+    line-height: 1.5;
+}
+
 /* ===== 免打扰时段输入（原生 time 控件，沿用 v1.12.16 视觉） ===== */
 .sd-quiet-hours {
     display: flex;
@@ -567,7 +610,7 @@ onUnmounted(unbindSettingsDialogHost)
 .sd-quiet-hours__field input {
     box-sizing: border-box;
     width: 100%;
-    min-height: 2.5rem;
+    min-height: var(--nue-box-size-md);
     padding: 0 var(--nue-padding-xs);
     border: 1px solid var(--nue-border-color);
     border-radius: var(--nue-primary-radius);
