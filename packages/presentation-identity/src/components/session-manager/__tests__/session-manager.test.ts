@@ -181,3 +181,48 @@ describe('R3 状态区走 LoadingError', () => {
         expect(view.findAll('[data-session-id]').length).toBe(0)
     })
 })
+describe('T754 刷新按钮移出列表头（改由宿主分区组头承接）', () => {
+    /** 组件暴露的最小面（`defineExpose({ refresh })`）：宿主经模板 ref 调它 */
+    type Exposed = { refresh: () => Promise<void> }
+    const exposed = (view: VueWrapper): Exposed => view.vm as unknown as Exposed
+
+    it('N：列表头不再有刷新按钮（面板内只应剩组头那一个）', async () => {
+        const view = await mountManager([session('a', { current: true }), session('b')])
+        const head = view.find('.session-manager__head')
+        expect(head.exists()).toBe(true)
+        const buttons = head.findAll('button')
+        expect(buttons.length).toBe(1)
+        expect(buttons[0]!.text()).toContain(t('settings.sessionSignOutOther'))
+        expect(
+            view
+                .findAll('button[title]')
+                .filter((b) => b.attributes('title') === t('settings.sessionRefresh')).length,
+            '列表组件不得再自带刷新按钮'
+        ).toBe(0)
+    })
+
+    it('N：只有一台设备时列表头整块不渲染（不占位）', async () => {
+        const view = await mountManager([session('a', { current: true })])
+
+        expect(view.find('.session-manager__head').exists()).toBe(false)
+    })
+
+    it('P：暴露 `refresh()` ⇒ 触发重新加载（挂载 1 次 + 调用 1 次）', async () => {
+        const view = await mountManager([session('a', { current: true })])
+        expect(mocks.loadSessions).toHaveBeenCalledTimes(1)
+
+        await exposed(view).refresh()
+        await flushPromises()
+
+        expect(mocks.loadSessions).toHaveBeenCalledTimes(2)
+    })
+
+    it('P：暴露的是**已节流**版本（2s 内连点只加载一次，语义与改前一致）', async () => {
+        const view = await mountManager([session('a', { current: true })])
+
+        await exposed(view).refresh()
+        await exposed(view).refresh()
+
+        expect(mocks.loadSessions, '宿主拿到的是未节流的 loadSessions').toHaveBeenCalledTimes(2)
+    })
+})
