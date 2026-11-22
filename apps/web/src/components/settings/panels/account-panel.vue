@@ -1,15 +1,19 @@
 <script setup lang="ts">
 /**
- * 设置「账户」分类面板（T535）
- * @description 自上而下：用户信息（展示 + 编辑入口）→ 密码修改（按需展开表单）→ 登录设备
- *              → 独立危险区（退出登录 → 注销账户，注销在最末、不可逆）。
- *              行为零改动：用户信息/改密/会话/注销全部复用既有组件与用例，危险区只是换位置。
+ * 设置「账户」分类面板（T535 / #360）
+ * @description 自上而下：用户信息（头像 + 昵称/邮箱/注册时间 + 昵称编辑）→ **密码常驻分区**
+ *              （组头 + 有底色块，不折叠）→ 登录设备 → 独立危险区（退出登录 → 注销/撤销注销
+ *              → 待注销时的数据删除时间，不可逆动作在最末）。
+ *              #360：删「更多信息」分组（注册时间归位到身份区第三行、待注销时间迁到危险区末行）；
+ *              密码由折叠升为常驻分区。行为零改动：改密/会话/注销全部复用既有组件与用例。
+ * @see docs/prds/2026-11-22-settings-polish.md（AC2 / AC3 / AC5 / AC6）
  * @see docs/prds/2026-10-24-settings-ia.md（AC2 · AC6 · R3）
  */
-import { computed, inject, ref } from 'vue'
+import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { NueConfirm } from 'nue-ui'
+import dayjs from 'dayjs'
 import { t } from '@nao-todo/shared/locales'
 import {
     USER_DEACTIVE_DIALOG_KEY,
@@ -35,14 +39,21 @@ const { signOut } = useSettingsSignOut()
 const userStore = useUserStore()
 const { profile } = storeToRefs(userStore)
 
-// @state 改密表单按需展开（默认收起：面板保持可扫读；表单语义与既有组件逐字一致）
-const passwordOpen = ref(false)
-
 /** 冷却期内不可再次发起注销（沿用既有 deactive-manager 的 disabled 条件） */
 const deactiveCooldown = computed(() => profile.value?.isInDeactiveCooldown === true)
 
 /** 已进入待注销 ⇒ 危险区末行改为「撤销注销」（与 v1.12.16 deactive-manager 同分支） */
 const deactivated = computed(() => !!profile.value?.deactivedAt)
+
+/**
+ * 数据删除时间 = 停用日 − 7 天（沿用既有计算与格式 `YYYY-MM-DD HH:mm:ss`）。
+ * 待注销才渲染；缺失 ⇒ 空串（整行不渲染，不留空行 / 空标签，AC5）。
+ */
+const deletionDeadline = computed<string>(() => {
+    const deactivedAt = profile.value?.deactivedAt
+    if (!deactivedAt) return ''
+    return dayjs(deactivedAt).subtract(7, 'days').format('YYYY-MM-DD HH:mm:ss')
+})
 
 const handleDeactivate = async (): Promise<void> => {
     const [isByCancel] = await NueConfirm({
@@ -78,23 +89,15 @@ const handleDeactivated = async (): Promise<void> => {
                 <settings-profile-updater :show-sign-out="false" />
             </div>
 
-            <div class="sd-row sd-row--stack" data-setting-id="password">
-                <button
-                    type="button"
-                    class="sd-row__toggle"
-                    :aria-expanded="passwordOpen"
-                    @click="passwordOpen = !passwordOpen"
-                >
-                    <nue-icon name="lock" size="1rem" />
-                    <span class="sd-row__label">{{ t('settings.password') }}</span>
-                    <nue-icon
-                        class="sd-row__chevron"
-                        :name="passwordOpen ? 'arrow-up' : 'arrow-down'"
-                        size="1rem"
-                    />
-                </button>
-                <settings-password-updater v-if="passwordOpen" />
-            </div>
+            <!-- 密码常驻分区（AC3）：组头（20/600，无副说明）+ 有底色块，零点击即见三个输入框 -->
+            <section class="sd-subblock sd-password" data-setting-id="password">
+                <header class="sd-group__head">
+                    <h3 class="sd-group__title">{{ t('settings.password') }}</h3>
+                </header>
+                <div class="sd-password__body">
+                    <settings-password-updater />
+                </div>
+            </section>
 
             <div class="sd-row sd-row--block" data-setting-id="sessions">
                 <user-session-manager :user-use-case="userUseCase" />
@@ -143,6 +146,13 @@ const handleDeactivated = async (): Promise<void> => {
                 <nue-icon name="restore" size="1rem" />
                 <span>{{ t('user.restoreWarningTitle') }}</span>
             </button>
+
+            <!-- 待注销时才出现的末行（AC6）：数据删除时间；不满足条件整行不渲染（AC5） -->
+            <div v-if="deletionDeadline" class="sd-row" data-setting-deletion-deadline>
+                <span class="sd-row__label sd-deletion-deadline">
+                    {{ t('settings.restore.deletionDeadline', { date: deletionDeadline }) }}
+                </span>
+            </div>
         </section>
 
         <!-- 注销/撤销注销弹层：宿主在本面板（触发器与弹层同层，行为与既有 deactive-manager 一致） -->

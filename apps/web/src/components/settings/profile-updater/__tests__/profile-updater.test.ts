@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { defineComponent, ref } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia } from 'pinia'
 import {
     NueButton,
     NueContainer,
@@ -18,6 +18,8 @@ import {
     isOfflineEntryGranted,
     revokeOfflineEntry
 } from '@/views/auth/offline-entry'
+import { useUserStore } from '@nao-todo/presentation-identity'
+import { t } from '@nao-todo/shared/locales'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '../../context'
 import ProfileUpdater from '../index.vue'
 
@@ -104,10 +106,10 @@ const SlotStub = defineComponent({
 
 let wrapper: VueWrapper | null = null
 
-const mountView = (): VueWrapper => {
+const mountView = (pinia = createPinia()): VueWrapper => {
     wrapper = mount(ProfileUpdater, {
         global: {
-            plugins: [createPinia()],
+            plugins: [pinia],
             provide: {
                 [SETTINGS_VIEW_CONTEXT_KEY as symbol]: {
                     isDisplayAside: ref(false),
@@ -130,7 +132,6 @@ const mountView = (): VueWrapper => {
             stubs: {
                 'user-avatar-updater': SlotStub,
                 'user-nickname-updater': true,
-                'user-info-viewer': true,
                 'user-session-manager': true,
                 'user-deactive-manager': true,
                 'user-restore-dialog': true,
@@ -194,6 +195,51 @@ describe('G12 - 离线可退出登录', () => {
         expect(mocks.replace).not.toHaveBeenCalled()
         // C-54：护栏取消 ⇒ 不清库、不广播（广播不绕过护栏）
         expect(mocks.broadcastSignOut).not.toHaveBeenCalled()
+    })
+})
+
+/**
+ * T750 / Issue #360 · 身份区三行（AC2 / AC5 / AC9）
+ * @description 头像右侧 = 昵称 / 邮箱 / `注册时间 {createdAt}`；「更多信息」分组删除
+ *              （`settings.moreInfo` 键与 `user-info-viewer` 组件一并退役）。
+ */
+describe('T750 - 身份区三行 + 无「更多信息」', () => {
+    /** 预置 profile 的挂载（同一 pinia ⇒ 组件读到真实现写入的 store） */
+    const mountWithProfile = (patch: Record<string, unknown>): VueWrapper => {
+        const pinia = createPinia()
+        setActivePinia(pinia)
+        useUserStore().setUserProfile(patch as never)
+        return mountView(pinia)
+    }
+
+    it('profile 就绪 ⇒ 昵称 / 邮箱 / 注册时间 三行，且第三行带已格式化时间', async () => {
+        const view = mountWithProfile({
+            nickname: '张三',
+            email: 'zhangsan@example.com',
+            createdAt: '2026-01-02 03:04:05'
+        })
+        await flushPromises()
+
+        const lines = view.findAll('.settings-profile__names > *').map((line) => line.text().trim())
+        expect(lines).toEqual(['张三', 'zhangsan@example.com', '注册时间 2026-01-02 03:04:05'])
+        expect(view.html()).not.toContain('info-viewer')
+    })
+
+    it('createdAt 缺失 ⇒ 第三行整行不渲染（不留空行 / 空标签）', async () => {
+        const view = mountWithProfile({ nickname: '张三', email: 'zhangsan@example.com' })
+        await flushPromises()
+
+        const lines = view.findAll('.settings-profile__names > *').map((line) => line.text().trim())
+        expect(lines).toEqual(['张三', 'zhangsan@example.com'])
+        expect(view.text()).not.toContain(t('settings.registeredAt'))
+    })
+
+    it('「更多信息」分组不存在（文案与导出均退役）', async () => {
+        const view = mountWithProfile({ nickname: '张三', createdAt: '2026-01-02 03:04:05' })
+        await flushPromises()
+
+        expect(view.text()).not.toContain('更多信息')
+        expect(view.findAll('.settings-profile__field').length).toBe(1)
     })
 })
 

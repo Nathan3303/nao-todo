@@ -411,7 +411,6 @@ export interface LocaleMessages {
     'settings.nicknameDesc': string
     'settings.nicknamePlaceholder': string
     'settings.nicknameSubmit': string
-    'settings.moreInfo': string
     'settings.dangerZone': string
     'settings.registeredAt': string
     'settings.passwordHintTitle': string
@@ -456,7 +455,6 @@ export interface LocaleMessages {
     'settings.deactive.passwordMismatch': string
     'settings.deactive.passwordRequired': string
     'settings.deactive.agreeRequired': string
-    'settings.deactivedAt': string
     'settings.restore.title': string
     'settings.restore.pendingMessage': string
     'settings.restore.deletionDeadline': string
