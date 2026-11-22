@@ -582,7 +582,17 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
    桌面密度：控件 30px / 正文 13px / 卡片边框承托；断点按**面板可用宽**（容器查询），非视口。
    ⛔ 不加底色、不加阴影；颜色全取 nue-* token（DESIGN §3 已登记 30px 例外） */
 .sd-update {
+    /* 左边缘基准（设计稿 §3「对齐基准」）：inset 的唯一来源 = 同面板既有行的水平内边距 ——
+       `.sd-row` / `.sd-group__head` 的 `--nue-padding-sm`（宽 / 中档）。缺这条 ⇒ 标签与卡片直接贴
+       `.sd-cat` 边缘，比上方文字整体左移一个 `--nue-padding-sm`（T742 走查实报）。 */
+    padding: 0 var(--nue-padding-sm);
     container-type: inline-size;
+}
+
+/* 窄屏：既有行 / 组头的水平内边距收到 `--nue-padding-2xs` ⇒ 更新块取同一 token、随同一断点切换
+   （`.sd-body.is-narrow` 见 `settings/dialog/index.vue`；设计稿 §3 / §6） */
+.sd-body.is-narrow .sd-update {
+    padding: 0 var(--nue-padding-2xs);
 }
 
 .sd-update__label {
