@@ -198,7 +198,7 @@
 - **正例·按钮**：`nue-button theme="primary|secondary|ghost,small"` —— 尺寸 / 圆角 / 边框 / hover 全由主题给；调用方 ⛔ 不写 `height` / `padding` / `font-size` / `border-radius`（#358 v4 撤回 30px 特例即按此口径）。
 - **正例·输入与表单**：`nue-input`（36px、内距 `--nue-gap-sm`、边框 `--nue-divider-color`）+ `nue-div theme="form-item"`（label 14px / `-600` / gap 8）—— 表单字段间距由组件定义，页面 ⛔ 不另加壳。
 - **正例·导航链接**：左栏 / 侧栏的选中项取 `nue-link--route` 的四态值（底透明 → hover `-200` → 激活 `-900` 底 + `-0` 字 + 600 → focus 环 `-600` + offset 2），⛔ 不用左侧竖线 / 自造指示条。
-- **反例（现存待收敛项，不随本节批量改）**：`.sd-quiet-hours__field input`（自绘 time 输入，40px + 自填边框）、`.sd-row__action`（自绘按钮，替代 `nue-button`）、`.sd-cat` 的 `2.75rem` / `.sd-row__text` 的 `2px` 等**非 token 字面值**。
+- **反例（现存待收敛项，不随本节批量改）**：`.sd-quiet-hours__field input`（自绘 time 输入，40px + 自填边框）、`.sd-row__action`（自绘按钮，替代 `nue-button`）等**自绘控件**。设置域的间距字面值（旧 `.sd-cat` 的 `2.75rem` / `.sd-row__text` 的 `2px`）已随 #360 收敛为 token，不再属于本节反例。
 - **一句话检验**：新块写完后扫一遍自己的 CSS —— 若出现 `height` / `padding` / `font-size` / `border-radius` / `background-color` 的**新字面值**（非 `--nue-*`、非组件既有档位），即视为漂移，须回上一步取件。
 
 ---
