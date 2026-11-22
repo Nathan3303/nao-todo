@@ -22,8 +22,10 @@ import AccountPanel from '../account-panel.vue'
  * - **登录设备升为独立分区**：组件内同名小标题（`.session-manager__title`）移除，
  *   标题由分区组头承担 ⇒ 面板内「登录设备」只出现一次。
  *
- * 真机几何（左缘同基线 / 窄屏可用宽 / 计算样式）由真实 Chromium 探针实测，见
- * `t752-account-sections-render.test.ts`（同一断言的计算样式版本）。
+ * 真机几何（左缘同基线 / 窄屏可用宽 / 计算样式）**不进测试套件**：它由一次性的 Chromium 探针
+ * 在仓外实测（`T753` 已把探针文件移出仓库，理由是 `apps/web` 的 TS program 一旦 import `node:*`
+ * 就把 `@types/node` 的全局 `setTimeout` 拉进整个 web 程序，全仓 `vp check` 变红）。实测值留档在
+ * `T753` 回执 / PR 描述；本文件负责**可回归**的那半（DOM 结构 + 源级样式契约）。
  * @see docs/prds/2026-11-22-settings-polish.md（AC2 / AC3 / AC4 / AC5）
  */
 
@@ -321,5 +323,18 @@ describe('③ + ④ 密码分区去底色（B 方案）：无底色 / 无内边�
         const block = /<div class="([^"]*)" data-setting-id="password">/.exec(panel)
         expect(block, '缺密码分区内容块').not.toBeNull()
         expect(block![1]).toBe('sd-row sd-row--block')
+    })
+
+    it('D 源级：密码块用到的行语言 class 自身不带任何「区分手段」声明', () => {
+        // 等价于真机断言「从密码表单走到内容块，**每一层**都无底色 / 圆角 / 内边距」：
+        // 内容块 = `.sd-row.sd-row--block`，中间无第二层容器（上一条已断言）
+        const declares = (selector: string, family: string): boolean =>
+            new RegExp(`(?:^|;|\\s)${family}(?:-[a-z]+)?\\s*:`).test(ruleBody(selector))
+        for (const selector of ['.sd-row', '.sd-row--block']) {
+            expect(ruleBody(selector), `${selector} 规则体缺失`).not.toBe('')
+            for (const family of ['background', 'border', 'padding', 'box-shadow']) {
+                expect(declares(selector, family), `${selector} 不得声明 ${family}*`).toBe(false)
+            }
+        }
     })
 })
