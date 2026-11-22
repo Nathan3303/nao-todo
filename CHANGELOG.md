@@ -2,6 +2,15 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.21.0] - 2026-11-22
+
+桌面版应用内自我更新 + 设置面板改版（发版说明 `docs/releases/v1.21.0.md` · PR #359 / #362 · Issue #358 / #360）：
+
+- **应用内自我更新（#358）**：`electron-updater` 6.x + GitHub Releases 唯一源，整体包在 adapter 层；主进程内核零 `electron` 依赖（`checker`/`downloader`/`installer`/`env`/`syncGuard` 五端口 + 八态状态机），`autoDownload` / `autoInstallOnAppQuit` 均关闭。原地更新仅 Windows NSIS 与 Linux AppImage；macOS（未签名）与 deb 为 `download-page` 且**不发起检查**（AC4b）。安装形态判定为纯函数 `resolveInstallMode({ platform, appimage, isPackaged })`（先判 `isPackaged`，`dev` 不再误判为 deb）；错误原因只以原因码进载荷，`electron-updater` 原文/路径/主机名不进 UI、日志出口脱敏（AC9b）。护栏复用 `useSyncStatus().pendingCount`（队列非空，⛔ 不用内存态 `failedCount`），24h 缓存走真 temp dir 的 fs 面，边界按 `23:59:59.999` / `24:00:00.000`。开发态假更新源接缝（`NAO_UPDATE_FAKE_FEED`，`isPackaged` 时恒不生效）。
+- **设置面板改版（#360）**：左栏去激活竖线、复用 `nue-link--route` 四态（`tablist` 语义与键盘未变）；账户四分区（用户信息 / 密码 / 登录设备 / 危险区，各带副标题），注册时间进身份区第三行、「待注销时间」进危险区末行；密码修改由折叠改常驻分区并移除底色；间距台阶 L0–L6 每层单处定义（删 4 处双层内边距与 `2.75rem`/`2rem`/`0.375rem`/`2.5rem`/`2px` 字面值）；`DESIGN.md` 新增 §4.9「元素设计方式：以组件库主题为准」。移除 `UserInfoViewer` 组件与 3 个文案键（全仓 + 移动端 0 引用）；登录设备「刷新」经 `defineExpose` 暴露已节流版本并移到分区组头；危险区两动作改 `nue-div` + `nue-button`（`destructive` / `primary`）水平排列。
+- **测试卫生**：一次几何探针被误写成入库用例（`node:child_process` + spawn Chromium）⇒ `@types/node` 漏进 `apps/web` program，令无关文件 `setTimeout` 报 `TS2322`、全仓 `vp check` rc=1；已删除探针并把 jsdom 可测判据迁入普通用例（变异有牙）。
+- **门禁**：`vp test --run` 469 文件 / 3807 例 / 0 红（其中一次 `t706` 负载 flake 单跑 5 次全绿）· `vp check` 0 error · 五守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行。
+
 ## [v1.20.3] - 2026-11-20
 
 全仓体检治理批 + 桌面产物去注释（发版说明 `docs/releases/v1.20.3.md` · 体检报告 `docs/reports/2026-11-20-project-audit.md` · PR #355 / #356）：

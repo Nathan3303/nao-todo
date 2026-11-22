@@ -31,7 +31,7 @@
 - **范围**：两批合并后的事实（工程治理 PR #355 `8f564ab5` + 产物注释 PR #356 `1fad3ff4`）；用户 2026-11-20「发」= 授权发版。
 - **已闭环（2026-11-20 实核）**：发版 PR **#357** ⇒ squash **`7cd26fb5`** · 注解 tag `v1.20.3` 指向该合并提交 · Release 已发布（8 产物含三份 `latest*.yml`）。
 
-## 一之四、桌面端应用内自我更新（`feat` · 在制 · Issue #358）
+## 一之四、桌面端应用内自我更新（`feat` · ✅ 已合并 2026-11-22 · Issue #358）
 
 - **需求**：Desktop 端内置「检查更新 + 立即更新」（用户 2026-11-20 提出；5 项澄清已答：Linux/Windows 原地更新 · macOS 与 deb 降级下载页 · 启动静默检查 + 手动入口 · 下载完提示重启/稍后 · 未同步改动需护栏）。
 - **PRD**：`docs/prds/2026-11-20-desktop-self-update.md`（AC1–AC13 · RICE ≈0.29 · Must）。**分支** `feat/358-desktop-self-update`（自 `origin/main` `7cd26fb5`）。
@@ -52,10 +52,11 @@
 - **v4 设计稿 + 重写**：`T746` uiux `26503e02`/`2f5d5d96`（组头 + 两条有底色行，逐字对齐 `.nue-div--todo-list-main__row` 的 `--small` 变体；控件回 `nue-button` 36px，**30px 例外撤回**（`DESIGN.md` §3 同步撤登记）；灰底对比度全部重算：`success-100` 5.29 · hint `-700` 6.77 · 轨 `-500` 3.16）· `T747` rd-fe `eaed4fcb`（**重写**而非修补：删盒式卡整套、行 40 最小高/`-100` 底/6px 圆角/hover 描边、整行不可点；真实 Chromium 实测 行高 56、按钮 36、`rectLeft` 与同步行同 28、窄屏 8/3）。B 备选方案 = 删行底色/圆角/内边距三条声明（用户走查时定）。
 - **walkthrough 基建**：`T748` rd-infra `27e787dc`（开发态假更新源：`isPackaged === false` **且** `NAO_UPDATE_FAKE_FEED` 非空才生效，值为 JSON 配置绝对路径，每次点击重读 ⇒ 改文件即切场景；生产不生效有断言：端口对象同一性 + 配置文件零次读取 + 删守卫即 2 例红）。两处诚实偏离：① 假源把 env 报成「已打包 + win32」，否则 AC4b 前置 gate 恒 `unsupported`、其余八态物理不可达 ② `just-updated` 由「假安装后按真实重启语义重建内核」达成（生产路径不可达，`fake` 恒 `false`）。
 - **第三轮批末门禁（PM 亲跑 `27e787dc`，独占无并发）**：`vp test --run` **466 文件 / 3744 例 / 3738 通过 / 6 跳过 / 0 红**（348.67s）· `vp check` 2024 文件格式 pass + 1611 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0 · 移动端红线 **0 行**。
-- **待办**：用户 dev 走查九态（命令已给）→ 定 A/B → PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
+- **✅ 已合并（2026-11-22）**：用户「所有走查通过」⇒ PR **#359** MERGED ⇒ squash **`3fea8458`**（`wip(` 残留 body/`subject` 各 0 · 远端分支已删 · Issue #358 CLOSED）。合并时 GitHub 报过一次 504，重试同一命令后落库（RD 如实记录）。
+- **发布决策（用户 2026-11-22）：随下一个 PR 发，本批不单独发 `v1.21.0`**（台账更新随下个任务 PR 的首个文档提交带走）。发版检查项仍为：tag = `package.json` = `latest*.yml` 三者一致。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
-## 一之五、设置面板改版（`feat` · 在制 · Issue #360 · PR #361）
+## 一之五、设置面板改版（`feat` · ✅ 已合并 2026-11-22 · Issue #360 · PR #362）
 
 - **需求**：用户 2026-11-22 走查四条 —— 左栏激活态去竖线改导航链接观感 · 账户删「更多信息」把注册时间归位、待注销时间迁危险区 · 密码修改升常驻分区且更明显 · 对话框内 padding/gap 全量治理 + `DESIGN.md` 补元素设计口径。
 - **澄清（用户已答）**：左栏**只要视觉**（不动路由/URL）· 密码为账户内常驻分区（非第五分类）· 间距范围 = 对话框内全部模块 + `DESIGN.md` 口径 · 注册时间放身份区第三行 · 待注销时间进危险区。
@@ -68,7 +69,16 @@
 - **用户第二轮两条（2026-11-22）**：① 「登录设备」也算一个分区、每区需要副标题 ② 密码分区**不要背景色**。`T751` uiux `64b37687`（账户四分区 + 3 个新副标题键 zh/en；密码走 B 方案：删 padding/圆角/`-100` 底 + label `-700` 覆写，区分由组头字阶 + 24px 间距承担；回退路径写死）· `T752` rd-fe `b2f2f18f`（四分区落地 + `session-manager` 组件内同名小标题移除（移动端 0 引用）+ 密码表单左缘回同线、窄屏 +24px；几何实测四组头左缘 36/36/36/36、密码表单 Δ0.00px）。
 - **测试卫生事故与修复（如实记录）**：`T752` 把 743 行几何探针写成了入库测试文件（`import 'node:child_process'` + spawn Chromium）⇒ ① 违反「探针放 `/tmp`」纪律 ② `@types/node` 被拉进 `apps/web` program ⇒ 全局 `setTimeout` 变 `NodeJS.Timeout` ⇒ 全仓 `vp check` **rc=1**（报在无关的番茄文件 `use-task-panel.ts:84`）。PM 用「切分支对照」定位到本分支引入 ⇒ `T753` rd-fe `402a54d8` 删除探针、判据迁到 jsdom 用例（`t752-account-sections.test.ts` 10→11 例，变异有牙），**全仓 `vp check` 回 rc=0**（2029 文件格式 pass / 1612 文件 0 error）。
 - **批末门禁（PM 亲跑 `402a54d8`）**：`vp test --run` **469 文件 / 3789 例 / 3782 通过 / 6 跳过 / 1 红** —— 红点 = `persistence-sync/__tests__/t706-qa-prune-cap-probe.test.ts`（审计裁切限幅，**与本需求无关**；单文件连跑 5 次全绿 6/6 ⇒ 判为负载相关 flake，记缺陷池观察）· `vp check` rc=0 · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0 · 移动端红线 0 行。
-- **待办**：用户走查两套改动（#358 更新块 + #360 设置改版）→ PM 逐 AC 验收 → #358 先合并 → #361 rebase 到 main 再合并 → 发 MINOR。
+- **用户第三/四轮走查（2026-11-22）**：① 更设备「刷新」移到分区标题后 ② 危险区两按钮收进一个 `nue-div` 改 `nue-button` 水平排列 ⇒ `T754` rd-fe `87ffc494`（`defineExpose({refresh})` 暴露已节流版本 + 函数 ref 转发，包内不反向依赖面板；危险区两动作改库原生 `destructive`/`primary`，手写 `.sd-danger-row` 三套态删除；变异 3 红 / 4 红，含「空列表夹具漏杀 → 改两台设备夹具才杀掉」的自纠）。
+- **✅ 已合并（2026-11-22）**：PR #361 因 base 分支随 #358 合并被删而**自动关闭且无法 reopen** ⇒ 把分支 rebase 到新 main（`git rebase --onto origin/main c1e83642`，9 提交干净落地、只留 #360 的 28 文件）、强推、新开 PR **#362**（base main）⇒ squash **`596d1b7f`**（`wip(` 各 0 · 远端分支已删 · Issue #360 CLOSED）。
+- **发布决策（同 #358）：随下一个 PR 发**。
+
+## 一之六、`v1.21.0` 发版（MINOR · 在制）
+
+- **范围**：`3fea8458`（#358 应用内自我更新）+ `596d1b7f`（#360 设置面板改版）。用户 2026-11-22 先定「随下个 PR 发」，随后改口「还是发版吧」⇒ 本批直接发 MINOR。
+- **分支** `nao/release-v1.21.0`：版本 root / `apps/web` / `apps/desktop` `1.20.3 → 1.21.0`；`CHANGELOG.md` + `docs/releases/v1.21.0.md`（C 端说人话；内部术语全部下沉「技术细节」段）；`packages/*` 有源码改动（`shared` 文案键 / `presentation-identity` 组件）按近批惯例**不单独 bump**。
+- **待办**：PR → RD 合并 → 注解 tag `v1.21.0` 指向 main 合并提交 → 推送触发打包 → Release（正文与 `docs/releases/v1.21.0.md` 归一化逐字一致）→ **8 产物 + 三份 `latest*.yml` 实核 + 硬校验 tag = `package.json` = `latest*.yml` 三者一致**。
+- **本批遗留（下批处理）**：① `t706-qa-prune-cap-probe` 负载 flake（未定位，单跑 5 次全绿）② 发版三版本一致校验目前只有人工清单、无自动化（加进 `release.yaml` 需 `gh` token 具备 `workflow` scope）。
 
 ## 二、上一批次终态
 
