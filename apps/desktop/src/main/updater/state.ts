@@ -1,18 +1,22 @@
 /**
- * 更新状态机（设计稿 §5 八态 · 单一可订阅）
+ * 更新状态机（设计稿 §5 九态 · 单一可订阅）
  *
  * @description 全应用**只有一个**更新状态源：主进程内核持有它，preload 订阅后推给渲染层。
  *              渲染层不再自己推导状态组合（状态爆炸与双源抖动都由本机集中排除）。
- *              两条硬规则：
+ *              三条硬规则：
  *              ① **`ready` 不可被检查结果覆盖**（P5：已下载成果不能被一次检查抹掉）；
- *              ② `failed` 之后必须能再次进入检查/下载（AC11：按钮不得永久禁用）。
+ *              ② `failed` 之后必须能再次进入检查/下载（AC11：按钮不得永久禁用）；
+ *              ③ **`unsupported` 是前置 gate**（AC4b）：它是形态判定阶段的初始态、不参与
+ *                 `checking` / `available` 流转 ⇒ 出向白名单为空（无迁移可出）。
  * @see docs/designs/358-desktop-self-update.md（§5 状态 / 优先级）
- * @see docs/prds/2026-11-20-desktop-self-update.md（AC1 / AC6 / AC11）
+ * @see docs/prds/2026-11-20-desktop-self-update.md（AC1 / AC4b / AC6 / AC11）
  */
 import type { DesktopUpdateState, DesktopUpdateStatus } from '@nao-todo/shared'
 
 /** 合法迁移表（`from → to` 白名单；同态自迁移恒允许，用于进度/字段刷新） */
 const ALLOWED_TRANSITIONS: Record<DesktopUpdateState, readonly DesktopUpdateState[]> = {
+    // 前置 gate：形态不支持应用内更新 ⇒ 独占终态（⛔ 永不进 checking / available）
+    unsupported: [],
     idle: ['checking'],
     checking: ['available', 'up-to-date', 'failed'],
     // available 期允许再检查（手动重查），也允许开始下载

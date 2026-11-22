@@ -241,6 +241,7 @@ const setupUpdater = (): void => {
             getWindow: () => mainWindow,
             onError: () => {
                 // 更新器内部异常只落本地（无遥测）：不弹窗、不阻断、不影响其它能力
+                // 入参已是脱敏摘要（只有原因码，AC9b）⇒ 日志不含本机路径 / 底层原文
             }
         })
     } catch {

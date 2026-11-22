@@ -24,8 +24,8 @@ export interface SetupDesktopUpdaterOptions {
     dir: string
     /** 当前主窗口（可能为 null / 已销毁；结构面最小化，不引 `electron` 类型） */
     getWindow(): UpdateStatusWindowLike | null
-    /** 本地日志出口（更新器任何异常都不得外抛） */
-    onError?: (error: unknown) => void
+    /** 本地日志出口（更新器任何异常都不得外抛；入参为脱敏摘要，AC9b） */
+    onError?: (summary: string) => void
 }
 
 export interface DesktopUpdaterHandle {

@@ -3,10 +3,12 @@ import type { DesktopUpdateStatus } from '@nao-todo/shared'
 import { canTransition, createUpdateStateMachine } from '../state'
 
 /**
- * T736 · 状态机（设计稿 §5 八态 · 单一可订阅）
+ * T736 · 状态机（设计稿 §5 九态 · 单一可订阅）
  *
- * @description 两条硬规则：① `ready` 不可被检查结果覆盖（P5，已下载成果不能被一次检查抹掉）；
- *              ② `failed` 之后仍能再检查 / 再下载（AC11，按钮不得永久禁用）。
+ * @description 三条硬规则：① `ready` 不可被检查结果覆盖（P5，已下载成果不能被一次检查抹掉）；
+ *              ② `failed` 之后仍能再检查 / 再下载（AC11，按钮不得永久禁用）；
+ *              ③ `unsupported` 是**前置 gate**（AC4b）：出向白名单为空，⛔ 不参与
+ *                 checking / available 流转。
  */
 
 const base: DesktopUpdateStatus = {
@@ -23,8 +25,9 @@ const withState = (state: DesktopUpdateStatus['state']): DesktopUpdateStatus => 
 })
 
 describe('状态机（AC1 / AC6 / AC11）', () => {
-    it('八态齐全且 `get` 返回当前快照', () => {
+    it('九态齐全且 `get` 返回当前快照', () => {
         for (const state of [
+            'unsupported',
             'idle',
             'checking',
             'available',
@@ -58,6 +61,26 @@ describe('状态机（AC1 / AC6 / AC11）', () => {
         expect(machine.set(withState('checking')).state).toBe('checking')
         expect(machine.set(withState('failed')).state).toBe('failed')
         expect(machine.set(withState('downloading')).state).toBe('downloading')
+    })
+
+    it('AC4b：unsupported 是前置 gate ⇒ 拒绝一切出向迁移（且不通知订阅者）', () => {
+        const machine = createUpdateStateMachine(withState('unsupported'))
+        const seen = vi.fn()
+        machine.subscribe(seen)
+        for (const next of [
+            'checking',
+            'available',
+            'downloading',
+            'ready',
+            'up-to-date',
+            'just-updated',
+            'failed',
+            'idle'
+        ] as const) {
+            expect(machine.set(withState(next)).state).toBe('unsupported')
+            expect(canTransition('unsupported', next)).toBe(false)
+        }
+        expect(seen).not.toHaveBeenCalled()
     })
 
     it('非法迁移被拒绝且不通知订阅者', () => {

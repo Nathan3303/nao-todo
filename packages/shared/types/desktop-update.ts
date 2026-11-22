@@ -13,10 +13,12 @@
  */
 
 /**
- * 更新状态机八态（设计稿 §5；渲染层 `data-update-state` 直接取该字面量，⛔ 不改名不加态）
+ * 更新状态机九态（设计稿 §5；渲染层 `data-update-state` 直接取该字面量，⛔ 不改名不加态）
+ * - `unsupported`：安装形态不支持应用内更新（**前置 gate**：进入后不发起检查、不参与
+ *   `checking` / `available` 流转；客户端可见动作只有「打开下载页」，一行原因见 `degradedReason`）
  * - `idle`：从未检查
  * - `checking`：检查中
- * - `available`：有新版本（原地可更新或走下载页，见 `installMode`）
+ * - `available`：有新版本（原地可更新，见 `installMode`）
  * - `downloading`：下载中（进度在 `percent` / `downloadedBytes`）
  * - `ready`：已下载待重启（只有用户显式触发才安装）
  * - `up-to-date`：已是最新
@@ -24,6 +26,7 @@
  * - `failed`：检查 / 下载 / 校验失败（原因见 `failure`）
  */
 export type DesktopUpdateState =
+    | 'unsupported'
     | 'idle'
     | 'checking'
     | 'available'
@@ -36,12 +39,17 @@ export type DesktopUpdateState =
 /**
  * 安装形态（ADR 平台矩阵，由纯函数 `resolveInstallMode` 判定，不做「试一次失败再降级」）
  * - `in-place`：Windows NSIS / Linux AppImage ⇒ 应用内下载并重启生效
- * - `download-page`：macOS / Linux deb ⇒ 只能打开下载页（`degradedReason` 说明原因）
+ * - `download-page`：macOS / Linux deb / **未打包开发态** ⇒ 只能打开下载页，且**不发起检查**
+ *   （AC4b ⇒ 状态直接落 `unsupported`；`degradedReason` 说明原因）
  */
 export type DesktopUpdateInstallMode = 'in-place' | 'download-page'
 
-/** 平台降级原因（= 文案键 `settings.update.manual.mac` / `.deb`） */
-export type DesktopUpdateManualReason = 'mac' | 'deb'
+/**
+ * 不支持应用内更新的原因（= 文案键 `settings.update.manual.mac` / `.deb` / `.dev`）
+ * @description `dev` = 未打包开发态（无更新源）；`resolveInstallMode` **先按 `isPackaged` 判 dev**
+ *              再按平台判 mac / deb，⛔ 不得把开发态说成「deb 版由系统包管理」。
+ */
+export type DesktopUpdateManualReason = 'mac' | 'deb' | 'dev'
 
 /** 失败发生阶段（决定标题文案：`failedCheck` / `failedDownload` / `failedVerify`） */
 export type DesktopUpdateFailureStage = 'check' | 'download' | 'verify'
@@ -50,6 +58,8 @@ export type DesktopUpdateFailureStage = 'check' | 'download' | 'verify'
  * 失败原因（= 文案键 `settings.update.reason.*`）
  * @description ⛔ 不新增「原始错误消息」字段：底层异常只用于本地日志与结果历史，
  *              面向用户的原因必须收窄到这几类（不裸露路径 / 主机名 / 内部编号）。
+ *              AC9b：`electron-updater` 原文（如 `APPIMAGE env is not defined…`）**不得**进入
+ *              任何面向 UI 的字段，认不出的一律 `unknown`。
  */
 export type DesktopUpdateFailureReason = 'offline' | 'timeout' | 'server' | 'disk' | 'unknown'
 
@@ -79,7 +89,10 @@ export interface DesktopUpdateStatus {
     percent?: number
     /** 安装形态（决定「立即更新」还是「打开下载页」，AC7） */
     installMode: DesktopUpdateInstallMode
-    /** 仅 `download-page` 且能判定具体系统时给出（mac / deb），用于取一行原因文案 */
+    /**
+     * 仅 `download-page` 且能判定具体形态时给出（mac / deb / dev），用于取一行原因文案
+     * @description 缺省（形态判定不出）⇒ 渲染层走 `settings.update.manual.unknown` 兜底。
+     */
     degradedReason?: DesktopUpdateManualReason
     /** 上次检查时间（ISO 串，R1 hint 用；从未检查 ⇒ 缺省） */
     lastCheckedAt?: string
@@ -111,7 +124,10 @@ export interface DesktopUpdateInstallOptions {
 export interface DesktopUpdateBridge {
     /** 当前状态（首帧初值；`onStatus` 订阅前先取一次，避免初值空洞） */
     getStatus(): Promise<DesktopUpdateStatus>
-    /** 手动检查（**忽略 24h 缓存**，必发一次检查请求；AC4 / AC8） */
+    /**
+     * 手动检查（**忽略 24h 缓存**，必发一次检查请求；AC4 / AC8）
+     * @description 例外（AC4b）：`unsupported` 形态**不发任何请求**，原样返回该态（0 次调用）。
+     */
     check(): Promise<DesktopUpdateStatus>
     /** 开始下载（`installMode === 'in-place'` 时可用；AC2） */
     download(): Promise<DesktopUpdateStatus>

@@ -1,13 +1,16 @@
 /**
- * 更新内核（AC1 / AC2 / AC4 / AC5 / AC6 / AC8 / AC11 主接缝）
+ * 更新内核（AC1 / AC2 / AC4 / AC4b / AC5 / AC6 / AC8 / AC9b / AC11 主接缝）
  *
  * @description **electron 零依赖**：`checker` / `downloader` / `installer` / `env` / `syncGuard`
  *              五个端口全部注入 ⇒ 用例零网络、零文件系统（除缓存目录用真 temp dir）、零 electron。
- *              职责只有三件事：
- *              ① 持有**唯一**状态机（八态，见 `state.ts`）；
+ *              职责只有四件事：
+ *              ① 持有**唯一**状态机（九态，见 `state.ts`）；
  *              ② 编排「检查 → 下载 → 安装」三段，并保证安装器**只在用户显式触发时**被调用；
- *              ③ 把检查结论与结果历史落「传入目录的 fs 面」（`store.ts`）。
- *              全部对外方法**不抛异常**：失败一律收敛成 `failed` 状态 + 历史记录（AC4 / AC11）。
+ *              ③ 把检查结论与结果历史落「传入目录的 fs 面」（`store.ts`）；
+ *              ④ **前置 gate（AC4b）**：安装形态为 `download-page`（未打包开发态 / deb / macOS）
+ *                 ⇒ 初始态即 `unsupported`，**任何检查都不发起**（`checker` 调用数恒 0）。
+ *              全部对外方法**不抛异常**：失败一律收敛成 `failed` 状态 + 历史记录（AC4 / AC11）；
+ *              失败原因**只以原因码**进入载荷与日志（AC9b：底层原文不外露）。
  * @see docs/prds/2026-11-20-desktop-self-update.md（§五 业务规则 / §七 AC）
  * @see docs/adr/2026-11-20-desktop-self-update.md（五端口 / autoDownload=false）
  */
@@ -95,8 +98,13 @@ export interface CreateUpdaterCoreOptions {
     store: UpdateStore
     /** 时钟（默认 `Date.now`；用例注入固定时钟测 24h 边界） */
     now?: () => number
-    /** 本地日志出口（异常不得外抛；缺省静默） */
-    onError?: (error: unknown) => void
+    /**
+     * 本地日志出口（异常不得外抛；缺省静默）
+     * @description 入参**已是脱敏摘要**（`describeFailureForLog`：只有原因码）—— AC9b 要求
+     *              日志不得含本机路径 / 主机名 / `electron-updater` 原文，因此这里不给原始异常。
+     *              ⛔ 不要改回 `(error: unknown) => void` 再自行 `console.error(error)`。
+     */
+    onError?: (summary: string) => void
 }
 
 export interface UpdaterCore {
@@ -155,6 +163,15 @@ export const classifyFailure = (error: unknown): DesktopUpdateFailureReason => {
     return 'unknown'
 }
 
+/**
+ * 本地日志的**脱敏摘要**（AC9b）
+ * @description 输出只会是固定枚举内的原因码，⛔ 不含原始消息 / 本机绝对路径 / 主机名 /
+ *              环境变量名。`onError` 的入参类型就是它的返回值 ⇒ **结构上**排除了
+ *              「顺手把 `error.message` 写进日志」的可能（变异改坏会红，见 core 用例）。
+ */
+export const describeFailureForLog = (error: unknown): string =>
+    `[update] failure reason=${classifyFailure(error)}`
+
 const toIso = (at: number): string => new Date(at).toISOString()
 
 /**
@@ -211,6 +228,13 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         appimage: env.appimage,
         isPackaged: env.isPackaged
     })
+    /**
+     * 前置 gate（AC4b · 设计稿 §5）
+     * @description `download-page`（未打包开发态 / Linux deb / macOS）⇒ 初始态即 `unsupported`，
+     *              检查动作**不发请求**（态与文案不变）。状态机的 `unsupported` 出向白名单为空，
+     *              所以即使将来有代码尝试把它推向 `checking` / `available`，也会被状态机拒绝。
+     */
+    const unsupported = installMode.mode === 'download-page'
 
     /** 组装状态：公共字段（当前版本 / 安装形态 / 提示位）一处给全，避免各处漏字段 */
     const build = (
@@ -226,7 +250,9 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         return { ...status, ...input, updateAvailable: isUpdateAvailableState(input.state) }
     }
 
-    const machine: UpdateStateMachine = createUpdateStateMachine(restoreStatus(store, env, build))
+    const machine: UpdateStateMachine = createUpdateStateMachine(
+        unsupported ? build({ state: 'unsupported' }) : restoreStatus(store, env, build)
+    )
     /** 安装幂等闸（重复点击不二次调用安装器） */
     let installing = false
     /**
@@ -237,6 +263,8 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         machine.get().state === 'available' ? (machine.get().latestVersion ?? null) : null
 
     const check = async (checkOptions: { manual?: boolean } = {}): Promise<DesktopUpdateStatus> => {
+        // AC4b：形态不支持应用内更新 ⇒ 前置 gate，**不发起任何请求**（`checker` 调用数恒 0）
+        if (unsupported) return machine.get()
         const current = machine.get()
         // 检查中/下载中：忽略重复触发（按钮 disabled 的另一半保险）
         if (current.state === 'checking' || current.state === 'downloading') return current
@@ -289,7 +317,8 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
                 })
             )
         } catch (error) {
-            options.onError?.(error)
+            options.onError?.(describeFailureForLog(error))
+            // AC9b：只有原因码进载荷（⛔ `error.message` 原文不进状态、不进 IPC 推播）
             const reason = classifyFailure(error)
             const at = now()
             store.appendHistory({ at, kind: 'check', ok: false, reason })
@@ -348,7 +377,7 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
                 }
             })
         } catch (error) {
-            options.onError?.(error)
+            options.onError?.(describeFailureForLog(error))
             outcome = { ok: false, stage: 'download', reason: classifyFailure(error) }
         }
 
@@ -399,7 +428,7 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         } catch (error) {
             // 安装期失败：保留 ready 态（用户可重试），只落历史与日志
             installing = false
-            options.onError?.(error)
+            options.onError?.(describeFailureForLog(error))
             store.appendHistory({
                 at: now(),
                 kind: 'install',
@@ -416,7 +445,7 @@ export const createUpdaterCore = (options: CreateUpdaterCoreOptions): UpdaterCor
         try {
             await env.openDownloadPage()
         } catch (error) {
-            options.onError?.(error)
+            options.onError?.(describeFailureForLog(error))
         }
     }
 

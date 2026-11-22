@@ -32,6 +32,8 @@ interface Harness {
     installer: { install: ReturnType<typeof vi.fn> }
     syncGuard: { hasPendingChanges: ReturnType<typeof vi.fn> }
     openDownloadPage: ReturnType<typeof vi.fn>
+    /** 本地日志摘要（AC9b：只能是脱敏后的原因码，⛔ 不含原文 / 路径） */
+    logs: string[]
     statuses: DesktopUpdateStatus[]
     setNow: (at: number) => void
     advance: (ms: number) => void
@@ -78,6 +80,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
     const installer = { install: vi.fn() }
     const syncGuard = { hasPendingChanges: vi.fn(() => options.pendingChanges ?? false) }
     const openDownloadPage = vi.fn()
+    const logs: string[] = []
 
     const ports = {
         env: {
@@ -91,7 +94,8 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
         downloader,
         installer,
         syncGuard,
-        store
+        store,
+        onError: (summary: string) => logs.push(summary)
     }
     const core = createUpdaterCore({ ...ports, now: () => clock })
 
@@ -108,6 +112,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
         installer,
         syncGuard,
         openDownloadPage,
+        logs,
         statuses,
         setNow: (at) => {
             clock = at
@@ -506,28 +511,142 @@ describe('24h 缓存与启动恢复（AC8）', () => {
     })
 })
 
-describe('平台降级（AC7）', () => {
-    it('macOS ⇒ available + download-page + mac 原因，且不触发下载', async () => {
+describe('不支持应用内更新（AC4b 前置 gate · AC7）', () => {
+    /**
+     * AC4b 的核心判据：**`checker.check` 调用数 = 0**（⛔ 不是「失败后降级」）
+     * @description 挂载即 `unsupported`（不经历 `idle`），手动检查不触网、态不变，
+     *              且订阅序列里不得出现 `checking` / `available` / `failed` 任何一个。
+     */
+    it('macOS ⇒ 初始即 unsupported + mac 原因；检查 0 请求、态不变；下载器 0 次', async () => {
         const harness = createHarness({ platform: 'darwin', appimage: undefined })
+
+        // 挂载即展示（不靠一次检查才得出态）
+        expect(harness.core.getStatus().state).toBe('unsupported')
+        expect(harness.core.getStatus().installMode).toBe('download-page')
+        expect(harness.core.getStatus().degradedReason).toBe('mac')
+        expect(harness.core.getStatus().updateAvailable).toBe(false)
+
         const checked = await harness.core.check({ manual: true })
 
-        expect(checked.state).toBe('available')
-        expect(checked.installMode).toBe('download-page')
-        expect(checked.degradedReason).toBe('mac')
+        expect(checked.state).toBe('unsupported')
+        expect(harness.checker.check).toHaveBeenCalledTimes(0)
+        // 前置 gate：不参与 checking / available / failed 流转
+        expect(harness.statuses.map((item) => item.state)).toEqual([])
 
         await harness.core.download()
         expect(harness.downloader.download).toHaveBeenCalledTimes(0)
-        expect(harness.core.getStatus().state).toBe('available')
+        expect(harness.core.getStatus().state).toBe('unsupported')
     })
 
-    it('Linux deb ⇒ download-page + deb 原因；打开下载页走 env 端口', async () => {
+    it('Linux deb ⇒ unsupported + deb 原因；检查 0 请求；打开下载页走 env 端口', async () => {
         const harness = createHarness({ appimage: null })
-        const checked = await harness.core.check({ manual: true })
-        expect(checked.installMode).toBe('download-page')
-        expect(checked.degradedReason).toBe('deb')
+
+        expect(harness.core.getStatus().state).toBe('unsupported')
+        expect(harness.core.getStatus().installMode).toBe('download-page')
+        expect(harness.core.getStatus().degradedReason).toBe('deb')
+
+        await harness.core.check({ manual: true })
+        expect(harness.checker.check).toHaveBeenCalledTimes(0)
 
         await harness.core.openDownloadPage()
         expect(harness.openDownloadPage).toHaveBeenCalledTimes(1)
+    })
+
+    it('未打包开发态（linux + !isPackaged）⇒ unsupported + dev（不再是 deb），检查 0 请求', async () => {
+        const harness = createHarness({ appimage: null, isPackaged: false })
+
+        expect(harness.core.getStatus().state).toBe('unsupported')
+        expect(harness.core.getStatus().degradedReason).toBe('dev')
+
+        // 静默检查（启动期）同样不得触网
+        await harness.core.check({ manual: false })
+        await harness.core.check({ manual: true })
+        expect(harness.checker.check).toHaveBeenCalledTimes(0)
+        expect(harness.core.getStatus().state).toBe('unsupported')
+    })
+
+    it('未知平台（形态判定不出）⇒ unsupported 且不给原因（渲染层走 manual.unknown 兜底）', async () => {
+        const harness = createHarness({ platform: 'freebsd', appimage: undefined })
+
+        expect(harness.core.getStatus().state).toBe('unsupported')
+        expect(harness.core.getStatus().installMode).toBe('download-page')
+        expect(harness.core.getStatus().degradedReason).toBeUndefined()
+        expect('degradedReason' in harness.core.getStatus()).toBe(false)
+    })
+
+    it('unsupported 下安装器恒 0（blocked=not-ready，不会接上 ready 路径）', async () => {
+        const harness = createHarness({ appimage: null })
+        expect(await harness.core.install()).toEqual({ installed: false, blocked: 'not-ready' })
+        expect(harness.installer.install).toHaveBeenCalledTimes(0)
+    })
+
+    it('原地形态（AppImage）不受 gate 影响：仍能正常检查到 available', async () => {
+        const harness = createHarness()
+        expect(harness.core.getStatus().state).toBe('idle')
+        expect((await harness.core.check({ manual: true })).state).toBe('available')
+        expect(harness.checker.check).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('错误原文不外露（AC9b）', () => {
+    /** 用户实报的原文（`electron-updater` 在未打包 AppImage 环境下抛出） */
+    const RAW_APPIMAGE_MESSAGE =
+        'APPIMAGE env is not defined, current application is not an AppImage'
+
+    it('检查失败（原文 = APPIMAGE …）⇒ 载荷不含原文、原因码 unknown、日志只有原因码', async () => {
+        const harness = createHarness()
+        harness.checker.check.mockRejectedValue(new Error(RAW_APPIMAGE_MESSAGE))
+
+        const status = await harness.core.check({ manual: true })
+
+        // ① 状态载荷（IPC 推播 + 渲染层状态 + i18n 文案选择的数据源）不含原文
+        expect(status.state).toBe('failed')
+        expect(status.failure).toEqual({ stage: 'check', reason: 'unknown' })
+        expect(JSON.stringify(status)).not.toContain('APPIMAGE')
+        expect(JSON.stringify(harness.statuses)).not.toContain('APPIMAGE')
+        expect(JSON.stringify(harness.store.readHistory())).not.toContain('APPIMAGE')
+        expect(JSON.stringify(harness.store.readHistory())).not.toContain(tmpdir())
+
+        // ② 本地日志：只允许脱敏摘要（固定原因码），不得含原文 / 本机路径
+        expect(harness.logs).toHaveLength(1)
+        expect(harness.logs[0]).toBe('[update] failure reason=unknown')
+        expect(harness.logs.join('\n')).not.toContain('APPIMAGE')
+        expect(harness.logs.join('\n')).not.toContain(tmpdir())
+    })
+
+    it('下载失败（原文带本机路径 / 主机名）⇒ 载荷与日志均不含原文', async () => {
+        const harness = createHarness()
+        await harness.core.check({ manual: true })
+        const raw = `ENOTFOUND registry.example.com at ${tmpdir()}/nao-todo.AppImage`
+        harness.downloader.download.mockRejectedValueOnce(new Error(raw))
+
+        const status = await harness.core.download()
+
+        expect(status.state).toBe('failed')
+        // 认得出的部分仍可收窄（offline），但原文与路径一律不出载荷
+        expect(status.failure).toEqual({ stage: 'download', reason: 'offline' })
+        expect(JSON.stringify(status)).not.toContain('registry.example.com')
+        expect(JSON.stringify(status)).not.toContain(tmpdir())
+        expect(harness.logs.join('\n')).not.toContain(tmpdir())
+        expect(harness.logs.join('\n')).not.toContain('registry.example.com')
+        expect(harness.logs.every((line) => /^\[update\] failure reason=\w+$/.test(line))).toBe(
+            true
+        )
+    })
+
+    it('失败的下载 port 返回（非抛错）也只得原因码（不携带 message）', async () => {
+        const harness = createHarness()
+        await harness.core.check({ manual: true })
+        harness.downloader.download.mockResolvedValueOnce({
+            ok: false,
+            stage: 'download',
+            reason: 'unknown'
+        })
+
+        const status = await harness.core.download()
+
+        expect(Object.keys(status.failure ?? {}).sort()).toEqual(['reason', 'stage'])
+        expect(JSON.stringify(status)).not.toContain('APPIMAGE')
     })
 })
 
