@@ -328,6 +328,7 @@ export interface LocaleMessages {
     'settings.ia.version.hint': string
     // Settings · 关于与更新（T737 / Issue #358：仅桌面端渲染）
     'settings.update.title': string
+    'settings.update.desc': string
     'settings.update.currentVersion': string
     'settings.update.lastChecked': string
     'settings.update.check': string

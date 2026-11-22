@@ -8,23 +8,26 @@ import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import DataPanel from '../data-panel.vue'
 
 /**
- * T737 · 桌面端「关于与更新」卡 + 卡 A 数据护栏（PRD `docs/prds/2026-11-20-desktop-self-update.md`）
+ * T737 / T747 · 桌面端「关于与更新」块 + 卡 A 数据护栏（PRD `docs/prds/2026-11-20-desktop-self-update.md`）
  *
- * 钩子契约（唯一事实来源 = 设计稿 §9；RD 必须按名实现）：
+ * v4（T746/T747）**重写**：盒式卡（`sd-update__card` / `__r1` / `__r2` / `__label`）整体作废，
+ * 改为「组头 + 两条有底色行」（`.sd-update__list` / `.sd-update__row`）—— 断言全部搬到新 DOM，
+ * **不删断言换实现**：九态渲染 / 动作可用性 / 失败态无重试 / primary 断言 / 卡 A / AC10 零外溢 /
+ * 无障碍（`role=status` 只挂阶段文案、progressbar 独立）逐项保留。
+ *
+ * 钩子契约（唯一事实来源 = 设计稿 §9）：
  * - R2 根：`data-setting-id="update-status"` + `data-update-state="<九态字面量>"`
  *   + `data-update-platform-degraded="true|false"`
- * - R1：保留 `data-setting-id="version"` + `data-setting-action="check-update"`
+ * - 版本行（R1 / Web 共用）：`data-setting-id="version"` + `data-setting-action="check-update"`
  * - 动作：`data-update-action="download|restart|later|open-download-page"`
  *   + 卡 A `data-update-action="guard-sync|guard-anyway|guard-cancel"`
  *   （⛔ **无** `retry`：失败态不提供行内重试，AC4；再试 = 回 R1 点「检查更新」）
  *
- * 覆盖 AC：AC1（版本 + 有新版本）· AC4（失败态无行内重试）· AC4b（`unsupported` 前置态 / 零请求面）·
- * AC5（校验未过单列）· AC6（已是最新无主按钮）· AC7（`unsupported` 唯一动作 = 打开下载页）·
- * AC9（卡 A 判据 = 队列非空）· AC10（Web 零外溢）· AC11（失败 / 不支持态检查按钮不 disabled）·
- * AC12（符号 + 文字 + 色三冗余 / 进度 aria）· AC13（i18n 双键在 locale 用例）
- *
  * 说明：本文件用 **hook 假状态注入**（`@/hooks/use-desktop-updater` mock）驱动九态；
- *       真 bridge 接线由 `apps/desktop/.../__tests__/t737-use-desktop-updater.test.ts` 承担。
+ *       真 bridge 接线由 `apps/desktop/.../__tests__/t737-use-desktop-updater.test.ts` 承担；
+ *       **真机几何**（行高 / 按钮高 / 行底色 / hover 描边）由真实 Chromium 探针给实测（见回执），
+ *       jsdom 无布局 ⇒ 版式部分用**源级样式契约**兜住（与 `aside-drawer-tools.test.ts` 同口径）。
+ * @see docs/designs/358-desktop-self-update.md（v4 §3 视觉 / §4 token / §5 九态 / §9 测试钩子）
  */
 
 const mocks = vi.hoisted(() => {
@@ -108,6 +111,39 @@ const NueDialogStub = {
         '<div v-if="modelValue" class="nue-dialog" :class="`nue-dialog--${theme}`"><slot /></div>'
 }
 
+/**
+ * 源级样式 / 模板契约（jsdom 无布局 ⇒ 只能读规则本体；真机几何见回执）
+ * @description `?raw` 读的是**源码文本**：注释里的示例选择器会污染正则扫描 ⇒ 先剥注释
+ */
+const panelModules = import.meta.glob('/apps/web/src/components/settings/panels/data-panel.vue', {
+    query: '?raw',
+    import: 'default',
+    eager: true
+}) as Record<string, string>
+const panelSource = panelModules['/apps/web/src/components/settings/panels/data-panel.vue'] ?? ''
+const panelNoComments = panelSource.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+const panelTemplate = panelNoComments.slice(
+    panelNoComments.indexOf('<template>'),
+    panelNoComments.indexOf('</template>')
+)
+
+/** 取指定选择器（逐字匹配 `选择器 {`）的首个规则体 */
+const ruleBody = (selector: string): string => {
+    const start = panelNoComments.indexOf(`${selector} {`)
+    if (start < 0) return ''
+    const open = start + selector.length + 2
+    return panelNoComments.slice(open, panelNoComments.indexOf('}', open))
+}
+
+/** 取模板里含某片段的那一个开标签（`<...>`）—— 用于断言「整行没有 click 绑定」 */
+const tagAround = (needle: string): string => {
+    const index = panelTemplate.indexOf(needle)
+    if (index < 0) return ''
+    const start = panelTemplate.lastIndexOf('<', index)
+    const end = panelTemplate.indexOf('>', index)
+    return panelTemplate.slice(start, end + 1)
+}
+
 let wrapper: VueWrapper | null = null
 
 const mountPanel = (): VueWrapper => {
@@ -153,6 +189,11 @@ const expectNoRetryWording = (copy: string): void => {
 }
 
 const r2 = (view: VueWrapper) => view.find('[data-setting-id="update-status"]')
+/** 版本行（R1 / Web 共用的一套 DOM） */
+const versionRow = (view: VueWrapper) => view.find('[data-setting-id="version"]')
+/** 状态文字节点（`role=status` 只挂在这里，进度不进来） */
+const stateNode = (view: VueWrapper) => view.find('.sd-desktop-status [role="status"]')
+const stateTextNode = (view: VueWrapper) => view.find('.sd-desktop-status .sd-row__label')
 
 beforeEach(() => {
     mocks.isDesktop.value = true
@@ -172,30 +213,33 @@ afterEach(() => {
     wrapper = null
 })
 
-describe('T737 · AC10 Web 端零外溢（整块不渲染，版本行逐字不变）', () => {
+describe('T747 · AC10 Web 端零外溢（桌面块不渲染，版本行逐字不变）', () => {
     beforeEach(() => {
         mocks.isDesktop.value = false
     })
 
-    it('Web：无更新卡、无状态行、无卡 A（节点数 0）', () => {
+    it('Web：无更新状态行、无动作、无组头（节点数 0）', () => {
         const view = mountPanel()
-        expect(view.find('.sd-update').exists()).toBe(false)
         expect(r2(view).exists()).toBe(false)
         expect(view.find('[data-update-action]').exists()).toBe(false)
-        expect(view.findAll('[data-setting-id="update-status"]')).toHaveLength(0)
+        expect(view.find('.sd-update__row').exists()).toBe(false)
+        expect(text(view)).not.toContain('关于与更新')
     })
 
     it('Web：版本行仍是「版本号 + 查看更新」外链（锚点与动作名不变）', () => {
         const view = mountPanel()
-        const row = view.find('[data-setting-id="version"]')
+        const row = versionRow(view)
         expect(row.exists()).toBe(true)
         expect(row.classes()).toContain('sd-row')
+        // 桌面载体类不出现（Web 行不加底色、不加圆角）
+        expect(row.classes()).not.toContain('sd-update__row')
         // 测试环境无构建注入版本 ⇒ 文案为「版本号 」空串（与既有行为一致）
         expect(row.text()).toContain('版本号')
         expect(row.find('[data-setting-action="check-update"]').exists()).toBe(true)
-        // 行内按钮仍是旧的原生 button + 外链文案（不是桌面卡的 nue-button）
+        // 行内按钮仍是旧的原生 button + 外链文案（不是桌面块的 nue-button）
         expect(row.html()).toContain('查看更新')
         expect(row.find('button.sd-row__action').exists()).toBe(true)
+        expect(row.find('.nue-button').exists()).toBe(false)
     })
 
     it('Web：即使 hook 状态是 available 也不渲染任何更新 UI（状态不外溢）', async () => {
@@ -211,32 +255,76 @@ describe('T737 · AC10 Web 端零外溢（整块不渲染，版本行逐字不�
     })
 })
 
-describe('T737 · AC1 桌面端 R1 版本行（永不被状态替换）', () => {
-    it('R1 保留 data-setting-id="version" + data-setting-action="check-update"，显示当前版本', () => {
-        const view = mountPanel()
-        const r1 = view.find('[data-setting-id="version"]')
-        expect(r1.exists()).toBe(true)
-        expect(r1.text()).toContain('当前版本 1.20.3')
-        expect(r1.find('[data-setting-action="check-update"]').exists()).toBe(true)
+describe('T747 · 版本行：R1 与 Web 行共用一套 DOM（v-if 只切 handler 与文案）', () => {
+    it('两端是同一处标记：同一父容器 + 同一个 data-setting-id，仅载体类与按钮不同', () => {
+        mocks.isDesktop.value = false
+        const web = mountPanel()
+        const webRow = versionRow(web)
+        const webParentClasses = Array.from(webRow.element.parentElement?.classList ?? [])
+        const webButton = webRow.find('[data-setting-action="check-update"]')
+        expect(webButton.element.tagName).toBe('BUTTON')
+        web.unmount()
+
+        mocks.isDesktop.value = true
+        const desktop = mountPanel()
+        const desktopRow = versionRow(desktop)
+        const desktopParentClasses = Array.from(desktopRow.element.parentElement?.classList ?? [])
+        const desktopButton = desktopRow.find('[data-setting-action="check-update"]')
+
+        // 同一父容器（`.sd-update__list`）⇒ AC10「Web 行逐字不变」是结构保证而非两段对齐
+        expect(webParentClasses).toContain('sd-update__list')
+        expect(desktopParentClasses).toEqual(webParentClasses)
+        // 面板里各只有一处版本行
+        expect(web.findAll('[data-setting-id="version"]')).toHaveLength(1)
+        expect(desktop.findAll('[data-setting-id="version"]')).toHaveLength(1)
+        // 只有桌面端加桌面载体类与 nue-button（Web 行不加底色）
+        expect(desktopRow.classes()).toContain('sd-update__row')
+        expect(desktopRow.classes()).toContain('sd-row')
+        expect(desktopButton.classes()).toContain('nue-button')
+        expect(desktopButton.classes()).toContain('nue-button--secondary')
+        expect(webRow.find('.nue-button').exists()).toBe(false)
     })
 
-    it('never-checked：无「上次检查」行，idle 文案给引导语', () => {
+    it('桌面 R1 保留 data-setting-id="version" + 动作名，显示当前版本（永不被状态替换）', async () => {
+        const view = mountPanel()
+        expect(versionRow(view).text()).toContain('当前版本 1.20.3')
+        expect(versionRow(view).find('[data-setting-action="check-update"]').exists()).toBe(true)
+        await setUpdate({ state: 'failed', failure: { stage: 'check', reason: 'offline' } })
+        expect(versionRow(view).text()).toContain('当前版本 1.20.3')
+        expect(versionRow(view).find('[data-setting-action="check-update"]').exists()).toBe(true)
+    })
+
+    it('never-checked：无「上次检查」hint，idle 文案给引导语', () => {
         const view = mountPanel()
         expect(text(view)).not.toContain('上次检查')
         expect(r2(view).attributes('data-update-state')).toBe('idle')
         expect(text(view)).toContain('还没检查过更新')
     })
 
-    it('有 lastCheckedAt ⇒ R1 显示上次检查时间', async () => {
-        await setUpdate({ lastCheckedAt: '2026-11-20T07:30:00.000Z' })
+    it('有 lastCheckedAt ⇒ 版本行显示上次检查时间（up-to-date 时也在 R1，R2 不重复）', async () => {
+        await setUpdate({
+            state: 'up-to-date',
+            lastCheckedAt: '2026-11-20T07:30:00.000Z'
+        })
         const view = mountPanel()
-        expect(text(view)).toContain('上次检查')
+        expect(versionRow(view).text()).toContain('上次检查')
+        // v4 §5：同一信息不在两块重复 ⇒ R2 无 hint
+        expect(r2(view).find('.sd-row__hint').exists()).toBe(false)
     })
 
     it('检查按钮点击 ⇒ 调 check()（手动检查忽略缓存）', async () => {
         const view = mountPanel()
         await view.find('[data-setting-action="check-update"]').trigger('click')
         expect(mocks.check).toHaveBeenCalledTimes(1)
+    })
+
+    it('关于与更新 有组头（h3 + 一句说明），与「桌面常驻」同构', () => {
+        const view = mountPanel()
+        const heads = view.findAll('.sd-group__head')
+        const updateHead = heads.find((head) => head.text().includes('关于与更新'))
+        expect(updateHead).toBeDefined()
+        expect(updateHead?.find('h3.sd-group__title').exists()).toBe(true)
+        expect(updateHead?.text()).toContain('下载时不会打断你正在做的事')
     })
 })
 
@@ -260,7 +348,7 @@ describe('T737 · 九态渲染（data-update-state 字面量 + 三冗余）', ()
         {
             state: 'available',
             symbol: '↑',
-            tone: 'warning',
+            tone: 'warn',
             copy: '有新版本 1.21.0',
             patch: { latestVersion: '1.21.0', updateAvailable: true }
         },
@@ -268,21 +356,21 @@ describe('T737 · 九态渲染（data-update-state 字面量 + 三冗余）', ()
             state: 'downloading',
             symbol: '…',
             tone: 'muted',
-            copy: '正在下载更新',
+            copy: '正在下载更新…',
             patch: { latestVersion: '1.21.0', updateAvailable: true, percent: 42 }
         },
         {
             state: 'ready',
             symbol: '↓',
-            tone: 'success',
+            tone: 'ok',
             copy: '更新已就绪',
             patch: { latestVersion: '1.21.0', updateAvailable: true }
         },
-        { state: 'up-to-date', symbol: '✓', tone: 'success', copy: '已是最新 1.20.3' },
+        { state: 'up-to-date', symbol: '✓', tone: 'ok', copy: '已是最新 1.20.3' },
         {
             state: 'just-updated',
             symbol: '✓',
-            tone: 'success',
+            tone: 'ok',
             copy: '已更新到 1.20.3',
             patch: { currentVersion: '1.20.3' }
         },
@@ -307,10 +395,14 @@ describe('T737 · 九态渲染（data-update-state 字面量 + 三冗余）', ()
                 expect(text(view)).not.toContain('还没检查过更新')
                 return
             }
-            const symbol = view.find('.sd-update__symbol')
+            const status = view.find('.sd-desktop-status')
+            // 色档挂在 `.sd-desktop-status` 家族上（符号与文字同档 ⇒ 去色后仍靠字形 + 文字）
+            expect(status.classes()).toContain(`is-${item.tone}`)
+            const symbol = status.find('.sd-desktop-status__symbol')
             expect(symbol.text()).toBe(item.symbol)
-            expect(symbol.classes()).toContain(`is-${item.tone}`)
-            expect(view.find('.sd-update__state').classes()).toContain(`is-${item.tone}`)
+            expect(symbol.attributes('aria-hidden')).toBe('true')
+            // 符号与文字都在同一色档容器内（同色同档，设计稿 §4 / §8）
+            expect(stateTextNode(view).text()).toBe(item.copy)
             expect(view.findComponent(LoadingError).exists()).toBe(false)
         })
     }
@@ -328,6 +420,7 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(text(view)).toContain('下载约 113 MB')
         const btn = action(view, 'download')
         expect(btn.exists()).toBe(true)
+        expect(btn.classes()).toContain('nue-button--primary')
         await btn.trigger('click')
         expect(mocks.download).toHaveBeenCalledTimes(1)
     })
@@ -343,7 +436,7 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(text(view)).not.toContain('MB')
     })
 
-    it('ready：主「立即重启更新」+ 次「稍后」；点「稍后」只改本地态（⛔ 不安装/不重启）', async () => {
+    it('ready：主「立即重启更新」+ 次「稍后」（secondary，⛔ 不用 ghost）；「稍后」只改本地态', async () => {
         await setUpdate({
             state: 'ready',
             latestVersion: '1.21.0',
@@ -352,14 +445,17 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         const view = mountPanel()
         expect(text(view)).toContain('更新已就绪')
         expect(action(view, 'restart').exists()).toBe(true)
+        expect(action(view, 'restart').classes()).toContain('nue-button--primary')
         expect(action(view, 'later').exists()).toBe(true)
+        // 行底是 -100 ⇒ ghost 的 hover 底与行底同色（零反馈）⇒ 次按钮只走 secondary
+        expect(action(view, 'later').classes()).toContain('nue-button--secondary')
+        expect(action(view, 'later').classes()).not.toContain('nue-button--ghost')
 
         await action(view, 'later').trigger('click')
         expect(action(view, 'later').exists()).toBe(false)
         expect(text(view)).toContain('更新已就绪')
         expect(action(view, 'restart').exists()).toBe(true)
-        // ⛔ 不变量（qa DEF-01）：「稍后」只改本地态 ⇒ 安装/重启通道调用 0 次；
-        // 已下载状态保留 = 仍为 ready、护栏不弹、主按钮还在
+        // ⛔ 不变量（qa DEF-01）：「稍后」只改本地态 ⇒ 安装/重启通道调用 0 次
         expect(mocks.restart).not.toHaveBeenCalled()
         expect(r2(view).attributes('data-update-state')).toBe('ready')
         expect(view.find('.sd-update-guard').exists()).toBe(false)
@@ -390,6 +486,13 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(text(view)).toContain('重启应用后即可再次检查')
     })
 
+    it('检查按钮是次按钮（nue-button secondary，组件原生 36px 档）', () => {
+        const view = mountPanel()
+        const checkBtn = view.find('[data-setting-action="check-update"]')
+        expect(checkBtn.classes()).toContain('nue-button--secondary')
+        expect(checkBtn.classes()).not.toContain('nue-button--primary')
+    })
+
     it('downloading：R1 检查禁用、给进度条与 aria-valuenow', async () => {
         await setUpdate({
             state: 'downloading',
@@ -404,6 +507,8 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         const bar = view.find('[role="progressbar"]')
         expect(bar.attributes('aria-valuenow')).toBe('42')
         expect(bar.attributes('aria-valuetext')).toBe('已下载 42%')
+        // 进度条用既有组件（先例 task-details/main），⛔ 不自绘
+        expect(view.find('.sd-update__progress .nue-progress').exists()).toBe(true)
         expect(text(view)).toContain('42%')
         expect(view.find('[data-update-action="download"]').exists()).toBe(false)
     })
@@ -459,7 +564,7 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(action(view, 'retry').exists()).toBe(false)
         expect(view.findAll('button').filter((btn) => btn.text().includes('重试'))).toHaveLength(0)
         expectNoRetryWording(text(view))
-        // 唯一动作 = 打开下载页，且它是主按钮（v3 由次按钮升 primary）
+        // 唯一动作 = 打开下载页，且它是主按钮
         expect(action(view, 'open-download-page').exists()).toBe(true)
         expect(action(view, 'open-download-page').classes()).toContain('nue-button--primary')
         expect(action(view, 'open-download-page').classes()).not.toContain('nue-button--ghost')
@@ -492,7 +597,6 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         const view = mountPanel()
         expect(text(view)).toContain('更新包校验没通过')
         expect(text(view)).not.toContain('sha512')
-        // 原因句只描述事实（v3）：不得出现「可以再试一次」类动作措辞
         expectNoRetryWording(text(view))
     })
 
@@ -527,6 +631,8 @@ describe('T737 · AC6 / AC4b / AC7 边界', () => {
         expect(action(view, 'download').exists()).toBe(false)
         expect(action(view, 'restart').exists()).toBe(false)
         expect(action(view, 'open-download-page').exists()).toBe(false)
+        // 无动作态不渲染空动作簇
+        expect(view.find('.sd-update__actions').exists()).toBe(false)
     })
 
     it('AC4b / AC7：macOS（download-page）⇒ unsupported 态 + 一行原因 + 唯一动作（primary）', async () => {
@@ -576,7 +682,7 @@ describe('T737 · AC6 / AC4b / AC7 边界', () => {
     it('AC4b：形态判定不出（degradedReason 缺省）⇒ unknown 兜底句，⛔ 不留空行', async () => {
         await setUpdate({ state: 'unsupported', installMode: 'download-page' })
         const view = mountPanel()
-        const hint = view.find('.sd-update__hint')
+        const hint = r2(view).find('.sd-row__hint')
         expect(hint.exists()).toBe(true)
         expect(hint.text()).toBe('这种安装方式的新版本要从下载页安装')
         // 不硬套具体形态的措辞
@@ -630,7 +736,6 @@ describe('T737 · AC9 卡 A 数据护栏（判据 = 同步队列非空）', () =
         expect(guard.exists()).toBe(true)
         expect(guard.attributes('aria-label')).toBe('有改动还没同步')
         expect(guard.text()).toContain('还有 3 项改动等待同步')
-        expect(guard.text()).toContain('3')
         // 文案 A（软提示）：⛔ 不出现「失败」
         expect(guard.text()).not.toContain('失败')
         expect(mocks.restart).not.toHaveBeenCalled()
@@ -683,7 +788,7 @@ describe('T737 · AC9 卡 A 数据护栏（判据 = 同步队列非空）', () =
         await nextTick()
 
         expect(view.find('.sd-update-guard').exists()).toBe(false)
-        // 普通路径不带 force（主进程按自己的就绪判定执行）
+        // 普通路径不带 force（主进程按自己的就绪判据执行）
         expect(mocks.restart).toHaveBeenCalledWith()
     })
 })
@@ -701,16 +806,28 @@ describe('T737 · 无障碍与弱提示联动（AC12 / 设计稿 §8）', () => 
         expect(live).toHaveLength(1)
         expect(live[0]?.attributes('aria-live')).toBe('polite')
         expect(live[0]?.text()).not.toContain('%')
+        expect(live[0]?.attributes('role')).toBe('status')
+        // 状态文字节点 = 阶段文案（不含进度百分比）
+        expect(stateNode(view).text()).toBe('正在下载更新…')
         expect(view.find('[role="progressbar"]').attributes('aria-valuenow')).toBe('10')
+    })
+
+    it('符号 aria-hidden：语义全由文字 + 角色承担（去色后仍可辨）', async () => {
+        await setUpdate({ state: 'up-to-date' })
+        const view = mountPanel()
+        const symbol = view.find('.sd-desktop-status__symbol')
+        expect(symbol.attributes('aria-hidden')).toBe('true')
+        // 符号不参与读屏，也不进 live 区文本
+        expect(stateNode(view).text()).not.toContain('✓')
     })
 
     it('首帧未 loaded ⇒ 不挂 role="status"/aria-live（读屏不得提前播报）', async () => {
         mocks.updateLoaded.value = false
         await setUpdate({ state: 'up-to-date' })
         const view = mountPanel()
-        const state = view.find('.sd-update__state')
-        expect(state.attributes('role')).toBeUndefined()
-        expect(state.attributes('aria-live')).toBe('off')
+        expect(stateNode(view).exists()).toBe(false)
+        expect(view.find('.sd-desktop-status .sd-row__label').attributes('role')).toBeUndefined()
+        expect(view.find('.sd-desktop-status .sd-row__label').attributes('aria-live')).toBe('off')
     })
 
     it('看到可用更新 ⇒ 通知 hook 记「已看过」（清侧栏弱提示）', async () => {
@@ -722,5 +839,87 @@ describe('T737 · 无障碍与弱提示联动（AC12 / 设计稿 §8）', () => 
         mountPanel()
         await nextTick()
         expect(mocks.markSeen).toHaveBeenCalled()
+    })
+})
+
+describe('T747 · 版式契约（v4 行语言 / 不可点 / token）', () => {
+    it('行样式逐条取自任务列表 `--small` 变体（底 -100 / 圆角 6 / 行高 ≥40 / 8-12 内边距）', () => {
+        const body = ruleBody('.sd-update__row')
+        expect(body).toContain('background-color: var(--nue-primary-color-100)')
+        expect(body).toContain('border-radius: var(--nue-primary-radius)')
+        expect(body).toContain('min-height: var(--nue-box-size-md)')
+        expect(body).toContain('border: 1px solid transparent')
+        // `-1px` 抵消边框 ⇒ 行内文字与组头/既有行左缘同线（≤0.5px，真机实测见回执）
+        expect(body).toContain('padding: var(--nue-padding-xs) calc(var(--nue-padding-sm) - 1px)')
+        // 行距 = 任务列表行距 0.5rem
+        expect(ruleBody('.sd-update__list')).toContain('gap: var(--nue-gap-xs)')
+    })
+
+    it('⛔ 整行不可点：行规则无 cursor，行标签无 click 绑定', async () => {
+        const base = ruleBody('.sd-update__row')
+        const hover = ruleBody('.sd-update__row:hover')
+        const narrow = ruleBody('.sd-body.is-narrow .sd-update__row')
+        // 手型光标 = 承诺可点（设计稿 §3 / §7）⇒ 三条行规则里都不许出现 cursor
+        for (const [name, body] of [
+            ['.sd-update__row', base],
+            ['.sd-update__row:hover', hover],
+            ['.sd-body.is-narrow .sd-update__row', narrow]
+        ] as const) {
+            expect(body, `${name} 不应声明 cursor（手型 = 假 affordance）`).not.toContain('cursor')
+        }
+        // hover 只表达「可操作的块」（描边），不接管点击
+        expect(hover).toContain('border-color: var(--nue-primary-color-500)')
+        // 模板：两条行标签上都没有 click 绑定
+        for (const needle of [
+            "'sd-update__row': isDesktopUpdater",
+            'sd-row sd-row--stack sd-update__row'
+        ]) {
+            const tag = tagAround(needle)
+            expect(tag, `行标签不应绑定点击：${tag}`).not.toContain('@click')
+            expect(tag).not.toContain('tabindex')
+            expect(tag).not.toContain('role="button"')
+        }
+
+        // 运行时：点行本身不触发任何通道（行不是按钮）
+        await setUpdate({
+            state: 'available',
+            latestVersion: '1.21.0',
+            updateAvailable: true
+        })
+        const view = mountPanel()
+        await r2(view).trigger('click')
+        await nextTick()
+        expect(mocks.download).not.toHaveBeenCalled()
+        expect(mocks.restart).not.toHaveBeenCalled()
+        expect(mocks.check).not.toHaveBeenCalled()
+        expect(mocks.openDownloadPage).not.toHaveBeenCalled()
+    })
+
+    it('行底上的 hint 取 -700（6.77 ✓），⛔ 不用 -600（压 -100 只有 4.60）', () => {
+        const body = ruleBody('.sd-update__row .sd-row__hint')
+        expect(body).toContain('color: var(--nue-primary-color-700)')
+        expect(body).not.toContain('--nue-secondary-text-color')
+        // 全块（含组头 / 状态色）不留 -600 的 hint 覆写
+        expect(panelNoComments).not.toMatch(
+            /\.sd-update__row[^{]*\{[^}]*--nue-secondary-text-color/
+        )
+    })
+
+    it('控件回归组件原生档：⛔ 30px 覆写、⛔ 动作区 min-width、⛔ ghost / `.sd-row__action` 上桌面行', () => {
+        const style = panelNoComments.slice(panelNoComments.indexOf('<style'))
+        expect(style).not.toContain('height: 30px')
+        expect(style).not.toContain('container-type')
+        // v3 的动作区占位宽已撤回（不跳位改由「文字恒左 / 首行恒 40px」保证）
+        expect(ruleBody('.sd-update__actions')).not.toContain('min-width')
+        // 桌面行内按钮只走 primary / secondary（ghost 与 -100 行底同底 ⇒ 零反馈）
+        const actionsTag = tagAround('class="sd-update__actions"')
+        expect(actionsTag).not.toContain('ghost')
+        // 状态行（R2）不出现 `.sd-row__action`（-100 底与行底同色 ⇒ 按钮看不见）；ghost 全块禁用
+        const r2Template = panelTemplate.slice(
+            panelTemplate.indexOf('data-setting-id="update-status"'),
+            panelTemplate.indexOf('卡 A')
+        )
+        expect(r2Template).not.toContain('sd-row__action')
+        expect(r2Template).not.toContain('ghost')
     })
 })

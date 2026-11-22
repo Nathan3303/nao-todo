@@ -341,6 +341,7 @@ const zhCN: LocaleMessages = {
     'settings.ia.version.hint': '在项目发布页查看新版本说明。',
     // 关于与更新（T737 / Issue #358：仅桌面端渲染；文案见 docs/designs/358-desktop-self-update-copy.md）
     'settings.update.title': '关于与更新',
+    'settings.update.desc': '在应用内检查并安装新版本，下载时不会打断你正在做的事',
     'settings.update.currentVersion': '当前版本 {version}',
     'settings.update.lastChecked': '上次检查：{time}',
     'settings.update.check': '检查更新',

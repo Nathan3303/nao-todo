@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
- * 设置「数据与关于」分类面板（T535 / T737）
+ * 设置「数据与关于」分类面板（T535 / T737 / T747）
  * @description 同步状态一行（**只读**，无控件、无新请求）· 本地数据与安全说明（默认折叠，全文 `v-if` 渲染）
- *              · 版本与更新：**Web 端**保持既有「版本号 + 查看更新」外链行（逐字不变，AC10）；
- *              **桌面端**升级为「关于与更新」卡（R1 版本行永不替换 + R2 九态状态行 + 动作区）。
+ *              · 版本行：**Web 端**保持既有「版本号 + 查看更新」外链行（逐字不变，AC10），
+ *              **桌面端**同一套 DOM 升为「关于与更新」块的行（R1 永不被状态替换）；
+ *              桌面端另有 R2 九态状态行 + 动作簇 + 卡 A 数据护栏。
  *              时间口径与侧栏**同源同 helper**（`mirrorPulledAt` + `formatMirrorPulledAt`）。
  * @see docs/prds/2026-10-24-settings-ia.md（AC7 · AC8 · AC9 · R4 · R6 · R7）
  * @see docs/prds/2026-11-20-desktop-self-update.md（AC1–AC13）
- * @see docs/designs/358-desktop-self-update.md（§5 九态 / §6 断点 / §8 无障碍 / §9 测试钩子）
+ * @see docs/designs/358-desktop-self-update.md（v4：§1 信息架构 / §3 视觉 / §4 token / §5 九态 / §6 断点 / §9 测试钩子）
  */
 import { computed, nextTick, ref, watch } from 'vue'
 import type { DesktopUpdateManualReason } from '@nao-todo/shared'
@@ -82,13 +83,16 @@ const lastCheckedText = computed(() => {
 })
 
 /**
- * R1 hint 是否渲染
- * @description `up-to-date` 时同一时间已在 R2 补充说明里出现一次 ⇒ R1 让位，避免同卡重复同一行
+ * 版本行（R1）的标签与 hint：**Web / 桌面共用一套 DOM**，`v-if` 只切 handler 与这两处文案
+ * @description AC10「Web 行逐字不变」由此成为**结构**保证（不是两段标记对齐）
  */
-const r1CheckedText = computed(() =>
-    updateState.value === 'up-to-date' || updateState.value === 'just-updated'
-        ? ''
-        : lastCheckedText.value
+const versionLabel = computed(() =>
+    isDesktopUpdater
+        ? t('settings.update.currentVersion', { version: currentVersionText.value })
+        : t('settings.version', { version: appVersion })
+)
+const versionHint = computed(() =>
+    isDesktopUpdater ? lastCheckedText.value : t('settings.ia.version.hint')
 )
 
 /** 三态可辨之一：符号（颜色与文字见样式与文案）；`checking` 的 spinner 由 `LoadingError` 承担 */
@@ -104,15 +108,16 @@ const SYMBOLS = {
     failed: '×'
 } as const
 
+/** 色档：落在既有 `.sd-desktop-status` 家族上（`is-ok` / `is-warn` / `is-error` + v4 新增 `is-muted`） */
 const TONES = {
     unsupported: 'muted',
     idle: 'muted',
     checking: 'muted',
-    available: 'warning',
+    available: 'warn',
     downloading: 'muted',
-    ready: 'success',
-    'up-to-date': 'success',
-    'just-updated': 'success',
+    ready: 'ok',
+    'up-to-date': 'ok',
+    'just-updated': 'ok',
     failed: 'error'
 } as const
 
@@ -214,7 +219,8 @@ const updateHintText = computed(() => {
         case 'ready':
             return t('settings.update.readyHint')
         case 'up-to-date':
-            return lastCheckedText.value
+            // v4 §5：时间在 R1，⛔ 同一信息不在两块重复
+            return ''
         case 'just-updated':
             return t('settings.update.justUpdatedHint')
         case 'failed': {
@@ -256,6 +262,14 @@ const showOpenDownloadPage = computed(
 )
 const showReadyActions = computed(() => updateState.value === 'ready')
 const showLater = computed(() => showReadyActions.value && !laterDismissed.value)
+/** 动作簇是否渲染（没有动作的态不渲染空簇） */
+const hasRowAction = computed(
+    () =>
+        showDownloadNow.value ||
+        showReadyActions.value ||
+        showLater.value ||
+        showOpenDownloadPage.value
+)
 
 /** 进入「已就绪」后重置「稍后」；离开 ready 再复位，避免下次就绪时少了「稍后」 */
 watch(updateState, (state) => {
@@ -365,43 +379,26 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                 <settings-local-data-notice v-if="localDataOpen" />
             </div>
 
-            <!-- 版本与更新（Web）：只读版本号 + 发布页外链（诚实文案，无自动更新）——
-                 ⛔ AC10：本行在 Web 端**逐字不变**；桌面端由下方「关于与更新」卡替代 -->
-            <div v-if="!isDesktopUpdater" class="sd-row" data-setting-id="version">
-                <div class="sd-row__text">
-                    <span class="sd-row__label">
-                        {{ t('settings.version', { version: appVersion }) }}
-                    </span>
-                    <p class="sd-row__hint">{{ t('settings.ia.version.hint') }}</p>
-                </div>
-                <button
-                    type="button"
-                    class="sd-row__action"
-                    data-setting-action="check-update"
-                    @click="openReleases"
-                >
-                    {{ t('settings.ia.version.check') }}
-                </button>
-            </div>
-        </section>
+            <!-- 关于与更新（桌面端专属组头，与「桌面常驻」同构；Web 端不渲染 ⇒ AC10 零外溢） -->
+            <header v-if="isDesktopUpdater" class="sd-group__head sd-update__head">
+                <h3 class="sd-group__title">{{ t('settings.update.title') }}</h3>
+                <p class="sd-group__desc">{{ t('settings.update.desc') }}</p>
+            </header>
 
-        <!-- 关于与更新（仅桌面端渲染；Web / 移动端整块不渲染、无空容器、无占位） -->
-        <section v-if="isDesktopUpdater" class="sd-group sd-update" data-setting-id="version">
-            <h3 class="sd-update__label">{{ t('settings.update.title') }}</h3>
-            <div class="sd-update__card">
-                <!-- R1 版本行：永不被状态替换（我在用哪版 / 能不能查） -->
-                <div class="sd-update__r1">
-                    <div class="sd-update__r1-text">
-                        <span class="sd-update__version">
-                            {{
-                                t('settings.update.currentVersion', { version: currentVersionText })
-                            }}
-                        </span>
-                        <span v-if="r1CheckedText" class="sd-update__checked">
-                            {{ r1CheckedText }}
-                        </span>
+            <div class="sd-update__list">
+                <!-- 版本行（R1 / Web 版本行**共用一套 DOM**：`v-if` 只切 handler 与文案） -->
+                <div
+                    class="sd-row"
+                    :class="{ 'sd-update__row': isDesktopUpdater }"
+                    data-setting-id="version"
+                >
+                    <div class="sd-row__text">
+                        <span class="sd-row__label">{{ versionLabel }}</span>
+                        <p v-if="versionHint" class="sd-row__hint">{{ versionHint }}</p>
                     </div>
+                    <!-- 桌面端：应用内检查（secondary 36px；ready 期 disabled + 可见理由） -->
                     <span
+                        v-if="isDesktopUpdater"
                         class="sd-update__check"
                         :title="checkBlocked ? checkBlockedReason : undefined"
                     >
@@ -409,6 +406,7 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                             {{ checkBlockedReason }}
                         </span>
                         <nue-button
+                            theme="secondary"
                             data-setting-action="check-update"
                             :disabled="checkBlocked"
                             :loading="updateState === 'checking'"
@@ -418,11 +416,22 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                             {{ t('settings.update.check') }}
                         </nue-button>
                     </span>
+                    <!-- Web 端：既有外链入口（逐字不变，AC10） -->
+                    <button
+                        v-else
+                        type="button"
+                        class="sd-row__action"
+                        data-setting-action="check-update"
+                        @click="openReleases"
+                    >
+                        {{ t('settings.ia.version.check') }}
+                    </button>
                 </div>
 
-                <!-- R2 状态行：九态（`data-update-state` 直取状态机字面量） -->
+                <!-- R2 状态行（仅桌面端）：九态，`data-update-state` 直取状态机字面量 -->
                 <div
-                    class="sd-update__r2"
+                    v-if="isDesktopUpdater"
+                    class="sd-row sd-row--stack sd-update__row"
                     data-setting-id="update-status"
                     :data-update-state="updateState"
                     :data-update-platform-degraded="String(updatePlatformDegraded)"
@@ -434,92 +443,82 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                         :loading-message="t('settings.update.checking')"
                     />
                     <template v-else>
-                        <div class="sd-update__status">
-                            <span
-                                class="sd-update__symbol"
-                                :class="`is-${updateTone}`"
-                                aria-hidden="true"
-                            >
-                                {{ updateSymbol }}
-                            </span>
-                            <div class="sd-update__status-text">
+                        <!-- 首行：左状态（符号 + 文字 + 同档颜色三重冗余）右动作；行高恒 40px ⇒ 不跳位 -->
+                        <div class="sd-row__line">
+                            <span class="sd-desktop-status" :class="`is-${updateTone}`">
+                                <span class="sd-desktop-status__symbol" aria-hidden="true">
+                                    {{ updateSymbol }}
+                                </span>
                                 <span
-                                    class="sd-update__state"
-                                    :class="`is-${updateTone}`"
+                                    class="sd-row__label"
                                     :role="updateLoaded ? 'status' : undefined"
                                     :aria-live="updateLoaded ? 'polite' : 'off'"
                                     >{{ updateStateText }}</span
                                 >
-                                <span v-if="updateHintText" class="sd-update__hint">
-                                    {{ updateHintText }}
-                                </span>
-                                <!-- 下载进度：有总量才给百分比（未知 ⇒ 只给「正在下载」，⛔ 不编数字） -->
-                                <div
-                                    v-if="updateState === 'downloading'"
-                                    class="sd-update__progress"
-                                    role="progressbar"
-                                    aria-valuemin="0"
-                                    aria-valuemax="100"
-                                    :aria-valuenow="progressPercent ?? undefined"
-                                    :aria-valuetext="
-                                        progressPercent === null
-                                            ? t('settings.update.a11y.progressUnknown')
-                                            : t('settings.update.a11y.progress', {
-                                                  percent: progressPercent
-                                              })
-                                    "
+                            </span>
+                            <div v-if="hasRowAction" class="sd-update__actions">
+                                <nue-button
+                                    v-if="showDownloadNow"
+                                    theme="primary"
+                                    data-update-action="download"
+                                    @click="downloadUpdate()"
                                 >
-                                    <div class="sd-update__track">
-                                        <div
-                                            class="sd-update__progress-bar"
-                                            :style="{
-                                                width: `${progressPercent ?? 0}%`
-                                            }"
-                                        />
-                                    </div>
-                                    <span
-                                        v-if="progressPercent !== null"
-                                        class="sd-update__progress-value"
-                                    >
-                                        {{ progressPercent }}%
-                                    </span>
-                                </div>
+                                    {{ t('settings.update.updateNow') }}
+                                </nue-button>
+                                <nue-button
+                                    v-if="showReadyActions"
+                                    theme="primary"
+                                    data-update-action="restart"
+                                    @click="restartWithGuard()"
+                                >
+                                    {{ t('settings.update.restartNow') }}
+                                </nue-button>
+                                <nue-button
+                                    v-if="showLater"
+                                    theme="secondary"
+                                    data-update-action="later"
+                                    @click="laterDismissed = true"
+                                >
+                                    {{ t('settings.update.later') }}
+                                </nue-button>
+                                <nue-button
+                                    v-if="showOpenDownloadPage"
+                                    theme="primary"
+                                    data-update-action="open-download-page"
+                                    @click="openDownloadPage()"
+                                >
+                                    {{ t('settings.update.openDownloadPage') }}
+                                </nue-button>
                             </div>
                         </div>
 
-                        <div class="sd-update__actions">
-                            <nue-button
-                                v-if="showDownloadNow"
-                                theme="primary"
-                                data-update-action="download"
-                                @click="downloadUpdate()"
-                            >
-                                {{ t('settings.update.updateNow') }}
-                            </nue-button>
-                            <nue-button
-                                v-if="showReadyActions"
-                                theme="primary"
-                                data-update-action="restart"
-                                @click="restartWithGuard()"
-                            >
-                                {{ t('settings.update.restartNow') }}
-                            </nue-button>
-                            <nue-button
-                                v-if="showLater"
-                                theme="ghost"
-                                data-update-action="later"
-                                @click="laterDismissed = true"
-                            >
-                                {{ t('settings.update.later') }}
-                            </nue-button>
-                            <nue-button
-                                v-if="showOpenDownloadPage"
-                                theme="primary"
-                                data-update-action="open-download-page"
-                                @click="openDownloadPage()"
-                            >
-                                {{ t('settings.update.openDownloadPage') }}
-                            </nue-button>
+                        <!-- hint / 进度条挂在首行下方、向下生长（不回头推动首行） -->
+                        <p v-if="updateHintText" class="sd-row__hint">{{ updateHintText }}</p>
+                        <!-- 下载进度：有总量才给百分比（未知 ⇒ 只给「正在下载」，⛔ 不编数字） -->
+                        <div
+                            v-if="updateState === 'downloading'"
+                            class="sd-update__progress"
+                            role="progressbar"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            :aria-valuenow="progressPercent ?? undefined"
+                            :aria-valuetext="
+                                progressPercent === null
+                                    ? t('settings.update.a11y.progressUnknown')
+                                    : t('settings.update.a11y.progress', {
+                                          percent: progressPercent
+                                      })
+                            "
+                        >
+                            <nue-progress
+                                :percentage="progressPercent ?? 0"
+                                :stroke-width="2"
+                                color="var(--nue-primary-color-900)"
+                                hide-text
+                            />
+                            <span v-if="progressPercent !== null" class="sd-row__hint">
+                                {{ progressPercent }}%
+                            </span>
                         </div>
                     </template>
                 </div>
@@ -577,68 +576,49 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
 </template>
 
 <style scoped>
-/* ===== 关于与更新（T737）=====
-   桌面密度：控件 30px / 正文 13px / 卡片边框承托；断点按**面板可用宽**（容器查询），非视口。
-   ⛔ 不加底色、不加阴影；颜色全取 nue-* token（DESIGN §3 已登记 30px 例外） */
-.sd-update {
-    /* 左边缘基准（设计稿 §3「对齐基准」）：inset 的唯一来源 = 同面板既有行的水平内边距 ——
-       `.sd-row` / `.sd-group__head` 的 `--nue-padding-sm`（宽 / 中档）。缺这条 ⇒ 标签与卡片直接贴
-       `.sd-cat` 边缘，比上方文字整体左移一个 `--nue-padding-sm`（T742 走查实报）。 */
-    padding: 0 var(--nue-padding-sm);
-    container-type: inline-size;
+/* ===== 关于与更新（T747 · v4：用任务列表行的语言，不新造盒子）=====
+   行样式逐条取自 `.nue-div--todo-list-main__row` 的 `--small` 变体
+   （`packages/presentation/task/components/list/list.css`）：浅灰底 + 6px 圆角 + 1px 透明边框 + 8/12 内边距。
+   控件回归 `nue-button` 默认尺寸（36px，`--nue-box-size-df`）⇒ 30px 例外已撤回（DESIGN §3）。
+   颜色全取 `nue-*`；**底色 = -100 ⇒ 文字比值必须按 -100 底重算**（设计稿 §4）。 */
+
+/* 桌面专属组头：与上一块（本地数据与安全行）的间距 = `.sd-cat` 的块间距（2.75rem），
+   ⛔ 不加分隔线；组头 → 首行沿用 `.sd-group__head` 既有 `margin-bottom: 1rem` */
+.sd-update__head {
+    margin-top: 2.75rem;
 }
 
-/* 窄屏：既有行 / 组头的水平内边距收到 `--nue-padding-2xs` ⇒ 更新块取同一 token、随同一断点切换
-   （`.sd-body.is-narrow` 见 `settings/dialog/index.vue`；设计稿 §3 / §6） */
-.sd-body.is-narrow .sd-update {
-    padding: 0 var(--nue-padding-2xs);
-}
-
-.sd-update__label {
-    margin: 0 0 12px;
-    color: var(--nue-secondary-text-color);
-    font-size: var(--nue-text-sm);
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.sd-update__card {
+/* 行距 = 任务列表行距（0.5rem） */
+.sd-update__list {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--nue-border-color);
-    border-radius: 8px;
-    padding: 16px;
+    gap: var(--nue-gap-xs);
 }
 
-.sd-update__r1 {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 48px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--nue-border-color);
+/* 行：底色 + 6px 圆角 + ≥40px 行高；`border: 1px solid transparent` 只为几何稳定与 hover 预留。
+   `-1px` 抵消边框宽度 ⇒ 行内文字与 `.sd-group__title` / 既有 `.sd-row__label` **左缘同线**（≤0.5px） */
+.sd-update__row {
+    background-color: var(--nue-primary-color-100);
+    border: 1px solid transparent;
+    border-radius: var(--nue-primary-radius);
+    min-height: var(--nue-box-size-md);
+    padding: var(--nue-padding-xs) calc(var(--nue-padding-sm) - 1px);
 }
 
-.sd-update__r1-text {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+/* hover 只表达「可操作的块」：⛔ 整行不接管 click / 不给 cursor: pointer / 不加 tabindex
+   （设计稿 §3 / §7：不可点的行给手型 = 假 affordance；真动作只在行内 nue-button 上） */
+.sd-update__row:hover {
+    border-color: var(--nue-primary-color-500);
 }
 
-.sd-update__version {
-    color: var(--nue-primary-color-900);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.35;
+.sd-body.is-narrow .sd-update__row {
+    padding: var(--nue-padding-xs) calc(var(--nue-padding-2xs) - 1px);
 }
 
-.sd-update__checked {
-    color: var(--nue-secondary-text-color);
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.4;
+/* 行底上的 hint：⛔ 不用 `--nue-secondary-text-color`（-600 压 -100 = 4.60，仅超线 0.1 且与
+   DESIGN §4 的 4.40 口径打架）⇒ 取 -700 = 6.77（设计稿 §4） */
+.sd-update__row .sd-row__hint {
+    color: var(--nue-primary-color-700);
 }
 
 .sd-update__check {
@@ -658,169 +638,41 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
     border: 0;
 }
 
-.sd-update__r2 {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 46px;
-    padding-top: 12px;
-}
-
-.sd-update__status {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    min-width: 0;
-}
-
-.sd-update__symbol {
-    flex: none;
-    width: 18px;
-    font-size: 18px;
-    line-height: 1.3;
-    font-variant-numeric: tabular-nums;
-    text-align: center;
-}
-
-.sd-update__symbol.is-warning {
-    color: var(--nue-warning-color-80);
-}
-
-.sd-update__symbol.is-success {
-    color: var(--nue-success-color-80);
-}
-
-.sd-update__symbol.is-error {
-    color: var(--nue-error-color-80);
-}
-
-.sd-update__symbol.is-muted {
-    color: var(--nue-secondary-text-color);
-}
-
-.sd-update__status-text {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-}
-
-.sd-update__state {
-    color: var(--nue-primary-color-900);
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.sd-update__state.is-warning {
-    color: var(--nue-warning-color-90);
-}
-
-.sd-update__state.is-success {
-    color: var(--nue-success-color-90);
-}
-
-.sd-update__state.is-error {
-    color: var(--nue-error-color-90);
-}
-
-.sd-update__hint {
-    color: var(--nue-secondary-text-color);
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
-}
-
-/* 进度：3px 轨 + 完成段，⛔ 不带语义色（绿/红会被读成成败结论） */
-.sd-update__progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 240px;
-    max-width: 100%;
-}
-
-.sd-update__track {
-    flex: 1 1 auto;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--nue-primary-color-100);
-    overflow: hidden;
-}
-
-.sd-update__progress-bar {
-    height: 3px;
-    border-radius: 2px;
-    background: var(--nue-primary-color-900);
-}
-
-.sd-update__progress-value {
-    flex: none;
-    color: var(--nue-primary-color-900);
-    font-size: 12px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-
+/* 动作簇：恒右对齐、恒不参与文字块压缩（⛔ 不设 min-width —— v3 的占位宽已随卡片撤回） */
 .sd-update__actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
-    /* 预留最小宽：状态切换时动作区不跳位（设计稿 §9 坑 ⑥） */
-    min-width: 8rem;
+    gap: var(--nue-gap-xs);
+    flex: none;
 }
 
-/* 控件 30px（DESIGN §3 已登记例外：仅本块；键盘可达与 focus 可见不降级） */
-.sd-update :deep(.nue-button) {
-    height: 30px;
-    font-size: 13px;
-    box-shadow: none;
+/* 进度：用既有 `nue-progress`（先例 `task-details/main`），⛔ 不自绘进度条。
+   颜色走组件自己的口子：填 = `color` prop（组件 `-innerbar-background-color` 的内联来源，-900）、
+   轨 = `:deep()` 覆写（-500 = 3.16 ✓；`-200` 只有 1.29 ≈ 消失）。
+   ⚠️ 不在此声明 `--nue-*` 自定义属性 —— 设置域静态守卫（settings-ia AC10）禁止新增 token 声明。 */
+.sd-update__progress {
+    display: flex;
+    align-items: center;
+    gap: var(--nue-gap-xs);
+    max-width: 240px;
 }
 
-.sd-update :deep(.nue-button:focus-visible) {
-    outline: 2px solid var(--nue-primary-color-900);
-    outline-offset: 2px;
+.sd-update__progress :deep(.nue-progress__outer-bar) {
+    background: var(--nue-primary-color-500);
 }
 
-/* —— 断点（容器查询，按面板可用宽）—— */
-@container (max-width: 519.98px) {
-    .sd-update__r1,
-    .sd-update__r2 {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        min-height: 0;
-    }
-
-    .sd-update__actions {
-        justify-content: flex-end;
-    }
+.sd-update__progress :deep(.nue-progress) {
+    flex: 1 1 auto;
 }
 
-@container (max-width: 379.98px) {
-    .sd-update__r1,
-    .sd-update__r2 {
-        flex-direction: column;
-        align-items: stretch;
-    }
+/* 窄屏（`.sd-body.is-narrow`，含 ≤445 窄屏形态）：动作换到文字下方、右对齐，次序与尺寸不变 */
+.sd-body.is-narrow .sd-row__line {
+    flex-wrap: wrap;
+}
 
-    .sd-update__actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-    }
-
-    .sd-update__actions :deep(.nue-button) {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .sd-update__check :deep(.nue-button) {
-        width: 100%;
-        justify-content: center;
-    }
+.sd-body.is-narrow .sd-update__actions {
+    flex-basis: 100%;
 }
 
 /* ===== 卡 A（数据护栏）===== */
@@ -842,22 +694,17 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
+    gap: var(--nue-gap-xs);
 }
 
-.sd-update-guard :deep(.nue-button) {
-    height: 30px;
-    font-size: 13px;
-    box-shadow: none;
-}
-
+/* 卡 A 按钮不设尺寸覆写：随 `nue-button` 默认档（36px）—— 30px 例外已撤回（DESIGN §3） */
 .sd-update-guard :deep(.nue-button:focus-visible) {
     outline: 2px solid var(--nue-primary-color-900);
     outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .sd-update__progress-bar {
+    .sd-update__progress :deep(.nue-progress__inner-bar) {
         transition: none;
     }
 }

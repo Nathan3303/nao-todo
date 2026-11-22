@@ -352,6 +352,8 @@ const enUS: LocaleMessages = {
     'settings.ia.version.hint': 'See release notes for new versions on the project page.',
     // About & updates (T737 / Issue #358: desktop-only block)
     'settings.update.title': 'About & updates',
+    'settings.update.desc':
+        "Updates are checked and installed in the app; downloading won't interrupt what you're doing",
     'settings.update.currentVersion': 'Version {version}',
     'settings.update.lastChecked': 'Last checked: {time}',
     'settings.update.check': 'Check for updates',

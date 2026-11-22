@@ -15,6 +15,7 @@ import enUS from '../en-US'
 
 const REQUIRED_KEYS = [
     'settings.update.title',
+    'settings.update.desc',
     'settings.update.currentVersion',
     'settings.update.lastChecked',
     'settings.update.check',
