@@ -55,6 +55,21 @@
 - **待办**：用户 dev 走查九态（命令已给）→ 定 A/B → PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
+## 一之五、设置面板改版（`feat` · 在制 · Issue #360 · PR #361）
+
+- **需求**：用户 2026-11-22 走查四条 —— 左栏激活态去竖线改导航链接观感 · 账户删「更多信息」把注册时间归位、待注销时间迁危险区 · 密码修改升常驻分区且更明显 · 对话框内 padding/gap 全量治理 + `DESIGN.md` 补元素设计口径。
+- **澄清（用户已答）**：左栏**只要视觉**（不动路由/URL）· 密码为账户内常驻分区（非第五分类）· 间距范围 = 对话框内全部模块 + `DESIGN.md` 口径 · 注册时间放身份区第三行 · 待注销时间进危险区。
+- **PRD**：`docs/prds/2026-11-22-settings-polish.md`（AC1–AC12 + 附录 A 四项 PM 裁决：控件按组件档 36px 分层口径 / 密码块静止边框 1.36 属装饰可接受 / 左栏采用 A 方案 `nue-link--route` 四态 / 危险区间距 68→24）。**分支** `feat/360-settings-polish`（**叠在 #358 之上**，用户选 B；#358 合并后改指 main）。
+- **设计（`T749` uiux `b03da9fe`）**：左栏四态 / 账户信息归位 / 密码常驻分区（`.sd-permission-notice` 三件套）/ 间距台阶 L0–L6（点名删 4 处双层内边距）/ `DESIGN.md` §4.9 增补草案（PM 已审定）；另附 copy 与画板指令（**未实际出图**，无绘图 MCP）。
+- **文档归位（PM）**：uiux 原把 360 稿落在 #358 分支（跨需求混提）⇒ #358 上 revert（`c1e83642`），`feat/360-settings-polish` 重建并落 PRD + 三稿（`4820afc4`，因 README 冲突改用 reset+取文件而非硬解）。
+- **实现（`T750` rd-fe）**：`1626cd9a`（四件事全落：左栏删 `inset 2px 0 0` 复用 `nue-link--route` 四态且 a11y 逐字未改 · 账户删 `UserInfoViewer`（全仓+移动端 0 引用，清理组件目录/barrel/3 个 locale 键）· 密码删折叠改常驻分区 · L0–L6 单处定义并删 5 类字面值）+ `a9973cd7`（`DESIGN.md` §4.9 + §8 一行，只加不改）。
+- **门禁**：受影响面 36 文件 / 349 例 / 0 红；`presentation-identity` 11 文件 / 58 例 / 0 红；**全仓（PM 亲跑）466 文件 / 3772 例 / 3766 通过 / 6 跳过 / 0 红**（第二次；首次出现 **1 红但用例名未捕获**，随后两次全绿 + 受影响面 3 连绿 ⇒ 记疑似 flake，未定位，随 PR 观察）· `vp check` 0 error · 五守卫 rc=0 · `webapp build` rc=0 · 移动端红线 0 行。
+- **PR**：#361（Draft，base 暂指 `feat/358-desktop-self-update`，待 #358 合并后改指 main）。
+- **用户第二轮两条（2026-11-22）**：① 「登录设备」也算一个分区、每区需要副标题 ② 密码分区**不要背景色**。`T751` uiux `64b37687`（账户四分区 + 3 个新副标题键 zh/en；密码走 B 方案：删 padding/圆角/`-100` 底 + label `-700` 覆写，区分由组头字阶 + 24px 间距承担；回退路径写死）· `T752` rd-fe `b2f2f18f`（四分区落地 + `session-manager` 组件内同名小标题移除（移动端 0 引用）+ 密码表单左缘回同线、窄屏 +24px；几何实测四组头左缘 36/36/36/36、密码表单 Δ0.00px）。
+- **测试卫生事故与修复（如实记录）**：`T752` 把 743 行几何探针写成了入库测试文件（`import 'node:child_process'` + spawn Chromium）⇒ ① 违反「探针放 `/tmp`」纪律 ② `@types/node` 被拉进 `apps/web` program ⇒ 全局 `setTimeout` 变 `NodeJS.Timeout` ⇒ 全仓 `vp check` **rc=1**（报在无关的番茄文件 `use-task-panel.ts:84`）。PM 用「切分支对照」定位到本分支引入 ⇒ `T753` rd-fe `402a54d8` 删除探针、判据迁到 jsdom 用例（`t752-account-sections.test.ts` 10→11 例，变异有牙），**全仓 `vp check` 回 rc=0**（2029 文件格式 pass / 1612 文件 0 error）。
+- **批末门禁（PM 亲跑 `402a54d8`）**：`vp test --run` **469 文件 / 3789 例 / 3782 通过 / 6 跳过 / 1 红** —— 红点 = `persistence-sync/__tests__/t706-qa-prune-cap-probe.test.ts`（审计裁切限幅，**与本需求无关**；单文件连跑 5 次全绿 6/6 ⇒ 判为负载相关 flake，记缺陷池观察）· `vp check` rc=0 · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0 · 移动端红线 0 行。
+- **待办**：用户走查两套改动（#358 更新块 + #360 设置改版）→ PM 逐 AC 验收 → #358 先合并 → #361 rebase 到 main 再合并 → 发 MINOR。
+
 ## 二、上一批次终态
 
 - **✅ `v1.20.2` 已发布（2026-11-13，批次终态）**：发版 PR **#352** ⇒ squash **`787b301b`** · 注解 tag `v1.20.2` · Release 已发布（正文与 `docs/releases/v1.20.2.md` 归一化逐字一致 1924/1924）· 8 产物齐全 · 打包 run `43392992600` 四 job 全绿；版本 root/web/desktop **1.20.2** · `presentation` **0.12.0** · `shared` **1.6.0**。服务端无改动。

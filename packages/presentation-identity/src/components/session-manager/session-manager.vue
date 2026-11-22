@@ -5,6 +5,13 @@
  *              **次行**（地区 + IP）· **第三行**（最近活跃 = 相对时间 + 登录时间 = 日期，两者 `title` 给完整时间戳）。
  *              **当前设备置顶**（三通道：位置 + 轻底色 + 文字标记），其余按最近活跃倒序。
  *              平铺口径：项与项之间不画线不画框，只用 12px 间距 + 当前设备轻底色区分。
+ *              T752（#360 第二轮）：本组件由「组内尾块」升为设置面板的**独立分区** ⇒ 面板
+ *              分区组头已承担同名标题（`settings.sessionTitle`），组件内的 14/600 同名小标题
+ *              **移除**（避免两级同名）。
+ *              T754（#360 第三轮）：**刷新按钮移出列表头**，改由设置面板「登录设备」分区组头
+ *              右侧承载（用户要求：与分区主标题同一行）⇒ 组件只 `defineExpose({ refresh })`，
+ *              面板侧调用这一个方法转发（⛔ 包内不反向依赖设置面板）。刷新逻辑与节流（2s）留在本
+ *              组件内，因此无论按钮摆在哪，节流语义不变。
  *              行为零改动：加载/下线/退出其他设备/二次确认/toast 文案与刷新节流（2s）全部沿用。
  * @see docs/prds/2026-10-24-settings-ia.md（AC2 · AC10）
  */
@@ -64,6 +71,13 @@ onMounted(loadSessions)
  * 刷新会话列表（节流：2s 内重复点击只触发一次）
  */
 const handleRefreshSessions = throttle(loadSessions, 2000)
+
+/**
+ * 宿主可用的**最小面**：只有 `refresh()`
+ * @description T754：刷新按钮移到设置面板的分区组头 ⇒ 面板经模板 ref 调本方法；
+ *              节流与加载逻辑仍在本组件（宿主拿到的是**已节流**的版本）。
+ */
+defineExpose({ refresh: handleRefreshSessions })
 
 /**
  * 设备类型文案映射
@@ -180,22 +194,10 @@ const handleSignOutOtherSessions = async () => {
 
 <template>
     <div class="session-manager">
-        <!-- 列表头：标题 + 刷新（保留节流 2s）；多于一台时才给「退出其他全部设备」 -->
-        <header class="session-manager__head">
-            <div class="session-manager__title-group">
-                <span class="session-manager__title">{{ t('settings.sessionTitle') }}</span>
-                <nue-button
-                    icon="refresh"
-                    theme="icon,ghost,small"
-                    :title="t('settings.sessionRefresh')"
-                    @click="handleRefreshSessions"
-                />
-            </div>
-            <nue-button
-                v-if="sessions.length > 1"
-                theme="secondary,small"
-                @click="handleSignOutOtherSessions"
-            >
+        <!-- 列表头：多于一台时才给「退出其他全部设备」（右对齐 = 与 T752 版式同位置）；
+             刷新按钮已移入设置面板的分区组头（T754）⇒ 本组件不再自带刷新，避免出现两个刷新 -->
+        <header v-if="sessions.length > 1" class="session-manager__head">
+            <nue-button theme="secondary,small" @click="handleSignOutOtherSessions">
                 {{ t('settings.sessionSignOutOther') }}
             </nue-button>
         </header>
@@ -278,23 +280,12 @@ const handleSignOutOtherSessions = async () => {
     gap: var(--nue-gap-sm);
 }
 
+/* 列表头只剩「退出其他全部设备」一个动作 ⇒ 右对齐（T754：刷新已移出本组件） */
 .session-manager__head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: var(--nue-gap-sm);
-}
-
-.session-manager__title-group {
-    display: flex;
-    align-items: center;
-    gap: var(--nue-gap-2xs);
-}
-
-.session-manager__title {
-    color: var(--nue-primary-color-900);
-    font-size: var(--nue-text-sm);
-    font-weight: 600;
 }
 
 .session-manager__state {

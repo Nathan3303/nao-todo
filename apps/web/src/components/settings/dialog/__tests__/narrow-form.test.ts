@@ -97,7 +97,6 @@ vi.mock('@nao-todo/presentation-identity', async (importOriginal) => {
         ...actual,
         UserAvatarUpdater: stub('UserAvatarUpdater'),
         UserNicknameUpdater: stub('UserNicknameUpdater'),
-        UserInfoViewer: stub('UserInfoViewer'),
         UserSessionManager: stub('UserSessionManager'),
         UserDeactiveManager: stub('UserDeactiveManager'),
         UserDeactiveDialog: stub('UserDeactiveDialog'),
