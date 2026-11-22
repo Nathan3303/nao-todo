@@ -48,7 +48,11 @@
 - **用户走查第一轮（2026-11-21）＝ 三条实报**：① 「关于与更新」标签/卡片比同面板其它行**左移 12px**（根因：`sd-row`/`sd-group__head` 带 `--nue-padding-sm`，新块未带）② 界面出现 `APPIMAGE env is not defined, current application is not an AppImage` 这类更新器原文 ③ 检查失败不该让用户「重试」，应引导下载页。
 - **三条修复**：`T742` rd-fe `39a62102`（对齐：真实 Chromium 量 `rectLeft` 40/40/40，窄档 12/12/12，delta 0）· `T743` uiux `db696841`（稿 v3：对齐基准/`failed` 去重试/新增 `unsupported` 态 + 指出 `resolveInstallMode` 判定顺序 bug）· `T744` rd-infra `9b27e05e`（降级形态**零请求**（`checker.check` 调用数 0 有断言）· 状态载荷只留原因码、日志改脱敏摘要（原文含 `APPIMAGE`/路径/主机名零命中）· 判定先 `isPackaged` ⇒ `dev` · 变异 3 红 / 5 红）· `T745` rd-fe `1bf6e692`（渲染第九态 `unsupported` · `failed` 删行内「重试」、`打开下载页` 升 primary、R1 仍可点 · 变异 3 红 / 2 红）。PRD 同步：AC4 改、新增 AC4b / AC9b（`7598700c`）。
 - **第二轮批末门禁（PM 亲跑 `1bf6e692`，独占无并发）**：`vp test --run` **465 文件 / 3708 例 / 3702 通过 / 6 跳过 / 0 红**（435s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
-- **待办**：用户复看（对齐 / 无原文 / 失败态只有下载页）→ PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
+- **用户走查第二轮（2026-11-21）＝ 观感否决**：原话「还是很难看，不符合当前项目的风格」，点名参照**任务列表主视图**。诊断 = v3 自造了第三套盒子（1px 边框 + radius 8 + 卡内定高 + 自定义标签），而项目行语言是「有底色块 + 悬停描边 / 平铺行」。
+- **v4 设计稿 + 重写**：`T746` uiux `26503e02`/`2f5d5d96`（组头 + 两条有底色行，逐字对齐 `.nue-div--todo-list-main__row` 的 `--small` 变体；控件回 `nue-button` 36px，**30px 例外撤回**（`DESIGN.md` §3 同步撤登记）；灰底对比度全部重算：`success-100` 5.29 · hint `-700` 6.77 · 轨 `-500` 3.16）· `T747` rd-fe `eaed4fcb`（**重写**而非修补：删盒式卡整套、行 40 最小高/`-100` 底/6px 圆角/hover 描边、整行不可点；真实 Chromium 实测 行高 56、按钮 36、`rectLeft` 与同步行同 28、窄屏 8/3）。B 备选方案 = 删行底色/圆角/内边距三条声明（用户走查时定）。
+- **walkthrough 基建**：`T748` rd-infra `27e787dc`（开发态假更新源：`isPackaged === false` **且** `NAO_UPDATE_FAKE_FEED` 非空才生效，值为 JSON 配置绝对路径，每次点击重读 ⇒ 改文件即切场景；生产不生效有断言：端口对象同一性 + 配置文件零次读取 + 删守卫即 2 例红）。两处诚实偏离：① 假源把 env 报成「已打包 + win32」，否则 AC4b 前置 gate 恒 `unsupported`、其余八态物理不可达 ② `just-updated` 由「假安装后按真实重启语义重建内核」达成（生产路径不可达，`fake` 恒 `false`）。
+- **第三轮批末门禁（PM 亲跑 `27e787dc`，独占无并发）**：`vp test --run` **466 文件 / 3744 例 / 3738 通过 / 6 跳过 / 0 红**（348.67s）· `vp check` 2024 文件格式 pass + 1611 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0 · 移动端红线 **0 行**。
+- **待办**：用户 dev 走查九态（命令已给）→ 定 A/B → PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
 ## 二、上一批次终态
