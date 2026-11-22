@@ -326,6 +326,10 @@ const zhCN: LocaleMessages = {
     'settings.ia.navLabel': '设置分类',
     'settings.ia.account.name': '账户',
     'settings.ia.account.desc': '资料、密码与登录设备',
+    // 账户面板四分区副标题（T752 / #360 第二轮）：组头名全部复用，只新增副标题
+    'settings.ia.profile.desc': '昵称、邮箱与注册时间',
+    'settings.ia.password.desc': '修改后需要用新密码重新登录',
+    'settings.ia.devices.desc': '已登录的浏览器与设备，可单独下线',
     'settings.ia.appearance.name': '外观与语言',
     'settings.ia.appearance.short': '外观',
     'settings.ia.appearance.desc': '主题与界面语言',

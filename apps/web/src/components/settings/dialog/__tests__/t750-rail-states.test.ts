@@ -228,8 +228,8 @@ describe('AC4 间距台阶 L0–L6：每层一个唯一来源（源级）', () =
         // 组头与行不再各自内缩（旧版与面板的 20 叠成三层）
         expect(declaration('.sd-group__head', 'padding-inline')).toBe('')
         expect(declaration('.sd-row', 'padding-inline')).toBe('')
-        // 有底色块的块内边距 = 12（L6）
-        expect(toPx(declaration('.sd-password__body', 'padding'))).toBe(12)
+        // 密码分区（T752 B 方案）：块 ⛔ 无底色 / 无内边距 / 无圆角 ⇒ 横轴内缩仍只由 `.sd-group` 承担
+        expect(ruleBody('.sd-password__body'), '密码分区不再有块级规则').toBe('')
     })
 
     it('calc() 只出现在「容器已带行 gap」的两处（组头 / 子块）', () => {

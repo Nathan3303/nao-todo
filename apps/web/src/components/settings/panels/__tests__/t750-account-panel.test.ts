@@ -16,7 +16,7 @@ import AccountPanel from '../account-panel.vue'
  * - 身份区三行 = 昵称 / 邮箱 / `注册时间 {createdAt}`（**「更多信息」分组不存在**，AC2）；
  *   离线或 `createdAt` 缺失 ⇒ 第三行整行不渲染（不留空行 / 空标签，AC5）。
  * - 密码分区 = **常驻**（无展开按钮、无 `aria-expanded`、输入框始终在 DOM）+ 组级标题
- *   （`h3.sd-group__title` = `settings.password`）+ 有底色块（AC3）。
+ *   （`h3.sd-group__title` = `settings.password`）；T752 起**无底色 / 无内边距 / 无圆角**（B 方案）。
  * - 危险区末行 = 待注销态才出现的「数据删除时间：{date}」（AC6）；不待注销 ⇒ 不占位（AC5）。
  * - 间距：密码分区与上一块的距离 = 24（L2，唯一来源；AC4）。
  *
@@ -218,6 +218,8 @@ const mountPanel = (
 }
 
 const passwordSection = (view: VueWrapper) => view.find('[data-setting-id="password"]')
+/** 分区组头（`data-settings-section` 是分区头的稳定钩子，T752） */
+const sectionHead = (view: VueWrapper, id: string) => view.find(`[data-settings-section="${id}"]`)
 const passwordRowIndex = (view: VueWrapper): number =>
     view
         .findAll('[data-setting-id]')
@@ -270,7 +272,8 @@ describe('AC2 身份区三行 + 「更多信息」不存在', () => {
 
         const lines = view.findAll('.settings-profile__names > *').map((line) => line.text().trim())
         expect(lines).toEqual(['张三', t('identity.offline')])
-        expect(view.text()).not.toContain('注册时间')
+        // 第三「行」不渲染（T752 起分区副标题固定含「注册时间」字样 ⇒ 只看身份区）
+        expect(view.find('.settings-profile__names').text()).not.toContain('注册时间')
     })
 
     it('E：profile 就绪但 createdAt 缺失 ⇒ 第三行整行不渲染（不留空标签）', async () => {
@@ -279,22 +282,27 @@ describe('AC2 身份区三行 + 「更多信息」不存在', () => {
 
         const lines = view.findAll('.settings-profile__names > *').map((line) => line.text().trim())
         expect(lines).toEqual(['张三', 'zhangsan@example.com'])
-        expect(view.text()).not.toContain('注册时间')
+        expect(view.find('.settings-profile__names').text()).not.toContain('注册时间')
     })
 })
 
 describe('AC3 密码常驻分区', () => {
-    it('P：恒为「组级标题 + 有底色块」，无折叠行 / 无 aria-expanded / 无 chevron', async () => {
+    it('P：恒为「分区组头（20/600）+ 常驻内容」，无折叠行 / 无 aria-expanded / 无 chevron', async () => {
         const view = mountPanel()
         await flushPromises()
 
-        const section = passwordSection(view)
-        expect(section.exists(), '缺密码分区 data-setting-id="password"').toBe(true)
-        expect(section.find('h3.sd-group__title').text()).toBe(t('settings.password'))
-        expect(section.find('.sd-password__body').exists()).toBe(true)
-        expect(section.findAll('[aria-expanded]').length).toBe(0)
-        expect(section.find('.sd-row__toggle').exists()).toBe(false)
-        expect(section.find('.sd-row__chevron').exists()).toBe(false)
+        const head = sectionHead(view, 'password')
+        expect(head.exists(), '缺密码分区组头 data-settings-section="password"').toBe(true)
+        expect(head.find('h3.sd-group__title').text()).toBe(t('settings.password'))
+        expect(head.find('p.sd-group__desc').text().trim(), '密码分区必须有一句副标题').toBe(
+            t('settings.ia.password.desc')
+        )
+
+        const block = passwordSection(view)
+        expect(block.exists(), '缺密码分区内容 data-setting-id="password"').toBe(true)
+        expect(block.findAll('[aria-expanded]').length).toBe(0)
+        expect(block.find('.sd-row__toggle').exists()).toBe(false)
+        expect(block.find('.sd-row__chevron').exists()).toBe(false)
     })
 
     it('P：三个密码输入框零点击即在 DOM（无需展开）', async () => {
@@ -320,25 +328,35 @@ describe('AC3 密码常驻分区', () => {
         expect(passwordRowIndex(view)).toBe(1)
     })
 
-    it('D 源级：有底色块的底色 / 圆角复用 `.sd-permission-notice` 三件套，块内边距 = 12', () => {
-        expect(declaration('.sd-password__body', 'background')).toBe(
-            declaration('.sd-permission-notice', 'background')
+    it('D 源级：密码分区**无底色 / 无内边距 / 无圆角**（T752 B 方案：只剩组头 + 内容）', () => {
+        // 旧「有底色块」的两条规则（`.sd-password__body` 三件套 + label 覆写）整体删除
+        expect(ruleBody('.sd-password__body'), '`.sd-password__body` 规则应已删除').toBe('')
+        expect(ruleBody('.sd-password'), '`.sd-password` 块规则应已删除').toBe('')
+        expect(dialogStyle, '设置域样式仍存在 `sd-password` 专属规则').not.toContain('sd-password')
+        // 内容块不再套第二层容器（旧 `sd-password__body` 的 12px 内边距是「右移 12」的唯一来源）
+        const panelSource = stripComments(sourceOf('/settings/panels/account-panel.vue'))
+        expect(panelSource).toContain('data-setting-id="password"')
+        expect(panelSource, '内容块不得再套 `sd-password__body` 容器').not.toContain(
+            'sd-password__body'
         )
-        expect(declaration('.sd-password__body', 'border-radius')).toBe(
-            declaration('.sd-permission-notice', 'border-radius')
-        )
-        expect(toPx(declaration('.sd-password__body', 'padding'))).toBe(12)
-        // ⛔ 不加描边 / 阴影 / 图标（一个区块只加一处重量）
+        // ⛔ 不加描边 / 阴影 / 字号等第三种区分手段（一个区块只加一处重量）
         expect(ruleBody('.sd-password__body')).not.toMatch(/(?:^|;|\s)border:/)
-        expect(ruleBody('.sd-password__body')).not.toContain('box-shadow')
+        expect(dialogStyle).not.toContain('box-shadow')
     })
 
-    it('D 源级：AC4 密码分区与上一块的间距 = 24（子块 margin + 行 gap，唯一来源）', () => {
+    it('D 源级：AC4 分区块间距 = 24（子块 margin + 行 gap，唯一来源）', () => {
         const subblock = toPx(declaration('.sd-subblock', 'margin-top'))
         const groupGap = toPx(declaration('.sd-group', 'gap'))
         expect(subblock + groupGap).toBe(24)
-        // 分区不再自带 margin / padding 叠加（旧版 `.sd-row` 上下各 8 已删）
-        expect(declaration('.sd-password', 'margin-top')).toBe('')
+        // 三个组内分区（资料 / 密码 / 登录设备）的组头必须挂上 `.sd-subblock`（⛔ 各自身带 margin）
+        const panelSource = stripComments(sourceOf('/settings/panels/account-panel.vue'))
+        const subblockHeads = [
+            ...panelSource.matchAll(/sd-subblock" data-settings-section="(\w+)"/g)
+        ].map((match) => match[1])
+        expect(subblockHeads).toEqual(['profile', 'password', 'devices'])
+        // 分区内容块自身不带纵向间距 / 内边距
+        expect(declaration('.sd-row--block', 'margin')).toBe('')
+        expect(declaration('.sd-row--block', 'padding')).toBe('')
         expect(declaration('.sd-row', 'padding-block')).toBe('')
     })
 })

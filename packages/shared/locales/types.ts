@@ -313,6 +313,9 @@ export interface LocaleMessages {
     'settings.ia.navLabel': string
     'settings.ia.account.name': string
     'settings.ia.account.desc': string
+    'settings.ia.profile.desc': string
+    'settings.ia.password.desc': string
+    'settings.ia.devices.desc': string
     'settings.ia.appearance.name': string
     'settings.ia.appearance.short': string
     'settings.ia.appearance.desc': string

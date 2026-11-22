@@ -391,25 +391,11 @@ onUnmounted(unbindSettingsDialogHost)
     margin-top: calc(var(--nue-gap-lg) - var(--nue-padding-xs));
 }
 
-/* 密码常驻分区（#360 AC3）：组级标题 + 有底色块，纵向按行 gap 排列（组头 ↔ 块 = L3 16） */
-.sd-password {
-    display: flex;
-    flex-direction: column;
-    gap: var(--nue-padding-xs);
-}
-
-/* 有底色块：逐字复用 `.sd-permission-notice` 三件套（-100 底 / 6px 圆角 / 12px 内边距）——
-   面板内既有的「容器级浅底」语言，⛔ 不加描边 / 阴影 / 图标。
-   块内 label 由 `-600`（压 -100 = 4.60，仅超线 0.1）覆写为 `-700`（6.77 ✓，设计稿 §4）。 */
-.sd-password__body {
-    padding: var(--nue-padding-sm);
-    border-radius: var(--nue-primary-radius);
-    background: var(--nue-primary-color-100);
-}
-
-.sd-password__body .nue-text--label {
-    color: var(--nue-primary-color-700);
-}
+/* 密码常驻分区（#360 AC3 / T752 B 方案）：本面板**刻意没有**密码块级规则 ——
+   **无底色 / 无内边距 / 无圆角**，分区重量只由「组头字阶（20 vs 14）+ 块间距（24）」两通道承担；
+   块内字段间距沿用组件原生（`nue-div` / `form-item`，定义处 `presentation-identity`）。
+   ⛔ 不回加 `-100` 浅底 / 描边 / 阴影 / 字号特例（一个区块只加一处重量）；
+   无底色后表单 label 回 `--nue-primary-color-600`（白底 5.74 ✓），不再覆写 `-700`。 */
 
 /* 组头：大字号标题 + 一行说明；与首行之间 L3 = 16（去掉所在容器已提供的行 gap 后补足） */
 .sd-group__head {
