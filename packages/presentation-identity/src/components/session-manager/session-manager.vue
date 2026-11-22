@@ -5,6 +5,9 @@
  *              **次行**（地区 + IP）· **第三行**（最近活跃 = 相对时间 + 登录时间 = 日期，两者 `title` 给完整时间戳）。
  *              **当前设备置顶**（三通道：位置 + 轻底色 + 文字标记），其余按最近活跃倒序。
  *              平铺口径：项与项之间不画线不画框，只用 12px 间距 + 当前设备轻底色区分。
+ *              T752（#360 第二轮）：本组件由「组内尾块」升为设置面板的**独立分区** ⇒ 面板
+ *              分区组头已承担同名标题（`settings.sessionTitle`），组件内的 14/600 同名小标题
+ *              **移除**（避免两级同名）；刷新按钮仍在原行内，视觉不变。
  *              行为零改动：加载/下线/退出其他设备/二次确认/toast 文案与刷新节流（2s）全部沿用。
  * @see docs/prds/2026-10-24-settings-ia.md（AC2 · AC10）
  */
@@ -180,17 +183,15 @@ const handleSignOutOtherSessions = async () => {
 
 <template>
     <div class="session-manager">
-        <!-- 列表头：标题 + 刷新（保留节流 2s）；多于一台时才给「退出其他全部设备」 -->
+        <!-- 列表头：刷新（保留节流 2s；标题由设置面板的分区组头承担，不在此重复）；
+             多于一台时才给「退出其他全部设备」 -->
         <header class="session-manager__head">
-            <div class="session-manager__title-group">
-                <span class="session-manager__title">{{ t('settings.sessionTitle') }}</span>
-                <nue-button
-                    icon="refresh"
-                    theme="icon,ghost,small"
-                    :title="t('settings.sessionRefresh')"
-                    @click="handleRefreshSessions"
-                />
-            </div>
+            <nue-button
+                icon="refresh"
+                theme="icon,ghost,small"
+                :title="t('settings.sessionRefresh')"
+                @click="handleRefreshSessions"
+            />
             <nue-button
                 v-if="sessions.length > 1"
                 theme="secondary,small"
@@ -283,18 +284,6 @@ const handleSignOutOtherSessions = async () => {
     align-items: center;
     justify-content: space-between;
     gap: var(--nue-gap-sm);
-}
-
-.session-manager__title-group {
-    display: flex;
-    align-items: center;
-    gap: var(--nue-gap-2xs);
-}
-
-.session-manager__title {
-    color: var(--nue-primary-color-900);
-    font-size: var(--nue-text-sm);
-    font-weight: 600;
 }
 
 .session-manager__state {

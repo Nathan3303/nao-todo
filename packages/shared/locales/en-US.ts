@@ -336,6 +336,10 @@ const enUS: LocaleMessages = {
     'settings.ia.navLabel': 'Settings sections',
     'settings.ia.account.name': 'Account',
     'settings.ia.account.desc': 'Profile, password and signed-in devices',
+    // Account panel · four section subtitles (T752 / #360 round 2): section titles are reused as-is
+    'settings.ia.profile.desc': 'Your nickname, email and sign-up date.',
+    'settings.ia.password.desc': 'You’ll sign in again with the new password.',
+    'settings.ia.devices.desc': 'Signed-in browsers and devices — sign out any of them.',
     'settings.ia.appearance.name': 'Appearance & Language',
     'settings.ia.appearance.short': 'Appearance',
     'settings.ia.appearance.desc': 'Theme and interface language',
