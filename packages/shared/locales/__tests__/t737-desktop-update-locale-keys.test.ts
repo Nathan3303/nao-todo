@@ -5,7 +5,7 @@ import enUS from '../en-US'
 /**
  * T737 · 「关于与更新」文案键齐备 + C 端说人话（AC13）
  *
- * @description 桌面端自我更新块需要八态文案 + 动作 + 失败原因 + 平台降级 + 数据护栏，
+ * @description 桌面端自我更新块需要九态文案 + 动作 + 失败原因 + 平台降级 + 数据护栏，
  *              zh / en **双键齐备**且**不得裸露内部术语**（`updater` / `sha512` / `autoUpdater` /
  *              `latest.yml` / `release` 等），失败与护栏文案口径见设计稿 §5 / §7（⛔ 不写「失败」，措辞软提示）。
  *              八态文字**互不相同**（颜色 + 符号 + 文字三重冗余，文字是三冗余之一）。
@@ -37,6 +37,7 @@ const REQUIRED_KEYS = [
     'settings.update.justUpdated',
     'settings.update.justUpdatedHint',
     'settings.update.openDownloadPage',
+    'settings.update.unsupported',
     'settings.update.failedCheck',
     'settings.update.failedDownload',
     'settings.update.failedVerify',
@@ -47,6 +48,8 @@ const REQUIRED_KEYS = [
     'settings.update.reason.unknown',
     'settings.update.manual.mac',
     'settings.update.manual.deb',
+    'settings.update.manual.dev',
+    'settings.update.manual.unknown',
     'settings.update.guard.title',
     'settings.update.guard.body',
     'settings.update.guard.syncFirst',
@@ -58,6 +61,7 @@ const REQUIRED_KEYS = [
 
 /** 状态文字（除 `checking` 由 `LoadingError` 承载外，其余都必须有独立文字） */
 const STATE_TEXT_KEYS = [
+    'settings.update.unsupported',
     'settings.update.idle',
     'settings.update.available',
     'settings.update.downloading',
@@ -149,5 +153,37 @@ describe('T737 · AC13 关于与更新文案键', () => {
     it('体积未知文案不编数字（不含 MB / GB）', () => {
         expect(ZH['settings.update.availableHintNoSize'] ?? '').not.toMatch(/[MG]B/)
         expect(EN['settings.update.availableHintNoSize'] ?? '').not.toMatch(/[MG]B/)
+    })
+
+    it('⛔ 不把「重试」写成动作（AC4）：失败原因与不支持原因句只描述事实', () => {
+        const factOnlyKeys = [
+            'settings.update.failedCheck',
+            'settings.update.failedDownload',
+            'settings.update.failedVerify',
+            'settings.update.reason.offline',
+            'settings.update.reason.timeout',
+            'settings.update.reason.server',
+            'settings.update.reason.disk',
+            'settings.update.reason.unknown',
+            'settings.update.unsupported',
+            'settings.update.manual.mac',
+            'settings.update.manual.deb',
+            'settings.update.manual.dev',
+            'settings.update.manual.unknown'
+        ] as const
+        const offenders: string[] = []
+        for (const [locale, messages, words] of [
+            ['zh-CN', ZH, ['重试', '再试', '再试一次']],
+            ['en-US', EN, ['try again', 'retry']]
+        ] as const) {
+            for (const key of factOnlyKeys) {
+                const copy = (messages[key] ?? '').toLowerCase()
+                for (const word of words) {
+                    if (copy.includes(word.toLowerCase()))
+                        offenders.push(`${locale} ${key} ← ${word}`)
+                }
+            }
+        }
+        expect(offenders).toEqual([])
     })
 })

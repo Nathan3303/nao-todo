@@ -374,17 +374,22 @@ const enUS: LocaleMessages = {
     'settings.update.justUpdated': 'Updated to {version}',
     'settings.update.justUpdatedHint': 'Installed during this launch',
     'settings.update.openDownloadPage': 'Open download page',
+    'settings.update.unsupported': "In-app updates aren't available for this install",
     'settings.update.failedCheck': "Couldn't check for updates",
     'settings.update.failedDownload': "The download didn't finish",
     'settings.update.failedVerify': "The download didn't pass its check, so it wasn't installed",
     'settings.update.reason.offline': "You're offline",
-    'settings.update.reason.timeout': "The server didn't respond. Please try again",
+    'settings.update.reason.timeout': "The server didn't respond",
     'settings.update.reason.server': 'The update service is temporarily unavailable',
-    'settings.update.reason.disk': 'Not enough disk space. Free some space and try again',
-    'settings.update.reason.unknown': 'Something went wrong. You can try again',
+    'settings.update.reason.disk': 'Not enough disk space',
+    'settings.update.reason.unknown': 'Something went wrong',
     'settings.update.manual.mac': 'On macOS, install the new version from the download page',
     'settings.update.manual.deb':
         'The deb build is managed by your system — get the new version from the download page',
+    'settings.update.manual.dev':
+        'The development build has no update source — get the new version from the download page',
+    'settings.update.manual.unknown':
+        'This type of install needs the new version from the download page',
     'settings.update.guard.title': "Some changes haven't synced",
     'settings.update.guard.body':
         "{count} change(s) are still waiting to sync. Updating restarts the app, so it's best to sync first",

@@ -3,13 +3,14 @@
  * 设置「数据与关于」分类面板（T535 / T737）
  * @description 同步状态一行（**只读**，无控件、无新请求）· 本地数据与安全说明（默认折叠，全文 `v-if` 渲染）
  *              · 版本与更新：**Web 端**保持既有「版本号 + 查看更新」外链行（逐字不变，AC10）；
- *              **桌面端**升级为「关于与更新」卡（R1 版本行永不替换 + R2 八态状态行 + 动作区）。
+ *              **桌面端**升级为「关于与更新」卡（R1 版本行永不替换 + R2 九态状态行 + 动作区）。
  *              时间口径与侧栏**同源同 helper**（`mirrorPulledAt` + `formatMirrorPulledAt`）。
  * @see docs/prds/2026-10-24-settings-ia.md（AC7 · AC8 · AC9 · R4 · R6 · R7）
  * @see docs/prds/2026-11-20-desktop-self-update.md（AC1–AC13）
- * @see docs/designs/358-desktop-self-update.md（§5 八态 / §6 断点 / §8 无障碍 / §9 测试钩子）
+ * @see docs/designs/358-desktop-self-update.md（§5 九态 / §6 断点 / §8 无障碍 / §9 测试钩子）
  */
 import { computed, nextTick, ref, watch } from 'vue'
+import type { DesktopUpdateManualReason } from '@nao-todo/shared'
 import type { LocaleKey } from '@nao-todo/shared/locales'
 import { locale, t } from '@nao-todo/shared/locales'
 import { formatMirrorPulledAt } from '@nao-todo/presentation/offline'
@@ -92,6 +93,7 @@ const r1CheckedText = computed(() =>
 
 /** 三态可辨之一：符号（颜色与文字见样式与文案）；`checking` 的 spinner 由 `LoadingError` 承担 */
 const SYMBOLS = {
+    unsupported: '–',
     idle: '–',
     checking: '…',
     available: '↑',
@@ -103,6 +105,7 @@ const SYMBOLS = {
 } as const
 
 const TONES = {
+    unsupported: 'muted',
     idle: 'muted',
     checking: 'muted',
     available: 'warning',
@@ -117,6 +120,7 @@ const updateSymbol = computed(() => SYMBOLS[updateState.value])
 const updateTone = computed(() => TONES[updateState.value])
 
 const STATE_TEXT_KEYS = {
+    unsupported: 'settings.update.unsupported',
     idle: 'settings.update.idle',
     checking: 'settings.update.checking',
     downloading: 'settings.update.downloading',
@@ -136,6 +140,17 @@ const REASON_KEYS = {
     disk: 'settings.update.reason.disk',
     unknown: 'settings.update.reason.unknown'
 } as const satisfies Record<string, LocaleKey>
+
+/**
+ * `unsupported` 一行原因的键（`degradedReason` → 文案；缺省 ⇒ `unknown` 兜底，⛔ 不留空行）
+ * @description 只描述「这种安装方式得去下载页」的**事实**，⛔ 不写「请重试」类动作措辞
+ */
+const MANUAL_REASON_KEYS = {
+    mac: 'settings.update.manual.mac',
+    deb: 'settings.update.manual.deb',
+    dev: 'settings.update.manual.dev',
+    unknown: 'settings.update.manual.unknown'
+} as const satisfies Record<DesktopUpdateManualReason | 'unknown', LocaleKey>
 
 /** 状态文字（阶段结论；失败按失败阶段取标题） */
 const updateStateText = computed(() => {
@@ -184,13 +199,6 @@ const updateHintText = computed(() => {
         case 'checking':
             return ''
         case 'available': {
-            if (updatePlatformDegraded.value) {
-                // 平台降级原因只在能判定具体系统时给（开发态 win32 也是 download-page 但无原因）
-                const reason = update.value.degradedReason
-                if (reason === 'deb') return t('settings.update.manual.deb')
-                if (reason === 'mac') return t('settings.update.manual.mac')
-                return ''
-            }
             const size = formatUpdateBytes(update.value.sizeBytes, locale.value)
             return size
                 ? t('settings.update.availableHint', { size })
@@ -213,6 +221,9 @@ const updateHintText = computed(() => {
             const reason = update.value.failure?.reason ?? 'unknown'
             return t(REASON_KEYS[reason])
         }
+        case 'unsupported':
+            // 前置 gate（AC4b）：一行原因说明「为什么不能应用内更新」，形态判定不出 ⇒ unknown 兜底
+            return t(MANUAL_REASON_KEYS[update.value.degradedReason ?? 'unknown'])
         default:
             return ''
     }
@@ -233,23 +244,18 @@ const checkBlockedReason = computed(() =>
           : t('settings.update.checking')
 )
 
-const showDownloadNow = computed(
-    () => updateState.value === 'available' && !updatePlatformDegraded.value
-)
+/** 原地可更新的唯一主按钮（`download-page` 形态永不进 `available`：AC4b 已由 `unsupported` 前置拦掉） */
+const showDownloadNow = computed(() => updateState.value === 'available')
+/**
+ * 「打开下载页」是**唯一**的降级出口
+ * @description `unsupported`（安装形态不支持）与 `failed`（失败后想装新版）都给这一个动作；
+ *              ⛔ 失败态**不提供**行内「重试」（AC4）—— 再试 = 回 R1 点「检查更新」（永久可点，AC11）
+ */
 const showOpenDownloadPage = computed(
-    () =>
-        (updateState.value === 'available' && updatePlatformDegraded.value) ||
-        updateState.value === 'failed'
+    () => updateState.value === 'failed' || updateState.value === 'unsupported'
 )
 const showReadyActions = computed(() => updateState.value === 'ready')
 const showLater = computed(() => showReadyActions.value && !laterDismissed.value)
-const showRetry = computed(() => updateState.value === 'failed')
-
-const retry = (): void => {
-    // 检查失败 ⇒ 重查；下载 / 校验失败 ⇒ 重新下载（AC4 / AC5）
-    if (update.value.failure?.stage === 'check' || !update.value.failure) void checkUpdate()
-    else void downloadUpdate()
-}
 
 /** 进入「已就绪」后重置「稍后」；离开 ready 再复位，避免下次就绪时少了「稍后」 */
 watch(updateState, (state) => {
@@ -414,7 +420,7 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                     </span>
                 </div>
 
-                <!-- R2 状态行：八态（`data-update-state` 直取状态机字面量） -->
+                <!-- R2 状态行：九态（`data-update-state` 直取状态机字面量） -->
                 <div
                     class="sd-update__r2"
                     data-setting-id="update-status"
@@ -507,15 +513,8 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                                 {{ t('settings.update.later') }}
                             </nue-button>
                             <nue-button
-                                v-if="showRetry"
-                                data-update-action="retry"
-                                @click="retry()"
-                            >
-                                {{ t('common.retry') }}
-                            </nue-button>
-                            <nue-button
                                 v-if="showOpenDownloadPage"
-                                :theme="showRetry ? 'ghost' : 'primary'"
+                                theme="primary"
                                 data-update-action="open-download-page"
                                 @click="openDownloadPage()"
                             >

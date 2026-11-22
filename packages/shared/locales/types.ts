@@ -350,6 +350,7 @@ export interface LocaleMessages {
     'settings.update.justUpdated': string
     'settings.update.justUpdatedHint': string
     'settings.update.openDownloadPage': string
+    'settings.update.unsupported': string
     'settings.update.failedCheck': string
     'settings.update.failedDownload': string
     'settings.update.failedVerify': string
@@ -360,6 +361,8 @@ export interface LocaleMessages {
     'settings.update.reason.unknown': string
     'settings.update.manual.mac': string
     'settings.update.manual.deb': string
+    'settings.update.manual.dev': string
+    'settings.update.manual.unknown': string
     'settings.update.guard.title': string
     'settings.update.guard.body': string
     'settings.update.guard.syncFirst': string

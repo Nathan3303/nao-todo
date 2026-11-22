@@ -11,17 +11,19 @@ import DataPanel from '../data-panel.vue'
  * T737 · 桌面端「关于与更新」卡 + 卡 A 数据护栏（PRD `docs/prds/2026-11-20-desktop-self-update.md`）
  *
  * 钩子契约（唯一事实来源 = 设计稿 §9；RD 必须按名实现）：
- * - R2 根：`data-setting-id="update-status"` + `data-update-state="<八态字面量>"`
+ * - R2 根：`data-setting-id="update-status"` + `data-update-state="<九态字面量>"`
  *   + `data-update-platform-degraded="true|false"`
  * - R1：保留 `data-setting-id="version"` + `data-setting-action="check-update"`
- * - 动作：`data-update-action="download|restart|later|retry|open-download-page"`
+ * - 动作：`data-update-action="download|restart|later|open-download-page"`
  *   + 卡 A `data-update-action="guard-sync|guard-anyway|guard-cancel"`
+ *   （⛔ **无** `retry`：失败态不提供行内重试，AC4；再试 = 回 R1 点「检查更新」）
  *
- * 覆盖 AC：AC1（版本 + 有新版本）· AC4/AC5（失败三阶段 + 重试）· AC6（已是最新无主按钮）·
- * AC7（平台降级 = 动作替换）· AC9（卡 A 判据 = 队列非空）· AC10（Web 零外溢）·
- * AC11（失败后按钮可再点）· AC12（符号 + 文字 + 色三冗余 / 进度 aria）· AC13（i18n 双键在 locale 用例）
+ * 覆盖 AC：AC1（版本 + 有新版本）· AC4（失败态无行内重试）· AC4b（`unsupported` 前置态 / 零请求面）·
+ * AC5（校验未过单列）· AC6（已是最新无主按钮）· AC7（`unsupported` 唯一动作 = 打开下载页）·
+ * AC9（卡 A 判据 = 队列非空）· AC10（Web 零外溢）· AC11（失败 / 不支持态检查按钮不 disabled）·
+ * AC12（符号 + 文字 + 色三冗余 / 进度 aria）· AC13（i18n 双键在 locale 用例）
  *
- * 说明：本文件用 **hook 假状态注入**（`@/hooks/use-desktop-updater` mock）驱动八态；
+ * 说明：本文件用 **hook 假状态注入**（`@/hooks/use-desktop-updater` mock）驱动九态；
  *       真 bridge 接线由 `apps/desktop/.../__tests__/t737-use-desktop-updater.test.ts` 承担。
  */
 
@@ -139,6 +141,17 @@ const text = (view: VueWrapper): string => view.text()
 
 const action = (view: VueWrapper, name: string) => view.find(`[data-update-action="${name}"]`)
 
+/** 文案禁用词：失败 / 不支持态不得把「重试」写成动作（AC4 —— 用户会去找不存在的按钮） */
+const RETRY_WORDINGS = ['重试', '再试', 'try again']
+
+const expectNoRetryWording = (copy: string): void => {
+    for (const word of RETRY_WORDINGS) {
+        expect(copy.toLowerCase(), `不应出现「${word}」类把重试当动作的措辞`).not.toContain(
+            word.toLowerCase()
+        )
+    }
+}
+
 const r2 = (view: VueWrapper) => view.find('[data-setting-id="update-status"]')
 
 beforeEach(() => {
@@ -227,7 +240,7 @@ describe('T737 · AC1 桌面端 R1 版本行（永不被状态替换）', () => 
     })
 })
 
-describe('T737 · 八态渲染（data-update-state 字面量 + 三冗余）', () => {
+describe('T737 · 九态渲染（data-update-state 字面量 + 三冗余）', () => {
     const cases: Array<{
         state: DesktopUpdateStatus['state']
         symbol: string
@@ -235,6 +248,13 @@ describe('T737 · 八态渲染（data-update-state 字面量 + 三冗余）', ()
         copy: string
         patch?: Partial<DesktopUpdateStatus>
     }> = [
+        {
+            state: 'unsupported',
+            symbol: '–',
+            tone: 'muted',
+            copy: '当前安装方式不支持应用内更新',
+            patch: { installMode: 'download-page', degradedReason: 'dev' }
+        },
         { state: 'idle', symbol: '–', tone: 'muted', copy: '还没检查过更新' },
         { state: 'checking', symbol: '', tone: '', copy: '正在检查更新' },
         {
@@ -426,7 +446,7 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(view.html()).not.toContain('0 MB')
     })
 
-    it('failed（检查）⇒ 可读原因 + 重试 + 打开下载页，且不得出现「已是最新」', async () => {
+    it('failed（检查）⇒ 可读原因 + **只**「打开下载页」，⛔ 无行内重试（AC4）', async () => {
         await setUpdate({
             state: 'failed',
             failure: { stage: 'check', reason: 'offline' }
@@ -435,24 +455,33 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         expect(text(view)).toContain('没能检查更新')
         expect(text(view)).toContain('当前没有网络连接')
         expect(text(view)).not.toContain('已是最新')
-        expect(action(view, 'retry').exists()).toBe(true)
+        // ⛔ 无重试节点（节点名与文案双向断言：换名字加回来也会被文字断言拓住）
+        expect(action(view, 'retry').exists()).toBe(false)
+        expect(view.findAll('button').filter((btn) => btn.text().includes('重试'))).toHaveLength(0)
+        expectNoRetryWording(text(view))
+        // 唯一动作 = 打开下载页，且它是主按钮（v3 由次按钮升 primary）
         expect(action(view, 'open-download-page').exists()).toBe(true)
-
-        await action(view, 'retry').trigger('click')
-        expect(mocks.check).toHaveBeenCalledTimes(1)
-        expect(mocks.download).not.toHaveBeenCalled()
+        expect(action(view, 'open-download-page').classes()).toContain('nue-button--primary')
+        expect(action(view, 'open-download-page').classes()).not.toContain('nue-button--ghost')
+        expect(action(view, 'download').exists()).toBe(false)
+        expect(action(view, 'restart').exists()).toBe(false)
     })
 
-    it('failed（下载 / 校验）⇒ 重试走重新下载（AC5）', async () => {
+    it('failed（下载 / 校验）⇒ 再试入口是 R1「检查更新」（无行内重试，AC4 / AC5）', async () => {
         await setUpdate({
             state: 'failed',
             failure: { stage: 'download', reason: 'timeout' }
         })
         const view = mountPanel()
         expect(text(view)).toContain('下载没完成')
-        await action(view, 'retry').trigger('click')
-        expect(mocks.download).toHaveBeenCalledTimes(1)
-        expect(mocks.check).not.toHaveBeenCalled()
+        expectNoRetryWording(text(view))
+        expect(action(view, 'retry').exists()).toBe(false)
+        // AC11：失败后 R1 恒可点，且点击走「重新检查」而不是绕道下载
+        const checkBtn = view.find('[data-setting-action="check-update"]')
+        expect(checkBtn.attributes('disabled')).toBeUndefined()
+        await checkBtn.trigger('click')
+        expect(mocks.check).toHaveBeenCalledTimes(1)
+        expect(mocks.download).not.toHaveBeenCalled()
     })
 
     it('failed（校验未过）⇒ 单列文案，不写内部术语', async () => {
@@ -463,12 +492,18 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
         const view = mountPanel()
         expect(text(view)).toContain('更新包校验没通过')
         expect(text(view)).not.toContain('sha512')
+        // 原因句只描述事实（v3）：不得出现「可以再试一次」类动作措辞
+        expectNoRetryWording(text(view))
     })
 
-    it('AC11：失败态关闭提示后仍可再检查（按钮不永久禁用）', async () => {
+    it('AC11：失败态可再检查（R1 不 disabled；检查中才短暂禁用）', async () => {
         await setUpdate({ state: 'failed', failure: { stage: 'check', reason: 'server' } })
         const view = mountPanel()
-        await action(view, 'retry').trigger('click')
+        expect(
+            view.find('[data-setting-action="check-update"]').attributes('disabled')
+        ).toBeUndefined()
+        await view.find('[data-setting-action="check-update"]').trigger('click')
+        expect(mocks.check).toHaveBeenCalledTimes(1)
 
         await setUpdate({ state: 'checking' })
         expect(
@@ -484,59 +519,90 @@ describe('T737 · 动作（AC1 / AC2 / AC5 / AC11）', () => {
     })
 })
 
-describe('T737 · AC6 / AC7 边界', () => {
+describe('T737 · AC6 / AC4b / AC7 边界', () => {
     it('AC6：已是最新 ⇒ 无任何主按钮（不出现「立即更新」）', async () => {
         await setUpdate({ state: 'up-to-date' })
         const view = mountPanel()
         expect(text(view)).toContain('已是最新 1.20.3')
         expect(action(view, 'download').exists()).toBe(false)
         expect(action(view, 'restart').exists()).toBe(false)
-        expect(action(view, 'retry').exists()).toBe(false)
+        expect(action(view, 'open-download-page').exists()).toBe(false)
     })
 
-    it('AC7：macOS 降级 ⇒ 动作替换为「打开下载页」+ 一行原因，无「立即更新」', async () => {
+    it('AC4b / AC7：macOS（download-page）⇒ unsupported 态 + 一行原因 + 唯一动作（primary）', async () => {
         await setUpdate({
-            state: 'available',
-            latestVersion: '1.21.0',
-            updateAvailable: true,
+            state: 'unsupported',
             installMode: 'download-page',
             degradedReason: 'mac'
         })
         const view = mountPanel()
+        expect(r2(view).attributes('data-update-state')).toBe('unsupported')
         expect(r2(view).attributes('data-update-platform-degraded')).toBe('true')
-        expect(action(view, 'download').exists()).toBe(false)
+        expect(text(view)).toContain('当前安装方式不支持应用内更新')
         expect(text(view)).toContain('macOS 版需要从下载页安装新版本')
+        // 无任何原地更新路径（AC7：不出现「立即更新」/ 下载按钮）
+        expect(action(view, 'download').exists()).toBe(false)
+        expect(text(view)).not.toContain('立即更新')
         const open = action(view, 'open-download-page')
         expect(open.exists()).toBe(true)
+        expect(open.classes()).toContain('nue-button--primary')
         await open.trigger('click')
         expect(mocks.openDownloadPage).toHaveBeenCalledTimes(1)
     })
 
-    it('AC7：deb 降级 ⇒ 专属原因文案', async () => {
+    it('AC4b：deb 形态 ⇒ 专属原因文案', async () => {
         await setUpdate({
-            state: 'available',
-            latestVersion: '1.21.0',
-            updateAvailable: true,
+            state: 'unsupported',
             installMode: 'download-page',
             degradedReason: 'deb'
         })
         const view = mountPanel()
+        expect(text(view)).toContain('当前安装方式不支持应用内更新')
         expect(text(view)).toContain('deb 版由系统包管理')
     })
 
-    it('降级但无法判定具体系统（如开发态 win32）⇒ 不硬套 mac/deb 原因文案', async () => {
+    it('AC4b：未打包开发态（dev）⇒ 专属原因，⛔ 不说成「deb 版由系统包管理」', async () => {
         await setUpdate({
-            state: 'available',
-            latestVersion: '1.21.0',
-            updateAvailable: true,
-            installMode: 'download-page'
+            state: 'unsupported',
+            installMode: 'download-page',
+            degradedReason: 'dev'
         })
         const view = mountPanel()
-        expect(r2(view).attributes('data-update-platform-degraded')).toBe('true')
-        expect(action(view, 'download').exists()).toBe(false)
-        expect(action(view, 'open-download-page').exists()).toBe(true)
-        expect(text(view)).not.toContain('macOS 版需要从下载页安装新版本')
+        expect(text(view)).toContain('开发版没有可用的更新源')
         expect(text(view)).not.toContain('deb 版由系统包管理')
+        expect(text(view)).not.toContain('macOS 版')
+    })
+
+    it('AC4b：形态判定不出（degradedReason 缺省）⇒ unknown 兜底句，⛔ 不留空行', async () => {
+        await setUpdate({ state: 'unsupported', installMode: 'download-page' })
+        const view = mountPanel()
+        const hint = view.find('.sd-update__hint')
+        expect(hint.exists()).toBe(true)
+        expect(hint.text()).toBe('这种安装方式的新版本要从下载页安装')
+        // 不硬套具体形态的措辞
+        expect(text(view)).not.toContain('macOS 版')
+        expect(text(view)).not.toContain('deb 版由系统包管理')
+        expect(text(view)).not.toContain('开发版')
+    })
+
+    it('AC4b：unsupported 态点 R1「检查更新」⇒ 仍可点、态与文案不变、⛔ 不绕道下载/重启/下载页', async () => {
+        await setUpdate({
+            state: 'unsupported',
+            installMode: 'download-page',
+            degradedReason: 'mac'
+        })
+        const view = mountPanel()
+        const checkBtn = view.find('[data-setting-action="check-update"]')
+        expect(checkBtn.attributes('disabled')).toBeUndefined()
+        await checkBtn.trigger('click')
+        // 面板层可观测面：只走「检查」这一条通道，不出现任何其他动作；
+        // 「不发更新器请求」由内核用例（`checker.check` 调用数 = 0）负责
+        expect(mocks.check).toHaveBeenCalledTimes(1)
+        expect(mocks.download).not.toHaveBeenCalled()
+        expect(mocks.restart).not.toHaveBeenCalled()
+        expect(mocks.openDownloadPage).not.toHaveBeenCalled()
+        expect(r2(view).attributes('data-update-state')).toBe('unsupported')
+        expect(text(view)).toContain('当前安装方式不支持应用内更新')
     })
 
     it('原地可更新 ⇒ data-update-platform-degraded="false"', async () => {
