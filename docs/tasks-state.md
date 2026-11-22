@@ -45,7 +45,10 @@
 - **缺陷闭环**：`T739` rd-fe `0b8d4d7a`（QA-01 补断言 + 反向对照，变异 1 红 40 绿）· `T740` rd-infra `026314d3`（QA-02 仅改注释 · QA-03 补 reason + 真实网络栈超时码 · QA-04 adapter 入库 28 例；三次变异 11/1/1 红）。
 - **qa 复签中断（如实记）**：`T741` 三轮均被模型网络 `ECONNREFUSED` 打断（非任务问题）；缺交的 `358-qa-cases.md` 已由该轮写入并入库，缺陷编号 `DEF-01…04` → `QA-01…04`（避免与缺陷池撞名），末次机械复核由 PM 执行并在报告 §一 末如实标注（**qa 未复签**）。
 - **批末门禁（PM 亲跑，`026314d3` 之后，独占无并发）**：`vp test --run` **465 文件 / 3692 例 / 3686 通过 / 6 跳过 / 0 红**（317.84s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` 17.44s rc=0 · `desktop:build` 19.59s rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
-- **待办**：用户视觉走查（清单已给）→ PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
+- **用户走查第一轮（2026-11-21）＝ 三条实报**：① 「关于与更新」标签/卡片比同面板其它行**左移 12px**（根因：`sd-row`/`sd-group__head` 带 `--nue-padding-sm`，新块未带）② 界面出现 `APPIMAGE env is not defined, current application is not an AppImage` 这类更新器原文 ③ 检查失败不该让用户「重试」，应引导下载页。
+- **三条修复**：`T742` rd-fe `39a62102`（对齐：真实 Chromium 量 `rectLeft` 40/40/40，窄档 12/12/12，delta 0）· `T743` uiux `db696841`（稿 v3：对齐基准/`failed` 去重试/新增 `unsupported` 态 + 指出 `resolveInstallMode` 判定顺序 bug）· `T744` rd-infra `9b27e05e`（降级形态**零请求**（`checker.check` 调用数 0 有断言）· 状态载荷只留原因码、日志改脱敏摘要（原文含 `APPIMAGE`/路径/主机名零命中）· 判定先 `isPackaged` ⇒ `dev` · 变异 3 红 / 5 红）· `T745` rd-fe `1bf6e692`（渲染第九态 `unsupported` · `failed` 删行内「重试」、`打开下载页` 升 primary、R1 仍可点 · 变异 3 红 / 2 红）。PRD 同步：AC4 改、新增 AC4b / AC9b（`7598700c`）。
+- **第二轮批末门禁（PM 亲跑 `1bf6e692`，独占无并发）**：`vp test --run` **465 文件 / 3708 例 / 3702 通过 / 6 跳过 / 0 红**（435s）· `vp check` 2022 文件格式 pass + 1609 文件 0 error · 五守卫 rc=0 · `webapp build` rc=0 · `desktop:build` rc=0（116 产物过注释守卫）· 移动端红线 **0 行**。
+- **待办**：用户复看（对齐 / 无原文 / 失败态只有下载页）→ PM 逐 AC 验收（评论 PR）→ 授权 rd-infra squash 合并 → 发布 MINOR（发版检查项：tag = `package.json` = `latest*.yml` 三者一致）。
 - **转办（QA 提出）**：Electron E2E 基建（Playwright / `_electron`）本期不建 ⇒ 进待派发队列（Owner：待定）；Windows 原地更新与 macOS 分支人工验收属已接受风险（PRD §八）。
 
 ## 二、上一批次终态
