@@ -14,7 +14,7 @@ import { appendConflict, compareConflict, valuesEqual } from '../conflict-journa
  * 根因：判等口径（`valuesEqual`：`null` ≠ `''`）与展示口径（`conflict-value-format.isUnsetValue`：
  *      `null` / `undefined` / `''` / `[]` 一律「未设置」）不一致。
  *
- * 契约（DESIGN §4.7「未设置不得成对出现」）：判等前**空值哨兵归一**
+ * 契约（DESIGN §5.3「未设置不得成对出现」）：判等前**空值哨兵归一**
  *   `null` ≡ `undefined` ≡ `''` ≡ `[]`；⛔ `0` / `false` **不是**空值。
  *   同一归一必须同时作用于**写入侧**（A1 快照字段挑选）⇒ 全仓只有一个判等实现。
  *

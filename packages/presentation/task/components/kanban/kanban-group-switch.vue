@@ -6,7 +6,7 @@ import { useKanbanGroup, type KanbanGroupBy } from './use-kanban-group'
 
 /**
  * 看板分组切换（`T613` 控件搬家）
- * @description **包装** `SegmentedSwitch`（`DESIGN §4.5` 单一来源件），不自绘分段；
+ * @description **包装** `SegmentedSwitch`（`DESIGN §5.1` 单一来源件），不自绘分段；
  *              分组状态经 `KANBAN_GROUP_BY_KEY` 注入（与看板读同一份 ref · PRD R-D）。
  *              三处右上角「视图」菜单共用本件（同一实现，非三份复制）。
  */

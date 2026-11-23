@@ -437,7 +437,7 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
                     :data-update-state="updateState"
                     :data-update-platform-degraded="String(updatePlatformDegraded)"
                 >
-                    <!-- 动作级加载态：`checking` 用 `LoadingError`（DESIGN §4.1 已登记口径） -->
+                    <!-- 动作级加载态：`checking` 用 `LoadingError`（DESIGN §1.1 已登记口径） -->
                     <loading-error
                         v-if="updateState === 'checking'"
                         :loading="true"
@@ -615,7 +615,7 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
 }
 
 /* 行底上的 hint：⛔ 不用 `--nue-secondary-text-color`（-600 压 -100 = 4.60，仅超线 0.1 且与
-   DESIGN §4 的 4.40 口径打架）⇒ 取 -700 = 6.77（设计稿 §4） */
+   DESIGN §2 的阈值口径打架）⇒ 取 -700 = 6.77（设计稿 §4） */
 .sd-update__row .sd-row__hint {
     color: var(--nue-primary-color-700);
 }

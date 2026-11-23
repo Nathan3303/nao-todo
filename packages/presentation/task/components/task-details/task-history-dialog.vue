@@ -428,13 +428,13 @@ const hasContent = computed(() => items.value.length > 0)
     padding: 0 var(--nue-padding-xs);
     font-size: var(--nue-text-xs);
     font-weight: 500;
-    /* 小文本 ≥4.5:1 ⇒ 用次要文字色（DESIGN §2：5.74:1 @ 白底） */
+    /* 小文本 ≥4.5:1 ⇒ 用次要文字色（DESIGN §2：次要文字色，实测 5.74:1 @ 白底） */
     color: var(--nue-secondary-text-color);
     text-align: left;
 }
 
 /* 「更早的记录」分页入口（复用既有 `history.more`；组标题另有专用键）
-   点击区 ≥40px（DESIGN §3）：`pure` 会把 `small` 的 28px 高度归零（实测 17px）⇒ 显式给足 */
+   点击区 ≥40px（DESIGN §2）：`pure` 会把 `small` 的 28px 高度归零（实测 17px）⇒ 显式给足 */
 .task-history__more {
     align-self: flex-start;
     min-height: 40px;

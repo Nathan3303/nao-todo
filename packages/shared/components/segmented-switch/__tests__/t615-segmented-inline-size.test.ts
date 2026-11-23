@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import { SegmentedSwitch } from '../index'
 
 /**
- * T615 `size="inline"` 第三档（DESIGN §4.5 · PRD R-H）
+ * T615 `size="inline"` 第三档（DESIGN §5.1 · PRD R-H）
  * @description 看板分组切换嵌在「视图」下拉菜单内，需与菜单条目（`nue-dropdown-item--small`
  *              = 32px / 12px）齐平 ⇒ 分段件新增 `inline` 档。
  *              本用例只断言**结构契约与 token 契约**（不写死 px，避免主题微调即碎）；真实几何

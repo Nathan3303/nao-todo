@@ -5,7 +5,7 @@
  *              桌面 / Electron：`env()` 恒为 `0` ⇒ 全部声明解析为改动前的数值
  *              （AC4「桌面 / Electron 视觉零变化」硬闸门）。
  *              安全区改动一律收敛在本文件，禁止散落到各组件 `<style>`（PRD §六 可维护性）。
- * @see DESIGN.md §9「安全区与视口基线」
+ * @see DESIGN.md §4「移动端视口与安全区不变量」
  */
 
 /* 外壳：刘海 / 圆角 / 手势条区域不承载可交互内容。body 已为 border-box（variables.css）

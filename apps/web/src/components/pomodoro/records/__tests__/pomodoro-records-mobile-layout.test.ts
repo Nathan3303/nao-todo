@@ -477,7 +477,7 @@ describe('T549 口径守卫（断点 / 视口单位 / 红线 / 详情复用）',
         expect(offenders, '新造色值 ⇒ 违反「不新创 token / 只沿用 nue-*」（AC8）').toEqual([])
     })
 
-    it('NFR：不得用裸静态视口高度单位作高度基（DESIGN.md §9）', () => {
+    it('NFR：不得用裸静态视口高度单位作高度基（DESIGN.md §4）', () => {
         const staticViewportHeight = new RegExp(STATIC_VH)
         const offenders = Object.entries(modules)
             .filter(([, source]) => staticViewportHeight.test(styleTextOf(source)))

@@ -73,11 +73,12 @@
 - **✅ 已合并（2026-11-22）**：PR #361 因 base 分支随 #358 合并被删而**自动关闭且无法 reopen** ⇒ 把分支 rebase 到新 main（`git rebase --onto origin/main c1e83642`，9 提交干净落地、只留 #360 的 28 文件）、强推、新开 PR **#362**（base main）⇒ squash **`596d1b7f`**（`wip(` 各 0 · 远端分支已删 · Issue #360 CLOSED）。
 - **发布决策（同 #358）：随下一个 PR 发**。
 
-## 一之六、`v1.21.0` 发版（MINOR · 在制）
+## 一之六、`v1.21.0` 发版（MINOR · ✅ 已发布 2026-11-22）
 
 - **范围**：`3fea8458`（#358 应用内自我更新）+ `596d1b7f`（#360 设置面板改版）。用户 2026-11-22 先定「随下个 PR 发」，随后改口「还是发版吧」⇒ 本批直接发 MINOR。
 - **分支** `nao/release-v1.21.0`：版本 root / `apps/web` / `apps/desktop` `1.20.3 → 1.21.0`；`CHANGELOG.md` + `docs/releases/v1.21.0.md`（C 端说人话；内部术语全部下沉「技术细节」段）；`packages/*` 有源码改动（`shared` 文案键 / `presentation-identity` 组件）按近批惯例**不单独 bump**。
 - **待办**：PR → RD 合并 → 注解 tag `v1.21.0` 指向 main 合并提交 → 推送触发打包 → Release（正文与 `docs/releases/v1.21.0.md` 归一化逐字一致）→ **8 产物 + 三份 `latest*.yml` 实核 + 硬校验 tag = `package.json` = `latest*.yml` 三者一致**。
+- **已发布事实（2026-11-22 实核）**：发版 PR **#363** ⇒ squash **`7e401ae2`** · 注解 tag `v1.21.0` 指向该提交 · 打包 run `45013552854` 四 job 全绿 · Release 已发布（非 draft / 非 prerelease）· **8 产物齐** + 三份 `latest*.yml` 的 `version` 均 = `1.21.0`（`path` 分别指向 x64.exe / arm64-mac.zip / x86_64.AppImage）· **三处版本一致性硬校验通过**：tag `v1.21.0` = root/web/desktop `package.json` `1.21.0` = `latest*.yml` `1.21.0` · Release 正文与 `docs/releases/v1.21.0.md` 归一化**逐字一致**（2470/2470）· Issue #358 / #360 CLOSED。
 - **本批遗留（下批处理）**：① `t706-qa-prune-cap-probe` 负载 flake（未定位，单跑 5 次全绿）② 发版三版本一致校验目前只有人工清单、无自动化（加进 `release.yaml` 需 `gh` token 具备 `workflow` scope）。
 
 ## 二、上一批次终态

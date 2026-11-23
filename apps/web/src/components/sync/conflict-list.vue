@@ -336,7 +336,7 @@ const currentSideLabel = computed(() =>
 )
 
 /**
- * 差异表列配置（DEF-136 / DESIGN §4.7）：三列 —— 字段 / 我的修改 / 云端最新
+ * 差异表列配置（DEF-136 / DESIGN §5.3）：三列 —— 字段 / 我的修改 / 云端最新
  * @description 字段列宽由 CSS 变量承载（8rem；≤720px 6rem）⇒ 响应式收窄不必用 `!important`；
  *              两个值列不设宽 ⇒ `table-layout: fixed` 下等分剩余宽度（等宽契约）。
  */
@@ -462,7 +462,7 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                     </dl>
                 </nue-div>
 
-                <!-- 差异详情：Git diff 式左右对照（DEF-134 / DESIGN §4.7）；无字段差异 ⇒ LoadingError 空态 -->
+                <!-- 差异详情：Git diff 式左右对照（DEF-134 / DESIGN §5.3）；无字段差异 ⇒ LoadingError 空态 -->
                 <section class="conflict-list__section">
                     <nue-text size="xs" class="conflict-list__section-title">
                         {{ t('sync.conflict.compareTitle') }}
@@ -477,7 +477,7 @@ const diffColumns = computed<NueTableColumn[]>(() => [
                         :empty-image-src="assetUrl('/images/todo.webp')"
                     />
                     <template v-else>
-                        <!-- DEF-136 / DESIGN §4.7：差异区一律用 `nue-table` 三列（字段 / 我的修改 / 云端最新）
+                        <!-- DEF-136 / DESIGN §5.3：差异区一律用 `nue-table` 三列（字段 / 我的修改 / 云端最新）
                              ⇒ 字段名与值**同行同基线**；不加框 / 斑马纹 / 排序 / 行点击 / 悬停高亮 -->
                         <nue-table
                             class="conflict-list__diff-table"
@@ -786,7 +786,7 @@ const diffColumns = computed<NueTableColumn[]>(() => [
     overflow-wrap: anywhere;
 }
 
-/* 差异对照（DEF-136 / DESIGN §4.7）：`nue-table` 三列（字段 / 我的修改 / 云端最新）。
+/* 差异对照（DEF-136 / DESIGN §5.3）：`nue-table` 三列（字段 / 我的修改 / 云端最新）。
    仅作**对齐容器**：不启用 `--border` / `--striped`、无排序 / 行点击 / 悬停高亮（无管理台气质） */
 .conflict-list__diff-table {
     /* 字段列宽（两值列由 `table-layout: fixed` 等分剩余宽度）；≤720px 收窄见下方 @media */
@@ -869,7 +869,7 @@ const diffColumns = computed<NueTableColumn[]>(() => [
     color: var(--nue-warning-color-90);
 }
 
-/* 值行：`is-loser` / `is-current` 之间**不再用颜色/字重区分**——DESIGN §4.7：两侧都有值时
+/* 值行：`is-loser` / `is-current` 之间**不再用颜色/字重区分**——DESIGN §5.3：两侧都有值时
    「两侧值用常规正文色」（差异由符号 + 文案承载，仅三态才染文字色）
    默认 1 行省略（长值 + 「展开」；完整值在 `title` 提示里） */
 .conflict-list__text {

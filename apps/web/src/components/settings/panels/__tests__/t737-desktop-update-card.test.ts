@@ -390,7 +390,7 @@ describe('T737 · 九态渲染（data-update-state 字面量 + 三冗余）', ()
             expect(r2(view).attributes('data-update-state')).toBe(item.state)
             expect(text(view)).toContain(item.copy)
             if (item.state === 'checking') {
-                // checking：动作级加载态走 LoadingError（DESIGN §4.1 已登记口径）
+                // checking：动作级加载态走 LoadingError（DESIGN §1.1 已登记口径）
                 expect(view.findComponent(LoadingError).exists()).toBe(true)
                 expect(text(view)).not.toContain('还没检查过更新')
                 return

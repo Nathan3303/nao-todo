@@ -1,273 +1,57 @@
-# DESIGN.md —— nao-todo 设计语言与界面规范
+# DESIGN.md —— 项目级界面约束契约
 
-> 适用：面向用户的 **web / desktop** 界面（`apps/web`、`apps/desktop`，二者复用同一组件与 hook）。
-> 定位：**C 端消费级应用**（任务 / 清单 / 专注工具），**不是后台管理台**。
-> 来源：2026-09-28 冲突面板视觉走查（T338/T339/T340/T342/T343）与实测 token 对比度。
-> 约束：**SSOT（Single Source of Truth）= 本文件**；新增页面/组件前请对照文末「检查清单」。
+> 本文件**只放组件库主题表达不了的项目级约束**；一切视觉值（色彩 / 字号 / 间距 / 尺寸 / 圆角）见主题包，取值顺序见 §1.4。
+> 上游 = `nue-ui@1.15.3` + `nue-ui-theme-shadlike@0.13.30`（`node_modules` 内 `dist/global/variables.css`、`dist/components/*.css` 可直接读）；⛔ 本文件不复制主题值（双源必漂移），确需新 token / 档位 ⇒ 先报 PM。
+> 适用：面向用户的 **web / desktop** 界面（C 端消费级应用，**不是后台管理台**）。
+> 编号对照（旧 → 新，供历史文档参照）：旧 §2 / §3（色彩 / 排版值）已删、归主题包 · §4.1→§1.1 · §4.5→§5.1 · §4.6→§5.2 · §4.7→§5.3 · §4.8→§5.4 · §4.9→§1.4 · §5→§2 · §6→§1.3 · §7→§1.2 · §8→§6 · §9→§4
 
----
+## 1. 硬规则
 
-## 1. 产品气质
+- **§1.1 状态占位统一用 `LoadingError`（硬规则）**：组件 `packages/shared/components/loading-error/`；优先级 `loading` > `error` > `empty` > 默认插槽（`loading` 默认 `true`，务必显式传）。**区域级**（列表 / 详情 / 面板段落）三态**一律**用它，⛔ 不自绘空态 / 错误态；**动作级**瞬时反馈（按钮动作驱动、不替换内容区域）保持内联提示。错误态用 `#error` 插槽给恢复动作，文案一律走 i18n。
+- **§1.1 续 · 已登记口径**（T734 / #358）：桌面端「关于与更新」块只有 `checking` 走 `LoadingError`，`idle` / `failed` 走行内状态行 —— 该块是动作状态行、非内容区；若将来改为整块内容区 ⇒ **必须**回 `LoadingError`（出处 `docs/designs/358-desktop-self-update.md`）。
+- **§1.2 危险 / 覆盖类动作**：覆盖数据必须**显式选择**（如「我的修改 / 云端最新」），⛔ 不默认静默覆盖，且给一句话说明「选择后以谁为准」；主按钮 = 更保全用户成果的一侧；破坏性动作（删除 / 永久覆盖）加二次确认或醒目样式。
+- **§1.3 i18n 约定**：文案三处齐备（`packages/shared/locales/{types,zh-CN,en-US}.ts`），键命名 `模块.区域.语义`，字段标签 `sync.conflict.field.<name>`；死键守护 = `apps/web/src/components/sync/__tests__/conflict-ux.test.ts` 静态扫描（引用键均已定义 + 零死键）；字段标签走 `packages/shared/utils/conflict-field-labels.ts` 的 `FIELD_LABEL_KEYS`，未映射走 `humanizeField`，⛔ 不裸露 raw / `camelCase`。
+- **§1.4 元素形态取自组件库主题（取用阶梯）**：① 主题 token `--nue-*`（组件自有变量如 `--nue-button-*` 优先于全局色阶）→ ② 组件原生档位（尺寸 / 变体）→ ③ 本仓主题覆盖 `apps/web/src/themes/*.css` → ④ 本仓类（只做组合与布局，⛔ 不重定义颜色 / 字号 / 圆角 / 尺寸）→ ⑤ 确需新 token / 档位 ⇒ 先报 PM。**检验**：新块 CSS 若出现 `height` / `padding` / `font-size` / `border-radius` / `background-color` 的**新字面值** ⇒ 视为漂移，回上一步取件。
 
-1. **客服向、说人话**：面向用户的界面**不得**裸露内部术语与技术键名（如 `stale` / `OCC` / 败方 / `derivedUpdates` / `name` / `archivedAt` / `revision`），一律映射为用户可读标签与说明。
-2. **视觉 C 端化**：避免「表头 + 行 + 网格」式后台排版 ⇒ 卡片 / 分区留白 / 圆角 / 舒展字号 / 更大点击区；主按钮突出、次按钮弱化。
-3. **信息分层**：列表（左栏）只承载「名称」级信息；类型 / 状态 / 时间 / ID / 字段差异等技术细节进**详情区**。硬约束 = **信息只迁移、不丢失**。
-4. **安全感**：涉及覆盖数据的动作必须给「选择后以谁为准」的说明；危险动作有明确主次与（必要时）二次确认。
-5. **不另创体系**：沿用既有 `nue-*` token 与 `nue-ui` 组件；确需新增 token / 组件 ⇒ 先与 PM 确认。
+## 2. 验收阈值
 
----
+- **对比度**：文本 ≥4.5:1；承载语义的图形 / 状态边框 ≥3:1。**阈值是口径、色值归主题包** —— 实测由 `pnpm run guard:contrast`（`scripts/contrast-audit.mjs`）按声明式 pair 表输出，任一不达标 ⇒ `exit 1` 并打印失败行。
+- **可点区**：控件取组件原生档（`nue-button` 等），列表 / 行级动作 ≥40px；低于底线的必在 §3 登记。
+- **三重冗余**：状态 = 颜色 + 符号 + 文字标签（实测：去色后橙 / 红两两 <3:1，色盲模拟下几乎重合，⛔ 仅靠颜色承载语义）。
+- **键盘**：可 Tab 聚焦 + focus 可见；对话框 Esc 关闭、焦点闭环与归还、`role="dialog"` + `aria-modal`；列表项 `aria-selected`。
 
-## 2. 色彩体系（实测，light 模式，底色 `--nue-primary-color-0` = `#fff`）
+## 3. 例外登记册
 
-| 用途                     | token                                                       | hex                               | 对比度                 | 达标线                                          |
-| :----------------------- | :---------------------------------------------------------- | :-------------------------------- | :--------------------- | :---------------------------------------------- |
-| 正文                     | `--nue-primary-text-color`（= `--nue-primary-color-800`）   | `#333333`                         | **12.63:1**            | 文本 ≥4.5 ✓                                     |
-| 次要文本                 | `--nue-secondary-text-color`（= `--nue-primary-color-600`） | `#666666`                         | **5.74:1**             | 文本 ≥4.5 ✓                                     |
-| 边框 / 分隔线            | `--nue-border-color`（= `--nue-divider-color`）             | `#cccccc`                         | 1.61:1                 | 装饰性（不承载语义）                            |
-| 三态·图形（色条 / 符号） | `--nue-{success,warning,error}-color-80`                    | `#1b981b` / `#a15912` / `#a12a12` | **3.78 / 5.31 / 7.35** | 图形 ≥3 ✓                                       |
-| 三态·文本（文字标签）    | `--nue-{success,warning,error}-color-90`                    | `#178217` / `#8a4d0f` / `#8a240f` | **4.95 / 6.67 / 8.97** | 文本 ≥4.5 ✓                                     |
-| ⚠️ 既有债                | `--nue-success-color-60`                                    | `#22c322`                         | **2.36:1**             | **不达标** ⇒ 勿用于文本/图形；用 `-80/-90` 替代 |
+- **移动抽屉 `nue-footer` 的设置齿轮**：按字形尺寸呈现（≈24px）、不加 40px 命中盒 —— 理由：与 5 个导航图标同排，抽屉内加盒会挤压导航，导航图标本身已 ≥40px（2026-10-22 用户裁定 · T521）。
+- **分段件 `inline` 档（32px）**：仅用于**嵌在菜单 / 紧凑条纹**内、跟随条目高度（菜单项本身即 32px）；⛔ 只允许段高差异，不得承载配色 / 圆角 / 字体 / 动效。
+- **已撤回**（2026-11-21 · T746/v4）：原「关于与更新」块的 30px 按钮例外**作废** —— v4 改用 `nue-button` 默认尺寸（组件原生档），按钮与行高均达标。
+- **新例外必须登记在此 + 写明理由与出处**，⛔ 禁止静默破线。
 
-**提示（Message / Toast）语义色配对（随 `nue-ui-theme-shadlike@0.13.27` 起）**
+## 4. 移动端视口与安全区不变量
 
-> 消息本体改用更深色阶（修复旧映射文本不达标）；上游已附 vitest 对比度自检（10 组）防退化。
+- **前提**：`apps/web/index.html` 的 viewport meta 必须含 `viewport-fit=cover`，否则 iOS Safari 下 `env(safe-area-inset-*)` 恒为 `0`、纯 CSS 方案空转。
+- **单一视口基**：`html`（`.nue-html`）用动态视口 `100dvh`；`body` / `#app` 一律 `100%`。⛔ **不得以裸静态视口单位作高度基**、⛔ **不得用含滚动条宽度的视口单位作宽度基**；不出现「父静态、子动态」混基（源级守卫 `apps/web/src/themes/__tests__/safe-area.test.ts`）。
+- **降级取向（可用性优先于观感）**：引擎不支持 `100dvh` ⇒ 该声明被丢弃、落主题 reset 静态视口，并由 `@supports not (height: 100dvh)` 恢复 `html` 可滚动 ⇒ 保证「末行可滚到底」。
+- **安全区内缩集中**在 `apps/web/src/themes/safe-area.css`（`env(safe-area-inset-*, 0px)`），⛔ 不散落到组件 `<style>`：外壳（`body`）四向 padding 管列表末行 / 空态 / 错误态；覆盖层（`.nue-overlay`，Teleport 到 fixed popup pool、**不继承** `body` padding）自身贴合可视视口并在内部四向内缩。
+- **桌面 / Electron 零变化**为硬闸门：`env()` 恒为 `0`、动态视口 = 静态视口、popup pool 位于 `(0, 0)` 且页面不滚动 ⇒ 全部解析为改动前的数值。
+- **已知边界**：iOS Safari 15.0–15.3 支持安全区但无动态视口 ⇒ 列表靠「静态视口 + 页面滚动」可滚到底；覆盖层不依赖视口单位（`position: fixed` + `inset: 0`），安全区仍由 `env()` 内缩。
 
-| 语义    | 文字 token                | 文字对比度（浅 / 深） | 边框 token               | 边框对比度（浅） |
-| :------ | :------------------------ | :-------------------- | :----------------------- | :--------------- |
-| success | `--nue-success-color-100` | **5.67 / 8.27**       | `--nue-success-color-80` | **3.25**         |
-| warning | `--nue-warning-color-90`  | **5.49 / 7.42**       | `--nue-warning-color-80` | **4.38**         |
-| error   | `--nue-error-color-90`    | **6.76 / 6.51**       | `--nue-error-color-80`   | **5.54**         |
+## 5. 已锁定的组件契约
 
-⇒ 文字均 **≥4.5**、边框均 **≥3**（图形）✓。**日历撤销失败态**（T368）同步改指 `error -90 / -10 / -80`（与本表同源，不再引用旧 `-70/-60`）。
+- **§5.1 分段选择**：唯一实现 `packages/shared/components/segmented-switch/`；调用方**只允许**段数 / `fill` / `size` 三轴差异，⛔ 不在调用处覆盖尺寸（差异写在调用处 = 漂移）；视觉（槽底 / 指示器 / 选中 / hover / 动效）与 a11y 逐项一致。新增同类「分段多选一」UX ⇒ 一律复用本组件，⛔ 不另写分段样式。
+- **§5.2 侧栏变体能力对等**：同一侧栏的响应式变体（`rail` / 抽屉）**只许摆放位置不同，不许能力（功能入口）有无不同**；共用同一份宿主注册表与单例状态（任一时刻至多一个宿主 / 一个对话框实例）。
+- **§5.3 冲突对比视图**：差异区一律 `nue-table` 三列（字段 / 我的修改 / 云端最新），字段名与值**同行同基线**；⛔ 不启用边框 / 斑马纹 / 排序 / 行点击 / 选中态；值**纯文本**、⛔ 不加框；三态 = 符号 + 文案 + 颜色（`−` 云端已无 / `+` 云端新增 / `~` 已修改）；两侧皆空（`null` / `undefined` / `''` / `[]`）**不产生差异行**；左栏一律左对齐、条目可指认对象（⛔ 不显示裸记录 ID）。
+- **§5.4 同步状态面板（侧栏下拉）**：分区用**留白**分隔、⛔ 不用分隔线；首行 = 上次同步时间（正文色）+「立即同步」右对齐；正常态**不铺空分区**；计数胶囊 = 淡底 + 语义**文字色** + 语义边框；可点行 hover **仅**背景弱变化（不加边框 / 阴影）；长内容 2 行截断 + `title`，面板内滚不撑破视口。⛔ 不改同步语义（计数 / 状态判定 / 按钮动作）。
 
-**按钮 / 徽标 / 表单提示语义色（`DEF-61` 修复后，随 `nue-ui-theme-shadlike@0.13.28` 起）**
-
-> 修复实心三态按钮、破坏性按钮、Badge、Prompt 错误值的对比度；上游已附 vitest 对比度自检防退化。
-
-| 用途                                      | token（映射）                                    | 对比度（浅 / 深） | 达标线                |
-| :---------------------------------------- | :----------------------------------------------- | :---------------- | :-------------------- |
-| 实心 success 按钮（白字 on 填充）         | `--nue-button-base-color` = `-success-color-100` | **6.60 / 10.51**  | 文本 ≥4.5 ✓           |
-| 实心 warning 按钮（白字 on 填充）         | `-warning-color-100`                             | **8.51 / 9.92**   | 文本 ≥4.5 ✓           |
-| 实心 error 按钮（白字 on 填充）           | `-error-color-100`                               | **10.93 / 8.69**  | 文本 ≥4.5 ✓           |
-| destructive 按钮（文字 / 描边 on 页面底） | `-error-color-80`                                | **7.35 / 6.11**   | 文本 ≥4.5 / 图形 ≥3 ✓ |
-| destructive hover 底（其上文字）          | `-error-color-10`                                | **5.54 / 5.55**   | 文本 ≥4.5 ✓           |
-| Prompt 值错误（`value-error`）            | `-error-color-70`                                | **6.05 / 5.23**   | 文本 ≥4.5 ✓           |
-| Badge（白字 on 底）                       | `-warning-color-80`                              | **5.31 / 8.25**   | 文本 ≥4.5 ✓           |
-
-⇒ 均达「文本 ≥4.5 / 图形 ≥3」。
-
-**三态可辨性（实测结论）**
-
-- 去色（灰阶）两两对比度：success↔warning **1.32** · warning↔error **1.92** · success↔error **2.53** ⇒ **全部 <3:1**。
-- 色盲模拟（ΔE76）：protanopia warning↔error **7.4** · deuteranopia **9.1**（橙 / 红几乎重合）。
-- ⇒ **颜色 + 符号 + 文字标签三重冗余是必需**，不得仅靠颜色承载语义。
-
----
-
-## 3. 排版与间距
-
-- 间距刻度（`nue-*`）：`--nue-gap-2xs` 4px · `--nue-gap-xs` 8px · `--nue-gap-sm` 12px · `--nue-gap-df` 16px。
-- 字号：`--nue-text-2xs` 10px · `--nue-text-xs` 12px（默认正文/字段） · `--nue-text-sm` 14px（组头/重点） · `--nue-text-md` 18px（详情标题）。
-- 行高：正文约 `1.5`；长文本 `1.6`（`overflow-wrap: anywhere` + `white-space: pre-wrap`）。
-- **点击区 ≥40px**：列表 / 组头等可点区域 `min-height: 40px`（当前实现使用 `--nue-box-size-sm` = 32px 的处所，若为**主操作行**应提升至 40px）。
-    - **已登记例外**（2026-10-22，用户裁定）：移动抽屉 `nue-footer` 内的**设置齿轮**按字形尺寸（≈24px）呈现、不加 40px 命中盒 —— 理由：齿轮与 5 个导航图标同排，256px 抽屉内加 40px 盒会挤压导航；导航图标本身已 ≥40px，齿轮为其补充入口。新例外须在此登记并写明理由，禁止静默破线。
-    - **已撤回**（2026-11-21 · T746/v4）：「关于与更新」块的 **30px 按钮例外作废** —— v4 改用 `nue-button` 默认尺寸（`--nue-box-size-df` = 36px，主 / 次均为组件原生档）与任务列表行节奏，不再需要例外；按钮全部 ≥36px、行高 ≥40px，本块不再属于任何例外（本条对上一条齿轮例外无影响）。出处 `docs/designs/358-desktop-self-update.md` §3 / §4 / §8。
-- 密度：字段行间距 8px（改前 4px）；卡片内边距 8–12px。
-- 圆角：`--nue-primary-radius`（= 6px）；卡片可用 `--nue-radius-lg`（8px）。
-
----
-
-## 4. 组件约定
-
-### 4.1 ⭐ 状态占位统一用 `LoadingError`（**硬规则**）
-
-> 组件：`packages/shared/components/loading-error/loading-error.vue`（`<loading-error>` / `<LoadingError>`）
-> 先例：`apps/web/src/components/pomodoro/records/index.vue`、`packages/presentation/task/components/task-details/details.vue`
-
-**规则**：**任何内容区域**（列表 / 详情 / 面板段落）出现的 **加载中 / 加载失败 / 空数据** 三态，**一律**使用 `LoadingError` 承载，**不得**自绘空态 / 错误态 DOM 与样式。
-
-- Props：`loading`（默认 **true**，务必显式传）、`loadingMessage`、`error`（布尔，**注意不是字符串**）、`errorMessage`、`empty`（布尔）、`emptyMessage`、`emptyImageSrc`、`emptyImageSize`。
-- 优先级：`loading` > `error` > `empty` > 默认插槽。
-- **恢复动作**：错误态用 `#error` 具名插槽放「重试」按钮（文案说人话，复用 `common.retry`）；空态可用 `#empty` 插槽。
-- 文案一律走 i18n（`emptyMessage` / `errorMessage` / `loadingMessage`），⛔ 不硬编码。
-- **区域级 vs 动作级**：`LoadingError` 用于**替换内容区域**的三态；**动作级瞬时反馈**（如「保留失败」）保持内联提示，不替换内容区域。
-- **已登记口径（2026-11-20，PM 裁决；T734 / Issue #358 · 桌面端「关于与更新」块）**：加载 / 失败 / 空三态**只有 `checking`** 走 `LoadingError`（`:loading` + `height:auto`）；`idle` / `failed` 走**动作级内联**状态行 —— 理由：R2 是**动作状态行**（由按钮动作驱动、结果恒占位，不替换内容区域），且 `nue-empty` 的 6rem 插画会破坏该块**行式**版式（v4 已无卡片，本条不受版式变化影响）。⛔ **边界**：若将来 RD 把它做成**整块内容区**（替换式三态），则**必须**回 `LoadingError`，本口径随之失效。
-- 参考实现：`apps/web/src/components/sync/conflict-list.vue`（左栏列表：loading/error/empty；右栏未选中：empty；无字段差异：empty）。
-
-### 4.2 对话框
-
-- 组件：`nue-dialog`（全局注册，见 `apps/web/src/nue-ui-register.ts`）。
-- 尺寸：`min(960px, 92vw) × min(620px, 86vh)`；窄窗（`<900px`）`94vw × 90vh`。
-- 布局：左右分栏（左栏列表 `clamp(200px,26%,320px)`，右栏详情 `flex:1; min-width:0`）；两栏之间 **1px 竖向分隔**（`--nue-border-color`），**窄窗堆叠时改为横向**。
-- 标题 + 条数走 `#header` 插槽（不拼字符串）。
-- a11y：`role="dialog"` + `aria-modal="true"` + aria-label；Esc 关闭；打开焦点入框、关闭归还触发按钮。
-
-### 4.3 列表
-
-- 列表行点击区 ≥40px；选中态用背景 + 字重 + `aria-selected`；**同一实体一行**（避免「同一对象多行同时 active」）。
-- 分组/折叠可按需用 `nue-collapse`（`apps/web/src/themes/collapse.css`）；若每项对应唯一详情，则折叠无信息可展示 ⇒ 直接用选择列表。
-
-### 4.4 按钮主次
-
-- 主操作：`theme="primary,small"`（如「保留我的修改」）；次操作：`theme="small,ghost"`；纯文本：`theme="pure,small"`。
-- 覆盖类动作前给**安全提示**（一句话说明「选择后以谁为准」）。
-
-### 4.5 分段选择（滑块式多选一）—— 实例化组件 `segmented-switch`
-
-> 组件：`packages/shared/components/segmented-switch/segmented-switch.vue`（**唯一实现 · 单一来源**，T512 自日历「日/月/周」抽出；`T609` 迁至 `shared` 以便跨包复用，内容逐字未改）；测试：`apps/web/src/components/calendar/__tests__/segmented-switch.test.ts`（测试仍在 calendar 目录，`?raw`/挂载指向新路径）。
-
-**适用**：同一维度下 N 个互斥选项的切换（N ≥ 2，常见 2–3，选项短），需「当前项一眼可见」——如日历「月 / 周 / 日」视图切换、「周起始」。
-
-**不适用**：选项 ≥ 5 或需更多说明 ⇒ 用 `nue-dropdown` 下拉；布尔二态开关 ⇒ `nue-checkbox` / `nue-switch`。
-
-**用法**（纯展示件：状态 / 切换语义由调用方注入）：
-
-- `items`：`{ label, value, testId?, title? }[]`（N 段等分宽）；`modelValue`：当前选中值（未命中时滑块回 0），点击上抛 `update:modelValue`。
-- `ariaLabel`：组可访问名（走 i18n 键）；`fill?`：`true` 铺满容器 / `false` 宽度自适应（默认 `true`）；`size?`：`sm`（默认）/ `md`（点击区 40px）；`thumbTestId?`：滑块定位 id。
-- 选中迁移 / 幂等切换语义由调用方决定（例：日历视图切换走路由、周起始走 `setWeekStart`）。
-
-**视觉契约**（已锁定；改动须同步本条款与组件测试）：槽底 = 主文字色 **8%** 混合页面底色；指示器 = 页面底色浮起 + **16%** 内描边；选中 = 主文字色加粗；未选中 = 次要文字色；hover = 6% 混合；**180ms 平移 + `prefers-reduced-motion` 降级**。⛔ **只可用既有 `nue-*` token，禁引 `--cal-*`**（日历侧栏在 `.nue-calendar-host` 令牌组之外，T448 根因）。
-
-**a11y**：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器 `aria-hidden` 装饰性；键盘 Tab 可达 + focus 可见。
-
-**所有调用方（现为 4 个：日历视图切换 / 周起始 / 设置窄屏分类 / 看板分组（`v1.16.1` 起经 `KanbanGroupSwitch` 包装件调用，三处清单菜单共用；直接调用点总数仍为 4），`T609` 增 / `v1.16.1` 改）只允许三轴不同**：段数（N）· 宽度策略（`fill`）· **尺寸（`size`）**；其余视觉 / 交互逐项一致（防漂移）。
-
-**`size`（T521 增补，`v1.16.1` 加第三档）**：`sm`（默认，28px）/ `md`（段高 = `--nue-box-size-md` ≈ 40px，用于满足 §3「点击区 ≥40px」）/ **`inline`（段高 = `--nue-box-size-sm` 32px + 字号 `--nue-text-xs` 12px，用于嵌在下拉菜单等紧凑条纹内，与菜单条目同档；`v1.16.1` 看板分组切换首用；实测 `sm`/`md` 的字号同为 12px ⇒ `inline` 与它们的差异**仅段高**）**。`inline` 档的段高 32px 低于 §3 的 40px 页面级点击区底线，按「菜单内嵌控件跟随条目高度」**登记例外**（菜单项本身即 32px）。⛔ **只允许用于点击区达标**，不得承载配色 / 圆角 / 字体 / 动效等任何其它差异 —— 那类差异一律视为漂移，须回组件内统一定义。**调用方不得在自身 CSS 里覆盖分段件尺寸**（把差异写在调用处 = 漂移）。
-
-**复用红线**：新增同类「分段多选一」UX ⇒ **一律复用本组件**，不得另写分段样式或另起同类组件。
-
-### 4.6 侧栏变体能力对等（`rail` / 抽屉）
-
-> 结构约定（2026-10-22，用户裁定）：抽屉内**同步状态**为 content 区底部**吸底工具带**（`position: sticky; bottom: 0`，高 48px，左右 padding `--nue-gap-df`）；**设置齿轮在 `nue-footer`**，与导航图标同排。rail 侧仍为「同步状态注入点 + 齿轮」竖排，两者互不影响。
-
-> 出处：`T521`（PRD `docs/prds/2026-10-22-aside-drawer-sync-and-settings.md`）。
-
-**规则**：同一侧栏的多个响应式变体，**只允许摆放位置不同，不允许能力（功能入口）有无不同**。
-新增侧栏能力（同步状态 / 设置 / 导航等）须**同时**落在全部变体：共用同一份宿主注册表与单例状态
-（**任一时刻至多一个宿主 / 一个对话框实例**），不得在两个变体里各写一套状态机。
-
-### 4.7 冲突对比视图（Git diff 式左右对照）
-
-> 出处：`DEF-134`（用户 2026-11-03 走查原话「详情字段区别这一块很难认，能不能改成 Git diff 类型的左右对比视图」）。适用范围：**仅冲突详情**（`conflict-list.vue` 右栏差异区），不推广到其它界面。
-
-**布局（组件 = `nue-table`，用户 2026-11-03 指定）**
-
-- 差异区**一律用 `nue-table`**（`packages/components/table`）渲染，三列：`field`（字段）/ `mine`（我的修改）/ `theirs`（云端最新）；列宽 `field` 固定 `8rem`（≤720px 收窄 `6rem`），两个值列等宽。
-- 表头用列 `title`（或 `#header-*` 插槽）承载「我的修改 / 云端最新」等文案；**字段名与值必须同行同基线**（这正是改用表格的原因 —— 此前 grid 方案出现"字段名与值不在一条线"）。
-- **不加框**：不启用 `nue-table--border` / `--striped`；主题默认 `--nue-table-border-color: transparent` ⇒ 无外框、无列分隔线（符合「值纯文本」）；仅保留行间距。
-- 单元格内容：`#cell-field` = 三态符号 + 字段标签 + 状态文案；`#cell-mine` / `#cell-theirs` = 格式化后的值（纯文本，无底色/圆角）。
-- 技术字段（时间戳 / 版本令牌 / ID / 计数等）**并入同一张表**、排在业务字段之后（文字用次要色区分），**不再折叠**、不再另设「显示技术信息」开关。
-- 长值：单元格默认 `nowrap` + 省略号（`nue-table` 默认行为）+ 悬停 `title` 看全文；「展开」时该行允许换行（仅该单元格）。
-- 窄屏（≤720px）：**保持三列**（字段列收窄），不改为上下堆叠 —— 表格本身即为对齐方案，避免两套布局漂移；横向不足时长值省略而非横滚。
-- ⛔ 不启用表格排序 / 行点击 / 选中态（本处非数据管理表，仅作对齐容器）；⛔ 不得因此处引入「表头 + 行 + 网格」的管理台气质（无边框、无斑马纹、无选中高亮）。
-
-**三态（颜色 + 符号 + 文字三重冗余，去色后仍可辨）**
-
-- **值一律纯文本，不加边框 / 底色 / 圆角卡片**（用户 2026-11-03 明确要求「详情值纯文本显示，不要框」）。
-- 仅左有值（云端已无）⇒ `−` + 文案「云端已无」，值用 `error` **文字色**。
-- 仅右有值（云端新增）⇒ `+` + 文案「云端新增」，值用 `success` **文字色**。
-- 两侧都有但不同 ⇒ `~` + 文案「已修改」，两侧值用常规正文色（差异由符号 + 文案承载）。
-- 颜色只作**强化**，不得作为唯一判据；文字标签必须出现。对比度按 §5（文本 ≥4.5:1、图形/边框 ≥3:1）。
-- **「未设置」不得成对出现**：两侧都为空值（`null` / `undefined` / `''` / `[]`）时**不产生差异行**（空值哨兵归一后比较，`0` 与 `false` 不算空）。
-
-**左栏（冲突对象列表）**
-
-- 文本**一律左对齐**（`<button>` 浏览器默认居中，必须显式 `text-align: left`）；长文本单行省略 + `title` 提示；条目高 ≥ 40px。
-- 标题必须能**指认对象**：优先取**当前行**的 `name`/`title`（不是败方快照 —— 快照只存差异字段，可能没有名称）；`taskComments` / `taskCheckItems` ⇒ 「父任务名 · 摘要」；仍取不到 ⇒ 表名 + 短 ID（≤8 位）。⛔ **不得只显示裸记录 ID**。
-
-### 4.8 同步状态面板（侧栏下拉）
-
-> 出处：用户 2026-11-04「美化一下同步状态的下拉列表」。定位：**C 端状态面板**，不是设置表。
-
-- **不要「设置表」气质**：分区之间用**留白**（≥ `--nue-gap-sm`）分隔，**不用 1px 分隔线**；分区标题 = `--nue-text-xs` + 次要色，与内容间距 `--nue-gap-2xs`。
-- **首行 = 主信息**：上次同步时间用**正文色**（不是次要色小字）；「立即同步」右对齐，文字按钮 + 图标，进行中显示 loading。
-- **正常态不铺空分区**：无待推送 / 无失败 / 无冲突 / 无错误时，只显示「时间 + 立即同步 + 一句『数据已是最新』」，不渲染空标题与空 chips。
-- **计数用胶囊**：淡底 + 语义**文字色** + 1px 语义边框（文本 ≥4.5:1、边框 ≥3:1）；待推送/失败/偏好失败各自语义色；冲突入口为**可点行**（带计数），点击区 ≥40px。
-- **可点行 hover 只用背景弱变化**（`--nue-primary-color-100`；主题**无 `-50` 档**，如将来补上可用 `var(--nue-primary-color-50, var(--nue-primary-color-100))` 自动切换），不加边框/阴影；不可点区域 hover 无变化。
-- **长内容**：错误摘要 2 行截断 + `title` 全文；面板整体 `max-height: 60vh` + 内部滚动，不撑破视口。
-- **窄屏（≤445px 抽屉）**：宽度仍 15rem，字号不缩小；分区间距不变。
-- ⛔ 不改任何同步语义（计数、状态判定、按钮动作）；⛔ 不新增 token / 组件。
-
-### 4.9 元素设计方式：以组件库主题为准
-
-> 出处：`T750` / Issue #360（AC11「元素形态与现有组件库主题一致，且 `DESIGN.md` 有对应口径可查」）。
-> 本节只回答「取值从哪来」，不在本节做数值裁决（数值仍看 §2 / §3）。
-
-- **原则**：新元素先「找现成的」，再考虑画。本项目视觉的唯一上游是组件库及其主题 —— `nue-ui@1.15.3` + `nue-ui-theme-shadlike@0.13.30`（`node_modules` 内可直接读 `dist/components/*.css` 与 `dist/global/variables.css`）。
-- **取用顺序（必须按序，越靠前越优先）**：① **主题 token**（`--nue-*`；组件自有变量如 `--nue-button-*` / `--nue-link-*` / `--nue-input-*` 优先于全局色阶）→ ② **组件原生档位**（尺寸 / 主题变体：`nue-button` 默认 36、`small` 28、`large` 40；`nue-input` 36；`nue-link--route` 40 + 深底激活 + `-200` hover；`nue-switch small`）→ ③ **本仓主题覆盖**（`apps/web/src/themes/*.css`，如 `link.css` 的 route 变体、`div.css` 的 `form-item`、`container.css` 的 `--in-dialog`）→ ④ **本仓类**（`sd-*` 等业务类，只做组合与布局，不得重新定义颜色 / 字号 / 圆角 / 尺寸）→ ⑤ **确需新 token / 新档位 ⇒ 先报 PM**（⛔ 不得在组件 CSS 里就地造）。
-- **正例·按钮**：`nue-button theme="primary|secondary|ghost,small"` —— 尺寸 / 圆角 / 边框 / hover 全由主题给；调用方 ⛔ 不写 `height` / `padding` / `font-size` / `border-radius`（#358 v4 撤回 30px 特例即按此口径）。
-- **正例·输入与表单**：`nue-input`（36px、内距 `--nue-gap-sm`、边框 `--nue-divider-color`）+ `nue-div theme="form-item"`（label 14px / `-600` / gap 8）—— 表单字段间距由组件定义，页面 ⛔ 不另加壳。
-- **正例·导航链接**：左栏 / 侧栏的选中项取 `nue-link--route` 的四态值（底透明 → hover `-200` → 激活 `-900` 底 + `-0` 字 + 600 → focus 环 `-600` + offset 2），⛔ 不用左侧竖线 / 自造指示条。
-- **反例（现存待收敛项，不随本节批量改）**：`.sd-quiet-hours__field input`（自绘 time 输入，40px + 自填边框）、`.sd-row__action`（自绘按钮，替代 `nue-button`）等**自绘控件**。设置域的间距字面值（旧 `.sd-cat` 的 `2.75rem` / `.sd-row__text` 的 `2px`）已随 #360 收敛为 token，不再属于本节反例。
-- **一句话检验**：新块写完后扫一遍自己的 CSS —— 若出现 `height` / `padding` / `font-size` / `border-radius` / `background-color` 的**新字面值**（非 `--nue-*`、非组件既有档位），即视为漂移，须回上一步取件。
-
----
-
-## 5. 可访问性基线
-
-- 对比度：文本 **≥4.5:1**；图形 / 边框（承载语义者）**≥3:1**。
-- **三重冗余**：状态不得仅靠颜色（颜色 + 符号 + 文字标签）。
-- 键盘可达：可点元素需可 Tab 聚焦、focus 可见；对话框 Esc 关闭、焦点闭环与归还。
-- 语义：对话框 `role="dialog"` / `aria-modal`；列表项 `aria-selected`。
-- 长内容：可截断 + 可展开（`--nue-text-*` + `text-overflow`）。
-
----
-
-## 6. i18n 约定
-
-- 文案位于 `packages/shared/locales/{types,zh-CN,en-US}.ts`，**三处齐备**（`LocaleKey` 联合类型 + 中英各一）。
-- 键命名：`模块.区域.语义`（如 `sync.conflict.metaTable`）；字段标签 `sync.conflict.field.<name>`。
-- **死键守护**：`apps/web/src/components/sync/__tests__/conflict-ux.test.ts` 静态扫描组件源码（`.vue` + 同目录 `.ts`）校验「组件引用的键均已定义」且「零死键」。
-- **字段名 → 可读标签**：新增字段在 `packages/shared/utils/conflict-field-labels.ts` 的 `FIELD_LABEL_KEYS` 增一行 + 上述三处加键；未映射字段走 `humanizeField` 可读回退（⛔ 不裸露 raw `/camelCase`）。
-
----
-
-## 7. 危险 / 覆盖类动作
-
-- 覆盖数据的选择必须显式（如「我的修改 / 云端最新」），不得默认静默覆盖。
-- 主按钮 = 更保全用户成果的一侧；次按钮 = 另一方；给一句话后果说明。
-- 破坏性动作（删除 / 永久覆盖）应加二次确认或醒目样式。
-
----
-
-## 8. 「新增页面 / 组件」检查清单
+## 6. 「新增页面 / 组件」检查清单
 
 - [ ] 面向用户文案**说人话**（无内部术语 / 技术键名）
 - [ ] 布局用**卡片 / 留白 / 圆角**，非「表头 + 行 + 网格」
-- [ ] 内容区域的 loading / error / empty **全部用 `LoadingError`**（文案走 i18n、错误态有恢复动作）
-- [ ] 对比度：文本 ≥4.5:1、图形 ≥3:1（用 `-80` 图形 / `-90`–`-100` 文本，避开 `-60` success；提示 Message 见 §2「提示语义色配对」）
+- [ ] 内容区域 loading / error / empty **全用 `LoadingError`**（文案 i18n、错误态有恢复动作）
+- [ ] 元素形态取自**组件库主题**（§1.4 取用阶梯），未自造尺寸 / 配色 / 圆角
+- [ ] `pnpm run guard:contrast` **exit 0**（文本 ≥4.5、图形 / 边框 ≥3）
 - [ ] 状态**三重冗余**（颜色 + 符号 + 文字标签）
-- [ ] 可点区 ≥40px；键盘可达 + focus 可见；对话框 Esc / 焦点归还 / `role=dialog`
+- [ ] 可点区 ≥40px 或已在 §3 登记；键盘可达 + focus 可见；对话框 Esc / 焦点归还 / `role="dialog"`
 - [ ] 主 / 次按钮分明；覆盖类动作有安全提示
 - [ ] 新增 i18n 键三处齐备；字段标签走映射（未映射有可读回退）
-- [ ] ⛔ 未新增色板 / 组件体系（如需新增 ⇒ 先报 PM）
-- [ ] 元素形态取自组件库主题（§4.9 取用顺序），未自造尺寸 / 配色 / 圆角
-- [ ] 分段多选一 UX ⇒ **复用 `segmented-switch`**（§4.5 单一来源），不另写分段样式
-- [ ] 视口 / 安全区：不以裸静态视口单位作高度基、不用含滚动条宽度的视口单位作宽度基；安全区改动只落 `themes/safe-area.css`（见 §9）
-- [ ] 移动端红线：`packages/presentation-react` / `apps/mobile` 不随桌面 / Web 需求改动
-
----
-
-## 9. 安全区与视口基线（Web / 手机浏览器）
-
-> 出处：`DEF-79` / `T519`（PRD `docs/prds/2026-10-22-web-mobile-safe-area.md`）。
-> 适用：`apps/web` 与 `apps/desktop` 共用的主题（`apps/web/src/themes`，桌面端 `@` 别名指向同一目录）。
-
-- **前提**：`apps/web/index.html` 的 viewport meta 必须含 `viewport-fit=cover` —— 否则 iOS Safari 下 `env(safe-area-inset-*)` 恒为 `0`，任何纯 CSS 安全区方案空转。
-- **单一视口基**：`html`（`.nue-html`）用动态视口 `100dvh`；`body` / `#app` 一律 `100%`（相对父级）。**不得**出现「父用静态视口、子用动态视口」的混基，也不得写裸静态视口高度或含滚动条宽度的视口单位（源级守卫：`apps/web/src/themes/__tests__/safe-area.test.ts`）。
-- **降级取向（可用性优先于观感）**：引擎不支持 `100dvh` 时该声明被丢弃，落到主题 reset 的静态视口，并由 `@supports not (height: 100dvh)` 把 `html` 恢复为可滚动 ⇒ 保证「末行可滚到底」，不回到「被裁且不可滚」。
-- **安全区内缩**：四向 `env(safe-area-inset-*, 0px)` **集中**在 `apps/web/src/themes/safe-area.css`，不得散落到组件 `<style>`：
-    - 外壳（`body`）四向 padding ⇒ 列表末行 / 空态 / 错误态不落刘海与手势条；
-    - 覆盖层（`.nue-overlay`，经 Teleport 挂到 fixed 的 popup pool，**不继承** `body` padding）自身贴合可视视口并在内部四向内缩；窄屏（≤400px）贴底抽屉的底部留白取 `max(var(--nue-padding-df), env(safe-area-inset-bottom, 0px))`。
-- **桌面 / Electron 零变化**：`env()` 恒为 `0`、动态视口高度等于静态视口高度、popup pool 位于 `(0, 0)` 且页面不滚动 ⇒ 上述声明全部解析为改动前的数值（验收硬闸门，见 PRD AC4）。
-- **加载态**：高度相对父级（`height="100%"`），不以视口高度为基线。
-- **已知边界**：iOS Safari 15.0–15.3 支持安全区但无动态视口 ⇒ 列表靠「静态视口 + 页面滚动」保证可滚到底；覆盖层不再依赖视口单位（`position: fixed` + `inset: 0`），安全区仍由 `env()` 内缩 —— 极端旧引擎的定位精度以真机为准，但不比改动前更差。
-
----
-
-## 参考
-
-- 冲突面板实现：`apps/web/src/components/sync/{conflict-dialog,conflict-list}.vue` · `conflict-diff.ts` · 字段标签 `packages/shared/utils/conflict-field-labels.ts`
-- 状态占位组件：`packages/shared/components/loading-error/loading-error.vue`
-- 主题 token：`nue-ui-theme-shadlike`（`--nue-*`，light：`--nue-dark-switch:0`）
-- 走查证据：`docs/qa/2026-09-28-t337-conflict-visual-seed.md`
+- [ ] 未破 §4 两条红线（裸静态视口单位 / 含滚动条宽度单位）；移动端红线（`packages/presentation-react` / `apps/mobile`）未动
