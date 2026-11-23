@@ -1158,6 +1158,42 @@ export interface LocaleMessages {
     'history.group.today': string
     'history.group.yesterday': string
     'history.group.earlier': string
+
+    // Command palette / shortcuts help（T766 / Issue #371）
+    'commands.palette.title': string
+    'commands.palette.placeholder': string
+    'commands.palette.empty': string
+    'commands.palette.list': string
+    'commands.palette.hint': string
+    'commands.help.title': string
+    'commands.help.intro': string
+    'commands.help.empty': string
+    'commands.key.wheel': string
+    'commands.group.system': string
+    'commands.group.navigation': string
+    'commands.group.tasks': string
+    'commands.group.calendar': string
+    'commands.group.other': string
+    'commands.command.openPalette': string
+    'commands.command.openPalette.description': string
+    'commands.command.showShortcuts': string
+    'commands.command.showShortcuts.description': string
+    'commands.command.openSettings': string
+    'commands.command.openSettings.description': string
+    'commands.command.createTask': string
+    'commands.command.createTask.description': string
+    'commands.command.createProject': string
+    'commands.command.createProject.description': string
+    'commands.command.calendarPrev': string
+    'commands.command.calendarNext': string
+    'commands.command.calendarToday': string
+    'commands.command.calendarWeek': string
+    'commands.command.calendarMonth': string
+    'commands.command.calendarQuickCreate': string
+    'commands.command.calendarOpenDay': string
+    'commands.command.dayZoomIn': string
+    'commands.command.dayZoomOut': string
+    'commands.command.dayZoomReset': string
 }
 
 export type LocaleKey = keyof LocaleMessages

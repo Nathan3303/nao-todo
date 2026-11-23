@@ -86,7 +86,7 @@ export class CommandRegistry {
         return this.getAll().filter((cmd) => {
             return (
                 cmd.id.toLowerCase().includes(normalized) ||
-                cmd.label.toLowerCase().includes(normalized) ||
+                (cmd.label != null && cmd.label.toLowerCase().includes(normalized)) ||
                 (cmd.description != null && cmd.description.toLowerCase().includes(normalized))
             )
         })

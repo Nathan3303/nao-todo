@@ -110,11 +110,23 @@ const useIndexView = () => {
     // 其余 tab 仍经作用域栈回退执行同一全局动作（C-F8-08 n 遮蔽语义前提）
     useShortcut('task.create', 'n', () => appDialogManager.open(TASK_CREATOR_DIALOG_KEY), {
         scope: 'index-view',
+        i18n: {
+            label: 'commands.command.createTask',
+            description: 'commands.command.createTask.description',
+            group: 'commands.group.tasks'
+        },
+        icon: 'plus',
         // SHELL-01：设置对话框等 Nue 弹层开启期间抑制裸键，避免在对话框上层误开创建器
         available: () => !isSettingsDialogOpen(document)
     })
     useShortcut('project.create', 'p', () => appDialogManager.open(PROJECT_CREATOR_DIALOG_KEY), {
         scope: 'index-view',
+        i18n: {
+            label: 'commands.command.createProject',
+            description: 'commands.command.createProject.description',
+            group: 'commands.group.tasks'
+        },
+        icon: 'projects',
         available: () => !isSettingsDialogOpen(document)
     })
 

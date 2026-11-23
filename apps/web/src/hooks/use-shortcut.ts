@@ -1,15 +1,19 @@
 import { registry } from '@/commands/instance'
-import type { Command, KeyEvent } from '@nao-todo/shared'
+import type { Command, KeyEvent } from '@nao-todo/shared/commands'
 import { onMounted, onUnmounted } from 'vue'
 
 /**
  * 视图级快捷键注册选项
  */
 export interface UseShortcutOptions {
-    /** 用户可见的名称，用于命令面板 */
-    label?: string
-    /** 命令分组 */
-    group?: string
+    /** 展示文案的 i18n 键（命令面板 / 快捷键帮助用；缺省回落 `label` / id） */
+    i18n?: Command['i18n']
+    /** 图标标识（命令面板用） */
+    icon?: string
+    /** 非键盘手势提示（如 `$mod+wheel`，仅供帮助面板展示） */
+    gesture?: string
+    /** 不在命令面板中列出 */
+    hidden?: boolean
     /** 绑定的作用域（默认使用当前最顶层作用域） */
     scope?: string
     /** 是否阻止浏览器默认行为 */
@@ -36,7 +40,7 @@ export interface UseShortcutOptions {
  * // 设置页中
  * useShortcut('settings.save', '$mod+s', () => save(), {
  *     preventDefault: true,
- *     group: '设置'
+ *     i18n: { label: 'commands.command.openSettings' }
  * })
  */
 export const useShortcut = (
@@ -48,14 +52,16 @@ export const useShortcut = (
     onMounted(() => {
         const command: Command = {
             id,
-            label: options?.label ?? id,
+            i18n: options?.i18n,
+            icon: options?.icon,
+            gesture: options?.gesture,
+            hidden: options?.hidden,
             handler,
             keyboard: {
                 keys,
                 scope: options?.scope,
                 preventDefault: options?.preventDefault
             },
-            group: options?.group,
             available: options?.available
         }
         registry.register(command)

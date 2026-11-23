@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, h, ref } from 'vue'
 import dayjs from 'dayjs'
 import { registry } from '@/commands/instance'
+import { commandLabelOf } from '@/components/command-palette/command-display'
 import { useKeyboardShortcuts } from '@/hooks'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
@@ -187,8 +188,9 @@ describe('T61 日视图 ←/→ 步长（回归守卫，预期红）', () => {
 
     it('标签：nav.prev 含「前一天」、nav.next 含「后一天」', async () => {
         await mountMonthly()
-        expect(registry.get('calendar.nav.prev')?.label).toContain('前一天')
-        expect(registry.get('calendar.nav.next')?.label).toContain('后一天')
+        // T766：标签改走 i18n 键（`i18n.label`）⇒ 经展示解析函数读取，口径与命令面板/帮助一致
+        expect(commandLabelOf(registry.get('calendar.nav.prev')!)).toContain('前一天')
+        expect(commandLabelOf(registry.get('calendar.nav.next')!)).toContain('后一天')
     })
 })
 

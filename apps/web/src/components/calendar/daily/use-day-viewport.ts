@@ -159,10 +159,22 @@ export const useDayViewport = ({ model, dayZoom, setDayZoom }: DayViewportDeps) 
     const zoomOut = (): void => applyZoom(prevDayZoom(dayZoom.value))
     const zoomReset = (): void => applyZoom(DAY_ZOOM_DEFAULT)
     // 入口②：快捷键（keys 字面量已定死；scope=CALENDAR_KEY_SCOPE，随日视图卸载注销）
-    useShortcut('calendar.dayzoom.in', '$mod+=', () => zoomIn(), { scope: CALENDAR_KEY_SCOPE })
-    useShortcut('calendar.dayzoom.out', '$mod+-', () => zoomOut(), { scope: CALENDAR_KEY_SCOPE })
+    // `gesture` 仅供命令面板 / 快捷键帮助展示（入口③ 的 Ctrl/⌘ + 滚轮不是 keydown ⇒ 不参与按键匹配）
+    useShortcut('calendar.dayzoom.in', '$mod+=', () => zoomIn(), {
+        scope: CALENDAR_KEY_SCOPE,
+        i18n: { label: 'commands.command.dayZoomIn', group: 'commands.group.calendar' },
+        icon: 'plus',
+        gesture: '$mod+wheel'
+    })
+    useShortcut('calendar.dayzoom.out', '$mod+-', () => zoomOut(), {
+        scope: CALENDAR_KEY_SCOPE,
+        i18n: { label: 'commands.command.dayZoomOut', group: 'commands.group.calendar' },
+        icon: 'arrow-down'
+    })
     useShortcut('calendar.dayzoom.reset', '$mod+0', () => zoomReset(), {
-        scope: CALENDAR_KEY_SCOPE
+        scope: CALENDAR_KEY_SCOPE,
+        i18n: { label: 'commands.command.dayZoomReset', group: 'commands.group.calendar' },
+        icon: 'refresh'
     })
     // 入口③：Ctrl/⌘ + 滚轮（deltaY < 0 放大、> 0 缩小、=== 0 忽略；preventDefault 由 .prevent 承担）
     const onWheel = (event: WheelEvent): void => {
