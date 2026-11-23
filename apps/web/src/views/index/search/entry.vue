@@ -43,14 +43,27 @@ const {
     enumerating,
     enumFailures,
     enumRatePaused,
+    enumBudgetPaused,
     rows,
     resultCount,
+    hasMore,
+    reachedDisplayCap,
+    showMore,
     filterProjectIds,
     filterTagIds,
     filterPriorities,
     filterStates,
     includeArchived,
     filtersActive,
+    sort,
+    dueFrom,
+    dueTo,
+    includeNoDue,
+    selectSortField,
+    selectSortOrder,
+    setDueFrom,
+    setDueTo,
+    clearDueRange,
     toggleProjectFilter,
     toggleTagFilter,
     togglePriorityFilter,
@@ -312,11 +325,21 @@ watch(
                             :active="filtersActive"
                             :include-archived="includeArchived"
                             :can-save="canSaveSearch"
+                            :sort="sort"
+                            :due-from="dueFrom"
+                            :due-to="dueTo"
+                            :include-no-due="includeNoDue"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
                             @toggle-archived="includeArchived = $event"
+                            @select-sort-field="selectSortField"
+                            @select-sort-order="selectSortOrder"
+                            @update:due-from="setDueFrom"
+                            @update:due-to="setDueTo"
+                            @update:include-no-due="includeNoDue = $event"
+                            @clear-due="clearDueRange"
                             @clear="onClearFilters"
                             @save="onSaveSearch"
                         />
@@ -351,6 +374,14 @@ watch(
                                 class="srch-tip srch-tip--warn"
                             >
                                 {{ t('search.enumFailures', { count: enumFailures }) }}
+                            </nue-text>
+                            <!-- T770：补拉超单轮时间预算（结果较多）⇒ 暂停提示，改关键词后继续 -->
+                            <nue-text
+                                v-if="enumBudgetPaused && !enumerating"
+                                size="var(--nue-text-sm)"
+                                class="srch-tip"
+                            >
+                                {{ t('search.enumBudgetPaused') }}
                             </nue-text>
                             <nue-text
                                 v-if="capped"
@@ -544,6 +575,19 @@ watch(
                                         />
                                     </nue-div>
                                 </nue-div>
+                                <!-- T770：按窗口展示（默认前 50 条）⇒「显示更多」+50；到展示上限改为提示 -->
+                                <nue-div v-if="hasMore" class="search-more" align="center">
+                                    <nue-button theme="small" @click="showMore">
+                                        {{ t('search.showMore') }}
+                                    </nue-button>
+                                </nue-div>
+                                <nue-text
+                                    v-else-if="reachedDisplayCap"
+                                    size="var(--nue-text-sm)"
+                                    class="srch-tip search-more__cap"
+                                >
+                                    {{ t('search.tooManyResults') }}
+                                </nue-text>
                             </nue-div>
                         </loading-error>
                     </nue-div>
@@ -761,5 +805,16 @@ watch(
 }
 .search-row--done .search-row__dot {
     display: none;
+}
+
+/* —— T770 展示窗口底部（「显示更多」/ 到顶提示；居中、与列表同宽） —— */
+.search-more {
+    width: 100%;
+    padding: var(--nue-padding-sm) 0;
+    justify-content: center;
+}
+.search-more__cap {
+    width: 100%;
+    text-align: center;
 }
 </style>

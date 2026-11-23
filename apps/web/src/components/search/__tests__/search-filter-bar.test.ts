@@ -100,10 +100,13 @@ afterEach(() => {
 })
 
 describe('T505 ① 已移除 excluded 开关', () => {
-    it('筛选栏不再渲染 excluded 开关（仅剩归档一个开关）', () => {
+    it('筛选栏不再渲染 excluded 开关（开关仅剩归档 + T770 无截止日两处）', () => {
         mountBar()
         expect(wrapper!.findAll('.search-filter-bar__excluded')).toHaveLength(0)
-        expect(wrapper!.findAll('.nue-switch')).toHaveLength(1)
+        // T505 原口径「全页仅一个开关」在 T770 新截止日面板（含「包含无截止日」）后放不下，
+        // 改为锁「归档行内仅一个开关 + 全页恰好两个（无第三个）」——排他强度不变
+        expect(wrapper!.findAll('.search-filter-bar__archived .nue-switch')).toHaveLength(1)
+        expect(wrapper!.findAll('.nue-switch')).toHaveLength(2)
         expect(wrapper!.find('.search-filter-bar__archived').exists()).toBe(true)
     })
 })
@@ -167,8 +170,9 @@ describe('T505 ④ 触发器显示已选名称', () => {
         expect(triggerText(TRIGGER.tag)).toBe('标签')
         expect(triggerText(TRIGGER.priority)).toBe('优先级')
         expect(triggerText(TRIGGER.state)).toBe('状态')
-        for (const trigger of wrapper!.findAll('.filter-trigger')) {
-            expect(trigger.text()).not.toContain('：')
+        // 锁仅针对四维触发器（T770 起同一行还有排序触发器，其摘要天然含「：」）
+        for (const index of Object.values(TRIGGER)) {
+            expect(wrapper!.findAll('.filter-trigger')[index]!.text()).not.toContain('：')
         }
     })
 

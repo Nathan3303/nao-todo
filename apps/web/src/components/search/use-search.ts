@@ -19,16 +19,26 @@ import {
     retryDelayFor,
     RATE_MAX_ATTEMPTS,
     RATE_PAUSE_THRESHOLD,
-    searchTasks
+    searchTasksPage
 } from './search-tasks'
+import {
+    DEFAULT_SEARCH_SORT,
+    defaultOrderOf,
+    isDueRangeActive,
+    searchSortEquals,
+    type SearchSort
+} from './search-sort'
 
 /**
- * 搜索数据管线组合式（SEA-01）
+ * 搜索数据管线组合式（SEA-01 / T770）
  * @description DI 组装入口：任务用例本地组装（不来自视图上下文）。
- *              - 顶层全量懒加载（分页游标 ≤5000，含默认容器/已完成；不含 deleted/archived/given-up）；
+ *              - 顶层扫描：**单次大页**（≤ MAX_SCAN 条 + 1 次触顶探测）—— 本地仓储每次 `list`
+ *                都要整表读取并解密，多页小页会把 5 万条数据变成 50× 的重复成本（实测 35.8s）；
  *              - 会话缓存（模块级单例）：激活刷新后台换新（有旧数据期间不闪屏）；
- *              - 键入(200ms 去抖)时按父任务分块并发(4)补拉子任务归并缓存（方案 A 裁定）；
- *              - 未就绪期间输入的关键词在数据就绪后自动重放（结果 computed 依赖数据源自动重算）。
+ *              - 键入(200ms 去抖)时按父任务分块并发(4)补拉子任务归并缓存（方案 A 裁定；
+ *                T770 加**时间预算**：单轮超预算即暂停，下次关键词继续，避免大库下无界补拉）；
+ *              - 结果：默认展示前 50 条（总数恒为全量命中数），「显示更多」每次 +50，
+ *                上限 MAX_DISPLAY_ROWS（5000）后停止并提示缩小条件。
  */
 
 // 会话级缓存（模块级单例，跨路由切换保留；浅响应以驱动 computed 重算）
@@ -48,9 +58,18 @@ const bumpRevision = () => {
 }
 
 const PAGE_LIMIT = 100
-/** 顶层全量上限（提示条口径：仅搜索前 5000 条） */
-const MAX_ROWS = 5000
-const MAX_ROOT_PAGES = Math.ceil(MAX_ROWS / PAGE_LIMIT)
+/**
+ * 顶层扫描上限（T770：单次大页；命中总数按本集合统计）
+ * @description ⚠️ 只在搜索上下文使用（`buildRootQuery` 的搜索专用构造），不作为全局默认值。
+ *              实测 5 万条：单次 `list` ≈ 0.77s（整表读取 + 解密），多页小页会成倍重复该成本。
+ */
+export const MAX_SCAN = 50_000
+/** 展示上限（「显示更多」到顶即停并提示缩小条件） */
+export const MAX_DISPLAY_ROWS = 5000
+/** 每次「显示更多」的步长 */
+export const DISPLAY_STEP = 50
+/** 子任务搜索启用时单轮补拉时间预算（超预算即暂停，下次关键词继续） */
+export const ENUMERATE_TIME_BUDGET_MS = 10_000
 /** 单父任务子任务枚举页数上限（防御；单层 UI 常态远小于此） */
 const MAX_CHILD_PAGES = 10
 /** 子任务补拉并发数（方案 A） */
@@ -71,13 +90,14 @@ const ROOT_STATUS_VARIANT: RootStatusVariant = { isDeleted: false, isGivenUp: fa
 export const buildRootQuery = (
     page: number,
     variant: RootStatusVariant,
-    includeArchived: boolean
+    includeArchived: boolean,
+    limit: number = PAGE_LIMIT
 ): GetTasksOptions => ({
     isDeleted: variant.isDeleted,
     ...(includeArchived ? { includeArchived: true } : { isArchived: false }),
     isGivenUp: variant.isGivenUp,
     sort: { field: 'id', order: 'asc' },
-    limit: PAGE_LIMIT,
+    limit,
     page
 })
 
@@ -115,10 +135,12 @@ const useSearchEngine = () => {
     const firstLoading = ref<boolean>(!sessionCache.value) // 首拉门（无缓存时整页加载）
     const refreshing = ref<boolean>(false) // 后台刷新（有缓存不闪屏）
     const error = ref('') // 拉取错误（重试出口）
-    const capped = ref(false) // 顶层已达 5000 上限
+    const capped = ref(false) // 顶层扫描已达 MAX_SCAN 上限（提示条：仅搜索前 5 万条）
     const enumerating = ref(false) // 子任务补拉中（顶部轻提示）
     const enumFailures = ref(0) // 本次补拉失败的父任务数（>0 时轻提示）
     const enumRatePaused = ref(false) // 枚举连续限流暂停（提示「限流，稍后自动重试」）
+    const enumBudgetPaused = ref(false) // 枚举超单轮时间预算暂停（提示「改动关键词后继续」）
+    const visibleLimit = ref(DISPLAY_STEP) // T770：展示窗口（默认前 50，每次 +50，上限 5000）
 
     // @states 结构化筛选（SEA-03：空数组=不过滤；收件箱=projectId ''；初值来自 URL）
     const filterProjectIds = ref<string[]>([...initialState.projectIds]) // 清单（含收件箱哨兵 ''）
@@ -126,6 +148,11 @@ const useSearchEngine = () => {
     const filterPriorities = ref<string[]>([...initialState.priorities]) // 优先级 high/medium/low
     const filterStates = ref<string[]>([...initialState.states]) // 状态 todo/in-progress/done
     const includeArchived = ref<boolean>(initialState.includeArchived) // P2：包含已归档（开 ⇒ 顶层/子任务均不过滤归档）
+    // @states T770：排序 / 截止日区间 / 含无截止日（初值来自 URL，缺省走默认）
+    const sort = ref<SearchSort>(initialState.sort ?? DEFAULT_SEARCH_SORT)
+    const dueFrom = ref(initialState.dueFrom ?? '')
+    const dueTo = ref(initialState.dueTo ?? '')
+    const includeNoDue = ref(initialState.includeNoDue === true)
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined
     let reloadQueued = false
@@ -148,8 +175,8 @@ const useSearchEngine = () => {
             // Fix B：收集箱真实数据 `'inbox'` 归一为内部哨兵 `''`（不改 URL / 内建清单查询）
             .map((task) => (task.projectId === 'inbox' ? { ...task, projectId: '' } : task))
     )
-    // @results 四维筛选（即时重算）→ 关键词 200ms 去抖 → 纯函数排序/高亮（未就绪输入就绪后自动重放）
-    const rows = computed(() => {
+    // @results 四维筛选（即时重算）→ 关键词 200ms 去抖 → 纯函数「计数 + 排序 + 展示窗口」
+    const page = computed(() => {
         const base = flatTasks.value.filter((task) =>
             matchTaskFilters(task, {
                 projectIds: filterProjectIds.value,
@@ -158,17 +185,30 @@ const useSearchEngine = () => {
                 states: filterStates.value
             })
         )
-        return searchTasks(base, debouncedKeyword.value, {
-            includeArchived: includeArchived.value
+        return searchTasksPage(base, debouncedKeyword.value, {
+            includeArchived: includeArchived.value,
+            sort: sort.value,
+            dueRange: { from: dueFrom.value, to: dueTo.value },
+            includeNoDue: includeNoDue.value,
+            limit: Math.min(visibleLimit.value, MAX_DISPLAY_ROWS)
         })
     })
-    const resultCount = computed(() => rows.value.length)
+    const rows = computed(() => page.value.rows)
+    /** 全量命中数（不受展示窗口影响） */
+    const resultCount = computed(() => page.value.total)
+    /** 还能继续展开（未到 5000 展示上限且仍有更多命中） */
+    const hasMore = computed(() => page.value.truncated && visibleLimit.value < MAX_DISPLAY_ROWS)
+    /** 已展开到展示上限（到顶提示：结果过多，请缩小条件） */
+    const reachedDisplayCap = computed(
+        () => page.value.total > MAX_DISPLAY_ROWS && visibleLimit.value >= MAX_DISPLAY_ROWS
+    )
     const filtersActive = computed(
         () =>
             filterProjectIds.value.length > 0 ||
             filterTagIds.value.length > 0 ||
             filterPriorities.value.length > 0 ||
-            filterStates.value.length > 0
+            filterStates.value.length > 0 ||
+            isDueRangeActive({ from: dueFrom.value, to: dueTo.value })
     )
     const rootCount = computed(() => sessionCache.value?.rootIds.size ?? 0)
     const ready = computed(() => !!sessionCache.value)
@@ -205,12 +245,43 @@ const useSearchEngine = () => {
     const togglePriorityFilter = (id: string) => toggleIn(filterPriorities, id)
     const toggleStateFilter = (id: string) => toggleIn(filterStates, id)
 
-    // @method 一键清空全部筛选（恢复默认：不限，含已完成）
+    // @method 一键清空全部筛选（恢复默认：不限，含已完成；T770 含截止日区间）
     const clearFilters = () => {
         filterProjectIds.value = []
         filterTagIds.value = []
         filterPriorities.value = []
         filterStates.value = []
+        dueFrom.value = ''
+        dueTo.value = ''
+        includeNoDue.value = false
+    }
+
+    // @method T770 排序：选字段（方向回该字段默认；相关性无方向）/ 选方向（相关性忽略）
+    const selectSortField = (field: SearchSort['field']) => {
+        sort.value = { field, order: defaultOrderOf(field) }
+    }
+    const selectSortOrder = (order: SearchSort['order']) => {
+        if (sort.value.field === 'relevance') return
+        sort.value = { field: sort.value.field, order }
+    }
+
+    // @method T770 截止日区间（起/止单边可为空）+ 包含无截止日
+    const setDueFrom = (value: string) => {
+        dueFrom.value = value
+    }
+    const setDueTo = (value: string) => {
+        dueTo.value = value
+    }
+    const clearDueRange = () => {
+        dueFrom.value = ''
+        dueTo.value = ''
+        includeNoDue.value = false
+    }
+
+    // @method 显示更多（+50，不超过展示上限）
+    const showMore = () => {
+        if (!hasMore.value) return
+        visibleLimit.value = Math.min(visibleLimit.value + DISPLAY_STEP, MAX_DISPLAY_ROWS)
     }
 
     /**
@@ -236,31 +307,19 @@ const useSearchEngine = () => {
         variant: RootStatusVariant,
         includeArchived: boolean
     ): Promise<void> => {
-        let exhausted = false
-        for (let page = 1; page <= MAX_ROOT_PAGES; page++) {
-            const res = await callList(buildRootQuery(page, variant, includeArchived))
-            res.taskIds.forEach((id) => target.add(id))
-            if (res.taskIds.length < PAGE_LIMIT) {
-                exhausted = true
-                break
-            }
-            const maxPage = res.pagination?.maxPage ?? page
-            if (page >= maxPage) {
-                exhausted = true
-                break
-            }
-            if (target.size >= MAX_ROWS) break
-        }
-        if (!exhausted && target.size >= MAX_ROWS) {
-            // 触顶探测：再取 1 条判断是否仍有数据（精确「仅搜索前 5000 条」提示）；探测失败不阻塞已拉取结果
-            try {
-                const [probeRes, probeErr] = await taskUseCase.list(
-                    buildRootQuery(MAX_ROOT_PAGES + 1, variant, includeArchived)
-                )
-                if (probeErr === null && probeRes.taskIds.length > 0) capped.value = true
-            } catch {
-                /* 忽略探测错误：5000 条快照已可用 */
-            }
+        // T770：单次大页（本地仓储每次 list 都整表读取+解密 ⇒ 多页小页是重复成本，见模块头注）
+        const res = await callList(buildRootQuery(1, variant, includeArchived, MAX_SCAN))
+        res.taskIds.forEach((id) => target.add(id))
+        const exhausted = res.taskIds.length < MAX_SCAN
+        if (exhausted) return
+        // 触顶探测：再取 1 条判断是否仍有数据（精确「仅搜索前 5 万条」提示）；探测失败不阻塞已拉取结果
+        try {
+            const [probeRes, probeErr] = await taskUseCase.list(
+                buildRootQuery(2, variant, includeArchived, 1)
+            )
+            if (probeErr === null && probeRes.taskIds.length > 0) capped.value = true
+        } catch {
+            /* 忽略探测错误：已拉取快照仍可用 */
         }
     }
 
@@ -294,19 +353,27 @@ const useSearchEngine = () => {
         enumerating.value = true
         enumFailures.value = 0
         enumRatePaused.value = false
+        enumBudgetPaused.value = false
         if (enumResumeTimer) {
             clearTimeout(enumResumeTimer)
             enumResumeTimer = undefined
         }
+        const startedAt = Date.now()
         try {
             const missing = [...cache.rootIds].filter((id) => !cache.enumeratedParents.has(id))
             if (missing.length === 0) return
             let consecutiveRate = 0
             let abort = false
+            let budgetExhausted = false
             let cursor = 0
             const size = Math.min(ENUMERATE_CONCURRENCY, missing.length)
             const run = async (): Promise<void> => {
                 while (cursor < missing.length && !abort) {
+                    // T770：单轮时间预算（大库下补拉是「每父一次整表读取」，无界会持续拖住搜索页）
+                    if (Date.now() - startedAt >= ENUMERATE_TIME_BUDGET_MS) {
+                        budgetExhausted = true
+                        break
+                    }
                     const parentId = missing[cursor]!
                     cursor++
                     try {
@@ -330,6 +397,9 @@ const useSearchEngine = () => {
                     enumResumeTimer = undefined
                     void ensureChildrenOnce()
                 }, RATE_PAUSE_RESUME_MS)
+            } else if (budgetExhausted) {
+                // 本轮停下；未枚举的父任务仍在 missing 集合 ⇒ 下次关键词输入继续
+                enumBudgetPaused.value = true
             }
         } finally {
             enumerateBusy = false
@@ -344,7 +414,11 @@ const useSearchEngine = () => {
         tagIds: filterTagIds.value,
         priorities: filterPriorities.value,
         states: filterStates.value,
-        includeArchived: includeArchived.value
+        includeArchived: includeArchived.value,
+        ...(searchSortEquals(sort.value, DEFAULT_SEARCH_SORT) ? {} : { sort: sort.value }),
+        ...(dueFrom.value !== '' ? { dueFrom: dueFrom.value } : {}),
+        ...(dueTo.value !== '' ? { dueTo: dueTo.value } : {}),
+        ...(includeNoDue.value ? { includeNoDue: true } : {})
     }))
     // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；等价则短路避免回环）
     const writeQueryToUrl = () => {
@@ -354,8 +428,37 @@ const useSearchEngine = () => {
     }
     watch(keyword, writeQueryToUrl)
     watch(
-        [filterProjectIds, filterTagIds, filterPriorities, filterStates, includeArchived],
+        [
+            filterProjectIds,
+            filterTagIds,
+            filterPriorities,
+            filterStates,
+            includeArchived,
+            sort,
+            dueFrom,
+            dueTo,
+            includeNoDue
+        ],
         writeQueryToUrl,
+        { deep: true }
+    )
+    // @watch T770 条件变化 ⇒ 展示窗口回到首屏 50 条（排序/区间/筛选/归档/关键词任一变化）
+    watch(
+        [
+            debouncedKeyword,
+            filterProjectIds,
+            filterTagIds,
+            filterPriorities,
+            filterStates,
+            includeArchived,
+            sort,
+            dueFrom,
+            dueTo,
+            includeNoDue
+        ],
+        () => {
+            visibleLimit.value = DISPLAY_STEP
+        },
         { deep: true }
     )
     // @url 本地状态为真源（SEA-04-DEF-02 B 方案）：路由 query 变化时仅对账再导出，
@@ -382,6 +485,11 @@ const useSearchEngine = () => {
         filterPriorities.value = [...state.priorities]
         filterStates.value = [...state.states]
         includeArchived.value = state.includeArchived
+        // T770：旧保存搜索无新字段 ⇒ 回退默认（不改其原有条件语义）
+        sort.value = state.sort ?? DEFAULT_SEARCH_SORT
+        dueFrom.value = state.dueFrom ?? ''
+        dueTo.value = state.dueTo ?? ''
+        includeNoDue.value = state.includeNoDue === true
     }
 
     /**
@@ -487,6 +595,15 @@ const useSearchEngine = () => {
         filterStates,
         includeArchived,
         filtersActive,
+        sort,
+        dueFrom,
+        dueTo,
+        includeNoDue,
+        selectSortField,
+        selectSortOrder,
+        setDueFrom,
+        setDueTo,
+        clearDueRange,
         toggleProjectFilter,
         toggleTagFilter,
         togglePriorityFilter,
@@ -503,8 +620,13 @@ const useSearchEngine = () => {
         enumerating,
         enumFailures,
         enumRatePaused,
+        enumBudgetPaused,
         rows,
         resultCount,
+        hasMore,
+        reachedDisplayCap,
+        showMore,
+        visibleLimit,
         rootCount
     }
 }

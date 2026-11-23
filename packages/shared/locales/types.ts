@@ -262,6 +262,7 @@ export interface LocaleMessages {
     'search.enumRatePaused': string
     'search.enumFailures': string
     'search.capped': string
+    'search.enumBudgetPaused': string
     'search.refreshFailed': string
     'search.viewLoadFailed': string
     'search.searchFailed': string
@@ -276,6 +277,24 @@ export interface LocaleMessages {
     'search.filter.state': string
     'search.filter.noTags': string
     'search.filter.clear': string
+    'search.sort.label': string
+    'search.sort.relevance': string
+    'search.sort.updatedAt': string
+    'search.sort.dueAt': string
+    'search.sort.priority': string
+    'search.sort.name': string
+    'search.sort.orderAsc': string
+    'search.sort.orderDesc': string
+    'search.filter.due': string
+    'search.filter.dueFrom': string
+    'search.filter.dueTo': string
+    'search.filter.dueRange': string
+    'search.filter.dueFromOnly': string
+    'search.filter.dueToOnly': string
+    'search.filter.dueClear': string
+    'search.includeNoDue': string
+    'search.showMore': string
+    'search.tooManyResults': string
     'search.saved.title': string
     'search.saved.saveButton': string
     'search.saved.saveTitle': string

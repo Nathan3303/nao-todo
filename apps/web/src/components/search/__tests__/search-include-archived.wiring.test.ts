@@ -144,10 +144,11 @@ describe('T181 · UI 接线（search-filter-bar prop / toggleArchived 事件）'
 
     it('渲染「包含已归档」开关并上抛 toggleArchived(true)', async () => {
         const wrapper = mountBar(false)
-        const switches = wrapper.findAllComponents(NueSwitch)
-        // T505 ① 移除 excluded 开关后，筛选栏仅剩归档一个开关
-        expect(switches).toHaveLength(1)
-        const archivedSwitch = switches[0]!
+        // T505 ① 移除 excluded 开关后，归档开关仍是筛选栏内唯一的「行内」开关
+        // （T770 起截止日面板内新增「包含无截止日」开关，故按归档区块定位而非「全页仅一个」）
+        expect(wrapper.findAll('.search-filter-bar__excluded')).toHaveLength(0)
+        const archivedSwitch = wrapper.find('.search-filter-bar__archived').findComponent(NueSwitch)
+        expect(archivedSwitch.exists()).toBe(true)
         archivedSwitch.vm.$emit('update:model-value', true)
         await nextTick()
         expect(wrapper.emitted('toggleArchived')?.[0]).toEqual([true])
@@ -156,7 +157,7 @@ describe('T181 · UI 接线（search-filter-bar prop / toggleArchived 事件）'
 
     it('关闭态切换上抛 toggleArchived(false)', async () => {
         const wrapper = mountBar(true)
-        const archivedSwitch = wrapper.findAllComponents(NueSwitch)[0]!
+        const archivedSwitch = wrapper.find('.search-filter-bar__archived').findComponent(NueSwitch)
         archivedSwitch.vm.$emit('update:model-value', false)
         await nextTick()
         expect(wrapper.emitted('toggleArchived')?.[0]).toEqual([false])

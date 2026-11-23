@@ -1,9 +1,20 @@
-import type { TaskViewObject } from '@nao-todo/domain-task'
+import { prioritySNMap, type TaskViewObject } from '@nao-todo/domain-task'
+import { getLocale } from '@nao-todo/shared/locales'
+import {
+    DEFAULT_SEARCH_SORT,
+    EMPTY_DUE_RANGE,
+    dateKeyOfIso,
+    isDueRangeActive,
+    type SearchDueRange,
+    type SearchSort
+} from './search-sort'
 
 /**
  * 搜索纯函数层（SEA-01）
- * @description 关键词过滤 + 相关度排序 + 高亮纯文本分段。零框架、可单测；
- *              高亮以「分段文本数组」返回（模板逐段渲染文本，禁 v-html 注入）。
+ * @description 关键词过滤 + 排序（五种字段 × 升降序）+ 截止日区间筛选 + 高亮纯文本分段。
+ *              零框架、可单测；高亮以「分段文本数组」返回（模板逐段渲染文本，禁 v-html 注入）。
+ *              T770：一次性全量排序改为「轻量谓词计数 + 只对展示窗口做完整排序/高亮」，
+ *              总数仍为全量命中数（见 `searchTasksPage`）。
  */
 
 /** 高亮分段：一段文本是否命中关键词 */
@@ -23,10 +34,28 @@ export type SearchRow = {
     descriptionOnlyHit: boolean
 }
 
-/** 搜索选项（P2：范围开关） */
+/** 搜索选项 */
 export type SearchTasksOptions = {
     /** 是否纳入已归档（默认 false，P2 / ADR §15.2） */
     includeArchived?: boolean
+    /** 排序（省略 = 相关性默认） */
+    sort?: SearchSort
+    /** 截止日区间（省略 = 不限；`''` 侧不限） */
+    dueRange?: SearchDueRange
+    /** 区间生效时是否保留「无截止日」任务（默认 false = 排除，需求口径 3） */
+    includeNoDue?: boolean
+    /** 返回行数上限（省略 = 不限，返回全量；总数恒为全量命中数） */
+    limit?: number
+}
+
+/** 分页结果（总数 + 展示窗口 + 是否还有更多） */
+export type SearchPageResult = {
+    /** 全量命中数（不受 limit 影响） */
+    total: number
+    /** 展示窗口行（已排序，含高亮分段） */
+    rows: SearchRow[]
+    /** 命中数 > 展示窗口（还有更多可展开） */
+    truncated: boolean
 }
 
 /** 备注预览窗口最大长度（命中周围截取） */
@@ -90,61 +119,171 @@ const buildDescriptionPreview = (description: string, kwLower: string): SearchHi
 export const isTaskHit = (task: TaskViewObject, kwLower: string): boolean =>
     task.name.toLowerCase().includes(kwLower) || task.description.toLowerCase().includes(kwLower)
 
+/** 命中候选（排序键在过滤期一次算好，避免比较函数内重复计算/重复分配） */
+type Candidate = {
+    task: TaskViewObject
+    nameHitStart: number
+    descriptionHitStart: number
+    /** 相关度键：[名称命中?0:1, 命中位置, 名称长度]（仅相关性排序时计算） */
+    rank?: [number, number, number]
+    /** 截止日键（`YYYY-MM-DD`；`''` = 无截止日；仅区间筛选/截止日排序时计算） */
+    dueKey?: string
+}
+
+/** id 升序（跨引擎/入参顺序稳定的最终收敛键） */
+const compareById = (a: Candidate, b: Candidate): number =>
+    a.task.id < b.task.id ? -1 : a.task.id > b.task.id ? 1 : 0
+
+/** 文本比较（空值恒排最后、不随方向翻转；同值 0 交由 id 收敛） */
+const compareEmptyLast = (a: string, b: string, dir: number): number => {
+    if (a === b) return 0
+    if (a === '') return 1
+    if (b === '') return -1
+    return (a < b ? -1 : 1) * dir
+}
+
+/** 优先级权重（单一来源 = domain `prioritySNMap`；非白名单脏值与 low 同档，同列表/日历口径） */
+const priorityRank = (priority: string): number =>
+    (prioritySNMap as Record<string, number>)[priority] ?? prioritySNMap.low
+
+/** 名称比较器（按当前界面语言本地化；含数字自然序）——缓存避免逐条构造 */
+let collatorLocale = ''
+let collator: Intl.Collator | null = null
+const nameCollator = (): Intl.Collator => {
+    const current = String(getLocale().value ?? '')
+    if (!collator || current !== collatorLocale) {
+        collatorLocale = current
+        collator = new Intl.Collator(current === '' ? undefined : current, { numeric: true })
+    }
+    return collator
+}
+
+/** 排序比较器（相关性无方向；其余按 order 翻转，空值恒最后） */
+const comparatorOf = (sort: SearchSort): ((a: Candidate, b: Candidate) => number) => {
+    const dir = sort.order === 'asc' ? 1 : -1
+    switch (sort.field) {
+        case 'updatedAt':
+            return (a, b) =>
+                compareEmptyLast(a.task.updatedAt, b.task.updatedAt, dir) || compareById(a, b)
+        case 'dueAt':
+            return (a, b) =>
+                compareEmptyLast(a.dueKey ?? '', b.dueKey ?? '', dir) || compareById(a, b)
+        case 'priority':
+            return (a, b) =>
+                (priorityRank(a.task.priority) - priorityRank(b.task.priority)) * dir ||
+                compareById(a, b)
+        case 'name':
+            return (a, b) =>
+                nameCollator().compare(a.task.name, b.task.name) * dir || compareById(a, b)
+        case 'relevance':
+        default: {
+            // 名称命中 > 仅备注命中；组内「短命中」优先；平局 updatedAt 倒序，再 id 收敛
+            return (a, b) => {
+                const ak = a.rank!
+                const bk = b.rank!
+                for (let i = 0; i < ak.length; i++) {
+                    if (ak[i] !== bk[i]) return ak[i]! - bk[i]!
+                }
+                return compareEmptyLast(a.task.updatedAt, b.task.updatedAt, -1) || compareById(a, b)
+            }
+        }
+    }
+}
+
+/** 命中行构建（高亮分段；仅对展示窗口调用） */
+const toRow = (candidate: Candidate, kwLower: string): SearchRow => {
+    const { task, nameHitStart, descriptionHitStart } = candidate
+    const nameHit = nameHitStart >= 0
+    const descriptionHit = descriptionHitStart >= 0
+    return {
+        task,
+        nameSegments: highlightSegments(task.name, kwLower),
+        // 恒显：有描述即输出描述行（命中 → 高亮窗口；未命中 → 整段纯文本，由展示层 clamp/title）
+        descriptionSegments: task.description
+            ? descriptionHit
+                ? buildDescriptionPreview(task.description, kwLower)
+                : [{ text: task.description, hit: false }]
+            : null,
+        descriptionOnlyHit: !nameHit && descriptionHit
+    }
+}
+
 /**
- * 搜索结果构建（过滤 + 排序 + 高亮分段）
- * @description 排序：名称命中 > 仅备注命中；组内「短命中」优先（命中位置更靠前，
- *              同位置取名称更短）；平局 updatedAt 倒序（再做 id 稳定收敛）。
- *              已归档默认排除，options.includeArchived 开启后纳入（P2）；
- *              已删除/已放弃恒排除（T505 移除 includeExcluded 后无 UI 可达）。
+ * 搜索结果分页构建（过滤 + 计数 + 排序 + 展示窗口高亮）
+ * @description T770 口径：
+ *              ① 一遍轻量谓词（归档/删除/放弃/关键词/截止日区间）算出**全量命中数**；
+ *              ② 只对命中候选排序（紧凑结构，不含高亮分段）；
+ *              ③ 仅对展示窗口（前 `limit` 条）做高亮分段等「完整行」materialize。
+ *              排序：相关性（默认，无方向）/ 更新时间 / 截止日 / 优先级 / 名称，后四者升/降；
+ *              空值（无截止日 / 空更新时间）**恒排最后**，不随方向翻转；同值以 id 升序收敛。
+ *              已归档默认排除，includeArchived 开启后纳入（P2）；已删除/已放弃恒排除。
+ *              截止日 = `endAt`（本地自然日，闭区间）；`includeNoDue` 决定无截止日任务去留。
+ */
+export const searchTasksPage = (
+    tasks: TaskViewObject[],
+    keyword: string,
+    options: SearchTasksOptions = {}
+): SearchPageResult => {
+    const kwLower = keyword.trim().toLowerCase()
+    if (!kwLower) return { total: 0, rows: [], truncated: false }
+    const includeArchived = options.includeArchived === true
+    const includeNoDue = options.includeNoDue === true
+    const sort = options.sort ?? DEFAULT_SEARCH_SORT
+    const dueRange = options.dueRange ?? EMPTY_DUE_RANGE
+    const filterDue = isDueRangeActive(dueRange)
+    const needDueKey = filterDue || sort.field === 'dueAt'
+    const needRank = sort.field === 'relevance'
+    const candidates: Candidate[] = []
+    for (const task of tasks) {
+        if (task.isArchived && !includeArchived) continue
+        if (task.isDeleted || task.isGivenUp) continue
+        const nameHitStart = hitStartIndexOf(task.name, kwLower)
+        const descriptionHitStart = hitStartIndexOf(task.description, kwLower)
+        if (nameHitStart < 0 && descriptionHitStart < 0) continue
+        const candidate: Candidate = { task, nameHitStart, descriptionHitStart }
+        if (needDueKey) {
+            const dueKey = dateKeyOfIso(task.endAt)
+            candidate.dueKey = dueKey
+            if (filterDue) {
+                // 无截止日：默认排除；勾选「包含无截止日」后保留（不受区间约束）
+                if (dueKey === '') {
+                    if (!includeNoDue) continue
+                } else if (
+                    (dueRange.from !== '' && dueKey < dueRange.from) ||
+                    (dueRange.to !== '' && dueKey > dueRange.to)
+                ) {
+                    continue
+                }
+            }
+        }
+        if (needRank) {
+            candidate.rank =
+                nameHitStart >= 0
+                    ? [0, nameHitStart, task.name.length]
+                    : [1, descriptionHitStart, task.name.length]
+        }
+        candidates.push(candidate)
+    }
+    const total = candidates.length
+    candidates.sort(comparatorOf(sort))
+    const limit = options.limit === undefined ? total : Math.max(0, Math.floor(options.limit))
+    const visible = candidates.length > limit ? candidates.slice(0, limit) : candidates
+    return {
+        total,
+        rows: visible.map((candidate) => toRow(candidate, kwLower)),
+        truncated: visible.length < total
+    }
+}
+
+/**
+ * 搜索结果构建（全量行；等价于不限展示窗口的分页结果）
+ * @description 保留给「需要完整命中行」的调用方与既有用例；视图侧用 `searchTasksPage`。
  */
 export const searchTasks = (
     tasks: TaskViewObject[],
     keyword: string,
     options: SearchTasksOptions = {}
-): SearchRow[] => {
-    const kwLower = keyword.trim().toLowerCase()
-    if (!kwLower) return []
-    const includeArchived = options.includeArchived === true
-    type RankKey = [number, number, number]
-    type RankedRow = { rank: RankKey; row: SearchRow }
-    const ranked: RankedRow[] = []
-    for (const task of tasks) {
-        if (task.isArchived && !includeArchived) continue
-        if (task.isDeleted || task.isGivenUp) continue
-        const nameHitStart = hitStartIndexOf(task.name, kwLower)
-        const nameHit = nameHitStart >= 0
-        const descriptionHitStart = hitStartIndexOf(task.description, kwLower)
-        const descriptionHit = descriptionHitStart >= 0
-        if (!nameHit && !descriptionHit) continue
-        const row: SearchRow = {
-            task,
-            nameSegments: highlightSegments(task.name, kwLower),
-            // 恒显：有描述即输出描述行（命中 → 高亮窗口；未命中 → 整段纯文本，由展示层 clamp/title）
-            descriptionSegments: task.description
-                ? descriptionHit
-                    ? buildDescriptionPreview(task.description, kwLower)
-                    : [{ text: task.description, hit: false }]
-                : null,
-            descriptionOnlyHit: !nameHit && descriptionHit
-        }
-        // 排序键（避免行内重复计算字符串比较）
-        const rank: RankKey = nameHit
-            ? [0, nameHitStart, task.name.length]
-            : [1, descriptionHitStart, task.name.length]
-        ranked.push({ rank, row })
-    }
-    ranked.sort((a, b) => {
-        for (let i = 0; i < a.rank.length; i++) {
-            const ak = a.rank[i]!
-            const bk = b.rank[i]!
-            if (ak !== bk) return ak - bk
-        }
-        if (a.row.task.updatedAt !== b.row.task.updatedAt)
-            return a.row.task.updatedAt < b.row.task.updatedAt ? 1 : -1
-        return a.row.task.id < b.row.task.id ? -1 : a.row.task.id > b.row.task.id ? 1 : 0
-    })
-    return ranked.map(({ row }) => row)
-}
+): SearchRow[] => searchTasksPage(tasks, keyword, options).rows
 
 /** 日期键（YYYY-MM-DD）文本：同年仅 M月D日，跨年含年份（空输入返回 ''） */
 export const dateKeyLabel = (dateKey: string | null | undefined, nowYear: number): string => {
