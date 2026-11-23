@@ -164,7 +164,7 @@ const submit = async (e: Event) => {
     text-align: left;
 }
 
-/* 符号冗余：不只靠颜色传达「需要注意」（DESIGN §2 三态可辨性） */
+/* 符号冗余：不只靠颜色传达「需要注意」（DESIGN §2 三重冗余） */
 .session-end-banner__mark {
     flex: none;
     font-weight: 700;

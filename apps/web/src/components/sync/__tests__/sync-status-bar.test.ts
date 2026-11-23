@@ -105,7 +105,7 @@ vi.mock('@/hooks', async () => {
 })
 
 /**
- * 组件源码（`?raw`）：DESIGN §4.8 的**样式契约**断言用 —— jsdom 不应用 SFC `<style scoped>`，
+ * 组件源码（`?raw`）：DESIGN §5.4 的**样式契约**断言用 —— jsdom 不应用 SFC `<style scoped>`，
  * 分隔线 / 限高内滚 / 点击区高度等只能按源文本核（同 `safe-area.test.ts` 手法）。
  */
 const sourceModules = import.meta.glob<string>('../sync-status-bar.vue', {
@@ -826,13 +826,13 @@ describe('SyncStatusBar - T522 抽屉变体：可见状态文字', () => {
     })
 })
 /**
- * DESIGN §4.8 同步状态面板视觉整理（T659 追加）
+ * DESIGN §5.4 同步状态面板视觉整理（T659 追加）
  * @description 目标：C 端状态面板（非设置表）—— 留白分区（无分隔线）、首行主信息、正常态不铺空分区、
  *              柔和计数胶囊、冲突入口可点行、hover 只弱变化、长内容限高内滚。
  *              ⛔ 不涉及任何同步语义（计数/状态判定/按钮动作）；样式断言按源文本核（jsdom 不应用 scoped 样式）。
- * @see DESIGN.md §4.8（用户 2026-11-04「美化一下同步状态的下拉列表」）
+ * @see DESIGN.md §5.4（用户 2026-11-04「美化一下同步状态的下拉列表」）
  */
-describe('SyncStatusBar - DESIGN §4.8 面板视觉整理', () => {
+describe('SyncStatusBar - DESIGN §5.4 面板视觉整理', () => {
     /** 面板分区（直系 <li>，P8/C12 不变） */
     const sections = (): HTMLElement[] =>
         Array.from(panel()?.querySelectorAll<HTMLElement>(':scope > li.sync-panel__section') ?? [])

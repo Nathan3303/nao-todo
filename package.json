@@ -23,6 +23,7 @@
         "guard:barrel-imports": "node scripts/guard-barrel-imports.mjs",
         "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs",
         "guard:test-location": "node scripts/guard-test-location.mjs",
+        "guard:contrast": "node scripts/contrast-audit.mjs",
         "guard:dist-comments": "node scripts/guard-dist-comments.mjs"
     },
     "dependencies": {

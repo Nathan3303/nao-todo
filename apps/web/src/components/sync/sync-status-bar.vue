@@ -161,7 +161,7 @@ const displayError = computed(() => status.value.lastError ?? lastShownError.val
 const errorCarriedOver = computed(() => !status.value.lastError && lastShownError.value !== null)
 
 /**
- * @computed 正常态（DESIGN §4.8 / DEF-138）：无可展示的数据/待处理/冲突/错误/诊断
+ * @computed 正常态（DESIGN §5.4 / DEF-138）：无可展示的数据/待处理/冲突/错误/诊断
  * @description 正常态**不铺空分区**：面板只显示「时间 + 立即同步 + 一句『数据已是最新』」。
  *              同步中**同样常显**（去掉 `!syncing`）—— 否则该句会在运行开始/结束时忽隐忽现，
  *              面板高度与分区数跟着跳（用户走查 DEF-138「加载时会抖动」）。
@@ -350,7 +350,7 @@ watch(
             -->
             <!--
               面板分区行：@open 渲染 / @close 移除（C9）。面板根是库内 <ul> ⇒ **每个分区为一个 <li>**
-              （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合（DESIGN §4.8）：
+              （P8/C12：直系子节点仍为 <li>），分区内部用 <div> 组织，按类别聚合（DESIGN §5.4）：
               主信息（时间 + 「立即同步」动作）/ 数据（可信度与覆盖度）/ 待处理（计数胶囊）/ 冲突 / 错误；
               分区之间只用留白分隔（无 1px 分隔线），正常态不铺空分区。
             -->
@@ -540,7 +540,7 @@ watch(
     gap: var(--nue-gap-xs);
 }
 
-/* 可见短文字：12px（DESIGN §3）；颜色随状态（文本用 90 档 ⇒ 对比度 ≥4.5:1）；单行末尾省略 */
+/* 可见短文字：12px（DESIGN §1.4）；颜色随状态（文本用 90 档 ⇒ 对比度 ≥4.5:1）；单行末尾省略 */
 .sync-rail-btn--drawer :deep(.nue-button__text) {
     min-width: 0;
     font-size: var(--nue-text-xs);

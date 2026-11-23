@@ -9,7 +9,7 @@ import { computed } from 'vue'
  *  - 选中/hover 态、`prefers-reduced-motion` 降级均在件内定义一处；
  *  - 可访问性：`role="group"` + `aria-label`；每段 `aria-pressed`；指示器装饰性 `aria-hidden`。
  *  调用方只允许三轴不同：**段数**、**宽度策略**（fill）、**尺寸**（size，仅用于点击区达标）。
- *  `size='md'`（T521-R2）：段高 = `--nue-box-size-md`（≈40px，满足 DESIGN §3 点击区 ≥40px）；
+ *  `size='md'`（T521-R2）：段高 = `--nue-box-size-md`（≈40px，满足 DESIGN §2 点击区 ≥40px）；
  *  `size='inline'`（T615）：段高 = `--nue-box-size-sm`（32px）+ 字号 `--nue-text-xs`（12px），
  *  用于嵌在下拉菜单等紧凑条纹内（与 `nue-dropdown-item--small` 同档，跟随菜单条目高度）；
  *  其余视觉（槽底/滑块/字色/圆角/动效）与 `sm`/`md` 逐项一致，调用方不得在自身 CSS 覆盖尺寸。
