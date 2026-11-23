@@ -1005,8 +1005,6 @@ const enUS: LocaleMessages = {
     'dialog.taskCreator.title': 'Create Task',
     'dialog.taskCreator.namePlaceholder': 'Task Name',
     'dialog.taskCreator.descPlaceholder': 'Add task notes (optional)',
-    'dialog.taskCreator.smartModeToggle': 'Smart Creator',
-    'dialog.taskCreator.smartPlaceholder': 'Task Name',
     'dialog.parentTaskSelector.title': 'Select Parent Task',
     'dialog.parentTaskSelector.searchPlaceholder': 'Search tasks...',
     'dialog.parentTaskSelector.empty': 'No selectable tasks',

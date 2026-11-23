@@ -4,10 +4,11 @@
 
 NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的任务管理体验。该平台基于 Vue 3、Vite+（Rolldown）、TypeScript、NueUI、Pinia 构建，采用 pnpm monorepo 架构，并遵循 DDD（领域驱动设计）分层设计。
 
-项目包含两个客户端：
+项目包含三个客户端：
 
 - **Web 客户端**（`apps/web`）：基于 Vue 3 + Vite+ 的在线版本
-- **桌面客户端**（`apps/desktop`）：基于 Electron 的桌面版本，业务数据完全本地化（IndexedDB + AES-GCM 加密），认证沿用远程后端
+- **桌面客户端**（`apps/desktop`）：基于 Electron 的桌面版本，业务数据完全本地化（IndexedDB 明文本地存储），认证沿用远程后端
+- **移动客户端**（`apps/mobile`，`pnpm mobileapp dev`）：基于 Lynx（Rspeedy）的移动版本，功能为子集；**不在 CI / 发布流水线内**，且属「不随桌面 / Web 需求改动」的红线面
 
 ## 🌐 站点地址
 
@@ -28,10 +29,12 @@ NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的
 - **国际化**：Vue I18n
 - **HTTP 请求**：Axios
 - **日期处理**：Day.js
-- **本地存储**：localStorage（Web）/ Dexie + IndexedDB（桌面端，AES-GCM 加密）
+- **本地存储**：localStorage（Web）/ Dexie + IndexedDB（桌面端，明文本地存储）
 - **桌面框架**：Electron（electron-vite 构建）
 - **编程语言**：TypeScript
 - **包管理**：pnpm（monorepo）
+
+> **关于「本地加密」**：桌面端业务数据现为**明文本地存储** —— `persistence-local` 的 `cryptoService.encrypt` 直出 `plain:<原文>` 前缀，`decrypt` 见前缀直返。历史密文（`base64(iv):base64(密文)`）仍可读：`cryptoService` 的 `setup` / `unlock` / `ensureUnlocked` **仅为兼容历史数据**保留，解锁门内会把旧密文一次性迁移为明文（迁移完成后不再需要本地口令）。
 
 ## 📐 架构
 
@@ -41,7 +44,8 @@ NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的
 nao-todo/
 ├── apps/
 │   ├── web/                    # Web 客户端
-│   └── desktop/                # Electron 桌面客户端（本地加密存储）
+│   ├── desktop/                # Electron 桌面客户端（明文本地存储）
+│   └── mobile/                 # Lynx 移动客户端（不在 CI / 发布流水线）
 └── packages/
     ├── domain-built-in-project/# 内置项目领域（今天 / 本周等）
     ├── domain-identity/        # 身份认证领域（用户、JWT）
@@ -49,9 +53,10 @@ nao-todo/
     ├── domain-project/         # 项目领域
     ├── domain-tag/             # 标签领域
     ├── domain-task/            # 任务领域（任务、检查项、评论）
-    ├── infrastructure/         # 基础设施层 — persistence-go（Web API）、persistence-local（IndexedDB + 加密）
+    ├── infrastructure/         # 基础设施层 — persistence-go（Web API）、persistence-local（IndexedDB + 明文）
     ├── presentation/           # 表现层 — 组件、hooks、Pinia Store
     ├── presentation-identity/  # 身份表现层 — 用户 Store、认证组件
+    ├── presentation-react/     # 表现层（React）— 移动端复用
     └── shared/                 # 共享层 — 工具函数、通用组件、类型定义、国际化
 ```
 
@@ -61,7 +66,8 @@ nao-todo/
 nao-todo/
 ├── apps/
 │   ├── web/              # Web 客户端
-│   └── desktop/          # 桌面客户端（Electron）
+│   ├── desktop/          # 桌面客户端（Electron）
+│   └── mobile/           # 移动客户端（Lynx，不在 CI / 发布流水线）
 ├── packages/
 │   ├── domain-built-in-project/  # 内置项目领域
 │   ├── domain-identity/          # 身份认证领域
@@ -72,6 +78,7 @@ nao-todo/
 │   ├── infrastructure/           # 基础设施层
 │   ├── presentation/             # 表现层
 │   ├── presentation-identity/    # 身份表现层
+│   ├── presentation-react/       # 表现层（React，移动端复用）
 │   └── shared/                   # 共享层
 ├── pnpm-workspace.yaml   # pnpm 工作区配置
 ├── package.json          # 根脚本与依赖

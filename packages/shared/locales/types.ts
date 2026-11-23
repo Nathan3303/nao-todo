@@ -939,8 +939,6 @@ export interface LocaleMessages {
     'dialog.taskCreator.title': string
     'dialog.taskCreator.namePlaceholder': string
     'dialog.taskCreator.descPlaceholder': string
-    'dialog.taskCreator.smartModeToggle': string
-    'dialog.taskCreator.smartPlaceholder': string
     'dialog.parentTaskSelector.title': string
     'dialog.parentTaskSelector.searchPlaceholder': string
     'dialog.parentTaskSelector.empty': string

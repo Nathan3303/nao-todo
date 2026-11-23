@@ -968,8 +968,6 @@ const zhCN: LocaleMessages = {
     'dialog.taskCreator.title': '创建待办事项',
     'dialog.taskCreator.namePlaceholder': '待办事项名称',
     'dialog.taskCreator.descPlaceholder': '描述（可选）',
-    'dialog.taskCreator.smartModeToggle': '智能创建器',
-    'dialog.taskCreator.smartPlaceholder': '待办任务名称 ...',
     'dialog.parentTaskSelector.title': '选择父任务',
     'dialog.parentTaskSelector.searchPlaceholder': '搜索任务...',
     'dialog.parentTaskSelector.empty': '暂无可选任务',
