@@ -112,3 +112,119 @@ vue 3.5.46 的 `normalizeStyle` 多了一条字符类内置引号的组合正则
   **大版本跃迁**，本单明令禁止 ⇒ 待 PM / arch 定跃迁节奏
 - **转办（下一批 · owner=rd-infra）**：dev 面 `launch-editor` 2.14.1 → 2.14.2（3 条，补丁级；随 vite-plus 升级一并处理更省事）
 - **不变**：3 条 critical（`tinypool`×2 / `shell-quote`）仍只在 dev，需 `vitest` 大版本决策
+
+## 七、批次三（T789 / Issue #388）：dev 面 **Batch A** —— exact-key overrides（70 → 10，critical 清零）
+
+**结论**（2026-11-23 · 分支 `chore/388-deps-batch3` · rd-infra）：全量 advisory **70 → 10**（critical **3 → 0**），
+`--prod` 保持 **0**，新增条目 **0**。手法 = `pnpm-workspace.yaml` 的 `overrides` 段**只加覆盖、不动 `package.json` 范围**：
+9 条新增 + 1 条抬门槛（`serialize-javascript`）。**未升 `vite-plus` / `vitest` 系 / 任何主版本**，未改 Node 基线 /
+`packageManager`，未手改 lockfile。
+
+### 7.1 Batch A 配方表（键 / 值 / 解析 改前 → 改后 / 为什么必须 override / 何时可删）
+
+| override 键              | 值        | 解析 改前 → 改后        | 条数    | 为什么必须 override（parent 精确 pin / 上游未跟进） | 何时可删              |
+| ------------------------ | --------- | ----------------------- | ------- | --------------------------------------------------- | --------------------- |
+| `tinypool`               | `2.1.2`   | 2.1.0 → 2.1.2           | 2c      | `oxfmt@0.60.0` **精确 pin `2.1.0`**                 | oxfmt 内置 ≥2.1.2 后  |
+| `shell-quote`            | `1.12.0`  | 1.9.0 / 1.10.0 → 1.12.0 | 1c      | `concurrently@10.0.5` **精确 pin `1.9.0`**          | concurrently 跟进后   |
+| `launch-editor`          | `2.14.2`  | 2.14.1 → 2.14.2         | 3       | `@rsdoctor/sdk@1.6.3` 未跟进（可随 vite-plus 联动） | 其跟进后 / Batch B 后 |
+| `engine.io@~6.6.0`       | `6.6.12`  | 6.6.9 → 6.6.12          | 1h      | `socket.io@4.8.1` 声明 `~6.6.0` 未跟进              | socket.io 跟进后      |
+| `markdown-it@^14.3.0`    | `14.3.3`  | 14.3.0 → 14.3.3         | 4       | `@lynx-js/web-elements@0.12.7` 未跟进               | 其跟进后              |
+| `dompurify@^3.4.12`      | `3.5.0`   | 3.4.14 → 3.5.0          | 5l      | 同上（同一 parent）                                 | 同上                  |
+| `serialize-javascript`   | `>=7.1.4` | 7.1.0 → 7.1.4           | 1l      | **抬既有门槛**（原 `>=7.0.5`，patched ≥7.1.3）      | 上游跟进后            |
+| `undici@6.28.0`          | `6.29.1`  | 6.28.0 → 6.29.1         | 34 合计 | `node-gyp@12.4.0` 声明 `^6.25.0` 未跟进             | node-gyp 跟进后       |
+| `undici@7.29.0`          | `7.30.1`  | 7.29.0 → 7.30.1         | ↑       | `@electron/get@5.1.0` 声明 `^7.24.4` 未跟进         | 其跟进后              |
+| `undici@8.10.2`          | `8.13.1`  | 8.10.2 → 8.13.1         | ↑       | `jsdom@30.0.1` 声明 `^8.9.0` 未跟进                 | 其跟进后              |
+| `brace-expansion@1.1.18` | `1.1.21`  | 1.1.18 → 1.1.21         | 9 合计  | `minimatch@3.1.5` 声明 `^1.1.7` 未跟进              | minimatch 跟进后      |
+| `brace-expansion@2.1.4`  | `2.1.7`   | 2.1.4 → 2.1.7           | ↑       | `minimatch@5.1.9` / `@9.0.9` 声明 `^2.x`            | 同上                  |
+| `brace-expansion@5.0.9`  | `5.0.12`  | 5.0.9 → 5.0.12          | ↑       | `minimatch@10.2.6` 声明 `^5.0.8`                    | 同上                  |
+
+条目数口径：`tinypool` 的 2 条中的 1 条已在 `@lynx-js/template-webpack-plugin` 侧修好（本就是 2.1.2），覆盖只是把
+`oxfmt` 那条拉齐。`undici` 的 34 条、`brace-expansion` 的 9 条按包合计，不逐 major 拆分。
+
+**一处与 T788 配方的偏差（已实测，如实报）**：`engine.io` 取 **`6.6.12`** 而非 `6.6.13`。原因：`6.6.13` 于
+`2026-11-23T11:54Z` 发布（距本单执行 <4h），落在 pnpm 11 默认 `minimumReleaseAge` 的 24h 冷却窗口内 ⇒ 首次
+`pnpm install` **自动往 `pnpm-workspace.yaml` 追加了一条 `minimumReleaseAgeExclude: engine.io@6.6.13`**（并把整份文件
+重写成 2 空格 / LF，破坏既有 4 空格 + CRLF 基线）。`6.6.12` 同为 patched（advisory 1240112 要求 ≥6.6.10）、已过冷却
+⇒ 用它可以**不引入任何 `minimumReleaseAgeExclude` 例外**，audit 条数不变（仍是 10）。取舍理由：不为一条 4 小时新版本
+开供链例外，也不接受 `pnpm-workspace.yaml` 被工具重排整份格式。
+
+### 7.2 exact-key 的失配风险与自检方式（**本批主要遗留风险**）
+
+pnpm 的 override 键判定是 **`isIntersectingRange(覆盖键的区间, 依赖方「声明的」范围)`**（`createVersionsOverrider` →
+`pickVersionOverride`，pnpm 11.18.0 源码核对）。由此派生出三个必须知道的性质：
+
+1. **精确版本键天然锁 major**：`undici@6.28.0` 之所以只命中 `node-gyp`，是因为 `6.28.0 ∈ ^6.25.0`；而它与
+   `^7.24.4` / `^8.9.0` 不相交 ⇒ 不会跨线。这是「按 major 分 exact-key」可行的根本原因。
+2. **⛔ 范围选择器会跨 major 强推**：`undici@^6: 8.13.1` 这类写法会命中**所有**与 `^6` 相交的需求方，并把它们的
+   声明**替换成 8.13.1**（override 的值不受原范围约束）。T788 实测：`brace-expansion@^1: 5.0.12` 会把
+   `minimatch@3.1.5`（声明 `^1.1.7`）的 `brace-expansion` 推到 5.x ⇒ **直接推坏**。⇒ 本批**只用精确版本键**。
+3. **⚠️ 静默失配（最危险）**：键匹配的是依赖方**当前声明**。若上游把声明抬出键的区间（例：`node-gyp` 从 `^6.25.0`
+   改到 `^6.30.0`），`undici@6.28.0` 这条**不再命中 ⇒ 覆盖静默失效**，解析退回带漏洞版本 —— 而
+   `pnpm install` 仍 rc=0、`vp check`/`vp test`/七个守卫**全部照绿**（没有任何既有门禁读 advisory）。
+4. **反向风险**：上游修好后覆盖会变成「多余的版本钉死」，长期把包压在旧版本上。
+
+**自检方式**：`pnpm run guard:audit`（`scripts/guard-audit.mjs`）—— 跑 `pnpm audit --json`，断言
+**critical = 0** 且 **总数 ≤ `MAX_TOTAL`**（当前常数 **12**，实测 10，留 2 条余量；常数在脚本内，改动需说明理由）。
+退出码 `0` 通过 / `1` 判据不满足（打印按包归并的剩余条目）/ `2` 环境错误（pnpm 不可用、输出非 JSON）。
+**运行时机**：发版前、批末、以及**每次改 `overrides` 前后各一次**。
+
+**失败演练（三段证据，2026-11-23 实测）**：
+
+| 演练                                                         | 期望                                         | 实测                                                                 |
+| ------------------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------- |
+| ① `MAX_TOTAL` 临时改 `12 → 0`（其余不动）                    | exit 1                                       | `advisory 总数 10 > 阈值 0` ⇒ **rc=1**                               |
+| ② 临时注释掉 `tinypool: '2.1.2'`（真实故障：覆盖丢失）+ 重装 | exit 1（走 critical 分支，**不是**计数分支） | 总数 **12 == 阈值 12**（计数判据本会放行）但 `critical 2` ⇒ **rc=1** |
+| ③ 还原 ①② 后复跑                                             | exit 0                                       | `advisory 总数 10（阈值 12）· critical 0` ⇒ **rc=0**                 |
+
+演练 ② 是关键：它证明 **critical 判据能独立拦住「总数没超但覆盖已失效」**，而这正是本批最可能出现的退化形态。
+
+### 7.3 审计前后对照（`pnpm audit --json`，真跑）
+
+| 口径                | 批次二后                       | **批次三后**                |
+| ------------------- | ------------------------------ | --------------------------- |
+| 全量 advisory       | **70**（3c / 25h / 30m / 12l） | **10**（0c / 1h / 8m / 1l） |
+| `pnpm audit --prod` | 0                              | **0**                       |
+| 新增条目            | —                              | **0**                       |
+
+消失 **60** 条 = `undici`×34 + `brace-expansion`×9 + `dompurify`×5 + `markdown-it`×4 + `launch-editor`×3 + `tinypool`×2
+
+- `engine.io`×1 + `serialize-javascript`×1 + `shell-quote`×1。按 `module_name` 过滤，这 9 个包在**全量报告里整条不存在**。
+  **与 T788 预测一致（预测 10 / critical 0，实测 10 / critical 0）**，唯一差异是 `engine.io` 用 6.6.12（见 §7.1 末段），
+  不影响条数。
+
+### 7.4 回归（全仓真跑）
+
+- `vp test --run`（全仓，跑前 `pgrep -af vitest` 空）**rc=0**：**491 文件**（490 pass / 1 skip）· **3985 例**
+  （3979 pass / 6 skip）· **0 红** · 548.3s（同机负载较高，批次二为 293.4s；例数与红数一致）
+- `vp check` **rc=0**：2069 文件格式 OK · 1650 文件 lint + 类型 **0 error**（+1 文件 = 新增的 `scripts/guard-audit.mjs`）
+- 七守卫全 **rc=0**：`ddd` · `barrel-imports`（1650 文件 / 1856 导入 / 2676 命名）· `mobile-imports`（72 文件）·
+  `gate-pathspec` · `test-location`（483 文件）· `contrast`（17 组 pair）· `dist-comments`（116 产物 / 9 条打包器 banner）
+- `vp run webapp build` **rc=0**（22.2s）· `desktop:build` **rc=0**（29.4s）
+- 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobile` = **0**
+- `pnpm install --frozen-lockfile` **rc=0**（`Already up to date` ⇒ lockfile 自洽）；`pnpm install` 连跑 2 次
+  = 第 2 次 `Already up to date` + lockfile **sha 不变**（幂等）
+- lockfile 净变更 **65+/66-**（含新增的 `overrides:` 映射段与 13 个包的解析重定向）
+
+### 7.5 剩余 10 条与出口（**全部 = 接受含到期 / 转办，到期 2026-12-31**）
+
+| 包               | 条数          | patched 线 | 为什么本批不动                                             | 出口                                        |
+| ---------------- | ------------- | ---------- | ---------------------------------------------------------- | ------------------------------------------- |
+| `vite-plus`      | 5（1h/3m/1l） | `>=1.0.1`  | 需 **0.2.6 → 1.x 主版本跃迁 = 换工具链**，本批明令禁止     | 接受（到期 2026-12-31）+ **Batch B 另立单** |
+| `vitest`         | 1             | `>=4.1.11` | 与 `vite-plus` 的 vitest peer 绑定联动，属 Batch A+ 暂不做 | 接受（到期 2026-12-31）+ Batch B / A+ 承接  |
+| `@vitest/mocker` | 2             | `>=4.1.12` | 同上（随 `vitest` 同版本船）                               | 同上                                        |
+| `glob`           | 1             | `>=14.0.2` | 解析 13.0.6 / 7.2.3，**跨大版本**，上游无兼容解            | 接受（到期 2026-12-31）+ **转办上游观察**   |
+| `minimatch`      | 1             | `>=11.0.1` | 解析 10.2.6 / 9.0.9，**跨大版本**（9 条 parent 边）        | 同上                                        |
+
+到期处理：2026-12-31 前若 `vite-plus` 跃迁落地（Batch B）⇒ 前三条随之消失；`glob` / `minimatch` 若上游仍无 13.x / 10.x
+线补丁，则**续期并登记新到期日**，不得默默过期。
+
+### 7.6 Batch B 建议（`vite-plus` 1.3.0）—— **另立单，不并入本批**
+
+- **为什么另立**：`vite-plus` 0.2.6 → 1.x 是**换工具链级**变更（同时牵动 `catalog` 里
+  `vite: npm:@voidzero-dev/vite-plus-core@0.2.6`、`oxfmt@0.60.0` / `oxlint@1.75.0` 的 peer、以及 `vitest` 4.1.10），
+  影响面是全仓构建 + 测试 + 格式化三套门禁，与「依赖补丁级清零」不同风险类别。
+- **目标版本需重估**：T788 探索时按 `1.3.0` 估算，但当前 npm `latest` 已是 **1.7.0** ⇒ Batch B 开单时须重新评估目标
+  版本，并同步 `catalog` 与 `overrides`（`tinypool` / `launch-editor` 两条很可能会随上游跟进**自然失效 ⇒ 直接删**）。
+- **建议单内容**：① 在 `git worktree` 固定提交里做 A/B（禁止直接在主工作区构建，AGENTS.md「前后对照测量纪律」）；
+  ② 判据以**硬指标**（模块图 / ΣVue SFC / import 聚合）为准，wall 不作判据；③ 先 `guard:audit` 取基线，
+  升完复跑，确认 5 条消失且无新增。
