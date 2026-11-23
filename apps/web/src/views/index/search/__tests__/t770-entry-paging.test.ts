@@ -12,8 +12,10 @@ import SearchEntry from '../entry.vue'
 /**
  * T770 · 搜索页「默认截断 + 手动展开」与排序/区间接线（视图侧）
  * 依据：Issue #373 口径 1（默认 50 / +50 / 到 5000 停并提示）、口径 2/3（排序与区间状态由引擎持有）。
- * 断言口径：行数=展示窗口、点击「显示更多」只调用引擎 showMore（单一真源）、
- *          到顶时按钮换成提示文案、筛选栏收到新 props 且事件回落到引擎方法。
+ * 断言口径：本文件把 `use-search` 整体换成替身（行数由测试自己的 ref 提供）⇒
+ *          **只证明「视图把引擎给的行原样画出来、点击只调用引擎 showMore」**；
+ *          ⛔ 不能证明窗口值/步长（替身里没有窗口）。首屏 50、逐级 +50 的**真实窗口语义**
+ *          由 `t770-entry-paging-real.test.ts`（真实引擎 + 渲染行数）与 `t770-engine.test.ts` 守护。
  * jsdom 不可测（留给用户视觉走查）：按钮实际位置/间距、滚动加载观感。
  */
 
@@ -210,7 +212,8 @@ const moreButton = () =>
 
 beforeEach(() => {
     vi.clearAllMocks()
-    hoisted.rows.value = Array.from({ length: 50 }, (_, index) => makeRow(index))
+    // 行数故意 < 窗口（3 行）：本文件断言的是「原样渲染」，与窗口大小无关
+    hoisted.rows.value = Array.from({ length: 3 }, (_, index) => makeRow(index))
     hoisted.hasMore.value = true
     hoisted.reachedDisplayCap.value = false
     hoisted.resultCount.value = 5000
@@ -227,9 +230,9 @@ afterEach(() => {
 })
 
 describe('T770 视图侧：展示窗口与「显示更多」', () => {
-    it('首屏只渲染窗口内的 50 行，但「找到 N 条」显示全量命中数', () => {
+    it('视图原样渲染引擎给的行（不裁剪、不自增窗口），「找到 N 条」显示全量命中数', () => {
         mountEntry()
-        expect(rowsEl()).toHaveLength(50)
+        expect(rowsEl()).toHaveLength(3)
         expect(wrapper!.find('.srch-count').text()).toContain('5000')
     })
 
@@ -239,8 +242,8 @@ describe('T770 视图侧：展示窗口与「显示更多」', () => {
         expect(button).toBeTruthy()
         await button!.trigger('click')
         expect(hoisted.showMore).toHaveBeenCalledTimes(1)
-        // 视图不自增窗口（渲染源始终来自引擎）
-        expect(rowsEl()).toHaveLength(50)
+        // 视图不自增窗口（渲染源始终来自引擎：替身不涨 ⇒ 行数不变）
+        expect(rowsEl()).toHaveLength(3)
     })
 
     it('到展示上限 ⇒ 按钮消失、改为「结果过多，请缩小条件」提示', async () => {

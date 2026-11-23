@@ -218,6 +218,8 @@ describe('T770 截断与展开（默认 50 / +50 / 到 5000 停）', () => {
         expect(engine!.hasMore.value).toBe(true)
     })
 
+    // 单独给缩放上限用例放宽超时：5001 条 × 120 次「显示更多」= 每次全量重排，
+    // 并行跑整个搜索面时实测可超默认 5s（T771 实测 5.3s：机器负载敏感，非逻辑问题）
     it('超过 5000：展开到 5000 即停（hasMore=false、reachedDisplayCap=true）', async () => {
         roots = Array.from({ length: 5001 }, (_, index) => makeTask(index))
         await mountEngine()
@@ -229,7 +231,7 @@ describe('T770 截断与展开（默认 50 / +50 / 到 5000 停）', () => {
         expect(engine!.hasMore.value).toBe(false)
         expect(engine!.reachedDisplayCap.value).toBe(true)
         expect(engine!.visibleLimit.value).toBe(MAX_DISPLAY_ROWS)
-    })
+    }, 20_000)
 
     it('条件变化（排序/关键词）后窗口复位到 50', async () => {
         roots = Array.from({ length: 120 }, (_, index) => makeTask(index))
