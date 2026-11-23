@@ -27,6 +27,8 @@ const CODE_TO_LOCALE_KEY: Record<TaskErrorCodeValue, LocaleKey> = {
     [TaskErrorCode.STAR_MARK_FORBIDDEN]: 'task.error.starMarkForbidden',
     [TaskErrorCode.SCHEDULE_FORBIDDEN]: 'task.error.scheduleForbidden',
     [TaskErrorCode.TASK_NOT_FOUND]: 'task.error.taskNotFound',
+    [TaskErrorCode.ARCHIVE_PROJECT_ARCHIVED]: 'task.error.archiveProjectArchived',
+    [TaskErrorCode.ARCHIVE_SUBTASK_FORBIDDEN]: 'task.error.archiveSubtaskForbidden',
     [TaskErrorCode.PARENT_SELF]: 'task.error.parentSelf',
     [TaskErrorCode.PARENT_NOT_FOUND]: 'task.error.parentNotFound',
     [TaskErrorCode.PARENT_MUST_BE_TOP_LEVEL]: 'task.error.parentMustBeTopLevel',

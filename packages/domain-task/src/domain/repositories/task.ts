@@ -64,6 +64,17 @@ export interface TaskRepository {
     unarchiveByProjectId?(projectId: string): GoAsync<void>
 
     /**
+     * archive 单任务「归档」
+     * @description 可选方法 ⇒ 远端（`persistence-go`）/mobile 实现**不必提供**；
+     *              用例层以 `typeof === 'function'` 守卫，缺失返回「当前环境不支持」。
+     *              本地实现须在同一 Dexie `rw` 事务内判归档：**所属清单已归档 ⇒ 拒绝**
+     *              （清单归档后其内任务只读，`T768` 口径①），错误码 `TASK_ARCHIVE_PROJECT_ARCHIVED`。
+     *              归档 ≠ 移入收集箱 ⇒ `projectId` **保持不变**（`movedToInbox` 只属于 `unarchive`）。
+     * @param id 任务 ID
+     */
+    archive?(id: string): GoAsync<void>
+
+    /**
      * unarchive 单任务「取消归档」（脱归档）
      * @description 可选方法 ⇒ 远端（`persistence-go`）/mobile 实现**不必提供**；
      *              用例层以 `typeof === 'function'` 守卫，缺失返回「当前环境不支持」。

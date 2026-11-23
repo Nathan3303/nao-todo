@@ -27,7 +27,8 @@ const useTaskDetails = () => {
         selectTaskAndStartTimer,
         selectTaskAndStartFocus,
         resetTimer,
-        resetFocus
+        resetFocus,
+        isProjectArchived
     } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @dataStore
@@ -193,6 +194,7 @@ const useTaskDetails = () => {
         ungiveUpTask,
         switchTaskDetails,
         closeDetails,
+        isProjectArchived,
         retryCheckItems,
         retryComments,
         retrySubTasks,

@@ -4,6 +4,7 @@ import {
     prioritySNMap,
     TASK_PRIORITIES,
     TaskEntity,
+    TaskErrorCode,
     TaskRepository,
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
@@ -356,6 +357,57 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     async unarchiveByProjectId(projectId: string): GoAsync<void> {
         return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'unarchive')
+    }
+
+    /**
+     * 单任务归档（`T768`）
+     * @description 同一 Dexie `rw` 事务内判归档：**所属清单已归档 ⇒ 拒绝**（清单归档后其内任务只读）。
+     *              归档 ≠ 移入收集箱 ⇒ `projectId` **不变**；`archivedAt` 写当前（校准）时间，
+     *              `updatedAt` 同步推进并按 `upsert` 入同步队列。
+     */
+    async archive(id: string): GoAsync<void> {
+        try {
+            const outcome = await this.db.transaction(
+                'rw',
+                this.db.tasks,
+                this.db.projects,
+                this.db.syncQueue,
+                async () => {
+                    const record = await this.db.tasks.get(id)
+                    if (!record || record.userId !== this.currentUserId)
+                        return { ok: false as const, message: '任务不存在' }
+                    // 判据 = 任务所属清单当前是否归档（读项目行，非任务推导；与 unarchive 同口径）
+                    const project = record.projectId
+                        ? await this.db.projects.get(record.projectId)
+                        : undefined
+                    if (!isAbsentStamp(project?.archivedAt))
+                        return {
+                            ok: false as const,
+                            message: TaskErrorCode.ARCHIVE_PROJECT_ARCHIVED
+                        }
+                    const now = nowCalibratedIso()
+                    // 归档 ≠ 移入收集箱：只动 archivedAt / updatedAt
+                    const nextTask = { ...record, archivedAt: now, updatedAt: now }
+                    const fieldBase = captureFieldBase(record, nextTask)
+                    await putWithSyncBase(this.db.tasks, nextTask)
+                    await syncTracker.markDirty(
+                        'tasks',
+                        id,
+                        'upsert',
+                        now,
+                        this.db.syncQueue,
+                        fieldBase
+                    )
+                    return { ok: true as const }
+                }
+            )
+            if (!outcome.ok) return outcome.message
+            // 旁路审计在业务事务之后（⛔ 审计不进 Dexie 事务）；动作 = 归档（`archivedAt` 不进 `fields`）
+            await recordAudit({ entityId: id, action: 'archive', source: 'local-edit' })
+            return null
+        } catch (err) {
+            return String(err)
+        }
     }
 
     /**

@@ -665,6 +665,7 @@ const enUS: LocaleMessages = {
     'task.details.ungiveUp': 'Undo Give Up',
     'task.details.restore': 'Restore Task',
     'task.details.unarchive': 'Unarchive',
+    'task.details.archive': 'Archive this task',
     'task.details.deleteTask': 'Delete Task',
     'task.details.backToList': 'Back to Task List',
     'task.details.view': 'View Details',
@@ -737,6 +738,8 @@ const enUS: LocaleMessages = {
     'task.unarchivedToInbox': 'Moved to Inbox',
     'task.unarchivedToInboxHint': 'Its project is still archived',
     'task.unarchiveFailed': 'Failed to unarchive: {error}',
+    'task.archiveSuccess': 'Task archived',
+    'task.archiveFailed': 'Failed to archive: {error}',
     'task.confirmGiveUpTitle': 'Give up this task?',
     'task.confirmGiveUpContent': 'The task will be moved to "Given Up" list. Continue?',
     'task.confirmGiveUp': 'Confirm',
@@ -852,6 +855,9 @@ const enUS: LocaleMessages = {
     'task.error.starMarkForbidden': 'Deleted or archived tasks cannot be starred',
     'task.error.scheduleForbidden': 'Deleted or archived tasks cannot modify time',
     'task.error.taskNotFound': 'Task not found',
+    'task.error.archiveProjectArchived': 'This project is archived, so its tasks are read-only',
+    'task.error.archiveSubtaskForbidden':
+        'Subtasks cannot be archived on their own — archive the parent task',
     'task.error.parentSelf': 'A task cannot be its own parent',
     'task.error.parentNotFound': 'Parent task not found',
     'task.error.parentMustBeTopLevel':

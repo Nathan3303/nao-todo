@@ -15,9 +15,9 @@ import { describe, expect, it } from 'vite-plus/test'
  *   `pomodoroRecords` 属非 `tasks` 实体（PRD `R-8`）⇒ **不接**，由后续实体批次接入）。
  *
  * 现状红因：全部直写点都没有字段级基准（`put-with-sync-base.ts` 只回填行级 `syncedServerUpdatedAt`）。
- * 已知直写点（2026-11-10 实测 5 处 / 4 文件）：需接 `fieldBase` 的 **4 处** =
- * `put-with-sync-base.ts`(1) · `project-archive-cascade.ts`(2) · `task-repo-impl.ts` `unarchive`(1)；
- * 显式豁免 **1 处** = `pomodoro-record-repo-impl.ts`(1)。
+ * 已知直写点（2026-11-12 实测 6 处 / 4 文件）：需接 `fieldBase` 的 **5 处** =
+ * `put-with-sync-base.ts`(1) · `project-archive-cascade.ts`(2) · `task-repo-impl.ts`
+ * `unarchive`(1) + 单任务 `archive`(1，`T768` 新增)；显式豁免 **1 处** = `pomodoro-record-repo-impl.ts`(1)。
  *
  * 手法：`import.meta.glob(?raw)`（同 `packages/presentation/.../def-129-clearable-padding.test.ts`）。
  * ⛔ 不用 `node:fs` —— 在本包引入 `@types/node` 会把 `setTimeout` 全局返回类型染成 `Timeout`，
@@ -99,7 +99,8 @@ describe('T675 / M1 直写点源级断言', () => {
     it('扫描面非空（防 glob 写错 ⇒ 恒真空转）', () => {
         const scanned = Object.keys(sources)
         expect(scanned.length).toBeGreaterThan(50)
-        expect(SITES.length).toBe(5)
+        // `T768` 单任务归档新增 1 处（`task-repo-impl.ts` `archive`，已传 `fieldBase`）
+        expect(SITES.length).toBe(6)
     })
 
     it('直写点清单 = 允许清单 ∪ 豁免清单（新增 markDirty 直写点即红，须评估 fieldBase）', () => {
