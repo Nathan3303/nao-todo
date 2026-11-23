@@ -190,7 +190,6 @@ export const useCalendarHost = (options?: {
         if (calendarKeyLocked()) return
         action()
     }
-    const NAV_GROUP = '日历'
     const navPrev = (): void => {
         if (viewMode.value === 'month') goPrevMonth()
         else if (viewMode.value === 'week') goPrevWeek()
@@ -203,14 +202,14 @@ export const useCalendarHost = (options?: {
     }
     useShortcut('calendar.nav.prev', 'arrowleft', guardNav(navPrev), {
         scope: CALENDAR_KEY_SCOPE,
-        label: '上个月/上周/前一天',
-        group: NAV_GROUP,
+        i18n: { label: 'commands.command.calendarPrev', group: 'commands.group.calendar' },
+        icon: 'arrow-left',
         preventDefault: true
     })
     useShortcut('calendar.nav.next', 'arrowright', guardNav(navNext), {
         scope: CALENDAR_KEY_SCOPE,
-        label: '下个月/下周/后一天',
-        group: NAV_GROUP,
+        i18n: { label: 'commands.command.calendarNext', group: 'commands.group.calendar' },
+        icon: 'arrow-right',
         preventDefault: true
     })
     useShortcut(
@@ -219,8 +218,8 @@ export const useCalendarHost = (options?: {
         guardNav(() => goToToday()),
         {
             scope: CALENDAR_KEY_SCOPE,
-            label: '回到今天',
-            group: NAV_GROUP
+            i18n: { label: 'commands.command.calendarToday', group: 'commands.group.calendar' },
+            icon: 'calendar'
         }
     )
     useShortcut(
@@ -229,8 +228,8 @@ export const useCalendarHost = (options?: {
         guardNav(() => goToWeekView()),
         {
             scope: CALENDAR_KEY_SCOPE,
-            label: '切到周视图',
-            group: NAV_GROUP
+            i18n: { label: 'commands.command.calendarWeek', group: 'commands.group.calendar' },
+            icon: 'week'
         }
     )
     useShortcut(
@@ -239,8 +238,8 @@ export const useCalendarHost = (options?: {
         guardNav(() => goToMonthView()),
         {
             scope: CALENDAR_KEY_SCOPE,
-            label: '切到月视图',
-            group: NAV_GROUP
+            i18n: { label: 'commands.command.calendarMonth', group: 'commands.group.calendar' },
+            icon: 'calendar2'
         }
     )
     useShortcut(
@@ -254,12 +253,19 @@ export const useCalendarHost = (options?: {
             }
             openQuickCreate(selectedKey.value || todayDateKey())
         }),
-        { scope: CALENDAR_KEY_SCOPE, label: '在选中日快速新建', group: NAV_GROUP }
+        {
+            scope: CALENDAR_KEY_SCOPE,
+            i18n: {
+                label: 'commands.command.calendarQuickCreate',
+                group: 'commands.group.calendar'
+            },
+            icon: 'plus'
+        }
     )
     useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || todayDateKey()), {
         scope: CALENDAR_KEY_SCOPE,
-        label: '打开当日面板',
-        group: NAV_GROUP,
+        i18n: { label: 'commands.command.calendarOpenDay', group: 'commands.group.calendar' },
+        icon: 'list',
         preventDefault: true,
         available: (context) =>
             !calendarKeyLocked() && !isInteractiveKeyTarget(context.event?.target)

@@ -1,5 +1,6 @@
 import { registry, scopeManager } from '@/commands/instance'
-import { matchesKeyEvent, parseKeys, type KeyEvent, type Platform } from '@nao-todo/shared/commands'
+import { detectPlatform } from '@/commands/platform'
+import { matchesKeyEvent, parseKeys, type KeyEvent } from '@nao-todo/shared/commands'
 import { onMounted, onUnmounted } from 'vue'
 
 /**
@@ -8,11 +9,8 @@ import { onMounted, onUnmounted } from 'vue'
  * 将按键事件经 Registry + ScopeManager 匹配后派发到对应的 Command
  */
 export const useKeyboardShortcuts = () => {
-    // 平台检测：Mac 上 $mod → metaKey，其他平台 → ctrlKey
-    const isMac =
-        typeof navigator !== 'undefined' &&
-        (/mac/i.test(navigator.platform) || /mac/i.test(navigator.userAgent))
-    const platform: Platform = isMac ? 'mac' : 'win'
+    // 平台检测：Mac 上 $mod → metaKey，其他平台 → ctrlKey（与面板/帮助的键面提示同源）
+    const platform = detectPlatform()
 
     /**
      * 键盘事件处理
