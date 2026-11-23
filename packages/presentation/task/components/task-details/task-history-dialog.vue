@@ -14,7 +14,8 @@
  *                分页入口 = 列表末尾的独立「更早的记录」按钮（`hasMore` 时才渲染，
  *                ⛔ 不把组标题当按钮用）
  *              - 整行可点（原生 `button` ⇒ Tab 可达、Enter 展开）；长值单行省略 +
- *                `title` 给全文，展开后换行显示结构化字段差异（展开区有高度上限 + 内滚）
+ *                `title` 给全文，展开后换行显示结构化字段差异（差异区**随列表一起滚**，
+ *                全对话框只有 `.task-history__list` 一个滚动容器）
  *              - 关闭三路：Esc / `×`（`NueDialog` 原生）· 底部「关闭」按钮；**焦点归还**由触发方
  *                （footer）负责 —— 对话框不持有触发项引用
  *              - 打开按 `taskId`（entityId）加载；关闭即卸载内容并清空本组件状态（`generation`
@@ -403,7 +404,7 @@ const hasContent = computed(() => items.value.length > 0)
     width: 100%;
 }
 
-/* 列表：查阅型信息 ⇒ 框内滚动，标题与底部按钮常驻 */
+/* 列表：查阅型信息 ⇒ 由列表自身滚动（全对话框唯一滚动容器），标题与底部按钮常驻 */
 .task-history__list {
     display: flex;
     flex-direction: column;
@@ -550,20 +551,22 @@ const hasContent = computed(() => items.value.length > 0)
 }
 
 /*
- * 展开后面的**主文案仍保持 1 行省略**（全文看下方可滚的字段差异区）—— 否则长值会在主文案里
- * 无限换行，一条就顶满列表（实测 450px = 列表可视高的 108%）
+ * 展开后面的**主文案仍保持 1 行省略**（全文看下方字段差异区，差异区随列表一起滚）—— 否则长值会在
+ * 主文案里无限换行，一条就顶满列表（实测 450px = 列表可视高的 108%）
  */
 .task-history__entry.is-expanded .task-history__summary {
     white-space: nowrap;
 }
 
-/* 展开后：字段差异逐行（`create` 只有新值）；高度上限 + 内滚 ⇒ 一条不把列表顶满 */
+/*
+ * 展开后：字段差异逐行（`create` 只有新值）
+ * 单一滚动容器 = 上面的 `.task-history__list`（`DEF-162`）：差异区**不加高度上限、不自滚**，
+ * 展开内容随列表一起滚 —— 否则列表接近满时滚轮落在展开区会被内层吞掉（实测双层滚动条）
+ */
 .task-history__detail {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-height: 6.5rem;
-    overflow: auto;
     font-size: var(--nue-text-xs);
     color: var(--nue-secondary-text-color);
 }
