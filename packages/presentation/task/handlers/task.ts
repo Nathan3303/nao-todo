@@ -142,6 +142,25 @@ export class TaskHandler {
     }
 
     /**
+     * 任务归档（单任务）
+     * @description 归档成功后沿用**既有全量刷新事件**（`RefreshData`）让当前视图移除本任务
+     *              （列表查询默认排除已归档，重新查询即不再返回）——`T768`。
+     * @param taskId 任务 ID
+     * @returns 错误信息
+     */
+    async archiveTask(taskId: string): GoAsync<void> {
+        const archiveError = await this.taskUseCase.archive(taskId)
+        if (archiveError !== null) {
+            this.notifyError('task.archiveFailed', archiveError)
+            return archiveError
+        }
+        // 视图移除：沿用既有全量刷新（不新增事件）
+        this.subscriber.emit('RefreshData')
+        this.notifySuccess('task.archiveSuccess')
+        return null
+    }
+
+    /**
      * 任务取消归档（脱归档）
      * @description 清单仍归档 ⇒ 任务移入收集箱，并提示「原清单仍归档」；
      *              清单已恢复 ⇒ 回原清单（ADR `2026-09-24-project-archive.md` §15.1）。

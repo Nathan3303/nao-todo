@@ -66,6 +66,13 @@ export type TaskDetailsContext = {
     switchTaskDetails: (taskId: TaskViewObject['id']) => void
     closeDetails: () => void
 
+    /**
+     * 所属清单当前是否归档（`T768` 只读判据）
+     * @description 可选：仅装配层（视图 provider）提供；缺失按「未归档」处理。
+     *              用于门控「归档 / 取消归档」两项菜单动作 —— 清单已归档 ⇒ 其内任务只读。
+     */
+    isProjectArchived?: (projectId: string) => boolean
+
     retryCheckItems: () => Promise<void>
     retryComments: () => Promise<void>
     retrySubTasks: () => Promise<void>
@@ -158,6 +165,9 @@ export type TaskDetailsPreContext = {
     selectTaskAndStartFocus: (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => void
     resetTimer: () => void
     resetFocus: () => void
+
+    /** 所属清单是否归档（可选；同上，缺失按「未归档」处理） */
+    isProjectArchived?: (projectId: string) => boolean
 }
 
 // 任务详情预上下文键

@@ -613,6 +613,7 @@ export interface LocaleMessages {
     'task.details.ungiveUp': string
     'task.details.restore': string
     'task.details.unarchive': string
+    'task.details.archive': string
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string
@@ -683,6 +684,8 @@ export interface LocaleMessages {
     'task.unarchivedToInbox': string
     'task.unarchivedToInboxHint': string
     'task.unarchiveFailed': string
+    'task.archiveSuccess': string
+    'task.archiveFailed': string
     'task.confirmGiveUpTitle': string
     'task.confirmGiveUpContent': string
     'task.confirmGiveUp': string
@@ -792,6 +795,8 @@ export interface LocaleMessages {
     'task.error.starMarkForbidden': string
     'task.error.scheduleForbidden': string
     'task.error.taskNotFound': string
+    'task.error.archiveProjectArchived': string
+    'task.error.archiveSubtaskForbidden': string
     'task.error.parentSelf': string
     'task.error.parentNotFound': string
     'task.error.parentMustBeTopLevel': string

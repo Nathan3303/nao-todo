@@ -4,7 +4,7 @@ import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { TaskProjectSelector } from '../../project-selector'
-import { inject, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
+import { computed, inject, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_HISTORY_CONTEXT_KEY } from '../context'
@@ -24,7 +24,8 @@ const {
     deleteTask,
     restoreTask,
     giveUpTask,
-    ungiveUpTask
+    ungiveUpTask,
+    isProjectArchived
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 // @hook 导出任务文本（Markdown / JSON / HTML 单据）
@@ -70,6 +71,18 @@ const openParentTaskSelector = () => {
         }
     })
 }
+
+/**
+ * 所属清单是否归档（`T768` 只读判据）
+ * @description `isProjectArchived` 由装配层提供（缺失按「未归档」处理）；
+ *              在 computed 内调用 ⇒ 对 pinia 清单状态的读取会被依赖追踪，
+ *              清单取消归档后两个入口即时恢复。
+ */
+const isProjectArchivedByVo = computed(() => {
+    const projectId = vo.value?.projectId ?? ''
+    if (projectId === '' || typeof isProjectArchived !== 'function') return false
+    return isProjectArchived(projectId)
+})
 
 const handleDropdownExecute = async (executeId: string) => {
     if (!vo.value) return
@@ -118,6 +131,9 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'unarchive-todo':
             await taskHandler.unarchiveTask(vo.value.id)
             break
+        case 'archive-todo':
+            await taskHandler.archiveTask(vo.value.id)
+            break
     }
 }
 </script>
@@ -142,11 +158,30 @@ const handleDropdownExecute = async (executeId: string) => {
                 </nue-button>
             </template>
             <dropdown-div-block :title="t('task.details.moreOperations')">
+                <!--
+                    归档 / 取消归档互斥（`T768`）：
+                    · 清单已归档 ⇒ 其内任务只读 ⇒ 两项都不提供（改为一条可读的只读说明）；
+                    · 已归档 ⇒ 只给「取消归档」（ADR §15.1 逃生口）；
+                    · 子任务 ⇒ 不提供「归档此任务」（父任务归档即覆盖其可见性）。
+                -->
                 <inner-dropdown-option
-                    v-if="vo.archivedAt"
+                    v-if="isProjectArchivedByVo"
+                    disabled
+                    :title="t('archive.readOnlyHint')"
+                    icon="lock"
+                />
+                <inner-dropdown-option
+                    v-else-if="vo.archivedAt"
                     :title="t('task.details.unarchive')"
                     icon="archive"
                     execute-id="unarchive-todo"
+                />
+                <inner-dropdown-option
+                    v-else-if="!vo.parentTaskId"
+                    :disabled="vo.isDeleted"
+                    :title="t('task.details.archive')"
+                    icon="archive"
+                    execute-id="archive-todo"
                 />
                 <inner-dropdown-option
                     :disabled="vo.isDeleted"

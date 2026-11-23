@@ -143,6 +143,43 @@ export class TaskUseCase {
     }
 
     /**
+     * 单任务「归档」
+     * @description 前置守卫（`T768` 口径）：
+     *              ① 所属清单已归档 ⇒ 拒绝（清单归档后其内任务只读；判据落在仓储同事务内，
+     *                 返回可读错误码 `TASK_ARCHIVE_PROJECT_ARCHIVED`）；
+     *              ② 任务已归档 ⇒ 幂等（不写入、不报错）；
+     *              ③ 子任务不提供归档（父任务归档即覆盖其可见性）⇒ 拒绝 `TASK_ARCHIVE_SUBTASK_FORBIDDEN`。
+     *              仓储方法为**可选**（远端/mobile 不必实现）⇒ 缺失时返回「当前环境不支持」。
+     *              成功后同步内存 store（`archivedAt` / `isArchived`）⇒ 列表（默认排除已归档）不再包含本任务。
+     * @param id 任务 ID
+     * @returns 错误信息
+     */
+    async archive(id: TaskViewObject['id']): GoAsync<void> {
+        // 仓储可选方法守卫（远端/移动端未实现 ⇒ 明确「不支持」而非抛异常）
+        if (typeof this.taskRepo.archive !== 'function') return '当前环境不支持归档'
+        // 守卫所需的当前实体（父任务归属 / 归档位）
+        const [entity, getError] = await this.taskRepo.get(id)
+        if (getError !== null) return getError
+        if (!entity) return TaskErrorCode.TASK_NOT_FOUND
+        // 子任务不单独归档（父任务归档即覆盖其可见性）
+        if (entity.parentTaskId !== '') return TaskErrorCode.ARCHIVE_SUBTASK_FORBIDDEN
+        // 已归档 ⇒ 幂等（不重复写库，也不改 `updatedAt`）
+        if (entity.isArchived) {
+            this.taskStore.updateTask(id, { archivedAt: entity.archivedAt, isArchived: true })
+            return null
+        }
+        // 归档（清单已归档 ⇒ 仓储拒绝并返回可读错误码）
+        const err = await this.taskRepo.archive(id)
+        if (err !== null) return err
+        // 同步内存数据：可见性判据只认任务自身字段（PA-9：不改清单 archivedAt）
+        this.taskStore.updateTask(id, {
+            archivedAt: dayjs().toISOString(),
+            isArchived: true
+        })
+        return null
+    }
+
+    /**
      * 单任务「取消归档」（脱归档）
      * @description 清单仍归档 ⇒ 任务移入收集箱（`movedToInbox=true`）；清单已恢复 ⇒ 回原清单。
      *              仓储方法为**可选**（远端/mobile 不必实现）⇒ 缺失时返回「当前环境不支持」。

@@ -198,6 +198,9 @@ const useTasksView = () => {
         handleResizeOutline,
         getTag: tagsStore.getTag,
         getProjectName,
+        // T768：详情「更多」菜单的归档 / 取消归档门控（清单已归档 ⇒ 其内任务只读）
+        isProjectArchived: (projectId: string) =>
+            projectsStore.getProject(projectId)?.isArchived ?? false,
         selectTaskAndStartTimer,
         selectTaskAndStartFocus,
         resetTimer: () => pomodoroTimerStore.reset(),
