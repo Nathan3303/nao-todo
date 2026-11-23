@@ -53,10 +53,15 @@ const INTERNAL_ID_ANY = /\b(?:R5|R13|T654|R-10)\b/g
 const CJK = /[\u4e00-\u9fa5]/
 
 /**
- * 字符串外的注释提取（引号感知；不做正则字面量识别）
+ * 字符串外的注释提取（引号感知 + 表达式位置的正则字面量跳过）
  * @description 局限性（已知、可接受）：模板串 `${…}` 插值内部按字符串内容处理 ⇒ 插值里的
- *              注释不会被找出；正则字面量里的 `\/` 因紧跟在反斜杠之后，**不当作注释开头**
- *              （这是误报的主源，实测 `regex` 如 `/^https?:\/\//i`、`/\*[^]*?\*\//g`）。
+ *              注释不会被找出；正则字面量里的 `\/` 因紧跟在反斜杠之后，**不当作注释开头**。
+ *              正则字面量只在「前一个非空白字符是表达式起始符」（`= ( , : [ ! & | ? { } ; >`）时
+ *              整体跳过：该位置上的 `/` **不可能是除号**，故不会盖掉真实注释；其它位置的正则
+ *              （如 `if (x) /re/`）仍按不能识别的旧限制处理。
+ *              背景（T784）：`vue@3.5.46` 的 `normalizeStyle` 多了一条字符类内置引号的组合正则
+ *              `/"(?:…)"|…|\/\*[^]*?\*\//g`，旧解析在字符类的 `"` 处字符串状态失同步
+ *              ⇒ 把后面的 `startsWith("/*")` 误判成块注释（构建假红）。
  *              CSS 无行注释语义（`url(http://…)` 会误报）⇒ 只在 JS 里识别 `//`。
  * @returns {{ type: 'line'|'block', line: number, text: string }[]}
  */
@@ -88,6 +93,35 @@ function extractComments(source, { lineComments = true } = {}) {
         }
     }
 
+    /** 正则字面量的合法前导字符（`/` 紧跟它们时只可能是正则开头，不可能是除号） */
+    const REGEX_LEAD_CHARS = new Set(['=', '(', ',', ':', '[', '!', '&', '|', '?', '{', '}', ';', '>'])
+
+    /** 跳过正则字面量本体（含字符类内的 `/` 与转义）；未闭合 / 跨行 ⇒ 不消费并返回 false */
+    const skipRegex = () => {
+        if (source[index - 1] === '\\') return false
+        let before = index - 1
+        while (before >= 0 && /\s/.test(source[before])) before -= 1
+        if (before >= 0 && !REGEX_LEAD_CHARS.has(source[before])) return false
+        let cursor = index + 1
+        let inClass = false
+        while (cursor < length) {
+            const char = source[cursor]
+            if (char === '\\') {
+                cursor += 2
+                continue
+            }
+            if (char === '\n') return false
+            if (char === '[') inClass = true
+            else if (char === ']') inClass = false
+            else if (char === '/' && !inClass) {
+                index = cursor + 1
+                return true
+            }
+            cursor += 1
+        }
+        return false
+    }
+
     while (index < length) {
         const char = source[index]
         if (char === '\n') {
@@ -97,6 +131,9 @@ function extractComments(source, { lineComments = true } = {}) {
         }
         if (char === "'" || char === '"' || char === '`') {
             skipQuoted(char)
+            continue
+        }
+        if (char === '/' && source[index + 1] !== '/' && source[index + 1] !== '*' && skipRegex()) {
             continue
         }
         if (lineComments && char === '/' && source[index + 1] === '/' && source[index - 1] !== '\\') {
