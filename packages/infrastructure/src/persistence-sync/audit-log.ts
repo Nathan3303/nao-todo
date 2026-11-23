@@ -329,7 +329,9 @@ const pruneAuditLogInner = async (userId: string): Promise<number> => {
 /**
  * 分块删除（每块 ≤ `AUDIT_PRUNE_CHUNK_SIZE`，`bulkDelete` 每块自成一个事务）
  * @description 避免单个巨型事务长时间占用事件循环（qa 实测一次性删 1000/2000 条会出现秒级卡顿）。
- *              返回实际删除条数。
+ *              返回**实际物理删除**条数（`T763`）：删前先数本块**现存**键 —— 两轮裁切交叠时，
+ *              「请求删但已被对方删掉的键」⛔ 不得计入（`bulkDelete` 自身不返回条数，
+ *              旧实现按 `chunk.length` 累加 ⇒ 日志报 400、实际只删 200，`T762b` §2）。
  */
 const deleteAuditRowsInChunks = async (
     table: typeof localDatabase.auditLogs,
@@ -338,8 +340,10 @@ const deleteAuditRowsInChunks = async (
     let removed = 0
     for (let index = 0; index < keys.length; index += AUDIT_PRUNE_CHUNK_SIZE) {
         const chunk = keys.slice(index, index + AUDIT_PRUNE_CHUNK_SIZE)
+        // 物理删除数 = 本块**在库**的键数（主键 `:id` = `seq`）；紧贴删除前数，窗口最小
+        const present = await table.where(':id').anyOf(chunk).count()
         await table.bulkDelete(chunk)
-        removed += chunk.length
+        removed += present
         // 块与块之间让出一次宏任务：待保存的交互能在下一块之前插进来（⛔ 不改变删除总量语义）
         if (index + AUDIT_PRUNE_CHUNK_SIZE < keys.length) {
             await new Promise((resolve) => setTimeout(resolve, 0))
@@ -348,11 +352,47 @@ const deleteAuditRowsInChunks = async (
     return removed
 }
 
-/** 待执行的淘汰定时器（每用户最多 1 个 ⇒ 防抖 + 单飞） */
+/** 待执行的淘汰定时器（每用户最多 1 个 ⇒ 防抖） */
 const pruneTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
+/** 在飞裁切（每用户最多 1 个 ⇒ 单飞）；值为**整轮链**（含随后的补排轮），可被 `flushAuditPrune` await */
+const pruneInFlight = new Map<string, Promise<void>>()
+
+/** 在飞期间又到达的请求（只记「有」⇒ 本轮结束后**恰好补跑一轮**；⛔ 不按请求数放大成 N 轮） */
+const pruneRerunPending = new Set<string>()
+
 /**
- * 调度一次淘汰（防抖 + 单飞）
+ * 跑一轮裁切；若本轮期间又有请求到达 ⇒ **补跑一轮**
+ * @description 补排标记在每轮**开始时**清除 ⇒ `N` 个请求只多跑 **1** 轮（不是 N 轮）；
+ *              数据收敛后单轮删 0 即退出 ⇒ 不会变成无限循环。补跑那轮同样受
+ *              `AUDIT_PRUNE_MAX_PER_RUN` 限幅（走同一个 `pruneAuditLog`）。
+ */
+const runPruneRounds = async (userId: string): Promise<void> => {
+    do {
+        pruneRerunPending.delete(userId)
+        await pruneAuditLog(userId)
+    } while (pruneRerunPending.has(userId))
+}
+
+/**
+ * 触发一次裁切（**单飞**：同一用户同时只有一轮在跑）
+ * @description 已有在飞裁切 ⇒ 只置补排标记、⛔ 不并发再起一轮 —— 否则两轮裁切交叠，
+ *              单次窗口的物理删除量会超 `AUDIT_PRUNE_MAX_PER_RUN`（`T762b` §2 实测 600–800，
+ *              且 `audit.entry.evicted.count` 会多报）。
+ */
+const runPrune = (userId: string): void => {
+    if (pruneInFlight.has(userId)) {
+        pruneRerunPending.add(userId)
+        return
+    }
+    const run = runPruneRounds(userId).finally(() => {
+        pruneInFlight.delete(userId)
+    })
+    pruneInFlight.set(userId, run)
+}
+
+/**
+ * 调度一次淘汰（防抖 + 单飞 + 补排）
  * @description 一批写入（级联归档 200 条等）只会清一次；定时器到期才真正查询+删除，
  *              ⇒ 保存路径只多一次 `set` 开销（毫秒级以下），不出现可感延迟。
  *              裁切自身失败只丢日志、不影响任何业务写。
@@ -363,11 +403,43 @@ const schedulePrune = (userId: string): void => {
         userId,
         setTimeout(() => {
             pruneTimers.delete(userId)
-            void pruneAuditLog(userId).catch(() => {
-                // 裁切是维护动作：失败不向任何调用方传播（审计旁路姿态）
-            })
+            runPrune(userId)
         }, AUDIT_PRUNE_DEBOUNCE_MS)
     )
+}
+
+/**
+ * **排空裁切**：清掉待触发的防抖定时器，并 await 在飞裁切（含其后的补排轮）
+ * @description ⛔ **生产代码不用**（`T763` · 仅供测试隔离 / 清库前置）：生产侧裁切是旁路异步动作，
+ *              不阻塞任何保存路径。测试里若不排空，`beforeEach` 清表后残留的裁切会在**下一个用例**
+ *              的断言窗口内触发（`T762b` 判定的 flake 根因）。
+ *              调用后该用户（或全部用户）处于「无待触发定时器 + 无在飞裁切」的静默态。
+ * @param userId 缺省 = 全部用户
+ */
+export const flushAuditPrune = async (userId?: string): Promise<void> => {
+    const users =
+        userId === undefined
+            ? [...new Set([...pruneTimers.keys(), ...pruneInFlight.keys(), ...pruneRerunPending])]
+            : [userId]
+    // ① 清掉还没触发的防抖定时器（这些裁切**不再发生**）
+    for (const user of users) {
+        const timer = pruneTimers.get(user)
+        if (timer === undefined) continue
+        clearTimeout(timer)
+        pruneTimers.delete(user)
+    }
+    // ② await 在飞裁切（含补排轮）；等待期间若又排进新的一轮，继续等到彻底静默
+    for (const user of users) {
+        let awaited: Promise<void> | undefined
+        let next = pruneInFlight.get(user)
+        // 身份判等：⛔ 不对已 settle 的同一个 promise 反复 await（防自旋）
+        while (next !== undefined && next !== awaited) {
+            awaited = next
+            await next
+            next = pruneInFlight.get(user)
+        }
+        pruneRerunPending.delete(user)
+    }
 }
 
 /**
