@@ -57,7 +57,7 @@ const ITEMS = [
         fields: [
             { field: 'description', from: '旧描述', to: LONG_VALUE },
             { field: 'priority', from: 'medium', to: 'high' },
-            // 补足 5 个字段：内容高度必须**确定超过 6.5rem 上限**（⛔ 不能靠「本地字体刚好超了」）
+            // 补足 5 个字段：展开后内容必须确定超过列表可视高（⛔ 不能靠「本地字体刚好超了」）
             { field: 'state', from: 'todo', to: 'done' },
             { field: 'name', from: '旧名', to: LONG_VALUE },
             { field: 'startAt', from: null, to: '2026-11-13T00:00:00.000Z' }
@@ -290,6 +290,19 @@ window.__qa = (() => {
         await new Promise((resolve) => setTimeout(resolve, 50))
       }
       return last
+    },
+    /** 列表（唯一的滚动容器，T791 / DEF-162）实测：上限 / 溢出 / 当前 scrollTop */
+    listInfo: () => {
+      const list = document.querySelector('.task-history__list')
+      if (!list) return null
+      const style = getComputedStyle(list)
+      return {
+        maxHeight: style.maxHeight,
+        overflowY: style.overflowY,
+        clientHeight: list.clientHeight,
+        scrollHeight: list.scrollHeight,
+        scrollTop: Math.round(list.scrollTop)
+      }
     },
     detailInfo: () => {
       const detail = document.querySelector('.task-history__detail')
@@ -578,7 +591,8 @@ try {
   await evaluate('window.__qa.blur()')
   await pause(150)
 
-  // 展开态（点击展开，用于量「差异文字」颜色、行高、展开区上限与内滚）——与 Enter 路径分开，避免焦点底色污染底色
+  // 展开态（点击展开，用于量「差异文字」颜色、行高、展开区是否自滚、滚动容器枚举）
+  // ——与 Enter 路径分开，避免焦点底色污染底色
   await evaluate('window.__qa.clickRow(0)')
   await pause(350)
   const stableHeight = await evaluate('window.__qa.waitDetailStable()')
@@ -586,34 +600,28 @@ try {
   const detailBefore = await evaluate('window.__qa.detailInfo()')
   const scrollablesExpanded = await evaluate('window.__qa.scrollables()')
 
-  // 内滚的**键盘可达性**：Tab 直到焦点落到展开区（若可达），再按真 ArrowDown 看 scrollTop 是否变化
-  let detailFocus = null
-  for (let attempt = 0; attempt < 25; attempt++) {
-    await tab(sessionId)
-    await pause(60)
-    const info = await evaluate('window.__qa.focusInfo()')
-    if (info.isDetail) {
-      detailFocus = info
-      break
-    }
+  // 单一滚动容器（列表）的**键盘可达性**（T791 / DEF-162）：焦点在展开行上，真 ArrowDown
+  // ⇒ 列表 scrollTop 必须增加。detail 已不再是滚动容器（不可聚焦）⇒ 不再找 isDetail。
+  await evaluate('window.__qa.focusRow(0)')
+  await pause(150)
+  const listBeforeKeyboard = await evaluate('window.__qa.listInfo()')
+  for (let step = 0; step < 10; step++) {
+    await send(
+      'Input.dispatchKeyEvent',
+      { type: 'rawKeyDown', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
+      sessionId
+    )
+    await send(
+      'Input.dispatchKeyEvent',
+      { type: 'keyUp', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
+      sessionId
+    )
+    await pause(80)
   }
-  let detailAfter = detailBefore
-  if (detailFocus) {
-    for (let step = 0; step < 14; step++) {
-      await send(
-        'Input.dispatchKeyEvent',
-        { type: 'rawKeyDown', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
-        sessionId
-      )
-      await send(
-        'Input.dispatchKeyEvent',
-        { type: 'keyUp', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
-        sessionId
-      )
-      await pause(120)
-    }
-    detailAfter = await evaluate('window.__qa.detailInfo()')
-  }
+  await pause(200)
+  const listAfterKeyboard = await evaluate('window.__qa.listInfo()')
+  await evaluate('window.__qa.blur()')
+  await pause(100)
   await evaluate('window.__qa.clickRow(0)')
   await pause(250)
 
@@ -699,10 +707,9 @@ try {
     expandedSummary: afterEnter.summary,
     detail: {
       before: detailBefore,
-      after: detailAfter,
-      focus: detailFocus,
       scrollables: scrollablesExpanded,
-      stableHeight
+      stableHeight,
+      listScroll: { before: listBeforeKeyboard, after: listAfterKeyboard }
     },
     secondary,
     logs: logs.slice(0, 20)
@@ -780,6 +787,14 @@ interface DetailInfo {
     text: string
 }
 
+interface ListInfo {
+    maxHeight: string
+    overflowY: string
+    clientHeight: number
+    scrollHeight: number
+    scrollTop: number
+}
+
 interface RenderResult {
     light: RenderMeasure
     dark: RenderMeasure
@@ -816,18 +831,12 @@ interface RenderResult {
         whiteSpace: string
         overflow: string
     }
-    /** 展开区（`T718`：`max-height: 6.5rem` + 内滚）的实测 + 键盘可达性 + 滚动容器枚举 */
+    /** 展开区（`T791`/`DEF-162`：**不再自滚**，展开随列表一起滚）的实测 + 列表键盘可滚性 + 滚动容器枚举 */
     detail: {
         before: DetailInfo | null
-        after: DetailInfo | null
-        focus: {
-            activeTag: string
-            isRow: boolean
-            isDetail: boolean
-            focusVisible: boolean
-        } | null
         scrollables: string[]
         stableHeight: number
+        listScroll: { before: ListInfo | null; after: ListInfo | null }
     }
     /** 第二场景（`?rows=2`：列表**不**溢出）—— 判「无双层滚动条」的正面边界 */
     secondary: {
@@ -992,8 +1001,9 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 `长值必须真溢出（scrollWidth ${longRow.summary!.scrollWidth} > clientWidth ${longRow.summary!.clientWidth}）`
             ).toBeGreaterThan(longRow.summary!.clientWidth)
 
-            // `T719` 契约修订（PM 裁定）：展开后主文案**仍单行省略**，全文在下方 `detail` 内滚区
-            // （展开换行时单条 = 108% 可视高，正是要修的现象；且替代方案会有双层滚动条 + 同值显示两遍）
+            // `T719` 契约修订（PM 裁定）：展开后主文案**仍单行省略**，全文在下方 `detail` 差异区
+            // （展开换行时单条 = 108% 可视高，正是要修的现象；且替代方案会有同值显示两遍）
+            // `T791`/`DEF-162` 修订：差异区**不自滚**，展开内容随列表一起滚（全对话框仅一个滚动容器）
             // 「无信息丢失」前提①：折叠时 `title` = 主文案全文（逐字相等），且含完整长值
             expect(longRow.title, '`title` 必须与主文案逐字相等（全文兜底）').toBe(
                 longRow.summaryText
@@ -1008,7 +1018,7 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
             ).toBe('nowrap')
             expect(
                 measured.expandedSummary.scrollWidth,
-                '展开后主文案仍真溢出（全文走 title + detail 内滚区，⛔ 不丢信息）'
+                '展开后主文案仍真溢出（全文走 title + detail 差异区，⛔ 不丢信息）'
             ).toBeGreaterThan(measured.expandedSummary.clientWidth)
         },
         PROBE_TIMEOUT
@@ -1034,7 +1044,7 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
     )
 
     it(
-        'T719 抽验 T718：分页按钮 ≥40px（浅/深）· detail ≤6.5rem + 内滚可键盘滚 · 单条 ≤35% 可视高 · 无双层滚动条',
+        'T791 抽验 T718/DEF-162：单一滚动容器（detail 不再自滚）· 分页按钮 ≥40px（浅/深）· 列表真溢出且键盘可滚',
         async () => {
             const measured = await probe()
 
@@ -1050,62 +1060,69 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 ).toBeGreaterThanOrEqual(40)
             }
 
-            // ② 展开区：高度被 `max-height: 6.5rem` 约束、真溢出（内滚有意义）、overflow-y: auto
-            //    ⚠️ 上限的 px 值**依赖根字号**（本地 16px ⇒ 104px，CI 实测 96px）⇒ 一律从计算样式取，
-            //    ⛔ 不硬编码 104；判据 = 「clientHeight 恰好等于 min(内容高, 上限)」且「内容确实超过上限」
+            // ② 展开区**不再自滚**（`DEF-162` 修法 = 单一滚动容器）：无高度上限、overflow-y 非 auto/scroll、
+            //    内容不被截断（`clientHeight === scrollHeight`）。把 `max-height` 加回 ⇒ 本例必红
             const before = measured.detail.before
             expect(before, '展开后必须有字段差异区').toBeTruthy()
-            const capPx = Number.parseFloat(before!.maxHeight)
-            expect(
-                capPx,
-                `detail 必须声明像素级 max-height（实测 ${before!.maxHeight}）`
-            ).toBeGreaterThan(0)
-            expect(before!.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
             expect(
                 before!.clientHeight,
                 '死窗口守卫：detail 必须有真实布局高度（0 = 无布局视口，⛔ 不是「设计成立」）'
             ).toBeGreaterThan(0)
             expect(
-                before!.scrollHeight,
-                `夹具必须确定溢出：内容高 ${before!.scrollHeight} 必须 > 上限 ${capPx}（否则本例不成立）`
-            ).toBeGreaterThan(capPx)
+                before!.maxHeight,
+                `detail ⛔ 不得再有高度上限（实测 max-height=${before!.maxHeight}）`
+            ).toBe('none')
             expect(
-                before!.clientHeight,
-                `上限必须真的在起作用：clientHeight=${before!.clientHeight} 必须 = min(${before!.scrollHeight}, ${capPx})`
-            ).toBe(Math.min(before!.scrollHeight, capPx))
+                /auto|scroll/.test(before!.overflowY),
+                `detail ⛔ 不得再是滚动容器（实测 overflow-y=${before!.overflowY}）`
+            ).toBe(false)
             expect(
                 before!.scrollHeight,
-                '真溢出 ⇒ 被截断（scrollHeight > clientHeight）'
-            ).toBeGreaterThan(before!.clientHeight)
+                `无内滚 ⇒ 内容不得被截断（scrollHeight ${before!.scrollHeight} vs clientHeight ${before!.clientHeight}）`
+            ).toBeLessThanOrEqual(before!.clientHeight + 1)
 
-            // ③ 单条展开高度 ≤35% **可视高**（= 列表设计上限 `min(58vh, 26rem)`；内容不足时另报内容高口径）
+            // ③ **滚动容器只有一个 = 列表**（`rows=4` 且展开后列表确定溢出 —— 夹具边界）
+            const listExpanded = measured.expanded.list!
+            expect(
+                listExpanded.clientHeight,
+                `死窗口守卫：列表必须有真实布局高度（实测 ${listExpanded.clientHeight}）`
+            ).toBeGreaterThan(0)
+            expect(
+                listExpanded.scrollHeight,
+                `夹具必须确定溢出：列表内容高 ${listExpanded.scrollHeight} 必须 > 可视高 ${listExpanded.clientHeight}`
+            ).toBeGreaterThan(listExpanded.clientHeight)
+            expect(
+                measured.detail.scrollables,
+                `对话框内只允许一个「真的在滚」的容器（实测 ${JSON.stringify(measured.detail.scrollables)}）`
+            ).toEqual(['task-history__list'])
+            // 边界自证：列表内容确实超过设计上限 min(58vh, 26rem)（否则「只有一层」只是没东西可滚）
             const listCap = Number.parseFloat(measured.light.list!.maxHeight) || 0
-            const listContent = measured.light.list!.clientHeight
+            expect(listCap, '列表必须有设计上限（max-height）').toBeGreaterThan(0)
+            expect(
+                listExpanded.scrollHeight,
+                `列表已溢出的判定依据：scrollHeight 必须 > 设计上限 ${listCap}`
+            ).toBeGreaterThan(listCap)
+
+            // ④ 唯一滚动容器的**键盘可达性**：焦点在展开行上，真 ArrowDown ⇒ 列表 scrollTop 增加且能到底
+            const listScrollBefore = measured.detail.listScroll.before!
+            const listScrollAfter = measured.detail.listScroll.after!
+            expect(listScrollBefore.scrollTop, '夹具前提：键盘滚动前列表 scrollTop 应为 0').toBe(0)
+            expect(
+                listScrollAfter.scrollTop,
+                `真 ArrowDown 必须让列表滚动（scrollTop ${listScrollAfter.scrollTop}）`
+            ).toBeGreaterThan(0)
+            expect(
+                listScrollAfter.scrollTop + listScrollAfter.clientHeight,
+                '滚到底必须能看到列表内容结尾（无信息丢失）'
+            ).toBeGreaterThanOrEqual(listScrollAfter.scrollHeight - 2)
+
+            // ⑤ 单条展开高度仅作**记录项**（⛔ 不再是判据）：`DEF-162` 按 PM 裁定取消 detail 上限，
+            //    T718 的「≤35% 可视高」目标随之不再成立（现状数字写进回执/报告）
             const expandedRowHeight = measured.expanded.detail!.rowHeight
             // eslint-disable-next-line no-console
             console.log(
-                `\n[T719 单条展开] ${expandedRowHeight}px = ${((expandedRowHeight / listCap) * 100).toFixed(1)}% 设计可视高（${listCap}px）· ${((expandedRowHeight / listContent) * 100).toFixed(1)}% 当前内容高（${listContent}px）\n`
+                `\n[T791 单条展开] ${expandedRowHeight}px = ${((expandedRowHeight / listCap) * 100).toFixed(1)}% 设计可视高（${listCap}px）· ${((expandedRowHeight / listExpanded.clientHeight) * 100).toFixed(1)}% 当前可视高（${listExpanded.clientHeight}px）\n`
             )
-            expect(listCap, '列表必须有设计上限（max-height）').toBeGreaterThan(0)
-            expect(
-                expandedRowHeight / listCap,
-                `单条展开 ${expandedRowHeight}px 必须 ≤35% 设计可视高（${listCap}px）`
-            ).toBeLessThanOrEqual(0.35)
-
-            // ④ 键盘可滚：Tab 能进 detail（可聚焦），真 ↓ 使 scrollTop 增加，且能滚到底看到结尾
-            expect(
-                measured.detail.focus,
-                'Tab 必须能把焦点送进可滚的差异区（否则键盘用户无法滚动）'
-            ).toBeTruthy()
-            const after = measured.detail.after!
-            expect(
-                after.scrollTop,
-                `真 ArrowDown 必须让 detail 滚动（scrollTop ${after.scrollTop}）`
-            ).toBeGreaterThan(0)
-            expect(
-                after.scrollTop + after.clientHeight,
-                '滚到底必须能看到内容结尾（无信息丢失）'
-            ).toBeGreaterThanOrEqual(after.scrollHeight - 2)
 
             // ⑤-0 **死窗口守卫（PM T721 硬要求）**：先证「布局是真的」再判滚动条
             //     CI 上曾出现：DOM 查得到、`.click()` 也生效，但 clientHeight/scrollHeight 全 0
@@ -1114,52 +1131,30 @@ describeRender('T717 / 活动流渲染后实测（headless Chromium，浅 + 深�
                 measured.secondary.list?.clientHeight ?? 0,
                 `第二场景列表必须真有布局高度（clientHeight=${measured.secondary.list?.clientHeight}）`
             ).toBeGreaterThan(0)
-            const secondaryDetail = measured.secondary.detail
-            const secondaryCap = Number.parseFloat(secondaryDetail?.maxHeight ?? '')
-            expect(
-                secondaryCap,
-                `第二场景 detail 必须有像素级上限（实测 ${secondaryDetail?.maxHeight}）`
-            ).toBeGreaterThan(0)
-            expect(
-                secondaryDetail?.clientHeight ?? 0,
-                '第二场景 detail 必须有真实布局高度（0 = 死窗口）'
-            ).toBeGreaterThan(0)
-            expect(secondaryDetail?.overflowY, 'detail 必须 overflow-y: auto').toBe('auto')
-            expect(
-                secondaryDetail!.clientHeight,
-                `第二场景上限必须真的在起作用：clientHeight=${secondaryDetail!.clientHeight} 必须 = min(${secondaryDetail!.scrollHeight}, ${secondaryCap})`
-            ).toBe(Math.min(secondaryDetail!.scrollHeight, secondaryCap))
-            expect(
-                secondaryDetail!.scrollHeight,
-                `第二场景夹具必须确定溢出：内容高 ${secondaryDetail!.scrollHeight} > 上限 ${secondaryCap}`
-            ).toBeGreaterThan(secondaryCap)
-            expect(
-                measured.light.list!.clientHeight,
-                '第一场景列表必须真有布局高度（0 = 死窗口，⛔ 不是「设计成立」）'
-            ).toBeGreaterThan(0)
-
-            // ⑤ 无双层滚动条 —— **两个边界都钉住**（PM：判据必须带边界值）
-            //   a) 列表内容未溢出（rows=2）⇒ 只有 detail 在滚 = 1 个滚动容器 ⇒ 设计目标成立
-            //   b) 列表内容已溢出（rows=4，本夹具）⇒ 列表 + detail 同时可滚 = 2 个
-            //      ⇒ 这是**真实边界**（列表满时展开任意一条都会出现第二层），已作为 P3 发现上报 PM，
-            //        故此处显式钉住实际行为，⛔ 不用「只测能过的那种」蒙过去
             expect(measured.secondary.rows, '第二场景夹具自检：必须只有 2 条').toBe(2)
+            const secondaryDetail = measured.secondary.detail
+            expect(secondaryDetail, '第二场景展开后必须有字段差异区').toBeTruthy()
             expect(
-                measured.secondary.scrollables,
-                `列表未溢出时只允许 detail 一个滚动容器（实测 ${JSON.stringify(measured.secondary.scrollables)}）`
-            ).toEqual(['task-history__detail'])
+                secondaryDetail!.maxHeight,
+                `detail 任何场景都⛔ 不得有上限（实测 ${secondaryDetail!.maxHeight}）`
+            ).toBe('none')
+            expect(
+                /auto|scroll/.test(secondaryDetail!.overflowY),
+                `detail ⛔ 不得是滚动容器（实测 overflow-y=${secondaryDetail!.overflowY}）`
+            ).toBe(false)
 
+            // ⑤ 两个边界都钉住（PM：判据必须带边界值）
+            //   a) 只有 2 条（rows=2）⇒ 至多一个容器，且**绝不出现 detail**（取消上限后单条展开本身
+            //      就可能把列表顶出滚动 —— 这正是本次取舍，见 ⑥ 的记录数字）
+            //   b) 4 条且展开（rows=4，③ 已断言）⇒ **恰好**列表一个
             expect(
-                measured.detail.scrollables.length,
-                `列表已溢出时按现状是 2 个滚动容器（实测 ${JSON.stringify(measured.detail.scrollables)}）`
-            ).toBe(2)
-            expect(measured.detail.scrollables).toContain('task-history__list')
-            expect(measured.detail.scrollables).toContain('task-history__detail')
-            // 边界自证：列表 content 真的超过设计上限，才可能出现第二层
+                measured.secondary.scrollables.filter((item) => item !== 'task-history__list'),
+                `只允许列表一个容器，⛔ 不得出现第二层（实测 ${JSON.stringify(measured.secondary.scrollables)}）`
+            ).toEqual([])
             expect(
-                measured.expanded.list!.scrollHeight,
-                '列表已溢出的判定依据：scrollHeight 必须 > max-height 上限'
-            ).toBeGreaterThan(Number.parseFloat(measured.light.list!.maxHeight))
+                measured.secondary.scrollables.length,
+                `至多一个滚动容器（实测 ${JSON.stringify(measured.secondary.scrollables)}）`
+            ).toBeLessThanOrEqual(1)
         },
         PROBE_TIMEOUT
     )
