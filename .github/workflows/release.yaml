@@ -160,13 +160,8 @@ jobs:
         needs: build
         runs-on: ubuntu-latest
         steps:
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: artifacts
-
-            # 版本一致性硬校验（T776 / Issue #380）：tag = 三处顶层 version = 三份 latest*.yml
-            # 不一致 ⇒ Release 建不出来（而不是发出去之后才发现）。脚本零依赖，只需 node。
+            # ⚠️ checkout 必须在下载产物**之前**：actions/checkout 默认 clean:true，
+            # 会把工作区里未跟踪的 artifacts/ 当脏物删掉（v1.22.0 首次跑就这样翻过车）。
             - name: Checkout (校验脚本需要 package.json)
               uses: actions/checkout@v4
 
@@ -174,6 +169,16 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 24.20.0
+
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+                  # 摊平到 artifacts/ 根：脚本 --assets 按平铺查找三份 latest*.yml
+                  merge-multiple: true
+
+            # 版本一致性硬校验（T776 / Issue #380）：tag = 三处顶层 version = 三份 latest*.yml
+            # 不一致 ⇒ Release 建不出来（而不是发出去之后才发现）。脚本零依赖，只需 node。
 
             - name: Verify release version consistency
               run: node scripts/verify-release-versions.mjs "$GITHUB_REF_NAME" --assets artifacts
