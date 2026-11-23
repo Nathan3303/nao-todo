@@ -7,11 +7,15 @@ import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/pre
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { storeToRefs } from 'pinia'
+import { DEFAULT_SEARCH_SORT, type SearchSort, type SearchSortField } from './search-sort'
 import FilterTriggerLabel from './filter-trigger-label.vue'
+import SearchSortTrigger from './search-sort-trigger.vue'
+import SearchDueTrigger from './search-due-trigger.vue'
 
 /**
- * 搜索页结构化筛选栏（SEA-03 / DEF-1）
+ * 搜索页结构化筛选栏（SEA-03 / DEF-1 / T770）
  * @description 四维内联多选（清单/标签/优先级/状态）：维内 OR、维间 AND、空=不限；
+ *              T770 追加「排序」（五字段 + 升降）与「截止日区间」（起/止 + 含无截止日）；
  *              触发器为 NueButton，已选名称按维度选项顺序展示（≤2 全显、≥3 折叠 +N）；
  *              点击展开 NueDropdown 多选面板；状态由父（引擎）持有，本组件 props 驱动、
  *              仅展示与上抛事件（零业务逻辑）。
@@ -19,17 +23,33 @@ import FilterTriggerLabel from './filter-trigger-label.vue'
 
 defineOptions({ name: 'SearchFilterBar' })
 
-const props = defineProps<{
-    selectedProjectIds: string[]
-    selectedTagIds: string[]
-    selectedPriorities: string[]
-    selectedStates: string[]
-    active: boolean
-    /** P2：是否包含已归档 */
-    includeArchived: boolean
-    /** 任一条件非空（关键词或筛选），决定「保存为常用搜索」是否可用 */
-    canSave: boolean
-}>()
+const props = withDefaults(
+    defineProps<{
+        selectedProjectIds: string[]
+        selectedTagIds: string[]
+        selectedPriorities: string[]
+        selectedStates: string[]
+        active: boolean
+        /** P2：是否包含已归档 */
+        includeArchived: boolean
+        /** 任一条件非空（关键词或筛选），决定「保存为常用搜索」是否可用 */
+        canSave: boolean
+        /** T770 排序（缺省 = 相关性） */
+        sort?: SearchSort
+        /** T770 截止日起 `YYYY-MM-DD`（空 = 不限） */
+        dueFrom?: string
+        /** T770 截止日止 `YYYY-MM-DD`（空 = 不限） */
+        dueTo?: string
+        /** T770 区间生效时是否包含无截止日任务 */
+        includeNoDue?: boolean
+    }>(),
+    {
+        sort: () => DEFAULT_SEARCH_SORT,
+        dueFrom: '',
+        dueTo: '',
+        includeNoDue: false
+    }
+)
 
 const emit = defineEmits<{
     (e: 'toggleProject', id: string): void
@@ -39,6 +59,12 @@ const emit = defineEmits<{
     (e: 'toggleArchived', value: boolean): void
     (e: 'clear'): void
     (e: 'save'): void
+    (e: 'selectSortField', field: SearchSortField): void
+    (e: 'selectSortOrder', order: SearchSort['order']): void
+    (e: 'update:dueFrom', value: string): void
+    (e: 'update:dueTo', value: string): void
+    (e: 'update:includeNoDue', value: boolean): void
+    (e: 'clearDue'): void
 }>()
 
 // @options 清单：收件箱哨兵（projectId=''）+ 用户清单
@@ -262,6 +288,24 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                     />
                 </nue-div>
             </nue-dropdown>
+
+            <!-- T770：排序（五字段 + 升降） -->
+            <search-sort-trigger
+                :sort="sort"
+                @select-field="(field: SearchSortField) => emit('selectSortField', field)"
+                @select-order="(order: SearchSort['order']) => emit('selectSortOrder', order)"
+            />
+
+            <!-- T770：截止日区间（起/止 + 含无截止日） -->
+            <search-due-trigger
+                :from="dueFrom"
+                :to="dueTo"
+                :include-no-due="includeNoDue"
+                @update:from="(value: string) => emit('update:dueFrom', value)"
+                @update:to="(value: string) => emit('update:dueTo', value)"
+                @update:include-no-due="(value: boolean) => emit('update:includeNoDue', value)"
+                @clear="emit('clearDue')"
+            />
         </div>
 
         <!-- P2：包含已归档（默认关；开 ⇒ 结果纳入归档任务）

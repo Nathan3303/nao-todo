@@ -1,4 +1,11 @@
 import { TASK_PRIORITIES, TASK_STATES } from '@nao-todo/domain-task'
+import {
+    isSearchSortField,
+    isSearchSortOrder,
+    isCustomSort,
+    normalizeDateKey,
+    type SearchSort
+} from './search-sort'
 import type { SearchQueryState } from './search-query'
 
 /**
@@ -47,16 +54,36 @@ const isPriority = (value: string): boolean =>
     (TASK_PRIORITIES as readonly string[]).includes(value)
 const isState = (value: string): boolean => (TASK_STATES as readonly string[]).includes(value)
 
+/**
+ * 排序归一（T770 新增，**可选**）
+ * @description 字段/方向非法 → 省略（回退默认相关性）；等于默认排序也省略，保持旧格式。
+ *              旧保存搜索无 `sort` 键 → 走默认值，不报错、不改其余条件语义。
+ */
+const normalizeSort = (raw: unknown): SearchSort | undefined => {
+    if (!raw || typeof raw !== 'object') return undefined
+    const source = raw as { field?: unknown; order?: unknown }
+    if (!isSearchSortField(source.field) || !isSearchSortOrder(source.order)) return undefined
+    const sort: SearchSort = { field: source.field, order: source.order }
+    return isCustomSort(sort) ? sort : undefined
+}
+
 /** 查询条件归一（非法值清洗：枚举过滤 / 数组去重 / 布尔化） */
 const normalizeQuery = (raw: unknown): SearchQueryState => {
     const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+    const sort = normalizeSort(source.sort)
+    const dueFrom = normalizeDateKey(source.dueFrom)
+    const dueTo = normalizeDateKey(source.dueTo)
     return {
         keyword: typeof source.keyword === 'string' ? source.keyword : '',
         projectIds: dedupe(toStringArray(source.projectIds)),
         tagIds: dedupe(toStringArray(source.tagIds)),
         priorities: dedupe(toStringArray(source.priorities).filter(isPriority)),
         states: dedupe(toStringArray(source.states).filter(isState)),
-        includeArchived: source.includeArchived === true
+        includeArchived: source.includeArchived === true,
+        ...(sort ? { sort } : {}),
+        ...(dueFrom !== '' ? { dueFrom } : {}),
+        ...(dueTo !== '' ? { dueTo } : {}),
+        ...(source.includeNoDue === true ? { includeNoDue: true } : {})
     }
 }
 
