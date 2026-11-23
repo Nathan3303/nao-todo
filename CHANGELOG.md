@@ -2,6 +2,18 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.22.0] - 2026-11-23
+
+命令面板 + 快捷键帮助 + 任务级归档 + 搜索翻新（发版说明 `docs/releases/v1.22.0.md` · Issue #371 / #372 / #373 / #378 / #380 / #382 · PR #374 / #375 / #377 / #379 / #381 / #383）：
+
+- **命令面板与快捷键帮助（#371）**：`⌘/Ctrl+K` 面板、`?` 帮助，**全部由命令注册表派生**（无第二份清单）；日历/日视图快捷键本就经 `useShortcut` 注册进同一注册中心 ⇒ 帮助页天然「只列当前页面生效」；`Command` 新增可选 `i18n`/`hidden`/`gesture`；删除死命令 `app.modal.close`。
+- **任务级归档（#372）**：仓储可选 `archive(id)`（同事务写 `archivedAt`、`projectId` 不变、入同步队列、记审计）+ usecase 三守卫（清单归档硬拒 / 已归档幂等 / 子任务拒绝）；详情「更多」归档，与「取消归档」互斥；清单归档上下文两项不显示并给只读说明；`unarchive` 语义零改动（保留 ADR §15.1 逃生口）。
+- **搜索翻新（#373）**：默认 50 条 + 每次 +50（到 5000 提示）；五种排序（相关性/更新时间/截止日/优先级/名称，后四者可升降，名称走 `Intl.Collator` 本地化）；截止日区间筛选（可单边、可选「包含无截止日」）；加载管线改单次大页扫描 ⇒ **5 万条 35.8s → 约 0.9s**（数据就绪口径，内存 +25.8MB ≈ 541B/条）；子任务补拉 10s/轮预算。
+- **死代码与文档口径（#378）**：删 `feature-unimplement` 组件（0 消费）与两个智能创建器死键；README 更正为「三端 + 明文本地存储 + 历史密文一次性迁移」。
+- **发版硬校验进 CI（#380）**：`scripts/verify-release-versions.mjs`（JSON 解析，不 grep）+ 单测；`release.yaml` 在 Create Release 前强制校验 **tag = 三处 package.json 顶层 version = 三份 latest\*.yml**。
+- **提交范围预检（#382 / DEF-160 防线）**：`pnpm run guard:commit-scope` 阻断「非本次范围的 tracked 未暂存改动」（防 lint-staged 整树 stash 卷走他人改动）。
+- **门禁**：`vp test --run` 491 文件 / 3985 例 / 0 红 · `vp check` 0 error · 七守卫 rc=0 · 双端 build rc=0 · 移动端红线 0 行。
+
 ## [v1.21.0] - 2026-11-22
 
 桌面版应用内自我更新 + 设置面板改版（发版说明 `docs/releases/v1.21.0.md` · PR #359 / #362 · Issue #358 / #360）：

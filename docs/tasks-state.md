@@ -81,6 +81,26 @@
 - **已发布事实（2026-11-22 实核）**：发版 PR **#363** ⇒ squash **`7e401ae2`** · 注解 tag `v1.21.0` 指向该提交 · 打包 run `45013552854` 四 job 全绿 · Release 已发布（非 draft / 非 prerelease）· **8 产物齐** + 三份 `latest*.yml` 的 `version` 均 = `1.21.0`（`path` 分别指向 x64.exe / arm64-mac.zip / x86_64.AppImage）· **三处版本一致性硬校验通过**：tag `v1.21.0` = root/web/desktop `package.json` `1.21.0` = `latest*.yml` `1.21.0` · Release 正文与 `docs/releases/v1.21.0.md` 归一化**逐字一致**（2470/2470）· Issue #358 / #360 CLOSED。
 - **本批遗留（下批处理）**：① `t706-qa-prune-cap-probe` 负载 flake（未定位，单跑 5 次全绿）② 发版三版本一致校验目前只有人工清单、无自动化（加进 `release.yaml` 需 `gh` token 具备 `workflow` scope）。
 
+## 一之七、命令面板 / 任务归档 / 搜索翻新 / 工程守卫批（`feat` · ✅ 已合并 2026-11-23）
+
+- **范围**：Issue #371 命令面板与快捷键帮助 · #372 任务级归档 · #373 搜索翻新 · #378 死代码与 README 口径 · #380 发版硬校验进 CI · #382 DEF-160 提交范围预检。另 #370（同类定时器）**排查结案无改动**（`preference-sync` 有清理入口且被调用；`sync-service` 三定时器实例级、机制不叠加；结论与约定见 issue 评论）。
+- **合并**：`b570cd5e`(#371) · `829cd29c`(#372) · `bb724654`(#373) · `bade26ef`(#378) · `1313095d`(#380) · `4187f4ba`(#382)；均 squash、`wip(` 残留 0、远端分支已删、Issue CLOSED。
+- **关键证据**：
+    - #373 搜索 5 万条 **35.8s → 数据就绪 ~0.9s**（repo.list 758 · VO 77 · store 15 · 过滤 16 · 计数排序 31）；内存 +25.8MB ≈ 541B/条；**只绕开未治本**（仓储 `list()` 与 limit 无关地整表解密）⇒ 已开 **#376**。
+    - #371 判据：面板/帮助**全部由注册表派生**；变异（去掉 `hidden` / 帮助改手写）均红；删死命令 `app.modal.close` 后零引用。
+    - #372 口径冲突裁定 **A**：`archive` 清单归档时硬拒、`unarchive` 语义零改动（保留 ADR §15.1 逃生口），既有两个 unarchive 用例未被修改。
+    - #380 workflow 步骤已进主干（release job 第 178 行）；`workflow` scope 已由用户授权。
+    - #382 `guard:commit-scope` 真实仓库三场景：干净 rc=0 / 未暂存 rc=1 点名 / 未跟踪仅提示。
+- **用户走查**：本批视觉/真机走查项已随各 PR 的 body 列明（面板观感、mac 键面、窄屏、归档只读态、搜索手感），**待用户执行**。
+- **发布**：本批随 `v1.22.0`（MINOR）发布（见 §一之八）。
+- **未关闭 Issue**：#376（仓储读取性能根因，P2）· #384（Actions v4 → v5，Node 20 弃用警告，用户已同意开单）。
+
+## 一之八、`v1.22.0` 发版（MINOR · 在制）
+
+- **分支** `nao/release-v1.22.0`：root / `apps/web` / `apps/desktop` `1.21.0 → 1.22.0`；`CHANGELOG.md` + `docs/releases/v1.22.0.md`；`packages/*` 有源码改动按近批惯例不单独 bump。
+- **已用新闸门自证**：`node scripts/verify-release-versions.mjs v1.22.0` ⇒ 5 项 PASS / rc=0。
+- **待办**：PR → RD 合并 → 注解 tag `v1.22.0` → 打包 run → Release（正文与文件归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核（**本次起由 CI 自动校验**）。
+
 ## 二、上一批次终态
 
 - **✅ `v1.20.2` 已发布（2026-11-13，批次终态）**：发版 PR **#352** ⇒ squash **`787b301b`** · 注解 tag `v1.20.2` · Release 已发布（正文与 `docs/releases/v1.20.2.md` 归一化逐字一致 1924/1924）· 8 产物齐全 · 打包 run `43392992600` 四 job 全绿；版本 root/web/desktop **1.20.2** · `presentation` **0.12.0** · `shared` **1.6.0**。服务端无改动。
