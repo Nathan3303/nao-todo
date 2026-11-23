@@ -165,6 +165,19 @@ jobs:
               with:
                   path: artifacts
 
+            # 版本一致性硬校验（T776 / Issue #380）：tag = 三处顶层 version = 三份 latest*.yml
+            # 不一致 ⇒ Release 建不出来（而不是发出去之后才发现）。脚本零依赖，只需 node。
+            - name: Checkout (校验脚本需要 package.json)
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24.20.0
+
+            - name: Verify release version consistency
+              run: node scripts/verify-release-versions.mjs "$GITHUB_REF_NAME" --assets artifacts
+
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
               with:

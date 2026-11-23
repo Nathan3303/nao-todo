@@ -24,7 +24,8 @@
         "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs",
         "guard:test-location": "node scripts/guard-test-location.mjs",
         "guard:contrast": "node scripts/contrast-audit.mjs",
-        "guard:dist-comments": "node scripts/guard-dist-comments.mjs"
+        "guard:dist-comments": "node scripts/guard-dist-comments.mjs",
+        "guard:release-versions": "node scripts/verify-release-versions.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
