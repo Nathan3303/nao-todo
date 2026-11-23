@@ -235,8 +235,8 @@
 
 - **生产环境 Web 的 CSP 响应头**是否已按检查单下发（仓内无 CSP 配置，需对生产 `curl` 核对）。
 - **服务端提醒 cron 的运行期行为**（配置 + 单测已证「停用字段改写」，运行期数据库观测未取得）。
-- **`README.md` 与现状不符**（仍写「Dexie + AES-GCM 加密」「两个客户端」）：当前本地为明文、仓内已有 `apps/mobile`。**待修**，随下一次文档类提交处理。
-- **死代码**：`packages/shared/components/feature-unimplement/`（0 消费）、i18n 死键 `dialog.taskCreator.smartModeToggle|smartPlaceholder`。**待清理**（不影响功能）。（全局命令 `app.modal.close` 已随 Issue #371 删除。）
+- **`README.md` 与现状不符**（曾写「Dexie + AES-GCM 加密」「两个客户端」）——**已修**（T774 / Issue #378）：改为明文本地存储（`plain:` 前缀；历史密文一次性口令迁移仍保留）、三端表述 + `apps/mobile` 入目录树。
+- **死代码**：`packages/shared/components/feature-unimplement/`（0 消费）、i18n 死键 `dialog.taskCreator.smartModeToggle|smartPlaceholder`——**已清**（T774 / Issue #378，提交号见 PR）。（全局命令 `app.modal.close` 已随 Issue #371 删除。）
 
 ## 20. 未完成能力与后续批次（排期）
 
@@ -256,7 +256,7 @@
     - 发版「三处版本一致」校验仅人工清单，未自动化（需 `gh` token 具 `workflow` scope）。
     - 同类「模块级定时器 + 测试清库不清定时器」隐患：`preference-sync` / `sync-service`（Issue #370）。
     - `vp staged` 钩子按整棵工作树 stash/恢复（`DEF-160`，根治属上游）。
-    - 死代码清理（§19 三项）。
+    - 死代码清理（§19 三项）—— **已完成**（T774 / Issue #378）。
 
 ---
 
