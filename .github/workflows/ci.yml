@@ -28,10 +28,10 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v7
               with:
                   # 版本单一来源 = 仓库根的 .node-version（与 package.json 的 engines.node 同口径）
                   node-version: '24.20.0'
@@ -61,10 +61,10 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v7
               with:
                   node-version: '24.20.0'
 
