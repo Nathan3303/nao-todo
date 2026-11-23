@@ -12,6 +12,7 @@ import {
     AUDIT_PRUNE_CHUNK_SIZE,
     AUDIT_PRUNE_MAX_PER_RUN,
     clearAudit,
+    flushAuditPrune,
     pruneAuditLog
 } from '../audit-log'
 
@@ -32,6 +33,9 @@ const USER = 't708-prune-user'
 const N = 2000 // 溢出 1000 条
 
 const resetState = async (): Promise<void> => {
+    // `T763` · 清表**之前**先排空裁切（清掉待触发的防抖定时器 + await 在飞裁切）：
+    // 否则上一个用例残留的裁切会在本用例的断言窗口内再删一轮 ⇒ 跨用例 flake（`T762b`）
+    await flushAuditPrune()
     for (const table of [
         'projects',
         'projectPreferences',
@@ -199,6 +203,9 @@ describe('T708 / M7 复验：裁切限幅 + 分块（可观测口径）', () => 
                 },
                 { timeout: 20_000, interval: 100 }
             )
+            // `T763` · 等本轮裁切**彻底落定**再取数：否则可能读到「只删了 1 块」的中间态，
+            // 令最后一轮停在 1001 这类非收敛值（`B` 的 flush 正是为此而加）
+            await flushAuditPrune()
             counts.push(await auditCount())
             if (counts[counts.length - 1]! <= 1000) break
             // 让下一次写入落在新的防抖窗口内（否则会与上一次定时器合并）
