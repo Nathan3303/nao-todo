@@ -19,6 +19,7 @@
 - **可点区**：控件取组件原生档（`nue-button` 等），列表 / 行级动作 ≥40px；低于底线的必在 §3 登记。
 - **三重冗余**：状态 = 颜色 + 符号 + 文字标签（实测：去色后橙 / 红两两 <3:1，色盲模拟下几乎重合，⛔ 仅靠颜色承载语义）。
 - **键盘**：可 Tab 聚焦 + focus 可见；对话框 Esc 关闭、焦点闭环与归还、`role="dialog"` + `aria-modal`；列表项 `aria-selected`。
+- **对比度 · CI 落点**：阈值与 pair 表的单一事实来源 = `scripts/contrast-audit.mjs`；CI 由 `packages/shared/__tests__/contrast-audit.test.ts`（`test` job 内的 vitest 用例）守。
 
 ## 3. 例外登记册
 

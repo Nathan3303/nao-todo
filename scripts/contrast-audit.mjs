@@ -10,22 +10,35 @@
  *  4. pair 表只收**真实用法**（每行注明用途），不掺入未在界面上出现的组合。
  * 自证：本文件的 hsl 求值器重算旧 DESIGN.md 实测的 9 个 hex（#333333 / #666666 / #cccccc /
  * #1b981b / #a15912 / #a12a12 / #178217 / #8a4d0f / #8a240f）逐字节吻合。
- * 用途：`pnpm run guard:contrast`（本地 / 批末门禁；尚未接入 CI）。
+ * 用途：`pnpm run guard:contrast`（本地 / 批末门禁）。
+ * **CI 走 vitest**（`.github/workflows/**` 之外）：`packages/shared/__tests__/contrast-audit.test.ts`
+ * 复用本文件的 `evaluatePairs` / `THRESHOLD` / `PAIRS` 断言真实主题 0 条不达标，并对注入的坏 token 必报错。
+ * 本文件的 CLI 与前述用例共用同一份阈值与 pair 表（单一事实来源）。
  */
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import process from 'node:process'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
-const SOURCES = [
+export const SOURCES = [
     'node_modules/nue-ui-theme-shadlike/dist/global/variables.css',
     'apps/web/src/themes/variables.css'
 ]
-const DARK_SWITCH = '--nue-dark-switch'
+export const DARK_SWITCH = '--nue-dark-switch'
 const MAX_DEPTH = 32
 
-/** 声明式 pair 表：kind=text ⇒ ≥4.5；kind=graphic ⇒ ≥3（承载语义的图形 / 状态边框） */
-const PAIRS = [
+/** DESIGN.md §2 验收阈值：文本 / 承载语义的图形·边框 */
+export const TEXT_MIN = 4.5
+export const GRAPHIC_MIN = 3
+/** kind → 阈值（pair 表第 1 列即 kind） */
+export const THRESHOLD = { text: TEXT_MIN, graphic: GRAPHIC_MIN }
+
+/**
+ * 声明式 pair 表：kind=text ⇒ ≥4.5；kind=graphic ⇒ ≥3（承载语义的图形 / 状态边框）
+ * @type {Array<[string, string, string, string]>}
+ */
+export const PAIRS = [
     // —— 文本：页面底色 ——
     ['text', '--nue-primary-text-color', '--nue-primary-color-0', '正文（页面底色 / 卡片）'],
     ['text', '--nue-primary-color-900', '--nue-primary-color-0', '正文·深档（对话框 / 容器标题）'],
@@ -49,10 +62,9 @@ const PAIRS = [
     ['graphic', '--nue-error-color-80', '--nue-primary-color-0', 'error 图形 / 符号'],
     ['graphic', '--nue-primary-color-500', '--nue-primary-color-0', '进度条内条 / 中性图形']
 ]
-const THRESHOLD = { text: 4.5, graphic: 3 }
 
 /** 解析 `--name:value` 声明（括号深度内的 `;` `}` 不作边界；主题文件是压缩单行） */
-const parseDeclarations = (css) => {
+export const parseDeclarations = (css) => {
     const map = new Map()
     const src = css.replace(/\/\*[\s\S]*?\*\//g, '')
     let i = 0
@@ -92,16 +104,23 @@ const parseDeclarations = (css) => {
     return map
 }
 
-const VARS = new Map()
-for (const rel of SOURCES) {
-    const abs = ROOT + rel
-    const css = readFileSync(abs, 'utf8')
-    const decls = parseDeclarations(css)
-    if (decls.size === 0) throw new Error(`${rel}: 解析到 0 条声明（守卫会空转，拒绝）`)
-    for (const [k, v] of decls) VARS.set(k, v)
+/**
+ * 载入主题 token 表（后一个来源覆盖前一个）
+ * @param {{root?: string, sources?: string[]}} [options]
+ * @returns {Map<string, string>}
+ */
+export const loadThemeTokens = ({ root = ROOT, sources = SOURCES } = {}) => {
+    const tokens = new Map()
+    for (const rel of sources) {
+        const css = readFileSync(resolve(root, rel), 'utf8')
+        const decls = parseDeclarations(css)
+        if (decls.size === 0) throw new Error(`${rel}: 解析到 0 条声明（守卫会空转，拒绝）`)
+        for (const [k, v] of decls) tokens.set(k, v)
+    }
+    // light 模式：--nue-dark-switch 固定 0（theme 自带该声明，若被改写则下面求值会随之变化）
+    if (!tokens.has(DARK_SWITCH)) throw new Error(`主题缺少 ${DARK_SWITCH} 声明`)
+    return tokens
 }
-// light 模式：--nue-dark-switch 固定 0（theme 自带该声明，若被改写则下面求值会随之变化）
-if (!VARS.has(DARK_SWITCH)) throw new Error(`主题缺少 ${DARK_SWITCH} 声明`)
 
 /** 极小递归下降求值器：+ - * / 括号与小数（`%` 视作无量纲） */
 const evalExpr = (src) => {
@@ -167,7 +186,7 @@ const evalExpr = (src) => {
 }
 
 /** 把 var() 全部代换为数值，再求值（支持 calc 与嵌套 var 链） */
-const evalScalar = (expr, depth = 0) => {
+const evalScalar = (tokens, expr, depth = 0) => {
     if (depth > MAX_DEPTH) throw new Error(`var/calc 解析过深（疑似循环引用）: ${expr}`)
     let out = ''
     let i = 0
@@ -178,16 +197,16 @@ const evalScalar = (expr, depth = 0) => {
             const parts = splitTop(inner, ',')
             const name = parts[0].trim()
             if (!name.startsWith('--')) throw new Error(`var() 里不是自定义属性: ${inner}`)
-            const raw = VARS.get(name)
+            const raw = tokens.get(name)
             if (raw === undefined) {
                 if (parts.length > 1) {
-                    out += String(evalScalar(parts.slice(1).join(','), depth + 1))
+                    out += String(evalScalar(tokens, parts.slice(1).join(','), depth + 1))
                     i = close + 1
                     continue
                 }
                 throw new Error(`未定义的变量 ${name}`)
             }
-            out += String(evalScalar(raw, depth + 1))
+            out += String(evalScalar(tokens, raw, depth + 1))
             i = close + 1
             continue
         }
@@ -254,9 +273,9 @@ const hslToRgb = (h, s, l) => {
 }
 
 /** token → RGB（支持 #hex / var 别名 / hsl；其余形态如实报错） */
-const toRgb = (name, depth = 0) => {
+export const toRgb = (tokens, name, depth = 0) => {
     if (depth > MAX_DEPTH) throw new Error(`${name}: 别名链过深（疑似循环引用）`)
-    const raw = VARS.get(name)
+    const raw = tokens.get(name)
     if (raw === undefined) throw new Error(`${name}: 主题未定义该 token`)
     const lower = raw.toLowerCase()
     if (lower.startsWith('#')) {
@@ -274,14 +293,14 @@ const toRgb = (name, depth = 0) => {
     if (lower.startsWith('var(')) {
         const inner = raw.slice(4, matchParen(raw, 3))
         const target = splitTop(inner, ',')[0].trim()
-        return toRgb(target, depth + 1)
+        return toRgb(tokens, target, depth + 1)
     }
     if (/^hsl\(\s*from/.test(lower)) throw new Error(`${name}: 不支持相对色 '${raw}'`)
     if (lower.startsWith('hsl(')) {
         const inner = raw.slice(4, matchParen(raw, 3))
         const parts = splitTop(inner, ',')
         if (parts.length !== 3) throw new Error(`${name}: hsl() 参数个数异常 '${raw}'`)
-        return hslToRgb(...parts.map((p) => evalScalar(p)))
+        return hslToRgb(...parts.map((p) => evalScalar(tokens, p)))
     }
     throw new Error(`${name}: 不支持的色值形态 '${raw}'（只支持 #hex 与 hsl(h,s%,l%)）`)
 }
@@ -293,51 +312,91 @@ const luminance = (rgb) => {
     }
     return 0.2126 * ch(rgb[0]) + 0.7152 * ch(rgb[1]) + 0.0722 * ch(rgb[2])
 }
-const contrast = (a, b) => {
+export const contrastRatio = (a, b) => {
     const [hi, lo] = [luminance(a), luminance(b)].sort((p, q) => q - p)
     return (hi + 0.05) / (lo + 0.05)
 }
-const toHex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('')
+export const toHex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('')
 
-const failures = []
-const rows = []
-for (const [kind, fg, bg, usage] of PAIRS) {
-    let row
-    try {
-        const ratio = contrast(toRgb(fg), toRgb(bg))
-        const min = THRESHOLD[kind]
-        row = { ok: ratio >= min, kind, fg, bg, usage, ratio, min }
-    } catch (error) {
-        row = { ok: false, kind, fg, bg, usage, error: error.message }
+/**
+ * 纯函数：按 pair 表逐行评估（无文件 IO、无全局状态 —— 供 CLI 与 vitest 用例共用）
+ * @param {Map<string, string>} tokens token → 原始值（`#hex` / `hsl(...)` / `var(...)`）
+ * @param {Array<[string, string, string, string]>} [pairs] `[kind, fg, bg, usage]`
+ * @param {{text: number, graphic: number}} [thresholds]
+ * @returns {Array<{ok: boolean, kind: string, fg: string, bg: string, usage: string, ratio?: number,
+ *   min?: number, fgHex?: string, bgHex?: string, error?: string}>}
+ *   **解析失败的行同样 `ok:false` 并带 `error`**（不静默跳过）
+ */
+export const evaluatePairs = (tokens, pairs = PAIRS, thresholds = THRESHOLD) => {
+    const rows = []
+    for (const [kind, fg, bg, usage] of pairs) {
+        try {
+            const fgRgb = toRgb(tokens, fg)
+            const bgRgb = toRgb(tokens, bg)
+            const ratio = contrastRatio(fgRgb, bgRgb)
+            const min = thresholds[kind]
+            rows.push({
+                ok: ratio >= min,
+                kind,
+                fg,
+                bg,
+                usage,
+                ratio,
+                min,
+                fgHex: toHex(fgRgb),
+                bgHex: toHex(bgRgb)
+            })
+        } catch (error) {
+            rows.push({ ok: false, kind, fg, bg, usage, error: error.message })
+        }
     }
-    rows.push(row)
-    if (!row.ok) failures.push(row)
+    return rows
+}
+
+/**
+ * 审计真实主题（读 CSS → 解析 token → 评估 pair 表）
+ * @param {{root?: string, sources?: string[], pairs?: Array<[string, string, string, string]>,
+ *   thresholds?: {text: number, graphic: number}, tokens?: Map<string, string>}} [options]
+ * @returns {{tokens: Map<string, string>, rows: object[], failures: object[]}}
+ */
+export const auditContrast = (options = {}) => {
+    const { pairs = PAIRS, thresholds = THRESHOLD } = options
+    const tokens = options.tokens ?? loadThemeTokens(options)
+    const rows = evaluatePairs(tokens, pairs, thresholds)
+    return { tokens, rows, failures: rows.filter((row) => !row.ok) }
 }
 
 const short = (token) => token.replace('--nue-', '')
-console.log(`[guard:contrast] light 模式（${DARK_SWITCH}=0）· 来源 ${SOURCES.length} 个 CSS`)
-console.log(`  阈值：文本 ≥${THRESHOLD.text} · 图形/边框 ≥${THRESHOLD.graphic}\n`)
-for (const r of rows) {
-    const head = `${r.ok ? 'PASS' : 'FAIL'} ${r.kind.padEnd(7)} ${short(r.fg)} on ${short(r.bg)}`
-    if (r.error) {
-        console.log(`  ${head}\n        解析失败：${r.error}`)
-        continue
+
+const main = () => {
+    const { rows, failures } = auditContrast()
+
+    console.log(`[guard:contrast] light 模式（${DARK_SWITCH}=0）· 来源 ${SOURCES.length} 个 CSS`)
+    console.log(`  阈值：文本 ≥${THRESHOLD.text} · 图形/边框 ≥${THRESHOLD.graphic}\n`)
+    for (const r of rows) {
+        const head = `${r.ok ? 'PASS' : 'FAIL'} ${r.kind.padEnd(7)} ${short(r.fg)} on ${short(r.bg)}`
+        if (r.error) {
+            console.log(`  ${head}\n        解析失败：${r.error}`)
+            continue
+        }
+        console.log(
+            `  ${head.padEnd(62)} ${r.ratio.toFixed(2).padStart(6)}:1 (≥${r.min}) ` +
+                `${r.fgHex} on ${r.bgHex}  · ${r.usage}`
+        )
     }
-    const fgHex = toHex(toRgb(r.fg))
-    const bgHex = toHex(toRgb(r.bg))
-    console.log(
-        `  ${head.padEnd(62)} ${r.ratio.toFixed(2).padStart(6)}:1 (≥${r.min}) ` +
-            `${fgHex} on ${bgHex}  · ${r.usage}`
-    )
+
+    if (failures.length > 0) {
+        console.error(`\n[guard:contrast] 不达标 ${failures.length}/${rows.length} 组：`)
+        for (const f of failures)
+            console.error(
+                `  - ${f.kind} ${f.fg} on ${f.bg}（${f.usage}）：` +
+                    (f.error ? `解析失败 ${f.error}` : `${f.ratio.toFixed(2)}:1 < ${f.min}`)
+            )
+        process.exit(1)
+    }
+    console.log(`\n[guard:contrast] OK - ${rows.length} 组 pair 全部达标`)
 }
 
-if (failures.length > 0) {
-    console.error(`\n[guard:contrast] 不达标 ${failures.length}/${rows.length} 组：`)
-    for (const f of failures)
-        console.error(
-            `  - ${f.kind} ${f.fg} on ${f.bg}（${f.usage}）：` +
-                (f.error ? `解析失败 ${f.error}` : `${f.ratio.toFixed(2)}:1 < ${f.min}`)
-        )
-    process.exit(1)
-}
-console.log(`\n[guard:contrast] OK - ${rows.length} 组 pair 全部达标`)
+// 仅在作为 CLI 直接执行时跑；被 `import`（vitest 用例）时不产生副作用
+const invokedPath = process.argv[1]
+if (invokedPath && resolve(invokedPath) === fileURLToPath(import.meta.url)) main()
