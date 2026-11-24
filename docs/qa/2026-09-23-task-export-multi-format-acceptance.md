@@ -38,11 +38,13 @@
 1. **无日历/测试基建变更**：`git diff --name-only v1.8.0..HEAD -- apps/web/src/components/calendar` → **0 文件**。该测试文件自 v1.8.0 起未被任何提交触碰。
 2. **真实时钟锚点**：`apps/web/src/components/calendar/daily/use-calendar-day.ts:55` = `const anchorKey = ref(todayDateKey())`（回退真实时钟）；测试 fixture `daily-view.test.ts:199` 硬编码 `endAt: '2026-09-22 10:00:00'`，而复核日 `date +%F` = **2026-09-23** ⇒ 任务落在锚点日之外，全天泳道 `.cal-item` 数 = 0。
 3. **单跑复现（3/3 恒红）**：`vp test --run apps/web/src/components/calendar/daily/__tests__/daily-view.test.ts -t "全天任务渲染为 task-bar"` ×3 次，均：
-   `text
+
+```text
 AssertionError: expected 0 to be greater than or equal to 1
 ❯ daily-view.test.ts:207:50  expect(lane.findAll('.cal-item').length).toBeGreaterThanOrEqual(1)
 Tests  1 failed | 16 skipped (17)
-`
+```
+
 4. 全仓跑同一结果：`daily-view.test.ts (17 tests | 1 failed)`，其余 16 例该文件内为绿。
 
 **结论**：与 PM 归因**一致**，属既有 fixture 时间炸弹，与本单无因果（已登记 DEF-4）。**不构成停工条件**。
@@ -74,14 +76,14 @@ Tests  1 failed | 16 skipped (17)
 
 **逐行判定**：`--numstat` = `10 0`（**10 行新增、0 行删除**）；全部 10 行均为 `ExportTaskNode` 类型内的 additive **可选**字段声明及其注释：
 
-`text
+```text
 
 - id?: string
 - priority?: string
 - isGivenUp?: boolean
 - projectId?: string | null
 - tagIds?: string[]
-  `
+```
 
 **结论**：
 
@@ -116,11 +118,11 @@ Tests  1 failed | 16 skipped (17)
 
 **报错原文**：
 
-`text
+```text
 error: Lint or type issues found
 x typescript(TS2339): Property 'glob' does not exist on type 'ImportMeta'.
      ,-[packages/presentation/task/components/task-details/__tests__/export-dialog-multiformat.test.ts:297:37]
-`
+```
 
 **还原**后：`git checkout -- env.d.ts` ⇒ `git status --porcelain` 为空；`vp check`（全仓，见 §1）exit 0。
 

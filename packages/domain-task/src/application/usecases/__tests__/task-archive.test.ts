@@ -69,12 +69,10 @@ const makeRepo = (
         list: vi.fn(async () => [{ taskEntities: [] }, null]),
         copy: vi.fn(async () => [null, '未实现']),
         snooze: vi.fn(async () => [null, '未实现']),
-        unarchive: vi.fn(
-            async (): Promise<UnarchiveResult> => [
-                { movedToInbox: options.unarchiveResolvedToInbox ?? false },
-                null
-            ]
-        )
+        unarchive: vi.fn(async (): Promise<UnarchiveResult> => [
+            { movedToInbox: options.unarchiveResolvedToInbox ?? false },
+            null
+        ])
     }
     const archive =
         options.withArchive === false
