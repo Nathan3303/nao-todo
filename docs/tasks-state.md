@@ -91,7 +91,7 @@
     - #372 口径冲突裁定 **A**：`archive` 清单归档时硬拒、`unarchive` 语义零改动（保留 ADR §15.1 逃生口），既有两个 unarchive 用例未被修改。
     - #380 workflow 步骤已进主干（release job 第 178 行）；`workflow` scope 已由用户授权。
     - #382 `guard:commit-scope` 真实仓库三场景：干净 rc=0 / 未暂存 rc=1 点名 / 未跟踪仅提示。
-- **用户走查**：本批视觉/真机走查项已随各 PR 的 body 列明（面板观感、mac 键面、窄屏、归档只读态、搜索手感），**待用户执行**。
+- **用户走查**：本批视觉/真机走查项已随各 PR 的 body 列明（面板观感、mac 键面、窄屏、归档只读态、搜索手感），**W1–W5 五项已于 2026-11-24 由用户走查通过**（Linux `Ctrl` 键面实看通过；mac 真机待验 —— `detectPlatform` 映射有单测覆盖，结构性已测）。
 - **发布**：本批随 `v1.22.0`（MINOR）发布（见 §一之八）。
 - **未关闭 Issue**：#376（仓储读取性能根因，P2）· #384（Actions v4 → v5，Node 20 弃用警告，用户已同意开单）。
 
@@ -101,7 +101,7 @@
 - **已用新闸门自证**：`node scripts/verify-release-versions.mjs v1.22.0` ⇒ 5 项 PASS / rc=0。
 - **发版链路小事故与修复（如实记录）**：首次 tag 指向 `297f8182`（旧 workflow）⇒ 三个平台打包全绿，但 `release` job 的**新增校验步把发版拦下** —— 原因是我把 `actions/checkout`（默认 `clean: true`）放在 `download-artifact` **之后**，它把未跟踪的 `artifacts/` 删了 ⇒ 脚本报「--assets 目录不存在」。修复 = checkout 提前 + download 加 `merge-multiple: true`（PR #386 ⇒ `92eb163c`）；**另需知**：我误把 #386 当成 issue 写了 `Closes #386`，实际 #386 就是该 PR 自身（GitHub issue/PR 同号），无 issue 被关闭，RD 当场指出。
 - **✅ 已发布事实（2026-11-23 实核）**：发版 PR **#385** ⇒ squash **`297f8182`**；tag `v1.22.0` 因上述修复**重打**并指向 **`92eb163c`**（含同版本应用代码 + 修复后 workflow）；打包 run `45181660676` 四 job 全绿；**新增 CI 闸门首次实战通过**（8 条 PASS：三处顶层 version / 与 tag 一致 / 三份 `latest*.yml`）；Release 已发布（非 draft / 非 prerelease）· **8 产物齐** · Release 正文与 `docs/releases/v1.22.0.md` 归一化**逐字一致（2779/2779）**。
-- **本批遗留**：① #376 仓储 `list()` 整表解密（P2 根因，未修）② #384 Actions v4 → v5（Node 20 弃用警告，已开单）③ `DEF-160` 上游根因（现已有 `guard:commit-scope` 可执行防线）④ 用户视觉/真机走查（命令面板观感、mac 键面、窄屏、归档只读态、搜索手感）**待执行**。
+- **本批遗留**：① #376 仓储 `list()` 整表解密（P2 根因，未修）② #384 Actions v4 → v5（Node 20 弃用警告，已开单）③ `DEF-160` 上游根因（现已有 `guard:commit-scope` 可执行防线）④ 用户视觉/真机走查（命令面板观感、mac 键面、窄屏、归档只读态、搜索手感）**W1–W5 已于 2026-11-24 走查通过**（Linux `Ctrl` 键面实看通过；mac 真机待验 —— `detectPlatform` 映射有单测覆盖，结构性已测）。
 
 ## 一之九、工程基座：Actions 升级（`chore` · ✅ 已合并 2026-11-23 · Issue #384）
 
@@ -116,8 +116,8 @@
 - **合并序列（v1.22.0 之后 6 个提交）**：`f370175f` Actions 升 v7/v8/v3（#384）· `2b822069` prod 依赖安全（#388 批一）· `349be03f` prod 清零（#388 批二）· `2d71fbd8` dev 面 Batch A（#388 批三，audit 70→10 / 0 critical）· `2c480a4b` ADR 索引整篇去重（#394 / DEF-165）· `e0a137da` 变更历史单层滚动（#393 / DEF-162）。
 - **依赖现状**：`pnpm audit --prod` = **0**；全量 **10**（0c/1h/8m/1l）。剩余 = `vite-plus`×5（需换工具链，已开 **#391**）· `@vitest/mocker`×2 + `vitest`×1（工具链 pin）· `glob`×1 / `minimatch`×1（跨 major、上游无解）⇒ **接受至 2026-12-31 + 转办上游**。新增 `guard:audit`（critical=0 且总数 ≤12）。
 - **本批事故与处置（如实）**：① 同一 worktree 两会话交叉改动（我的 ADR 分支里出现对方的 DEF-162 文件，且 `t717` 被整文件 LF 化）⇒ 按 pathspec 只提交自己的文件，对方随后切回本分支并修正 EOL；② 我的首次「ADR 去重」用截断法会丢掉只存在于后半份的 `T696`/`T673` ⇒ 改为行并集重建 + 守卫用例。
-- **待用户**：发版 `v1.22.1`（本批铜基座，PATCH）· 视觉走查五项 · `#391` 换工具链决策 · `#376` 仓储读取性能 A/B 两步。
-- **待收拾**：缺陷池 `DEF-27` / `111` / `113` / `115` 等行状态过期（实际已闭环），下批随文档提交回写。
+- **待用户**：发版 `v1.22.1`（本批铜基座，PATCH）· 视觉走查五项（**W1–W5 已于 2026-11-24 通过**；Linux `Ctrl` 键面实看通过，mac 真机待验 —— `detectPlatform` 映射有单测覆盖、结构性已测）· `#391` 换工具链决策 · `#376` 仓储读取性能 A/B 两步。
+- **已清（`T802`，2026-11-24）**：`DEF-27`（已并入 `DEF-30`）/ `DEF-113`（`v1.15.2` 已清理）/ `DEF-111`（✅ 已修）/ `DEF-115`、`DEF-163`（维持挂账裁定）五行经逐行核对，均已带闭环标注或裁定，不再列入待收拾。
 
 ## 一之一一、走查修复批 + `v1.22.1` / `v1.22.2` 发版（2026-11-24）
 
@@ -129,9 +129,10 @@
 - **口径教训（PM 自查）**：门禁判据 `grep "isReadOnly ? undefined"` 写宽了 —— 命中的是 `:data-*` **属性绑定**（语义正确），真正要清的是**事件监听器条件绑定**；以后同类判据须带 `@事件=` 前缀。
 - **`v1.22.2`（PATCH · ✅ 已发布 2026-11-24）**：发版 PR **#402** ⇒ squash **`d72dbefd`**（含 `#403` 面板竖排定稿 `4076b7d2`）；注解 tag `v1.22.2` 指向该合并提交；打包 run **`45342681385`** 四 job 全绿（mac / win / linux + release）；workflow 内 `verify-release-versions` PASS（tag = 三处顶层 version = 三份 `latest*.yml`）；**8 产物齐**（`latest.yml` / `latest-mac.yml` / `latest-linux.yml` + `.exe` / `.dmg` / `-mac.zip` / `.deb` / `.AppImage`）；Release 正文已按 `docs/releases/v1.22.2.md` 补齐，归一化比对**逐字一致**（唯一差异 = 源文件末尾缺换行符，正文内容相同）。批末门禁（PM 自证，合并前 HEAD 实测）：`vp check` 0 error（2077 文件格式 / 1655 文件 0 error·0 warning）· 全仓 `vp test --run` **496 文件 / 4025 例 / 4019 通过 / 6 跳过 / 0 红**（326.5s）· 六守卫 rc=0 · `release-versions` rc=0 · `webapp build` + `desktop:build` rc=0 · 移动端红线 0 行 · 合并后 `git diff d6a4372e d72dbefd` **为空**（squash 内容 = 受门禁的内容）。`packages/*` 无变化。
 - **`v1.22.2` 发版链的四处操作痕迹（PM 记录）**：① 分支 `nao/release-v1.22.2` 变基到 `4076b7d2` 后 `--force-with-lease` 推送（自己的分支，main 未动）；② 提交前用 `guard:commit-scope` 查出他人两处未暂存改动会被 `vp staged` 整树 stash 卷走 ⇒ 先 `git stash push -- <两文件>`、只提交自己 3 个文件、提交后 `pop` 回（`git stash list` 现为空，无 lint-staged 残留）；③ GitHub 推送时报 **9 vulnerabilities**（1 high / 7 moderate / 1 low），与 `guard:audit`（critical=0、总数 ≤12）口径一致，属已知接受集（`vite-plus`×5 待 #391、`@vitest/mocker`+`vitest`、`glob`、`minimatch`），非本批引入；④ Release 正文需**事后补**（workflow 的 `action-gh-release` 未传 `body`，v1.22.1 同此先例）⇒ 发版流程应固化为「workflow 建 Release → PM 补正文 → 归一化比对」三步。
-- **待用户**：`#376` 仓储读取性能（索引下推 + 惰性解密）· `#391` 换工具链（vite-plus 1.3.0）· 视觉走查残余（mac 键位仅单测覆盖）。
-- **待收拾**：缺陷池 `DEF-27` / `111` / `113` / `115` 行状态过期（实际已闭环）。
+- **待用户**：`#376` 仓储读取性能（索引下推 + 惰性解密）· `#391` 换工具链（vite-plus 1.3.0）· 视觉走查 **W1–W5 已于 2026-11-24 通过**（Linux `Ctrl` 键面实看通过；mac 真机待验，mac 键位仅单测覆盖、结构性已测）。
+- **已清（`T802`，2026-11-24）**：`DEF-27`（已并入 `DEF-30`）/ `DEF-113`（`v1.15.2` 已清理）/ `DEF-111`（✅ 已修）/ `DEF-115`、`DEF-163`（维持挂账裁定）五行经逐行核对，均已带闭环标注或裁定，不再列入待收拾。
 - **`T755` rd-fe · 截止日筛选面板竖排重构（Issue #403）**：面板改为**逐值复刻任务详情面板日期选择器**（`task-date-selector`：标签缩进 / 无框控件 / 分隔线分段 / 定宽 14rem）+ 提醒设置器的开关行（文字左、开关右、整行可点）+ 左对齐「清除日期」；即时生效链路与 `data-role` 契约不变 · 门禁：`vp check` 0 error（2076 文件格式 / 1655 文件 0 error）· 搜索面 19 文件 / 239 例 / 0 红（含 T755 19 例）· Chromium 同页对照参考件 **8/8 计算值相等**（224px / 4px 0 / 8px / 4px / `rgb(153,153,153)` / 8px / 0px / none；控件 padding-left = 标签 8px、左缘同为 37px）· 三视口（1280 / 360 / 320）面板 224px、横向溢出 0 · 清除键与日历图标间距 11px · 开关行 28px 内文字左 8px / 开关右 8px · 用户视觉走查**通过**（2026-11-24，C1–C5 全过；PR #404 squash 合并 `4076b7d2`）。
+- **`T802` rd-fe · 文档债回写（缺陷池 + 走查台账，零源码）**：① `DEF-111` 跑用例复核后标 **✅ 已修（Issue #274 · 2026-10-29）**，证据逐条指行号（`t575-rounds-engine.test.ts`：M=4 `:83`/`:84`/`:87` · M=1 `:112`/`:113` · M=10 `:121`/`:122`/`:127` · skip 负向 `:143`/`:152`/`:161`/`:173`/`:176`）；② `DEF-115` 补用户裁定「维持挂账，移动端不改」；③ `DEF-163` 补裁定「用户撤回授权，维持挂账（移动端红线）」，**移动端零改动**；④ 走查台账第 94/104/119/132 行回写 **W1–W5 于 2026-11-24 用户走查通过**（口径：Linux `Ctrl` 键面实看通过；mac 真机待验 —— `detectPlatform` 映射有单测覆盖、结构性已测）。门禁：`vp check` 0 error（2077 文件格式 / 1655 文件 0 error·0 warning）· `vp test --run packages/presentation/pomodoro` **12 文件 / 109 例 / 0 红**（9.0s）· 守卫 `mobile-imports` / `test-location` / `barrel-imports` / `gate-pathspec` rc=0 · 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobile` = **0 行**。本批 2 个文件全为文档，零源码 / 零测试改动。
 
 ## 二、上一批次终态
 
