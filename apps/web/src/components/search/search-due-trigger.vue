@@ -125,11 +125,11 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
                 />
             </nue-button>
         </template>
-        <nue-div vertical class="due-panel" gap="var(--nue-gap-md)">
-            <!-- 日期组：两行同构（标签定宽 + 选择器等宽拉伸）⇒ 起/止控件左右缘对齐，只有单边时也不跳位 -->
-            <nue-div vertical class="due-panel__group" gap="var(--nue-gap-xs)">
-                <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
-                    <nue-text size="var(--nue-text-sm)" class="due-panel__label">
+        <nue-div vertical class="due-panel" gap="var(--nue-gap-sm)">
+            <!-- 日期组：起 / 止各一段竖排（标签在上、控件全宽）⇒ 两者左右缘天然对齐，单边时不跳位 -->
+            <nue-div vertical class="due-panel__group" gap="var(--nue-gap-sm)">
+                <nue-div vertical class="due-panel__row" gap="var(--nue-gap-2xs)">
+                    <nue-text size="var(--nue-text-xs)" class="due-panel__label">
                         {{ t('search.filter.dueFrom') }}
                     </nue-text>
                     <nue-date-picker
@@ -143,8 +143,8 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
                         @update:model-value="onFrom"
                     />
                 </nue-div>
-                <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
-                    <nue-text size="var(--nue-text-sm)" class="due-panel__label">
+                <nue-div vertical class="due-panel__row" gap="var(--nue-gap-2xs)">
+                    <nue-text size="var(--nue-text-xs)" class="due-panel__label">
                         {{ t('search.filter.dueTo') }}
                     </nue-text>
                     <nue-date-picker
@@ -159,7 +159,10 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
                     />
                 </nue-div>
             </nue-div>
-            <!-- 无截止日开关（与「包含已归档」同风格：NueSwitch + 可见文字标签，整行可点） -->
+            <nue-divider />
+            <!-- 无截止日开关（与「包含已归档」同风格：NueSwitch + 可见文字标签，整行可点）
+                 ⛔ 开关自身的 click 带 `.stop`（nue-ui 内部）⇒ 点开关只走 switch 的分支，
+                 不会与整行的 click 各抛一次而互相抵消（三方点击各产生**一次**切换）。 -->
             <nue-div
                 align="center"
                 class="due-panel__row due-panel__row--switch"
@@ -176,7 +179,8 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
                     {{ t('search.includeNoDue') }}
                 </span>
             </nue-div>
-            <!-- 清除动作独立成组（分隔线 + 左对齐），⛔ 不与开关行挤在同一组 -->
+            <!-- 清除动作独立成组（分隔线 + 左对齐），⛔ 不与开关行挤在同一组；无值时整组（含分隔线）不出现 -->
+            <nue-divider v-if="active" />
             <nue-div v-if="active" vertical class="due-panel__actions" gap="var(--nue-gap-xs)">
                 <nue-button
                     theme="small,ghost"
@@ -194,29 +198,44 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
 <style scoped src="./filter-trigger.css"></style>
 
 <style scoped>
+/* 竖排表单（Issue #403）：骨架对齐任务详情面板的日期选择器
+   —— 标签在上、控件全宽、分隔线分段；⛔ 不复用该组件（值域/提醒区/提交语义均不同）。 */
 .due-panel {
     padding: var(--nue-padding-sm);
-    min-width: 16rem;
-    max-width: 20rem;
+    /* 竖排不需要横排那份宽度：14rem 起、16rem 封顶（内容宽 ≈200px 时控件仍不溢出、不横滚） */
+    min-width: 14rem;
+    max-width: 16rem;
 }
 
-/* 标签定宽 + 选择器拉伸 ⇒ 两行控件左缘、右缘都对齐（只有单边时也不跳位） */
+/* 标签在上：小字 + 次要色（用 600 而非参考件的 400 —— 400 在浅底约 2.8:1，达不到文本 4.5:1 下限） */
 .due-panel__label {
-    flex: none;
-    min-width: 3.25rem;
+    color: var(--nue-primary-color-600);
+    line-height: 1.2;
 }
 
 .due-panel__row {
     width: 100%;
-}
-
-.due-panel__picker {
-    flex: 1 1 0;
     min-width: 0;
 }
 
+/* 控件占满面板宽度：nue-ui 1.15.x 的 `__trigger` 是 `width: fit-content` 包裹层，
+   只给选择器 100% 会被它收缩成内容宽 ⇒ 必须把包裹层与内层按钮一并拉满。 */
+.due-panel__picker {
+    width: 100%;
+    min-width: 0;
+}
+
+.due-panel__picker :deep(.nue-date-picker__trigger) {
+    width: 100%;
+}
+
+.due-panel__picker :deep(.nue-button) {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 /* 日期为数字，等宽数字避免 `01` 与 `8` 之间宽度抖动 */
-.due-panel__picker :deep(input) {
+.due-panel__picker :deep(.nue-button__text) {
     font-variant-numeric: tabular-nums;
 }
 
@@ -224,11 +243,9 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
     cursor: pointer;
 }
 
-/* 动作组与上方内容之间加分隔线，避免「清除日期」贴在开关行下面 */
 .due-panel__actions {
     width: 100%;
     padding-top: var(--nue-gap-xs);
-    border-top: 1px solid var(--nue-primary-color-200);
 }
 
 .due-panel__clear {
