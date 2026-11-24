@@ -7,11 +7,13 @@
  *
  * 契约：
  *  ① **不参与收缩**：行内空间不足时整颗按钮换行，⛔ 不被压扁（文字随之消失的空胶囊）；
- *  ② 宽度上限 220px，超长**只在文本上省略**（`.nue-button__text { min-width: 0 }` 是省略号生效的前提）。
+ *  ② 宽度上限 18rem，超长**只在文本上省略**（`.nue-button__text { min-width: 0 }` 是省略号生效的前提）；
+ *     上限由 220px 放宽（`#398` 四轮 · 用户实报）：截止日带年份后文案变长，220px 会截掉年份尾部
+ *     让区间读不通，故放宽到 18rem，完整值由触发器 `title` 兜底（悬停可见）。
  */
 .filter-trigger {
     flex: none;
-    max-width: 220px;
+    max-width: 18rem;
 }
 .filter-trigger :deep(.nue-button__text) {
     min-width: 0;

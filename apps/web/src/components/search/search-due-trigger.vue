@@ -29,32 +29,63 @@ const emit = defineEmits<{
 /**
  * 日期键 → 本地化短文案（`3/1`；仅用于触发器摘要，不参与筛选计算）
  *
- * @description **绝不抛错**（`T795` 复盘 / #398 二轮）：`Intl.DateTimeFormat().format(Invalid Date)`
- *              会抛 `RangeError`，而该函数在**渲染期**被调用 ⇒ 一个脏日期键就能让整颗触发器
- *              渲染中断（按钮只剩注释、宽度塌成 padding，用户看到"空胶囊"）。
- *              故先规整为 `YYYY-MM-DD`（容忍 ISO 时间），规整失败即回退原串展示。
+ * @description **绝不抛错**（`T795` 复盘 / #398 二轮）：曾被 `Intl.DateTimeFormat().format(Invalid Date)`
+ *              的 `RangeError` 打断渲染（脏日期键 ⇒ 整颗触发器只剩注释、宽度塌成 padding）。
+ *              现改为**纯字符串解析 + i18n 文案**（不再调用 `Intl`）⇒ 结构上不存在抛错面；
+ *              规整失败即回退原串展示。
  */
-const shortLabel = (key: string): string => {
+const shortLabel = (key: string, options: { withYear?: boolean } = {}): string => {
     const normalized = dateKeyOfIso(key) || normalizeDateKey(key)
     if (normalized === '') return key
     const [year, month, day] = normalized.split('-').map(Number)
-    try {
-        return new Intl.DateTimeFormat(String(getLocale().value || 'zh-CN'), {
-            month: 'numeric',
-            day: 'numeric'
-        }).format(new Date(year ?? 1970, (month ?? 1) - 1, day ?? 1))
-    } catch {
-        return normalized
+    // 走项目既有 i18n 日期文案（zh `11月1日` / en `11/1`），⛔ 不用浏览器 Intl 的自有格式
+    // （会得到 `2025/11/1`，与全站 `2025年11月1日` 风格不一致；也不用相对日期工具 —— 它带时刻且随当前时间漂移）。
+    return options.withYear
+        ? t('date.yearMonthDay', { year: year ?? 1970, month: month ?? 1, day: day ?? 1 })
+        : t('date.monthDay', { month: month ?? 1, day: day ?? 1 })
+}
+
+/** 日期键的年份（无法解析 ⇒ `null`） */
+const yearOf = (key: string): number | null => {
+    const normalized = dateKeyOfIso(key) || normalizeDateKey(key)
+    if (normalized === '') return null
+    const year = Number(normalized.slice(0, 4))
+    return Number.isFinite(year) ? year : null
+}
+
+/**
+ * 是否需要显示年份（`#398` 三轮 · 用户实报）
+ *
+ * @description 省略年份在**跨年**时会造成误读：`2025-11-01` 至 `2026-09-08` 只显示
+ *              「11/1 至 9/8」时，读者会以为起点晚于终点。规则：
+ *              ① 两端年份不同 ⇒ **两端都带年份**；
+ *              ② 任一端不是当前年 ⇒ 该端带年份（避免"去年 11/1"被读成今年）；
+ *              ③ 都在当前年 ⇒ 保持紧凑，只显示 `M/D`。
+ */
+const needYear = (from: string, to: string): { from: boolean; to: boolean } => {
+    const currentYear = new Date().getFullYear()
+    const fromYear = yearOf(from)
+    const toYear = yearOf(to)
+    if (fromYear !== null && toYear !== null && fromYear !== toYear) return { from: true, to: true }
+    return {
+        from: fromYear !== null && fromYear !== currentYear,
+        to: toYear !== null && toYear !== currentYear
     }
 }
 
 /** 区间摘要（双端 / 单边 / 未设置三态） */
 const rangeText = computed(() => {
     const { from, to } = props
+    const year = needYear(from, to)
     if (from !== '' && to !== '')
-        return t('search.filter.dueRange', { from: shortLabel(from), to: shortLabel(to) })
-    if (from !== '') return t('search.filter.dueFromOnly', { from: shortLabel(from) })
-    if (to !== '') return t('search.filter.dueToOnly', { to: shortLabel(to) })
+        return t('search.filter.dueRange', {
+            from: shortLabel(from, { withYear: year.from }),
+            to: shortLabel(to, { withYear: year.to })
+        })
+    if (from !== '')
+        return t('search.filter.dueFromOnly', { from: shortLabel(from, { withYear: year.from }) })
+    if (to !== '')
+        return t('search.filter.dueToOnly', { to: shortLabel(to, { withYear: year.to }) })
     return ''
 })
 
@@ -87,56 +118,75 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
                 data-role="due-trigger"
                 @click="trigger($event)"
             >
-                <filter-trigger-label :label="t('search.filter.due')" :items="selectedItem" />
+                <filter-trigger-label
+                    :label="t('search.filter.due')"
+                    :items="selectedItem"
+                    :title="rangeText"
+                />
             </nue-button>
         </template>
-        <nue-div vertical class="due-panel" gap="var(--nue-gap-sm)">
-            <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
-                <nue-text size="var(--nue-text-sm)" class="due-panel__label">
-                    {{ t('search.filter.dueFrom') }}
-                </nue-text>
-                <nue-date-picker
-                    :model-value="from"
-                    type="date"
-                    size="small"
-                    clearable
-                    :placeholder="t('search.filter.dueFrom')"
-                    data-role="due-from"
-                    @update:model-value="onFrom"
-                />
+        <nue-div vertical class="due-panel" gap="var(--nue-gap-md)">
+            <!-- 日期组：两行同构（标签定宽 + 选择器等宽拉伸）⇒ 起/止控件左右缘对齐，只有单边时也不跳位 -->
+            <nue-div vertical class="due-panel__group" gap="var(--nue-gap-xs)">
+                <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
+                    <nue-text size="var(--nue-text-sm)" class="due-panel__label">
+                        {{ t('search.filter.dueFrom') }}
+                    </nue-text>
+                    <nue-date-picker
+                        :model-value="from"
+                        type="date"
+                        size="small"
+                        clearable
+                        class="due-panel__picker"
+                        :placeholder="t('search.filter.dueFrom')"
+                        data-role="due-from"
+                        @update:model-value="onFrom"
+                    />
+                </nue-div>
+                <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
+                    <nue-text size="var(--nue-text-sm)" class="due-panel__label">
+                        {{ t('search.filter.dueTo') }}
+                    </nue-text>
+                    <nue-date-picker
+                        :model-value="to"
+                        type="date"
+                        size="small"
+                        clearable
+                        class="due-panel__picker"
+                        :placeholder="t('search.filter.dueTo')"
+                        data-role="due-to"
+                        @update:model-value="onTo"
+                    />
+                </nue-div>
             </nue-div>
-            <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-xs)">
-                <nue-text size="var(--nue-text-sm)" class="due-panel__label">
-                    {{ t('search.filter.dueTo') }}
-                </nue-text>
-                <nue-date-picker
-                    :model-value="to"
-                    type="date"
-                    size="small"
-                    clearable
-                    :placeholder="t('search.filter.dueTo')"
-                    data-role="due-to"
-                    @update:model-value="onTo"
-                />
-            </nue-div>
-            <!-- 无截止日开关（与「包含已归档」同风格：NueSwitch + 可见文字标签） -->
-            <nue-div align="center" class="due-panel__row" gap="var(--nue-gap-2xs)">
+            <!-- 无截止日开关（与「包含已归档」同风格：NueSwitch + 可见文字标签，整行可点） -->
+            <nue-div
+                align="center"
+                class="due-panel__row due-panel__row--switch"
+                gap="var(--nue-gap-2xs)"
+                @click="emit('update:includeNoDue', !includeNoDue)"
+            >
                 <nue-switch
                     :model-value="includeNoDue"
                     size="small"
                     :aria-label="t('search.includeNoDue')"
                     @update:model-value="(value: boolean) => emit('update:includeNoDue', value)"
                 />
-                <span
-                    class="due-panel__switch-label"
-                    @click="emit('update:includeNoDue', !includeNoDue)"
-                >
+                <span class="due-panel__switch-label">
                     {{ t('search.includeNoDue') }}
                 </span>
             </nue-div>
-            <nue-button v-if="active" theme="small,ghost" icon="clear" @click="emit('clear')">
-                {{ t('search.filter.dueClear') }}
-            </nue-button>
+            <!-- 清除动作独立成组（分隔线 + 左对齐），⛔ 不与开关行挤在同一组 -->
+            <nue-div v-if="active" vertical class="due-panel__actions" gap="var(--nue-gap-xs)">
+                <nue-button
+                    theme="small,ghost"
+                    icon="clear"
+                    class="due-panel__clear"
+                    @click="emit('clear')"
+                >
+                    {{ t('search.filter.dueClear') }}
+                </nue-button>
+            </nue-div>
         </nue-div>
     </nue-dropdown>
 </template>
@@ -146,15 +196,43 @@ const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(v
 <style scoped>
 .due-panel {
     padding: var(--nue-padding-sm);
-    min-width: 220px;
+    min-width: 16rem;
+    max-width: 20rem;
 }
 
+/* 标签定宽 + 选择器拉伸 ⇒ 两行控件左缘、右缘都对齐（只有单边时也不跳位） */
 .due-panel__label {
     flex: none;
+    min-width: 3.25rem;
 }
 
 .due-panel__row {
     width: 100%;
+}
+
+.due-panel__picker {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* 日期为数字，等宽数字避免 `01` 与 `8` 之间宽度抖动 */
+.due-panel__picker :deep(input) {
+    font-variant-numeric: tabular-nums;
+}
+
+.due-panel__row--switch {
+    cursor: pointer;
+}
+
+/* 动作组与上方内容之间加分隔线，避免「清除日期」贴在开关行下面 */
+.due-panel__actions {
+    width: 100%;
+    padding-top: var(--nue-gap-xs);
+    border-top: 1px solid var(--nue-primary-color-200);
+}
+
+.due-panel__clear {
+    align-self: flex-start;
 }
 
 .due-panel__switch-label {

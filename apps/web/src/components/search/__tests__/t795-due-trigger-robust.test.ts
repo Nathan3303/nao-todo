@@ -32,7 +32,7 @@ describe('T795 · 截止日触发器健壮性', () => {
         })
         const text = w.find('[data-role="due-trigger"]').text()
         expect(text).toContain('截止日')
-        expect(text).toMatch(/\d+\/\d+/)
+        expect(text).toMatch(/\d+月\d+日/)
     })
 
     it('无法解析的脏值不抛错，回退原串展示（⛔ 不塌成空胶囊）', () => {

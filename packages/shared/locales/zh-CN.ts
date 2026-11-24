@@ -923,6 +923,8 @@ const zhCN: LocaleMessages = {
 
     // Date relative
     'date.today': '今天 {time}',
+    'date.monthDay': '{month}月{day}日',
+    'date.yearMonthDay': '{year}年{month}月{day}日',
     'date.yesterday': '昨天 {time}',
     'date.tomorrow': '明天 {time}',
     'date.dayAfterTomorrow': '后天 {time}',
