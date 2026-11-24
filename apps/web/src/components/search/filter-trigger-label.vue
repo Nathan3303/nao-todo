@@ -14,6 +14,8 @@ defineProps<{
     label: string
     /** 已选项（已按维度选项顺序） */
     items: FilterTriggerItem[]
+    /** 完整文本（触发词条被省略号截断时悬停可见；T798） */
+    title?: string
 }>()
 
 /** 折叠阈值：超过则仅显示前 N 项 + 「+剩余」 */
@@ -21,7 +23,7 @@ const FOLD_LIMIT = 2
 </script>
 
 <template>
-    <span class="filter-trigger-label">
+    <span class="filter-trigger-label" :title="title || undefined">
         <span class="filter-trigger-label__dim">{{ label }}</span>
         <template v-for="(item, index) in items.slice(0, FOLD_LIMIT)" :key="item.id">
             <span class="filter-trigger-label__sep">{{ index === 0 ? '：' : '、' }}</span>

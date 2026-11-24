@@ -230,7 +230,8 @@ describe('T505 ④ 触发器显示已选名称', () => {
         mountBar({ selectedProjectIds: ['', 'p1', 'p2'] })
         expect(triggerText(TRIGGER.project)).toBe('清单：收集箱、工作 +1')
         // `T795`：几何（最大宽度 / 不收缩 / 文本可省略）收敛到唯一来源 `filter-trigger.css`
-        expect(triggerCss).toMatch(/\.filter-trigger\s*\{[^}]*max-width:\s*220px/m)
+        // `#398` 四轮：上限 220px → 18rem（截止日带年份后 220px 会截掉年份尾部）
+        expect(triggerCss).toMatch(/\.filter-trigger\s*\{[^}]*max-width:\s*18rem/m)
         expect(triggerCss).toMatch(/\.filter-trigger\s*\{[^}]*flex:\s*none/m)
         expect(triggerCss).toMatch(
             /\.filter-trigger :deep\(\.nue-button__text\)\s*\{[^}]*min-width:\s*0/m

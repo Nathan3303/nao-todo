@@ -896,6 +896,8 @@ export interface LocaleMessages {
 
     // Date relative
     'date.today': string
+    'date.monthDay': string
+    'date.yearMonthDay': string
     'date.yesterday': string
     'date.tomorrow': string
     'date.dayAfterTomorrow': string

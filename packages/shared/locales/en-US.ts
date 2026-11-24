@@ -961,6 +961,8 @@ const enUS: LocaleMessages = {
 
     // Date relative
     'date.today': 'Today {time}',
+    'date.monthDay': '{month}/{day}',
+    'date.yearMonthDay': '{month}/{day}/{year}',
     'date.yesterday': 'Yesterday {time}',
     'date.tomorrow': 'Tomorrow {time}',
     'date.dayAfterTomorrow': 'Day after tomorrow {time}',
