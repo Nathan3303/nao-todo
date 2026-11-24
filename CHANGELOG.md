@@ -2,6 +2,16 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.22.1] - 2026-11-23
+
+保养批：依赖安全 + 构建基座 + 两处小修（发版说明 `docs/releases/v1.22.1.md` · Issue #384 / #388 / #393 / #394）：
+
+- **依赖安全三批（#388）**：prod 面 **23 → 0**（electron 43.8.12 · vue 3.5.46 · vue-i18n 11.4.23 · @vue/server-renderer 3.5.46 · vite 7.3.8 · follow-redirects 1.16.3 · fast-uri 3.1.9 · postcss-selector-parser 7.2.1）；dev 面 **70 → 10（0 critical）**，用 12 条 **exact-key** + 1 条抬门槛 override（每条注明原因与可删条件），禁范围型 override（会把 node-gyp/minimatch 跨 major 强推）。新增 `guard:audit`（critical=0 且总数 ≤12）+ 变异自证。
+- **Actions 升到最新主版本（#384）**：checkout v7 / setup-node v7 / upload-artifact v7 / download-artifact v8 / action-gh-release v3；逐条核对破坏性变更后确认无需改 `with:`；`release` job 步骤顺序与 `merge-multiple: true` 不变。
+- **变更历史双层滚动（#393 / DEF-162）**：移除 `.task-history__detail` 的内滚，只保留列表一个滚动容器；源级守卫 4 例 + Chromium 几何（在滚容器数 = 1、`scrollHeight 571 / clientHeight 416`）+ 键盘到底。
+- **ADR 索引整篇重复（#394 / DEF-165）**：298 → 150 行；表行取两份并集（38 行，含此前只存在于某一份的 T696/T673/T733/T672）；新增结构守卫 5 例（变异可杀）。
+- **门禁**：`vp test --run` 493 文件 / 3994 例 / 0 红 · `vp check` 0 error · 八守卫 + `release-versions` rc=0 · 双端 build rc=0 · 移动端红线 0 行。
+
 ## [v1.22.0] - 2026-11-23
 
 命令面板 + 快捷键帮助 + 任务级归档 + 搜索翻新（发版说明 `docs/releases/v1.22.0.md` · Issue #371 / #372 / #373 / #378 / #380 / #382 · PR #374 / #375 / #377 / #379 / #381 / #383）：

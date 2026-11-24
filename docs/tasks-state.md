@@ -95,11 +95,29 @@
 - **发布**：本批随 `v1.22.0`（MINOR）发布（见 §一之八）。
 - **未关闭 Issue**：#376（仓储读取性能根因，P2）· #384（Actions v4 → v5，Node 20 弃用警告，用户已同意开单）。
 
-## 一之八、`v1.22.0` 发版（MINOR · 在制）
+## 一之八、`v1.22.0` 发版（MINOR · ✅ 已发布 2026-11-23）
 
 - **分支** `nao/release-v1.22.0`：root / `apps/web` / `apps/desktop` `1.21.0 → 1.22.0`；`CHANGELOG.md` + `docs/releases/v1.22.0.md`；`packages/*` 有源码改动按近批惯例不单独 bump。
 - **已用新闸门自证**：`node scripts/verify-release-versions.mjs v1.22.0` ⇒ 5 项 PASS / rc=0。
-- **待办**：PR → RD 合并 → 注解 tag `v1.22.0` → 打包 run → Release（正文与文件归一化逐字一致）→ 8 产物 + 三份 `latest*.yml` 实核（**本次起由 CI 自动校验**）。
+- **发版链路小事故与修复（如实记录）**：首次 tag 指向 `297f8182`（旧 workflow）⇒ 三个平台打包全绿，但 `release` job 的**新增校验步把发版拦下** —— 原因是我把 `actions/checkout`（默认 `clean: true`）放在 `download-artifact` **之后**，它把未跟踪的 `artifacts/` 删了 ⇒ 脚本报「--assets 目录不存在」。修复 = checkout 提前 + download 加 `merge-multiple: true`（PR #386 ⇒ `92eb163c`）；**另需知**：我误把 #386 当成 issue 写了 `Closes #386`，实际 #386 就是该 PR 自身（GitHub issue/PR 同号），无 issue 被关闭，RD 当场指出。
+- **✅ 已发布事实（2026-11-23 实核）**：发版 PR **#385** ⇒ squash **`297f8182`**；tag `v1.22.0` 因上述修复**重打**并指向 **`92eb163c`**（含同版本应用代码 + 修复后 workflow）；打包 run `45181660676` 四 job 全绿；**新增 CI 闸门首次实战通过**（8 条 PASS：三处顶层 version / 与 tag 一致 / 三份 `latest*.yml`）；Release 已发布（非 draft / 非 prerelease）· **8 产物齐** · Release 正文与 `docs/releases/v1.22.0.md` 归一化**逐字一致（2779/2779）**。
+- **本批遗留**：① #376 仓储 `list()` 整表解密（P2 根因，未修）② #384 Actions v4 → v5（Node 20 弃用警告，已开单）③ `DEF-160` 上游根因（现已有 `guard:commit-scope` 可执行防线）④ 用户视觉/真机走查（命令面板观感、mac 键面、窄屏、归档只读态、搜索手感）**待执行**。
+
+## 一之九、工程基座：Actions 升级（`chore` · ✅ 已合并 2026-11-23 · Issue #384）
+
+- **范围**：`.github/workflows/**` 共 **11 处** `uses:` 升到最新主版本（PM 派单原写「7 处」是错的，RD 当场纠正）：`checkout` v4→**v7** ×5 · `setup-node` v4→**v7** ×4 · `upload-artifact` v4→**v7** · `download-artifact` v4→**v8** · `action-gh-release` v2→**v3**。
+- **破坏性变更结论**：逐 action 读 release notes + 目标 tag 的 `action.yml` ⇒ **无一项需要改 `with:`**，diff 只有 11 行版本号。关键点：`checkout` 的 `clean: true` 默认**未变**（「checkout 必须在 download 之前」的既有约束照旧）；`setup-node` v6 起自动缓存收窄到仅 npm ⇒ 本仓 pnpm 行为同 v4；`download-artifact` v5 的「按 ID 下载路径变化」不适用（本仓走全量 + `merge-multiple: true`，v8 仍支持）。
+- **合并**：PR #387 ⇒ squash **`f370175f`**；`wip(` 残留 0；远端分支已删；Issue #384 CLOSED；合并后核验：无残留 `@v4`/`@v2`（0 处）、release job 五步顺序不变、`merge-multiple` 仍 1 处。
+- **验证层级（如实）**：① PR 的 `check`/`test` 真跑 `checkout@v7` + `setup-node@v7` ⇒ 双绿 ② 合并后 `workflow_dispatch` 预演 run `45189093750` 三平台 build + **`upload-artifact@v7` 全 success**（release job 按设计 skip）③ **`download-artifact@v8` 与 `action-gh-release@v3` 只能等下次发版验证**（PR 已写明 + 兜底：失败则 `git revert` 该提交）。
+- **顺带发现（未处理）**：GitHub 报默认分支 **94 个依赖漏洞**（3 critical / 34 high / 37 moderate / 20 low，Dependabot 口径）⇒ 建议单独开单评估，不在本单内混入。
+
+## 一之一〇、命令面板 / 任务归档 / 搜索翻新 / 依赖安全 / 文档治理 · 合并汇总（2026-11-23 夜间）
+
+- **合并序列（v1.22.0 之后 6 个提交）**：`f370175f` Actions 升 v7/v8/v3（#384）· `2b822069` prod 依赖安全（#388 批一）· `349be03f` prod 清零（#388 批二）· `2d71fbd8` dev 面 Batch A（#388 批三，audit 70→10 / 0 critical）· `2c480a4b` ADR 索引整篇去重（#394 / DEF-165）· `e0a137da` 变更历史单层滚动（#393 / DEF-162）。
+- **依赖现状**：`pnpm audit --prod` = **0**；全量 **10**（0c/1h/8m/1l）。剩余 = `vite-plus`×5（需换工具链，已开 **#391**）· `@vitest/mocker`×2 + `vitest`×1（工具链 pin）· `glob`×1 / `minimatch`×1（跨 major、上游无解）⇒ **接受至 2026-12-31 + 转办上游**。新增 `guard:audit`（critical=0 且总数 ≤12）。
+- **本批事故与处置（如实）**：① 同一 worktree 两会话交叉改动（我的 ADR 分支里出现对方的 DEF-162 文件，且 `t717` 被整文件 LF 化）⇒ 按 pathspec 只提交自己的文件，对方随后切回本分支并修正 EOL；② 我的首次「ADR 去重」用截断法会丢掉只存在于后半份的 `T696`/`T673` ⇒ 改为行并集重建 + 守卫用例。
+- **待用户**：发版 `v1.22.1`（本批铜基座，PATCH）· 视觉走查五项 · `#391` 换工具链决策 · `#376` 仓储读取性能 A/B 两步。
+- **待收拾**：缺陷池 `DEF-27` / `111` / `113` / `115` 等行状态过期（实际已闭环），下批随文档提交回写。
 
 ## 二、上一批次终态
 
