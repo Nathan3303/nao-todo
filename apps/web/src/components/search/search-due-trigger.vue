@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { t, getLocale } from '@nao-todo/shared/locales'
-import { isDueRangeActive } from './search-sort'
+import { dateKeyOfIso, isDueRangeActive, normalizeDateKey } from './search-sort'
 import FilterTriggerLabel from './filter-trigger-label.vue'
 
 /**
@@ -26,14 +26,26 @@ const emit = defineEmits<{
     (e: 'clear'): void
 }>()
 
-/** 日期键 → 本地化短文案（`3/1`；仅用于触发器摘要，不参与筛选计算） */
+/**
+ * 日期键 → 本地化短文案（`3/1`；仅用于触发器摘要，不参与筛选计算）
+ *
+ * @description **绝不抛错**（`T795` 复盘 / #398 二轮）：`Intl.DateTimeFormat().format(Invalid Date)`
+ *              会抛 `RangeError`，而该函数在**渲染期**被调用 ⇒ 一个脏日期键就能让整颗触发器
+ *              渲染中断（按钮只剩注释、宽度塌成 padding，用户看到"空胶囊"）。
+ *              故先规整为 `YYYY-MM-DD`（容忍 ISO 时间），规整失败即回退原串展示。
+ */
 const shortLabel = (key: string): string => {
-    const [year, month, day] = key.split('-').map(Number)
-    const date = new Date(year ?? 1970, (month ?? 1) - 1, day ?? 1)
-    return new Intl.DateTimeFormat(String(getLocale().value || 'zh-CN'), {
-        month: 'numeric',
-        day: 'numeric'
-    }).format(date)
+    const normalized = dateKeyOfIso(key) || normalizeDateKey(key)
+    if (normalized === '') return key
+    const [year, month, day] = normalized.split('-').map(Number)
+    try {
+        return new Intl.DateTimeFormat(String(getLocale().value || 'zh-CN'), {
+            month: 'numeric',
+            day: 'numeric'
+        }).format(new Date(year ?? 1970, (month ?? 1) - 1, day ?? 1))
+    } catch {
+        return normalized
+    }
 }
 
 /** 区间摘要（双端 / 单边 / 未设置三态） */
@@ -51,9 +63,11 @@ const selectedItem = computed(() =>
 )
 const active = computed(() => isDueRangeActive({ from: props.from, to: props.to }))
 
-/** 日期选择器输出（`YYYY-MM-DD` / null）→ 状态值（空 = 该侧不限） */
-const onFrom = (value: string | null | undefined) => emit('update:from', value ?? '')
-const onTo = (value: string | null | undefined) => emit('update:to', value ?? '')
+/** 日期选择器输出 → 状态值（**恒规整为 `YYYY-MM-DD`**；空 = 该侧不限） */
+const toDateKey = (value: string | null | undefined): string =>
+    value ? dateKeyOfIso(value) || normalizeDateKey(value) : ''
+const onFrom = (value: string | null | undefined) => emit('update:from', toDateKey(value))
+const onTo = (value: string | null | undefined) => emit('update:to', toDateKey(value))
 </script>
 
 <template>
