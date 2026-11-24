@@ -120,6 +120,18 @@
 - **待收拾**：缺陷池 `DEF-27` / `111` / `113` / `115` 等行状态过期（实际已闭环），下批随文档提交回写。
 - **`T755` rd-fe · 截止日筛选面板竖排重构（Issue #403）**：面板改为**逐值复刻任务详情面板日期选择器**（`task-date-selector`：标签缩进 / 无框控件 / 分隔线分段 / 定宽 14rem）+ 提醒设置器的开关行（文字左、开关右、整行可点）+ 左对齐「清除日期」；即时生效链路与 `data-role` 契约不变 · 门禁：`vp check` 0 error（2076 文件格式 / 1655 文件 0 error）· 搜索面 19 文件 / 239 例 / 0 红（含 T755 19 例）· Chromium 同页对照参考件 **8/8 计算值相等**（224px / 4px 0 / 8px / 4px / `rgb(153,153,153)` / 8px / 0px / none；控件 padding-left = 标签 8px、左缘同为 37px）· 三视口（1280 / 360 / 320）面板 224px、横向溢出 0 · 清除键与日历图标间距 11px · 开关行 28px 内文字左 8px / 开关右 8px · 待用户视觉走查。
 
+## 一之一一、走查修复批 + `v1.22.1` / `v1.22.2` 发版（2026-11-24）
+
+- **`v1.22.1`（PATCH · ✅ 已发布 2026-11-24）**：发版 PR **#397** ⇒ squash **`dc9083c1`**；tag `v1.22.1`；打包 run `45310975312` 四 job 全绿；**CI 闸门 8 条 PASS**；**`download-artifact@v8` + `action-gh-release@v3` 首次实战通过**（v1.22.0 时只验到 upload）；8 产物齐；Release 正文与 `docs/releases/v1.22.1.md` 归一化逐字一致（2157/2157）。
+- **用户走查（v1.22.1 之后四轮）与修复**：
+    - `2a6ae1bd` **走查四项**（Issue #398 / PR #399）：搜索触发器不收缩（`filter-trigger.css` 单一来源）· 归档任务只读 + 灰阶（拖拽由「条件绑定」改「始终绑定 + 处理器内早退」，原写法使拖拽整体失效、`subtasks.test.ts` 3 例红）· 变更历史左缘贴齐（DEF-162 单层滚动未回退）· 窄屏更新卡内边距（12px / 28px）。
+    - `8cf5e9dc` **截止日触发器渲染中断**（PR #400）：`nue-date-picker` 输出 ISO ⇒ `Number('01T00:00:00.000Z')` = NaN ⇒ `Intl.format(Invalid Date)` 抛 `RangeError`，该函数在渲染期跑 ⇒ 整颗触发器渲染中断、宽度塌成 padding（空胶囊）。修法：`dateKeyOfIso` 输入规整 + `shortLabel` 容错回退。
+    - `6a0ff245` **跨年带年份 + 面板排版**（PR #401）：两端年份不同或非当年 ⇒ 带年份（走 i18n `date.monthDay` / `date.yearMonthDay`，**不用** `Intl` 自由格式、**不复用** `relative-date-parser`（带 `HH:mm` 且相对措辞随时间漂移））；触发器上限 `18rem` + `title`；面板「标签定宽 + 控件 flex」对齐、`tabular-nums`、动作组独立 + 分隔线。
+- **口径教训（PM 自查）**：门禁判据 `grep "isReadOnly ? undefined"` 写宽了 —— 命中的是 `:data-*` **属性绑定**（语义正确），真正要清的是**事件监听器条件绑定**；以后同类判据须带 `@事件=` 前缀。
+- **`v1.22.2`（PATCH · 在制）**：分支 `nao/release-v1.22.2`；root / `apps/web` / `apps/desktop` `1.22.1 → 1.22.2`；`CHANGELOG.md` + `docs/releases/v1.22.2.md`；`packages/*` 无变化。
+- **待用户**：`#376` 仓储读取性能（索引下推 + 惰性解密）· `#391` 换工具链（vite-plus 1.3.0）· 视觉走查残余（mac 键位仅单测覆盖）。
+- **待收拾**：缺陷池 `DEF-27` / `111` / `113` / `115` 行状态过期（实际已闭环）。
+
 ## 二、上一批次终态
 
 - **✅ `v1.20.2` 已发布（2026-11-13，批次终态）**：发版 PR **#352** ⇒ squash **`787b301b`** · 注解 tag `v1.20.2` · Release 已发布（正文与 `docs/releases/v1.20.2.md` 归一化逐字一致 1924/1924）· 8 产物齐全 · 打包 run `43392992600` 四 job 全绿；版本 root/web/desktop **1.20.2** · `presentation` **0.12.0** · `shared` **1.6.0**。服务端无改动。
@@ -128,7 +140,7 @@
 ## 三、长期环境事实（滚动，跨批有效）
 
 - **GitHub 出网**：HTTPS 间歇 135s 超时 / 偶发 `flush 包` 半包 ⇒ push（含 tag）**重试 2–4 次**，`gh` 侧不受影响；`git@github.com:22` 不通。
-- **`gh` token 缺 `workflow` scope** ⇒ 改 `.github/workflows/**` 的提交会被拒（本批 `release.yaml` 改动需注意：**推送前先确认 token 是否已具 `workflow` scope，否则改走用户授权**）。
+- **`gh` token 已补 `workflow` scope（2026-11-23 用户执行 `gh auth refresh -s workflow`）** ⇒ 现可直接改 `.github/workflows/**`；scopes 实测 = `admin:public_key / gist / read:org / repo / workflow`。
 - **本机 mise**：全局 `node 24.22.3` **不提供 pnpm** ⇒ 用 `mise exec node@24.22.1 -- pnpm …`；本仓要求的 Node 版本见 `.node-version`（本批新增）。
 - **本地栈**：`nao-todo-server` 的 `docker compose up -d`；web dev 用 `setsid nohup` 起（⛔ 不用 tmux 托管），日志 `/tmp/webdev.log`，地址固定 `http://localhost:5173`（后端 CORS 白名单只有 5173/5174）。
 - **飞书桥接**：`pi-remote-feishu@0.1.6`，配置 `nao-todo/.pi/feishu.json`（600/已忽略），`setsid` 常驻、日志 `/tmp/feishu.log`；三坑（`allowUsers: []` = 谁都不允许 · `stream-card` 需 `cardkit:card:write` 且权限改动须发版 · `rendering.mode:"text"` 静默）与 `dist/feishu/channel.js` 的 `senderId` 本地补丁（升级会覆盖）见归档。
