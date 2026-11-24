@@ -4,20 +4,32 @@ import { Loading } from '@nao-todo/shared/components/loading'
 import { t } from '@nao-todo/shared/locales'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import type { TaskCommentViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
-const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
-    inject(TASK_DETAILS_CONTEXT_KEY)!
+const {
+    comments,
+    readOnly: readOnlyRef,
+    commentHandler,
+    commentsLoading,
+    commentsError,
+    retryComments
+} = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
 // @presetStates 登录凭证（头像加载需要）
 const { userToken } = storeToRefs(useUserStore())
 
+// 只读（T795）：已归档任务的评论不可改/删（UI 入口已不渲染，此处兜底）
 const commentUpdater = async (id: TaskCommentViewObject['id'], content: string) =>
-    commentHandler.update(id, { content })
+    isReadOnly.value ? null : commentHandler.update(id, { content })
 
-const deleteComment = async (id: TaskCommentViewObject['id']) => commentHandler.delete(id)
+const deleteComment = async (id: TaskCommentViewObject['id']) => {
+    if (isReadOnly.value) return
+    await commentHandler.delete(id)
+}
 </script>
 
 <template>
@@ -44,6 +56,7 @@ const deleteComment = async (id: TaskCommentViewObject['id']) => commentHandler.
                         v-for="comment in comments"
                         :key="comment.id"
                         :comment="comment"
+                        :readonly="isReadOnly"
                         :token="userToken"
                         :updater="commentUpdater"
                         :deleter="deleteComment"

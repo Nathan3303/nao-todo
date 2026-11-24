@@ -127,6 +127,8 @@ const onTo = (value: string | null | undefined) => emit('update:to', value ?? ''
     </nue-dropdown>
 </template>
 
+<style scoped src="./filter-trigger.css"></style>
+
 <style scoped>
 .due-panel {
     padding: var(--nue-padding-sm);

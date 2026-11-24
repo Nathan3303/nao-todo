@@ -657,6 +657,8 @@ const zhCN: LocaleMessages = {
     'task.details.restore': '恢复待办任务',
     'task.details.unarchive': '取消归档',
     'task.details.archive': '归档此任务',
+    'task.details.archivedReadOnly': '此任务已归档，只能查看。取消归档后可继续编辑。',
+    'task.details.archivedBadge': '已归档',
     'task.details.deleteTask': '删除待办任务',
     'task.details.backToList': '返回任务列表',
     'task.details.view': '查看详情',

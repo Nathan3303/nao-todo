@@ -610,9 +610,9 @@ const onGuardKeydown = (event: KeyboardEvent): void => {
     border-color: var(--nue-primary-color-500);
 }
 
-.sd-body.is-narrow .sd-update__row {
-    padding: var(--nue-padding-xs) calc(var(--nue-padding-2xs) - 1px);
-}
+/* 窄档（`.sd-body.is-narrow`）⛔ **不再**另开一套行内边距：
+   旧版把 `--nue-padding-2xs`（4px → 实得 3px）当水平内边距，元素几乎贴到卡边（`T795` / #398）；
+   宽/窄同一台阶后，行内元素到卡边恒 = 1px 边框 + 11px 内边距 = 12px（≥ 8px 验收线）。 */
 
 /* 行底上的 hint：⛔ 不用 `--nue-secondary-text-color`（-600 压 -100 = 4.60，仅超线 0.1 且与
    DESIGN §2 的阈值口径打架）⇒ 取 -700 = 6.77（设计稿 §4） */

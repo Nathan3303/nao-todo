@@ -15,6 +15,7 @@ import useExportTask from '../use-export-task'
 const {
     vo,
     projects,
+    readOnly: readOnlyRef,
     isCommenting,
     taskHandler,
     switchTaskDetails,
@@ -28,6 +29,8 @@ const {
     isProjectArchived
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
 // @hook 导出任务文本（Markdown / JSON / HTML 单据）
 const { status, markdown, json, html, error, startExport, retry, reset, copyMarkdown } =
     useExportTask()
@@ -84,8 +87,15 @@ const isProjectArchivedByVo = computed(() => {
     return isProjectArchived(projectId)
 })
 
+/**
+ * 只读（`T795`）下「更多」里**唯一可用的写动作** = 取消归档（逃生口）；
+ * 其余编辑类动作在模板里统一 disabled，此处再兜一层（键盘 / 程序化触发）。
+ */
+const READ_ONLY_ALLOWED_ACTIONS = new Set(['unarchive-todo', 'history', 'export-task'])
+
 const handleDropdownExecute = async (executeId: string) => {
     if (!vo.value) return
+    if (isReadOnly.value && !READ_ONLY_ALLOWED_ACTIONS.has(executeId)) return
     switch (executeId) {
         case 'star-mark':
             // DEF-153：动作点击 = 交互起点 ⇒ 冻结 starMarkAt 基准（此刻 vo.starMarkAt 仍是旧值）
@@ -97,6 +107,7 @@ const handleDropdownExecute = async (executeId: string) => {
             await updateTaskDetails(vo.value.id, { starMarkAt: '' })
             break
         case 'comment-todo':
+            if (isReadOnly.value) break
             isCommenting.value = true
             break
         case 'copy-todo':
@@ -144,7 +155,10 @@ const handleDropdownExecute = async (executeId: string) => {
             :project-id="vo.projectId || ''"
             :projects="projects"
             placement="top-start"
-            @select="(npId) => taskHandler.update(vo!.id, { projectId: npId })"
+            :disabled="isReadOnly"
+            @select="
+                (npId) => (isReadOnly ? undefined : taskHandler.update(vo!.id, { projectId: npId }))
+            "
         />
         <nue-dropdown
             theme="menu"
@@ -184,7 +198,7 @@ const handleDropdownExecute = async (executeId: string) => {
                     execute-id="archive-todo"
                 />
                 <inner-dropdown-option
-                    :disabled="vo.isDeleted"
+                    :disabled="vo.isDeleted || isReadOnly"
                     :title="
                         vo.isStarMarked ? t('task.details.unfavorite') : t('task.details.favorite')
                     "
@@ -193,11 +207,13 @@ const handleDropdownExecute = async (executeId: string) => {
                     :execute-id="vo.isStarMarked ? 'un-star-mark' : 'star-mark'"
                 />
                 <inner-dropdown-option
+                    :disabled="isReadOnly"
                     :title="t('task.details.addComment')"
                     icon="chat"
                     execute-id="comment-todo"
                 />
                 <inner-dropdown-option
+                    :disabled="isReadOnly"
                     :title="t('task.details.copyTask')"
                     icon="files"
                     execute-id="copy-todo"
@@ -214,13 +230,14 @@ const handleDropdownExecute = async (executeId: string) => {
                     execute-id="history"
                 />
                 <inner-dropdown-option
+                    :disabled="isReadOnly"
                     :title="t('task.details.moveToSubTask')"
                     icon="connection"
                     execute-id="move-to-subtask"
                 />
             </dropdown-div-block>
-            <nue-divider />
-            <dropdown-div-block :title="t('task.details.deleteOrGiveUp')">
+            <nue-divider v-if="!isReadOnly" />
+            <dropdown-div-block v-if="!isReadOnly" :title="t('task.details.deleteOrGiveUp')">
                 <inner-dropdown-option
                     :disabled="vo.isDeleted"
                     :title="vo.isGivenUp ? t('task.details.ungiveUp') : t('task.details.giveUp')"

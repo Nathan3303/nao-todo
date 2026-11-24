@@ -1,4 +1,4 @@
-import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
@@ -67,6 +67,10 @@ const useTaskDetails = () => {
         }
         return err
     }
+
+    // @computed 只读态（`T795` / Issue #398）：已归档 ⇒ 编辑入口全关，唯一出口 = 「取消归档」
+    // 判据沿用领域归档语义（`isArchived`，与 `archive-gate` 写守卫同源），⛔ 不另立规则
+    const readOnly = computed(() => task.value?.isArchived === true)
 
     // @hook 检查事项
     const {
@@ -164,6 +168,7 @@ const useTaskDetails = () => {
         dialogManager,
         vo: task,
         refreshKey,
+        readOnly,
         projects: avaliableProjects,
         tags: avaliableTags,
         checkItems,
@@ -210,7 +215,7 @@ const useTaskDetails = () => {
     })
 
     // @returns 返回值
-    return { loading, error, task, initialize, closeDetails }
+    return { loading, error, task, readOnly, initialize, closeDetails }
 }
 
 export default useTaskDetails

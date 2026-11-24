@@ -350,6 +350,8 @@ const isChecked = (list: string[], id: string) => list.includes(id)
     </div>
 </template>
 
+<style scoped src="./filter-trigger.css"></style>
+
 <style scoped>
 /* 颜色全走 shadlike 令牌（标签色点为用户数据豁免） */
 .search-filter-bar {
@@ -367,19 +369,16 @@ const isChecked = (list: string[], id: string) => list.includes(id)
     min-width: 0;
 }
 
-/* —— NueButton 触发器（④：限制最大宽度，超宽由 nue-text clamp 省略） —— */
+/* —— NueButton 触发器（④：限制最大宽度，超宽由 nue-text clamp 省略） ——
+   宽度上限 / 不收缩 / 文本可省略 三件套在 `./filter-trigger.css`（三个触发器组件共用一份来源，`T795`） */
 .filter-trigger {
     --nue-button-font-size: var(--nue-text-sm);
     display: inline-flex;
     align-items: center;
     gap: var(--nue-gap-2xs);
-    max-width: 220px;
     transition:
         background-color var(--nue-animation-duration-short) var(--nue-animation-timing-function),
         color var(--nue-animation-duration-short) var(--nue-animation-timing-function);
-}
-.filter-trigger :deep(.nue-button__text) {
-    min-width: 0;
 }
 .filter-trigger__icon {
     flex: none;

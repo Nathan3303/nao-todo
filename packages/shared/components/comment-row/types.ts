@@ -15,6 +15,11 @@ export type CommentRowProps = {
     /** 更新回调：返回 GoError（null 表示成功），供保存失败时保留编辑框 */
     updater?: (commentId: string, newContent: string) => Go<void> | void | Promise<Go<void>>
     deleter?: (commentId: string) => void
+    /**
+     * 只读（`T795`）：已归档任务等只读场景下不渲染「编辑 / 删除」入口
+     * @default false
+     */
+    readonly?: boolean
 }
 
 export type CommentRowEmits = {

@@ -1,0 +1,18 @@
+/*
+ * 搜索筛选触发器几何（`T795` / Issue #398）
+ *
+ * 三个触发器组件（筛选栏四维 / 排序 / 截止日）共用同一份几何契约 —— `.filter-trigger` 的
+ * scoped 规则**不跨 SFC 生效**（此前只有筛选栏那 4 颗按钮吃到，排序 / 截止日没有），
+ * 故以 `<style scoped src>` 引入同一份来源（同 `pomodoro-timer.css` 先例）⇒ 改这里即三处同时生效。
+ *
+ * 契约：
+ *  ① **不参与收缩**：行内空间不足时整颗按钮换行，⛔ 不被压扁（文字随之消失的空胶囊）；
+ *  ② 宽度上限 220px，超长**只在文本上省略**（`.nue-button__text { min-width: 0 }` 是省略号生效的前提）。
+ */
+.filter-trigger {
+    flex: none;
+    max-width: 220px;
+}
+.filter-trigger :deep(.nue-button__text) {
+    min-width: 0;
+}

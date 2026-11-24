@@ -633,6 +633,8 @@ export interface LocaleMessages {
     'task.details.restore': string
     'task.details.unarchive': string
     'task.details.archive': string
+    'task.details.archivedReadOnly': string
+    'task.details.archivedBadge': string
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string

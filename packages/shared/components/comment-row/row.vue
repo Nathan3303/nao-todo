@@ -38,6 +38,7 @@ watch(
 )
 
 const handleEditComment = () => {
+    if (props.readonly) return
     isEditing.value = true
     nextTick(() => editInputerRef.value?.innerInputRef.focus())
 }
@@ -60,7 +61,7 @@ const handleUpdateComment = async () => {
 }
 
 const handleDeleteComment = async () => {
-    if (!props.deleter) return
+    if (props.readonly || !props.deleter) return
     deleting.value = true
     props.deleter(props.comment.id)
     deleting.value = false
@@ -81,7 +82,8 @@ const handleCancelEdit = () => {
                 <nue-text theme="datetime">
                     {{ parse2RelativeDate(comment.createdAt) }}
                 </nue-text>
-                <nue-div theme="actions">
+                <!-- 只读（T795）：编辑 / 删除入口不进 DOM（已归档评论不可改） -->
+                <nue-div v-if="!readonly" theme="actions">
                     <nue-icon v-show="!isEditing" name="edit" @click="handleEditComment" />
                     <nue-icon
                         :name="deleting ? 'loading' : 'delete'"
