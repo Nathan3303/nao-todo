@@ -12,15 +12,19 @@ import SearchDueTrigger from '../search-due-trigger.vue'
  *
  * @description 验收口径逐条对应 Issue AC：
  *              ① 起/止为「标签在上 + 控件全宽」的竖排段，控件左右缘对齐；
- *              ② 选完后面板内控件显示 `2026年07月02日` 式文案，清除键存在且本组件不覆盖其右侧预留
- *                （覆盖会压住日历图标，`DEF-129` 同类事故）；
+ *              ② 选完后面板内控件显示 `2026年07月02日` 式文案，清除键存在且本组件**按 `size="small"`
+ *                显式恢复主题的 `padding-right` 预留**（`DEF-129`：预留一旦被 padding 简写清掉，
+ *                清除键就压住日历图标）；
  *              ③ 「包含无截止日」点开关 / 点文字 / 点整行空白**三者各切换一次**（真实组件挂载，
  *                断言受控状态与上抛次数，⛔ 不用 stub —— AC 明确要求）；
  *              ④ 无筛选值时底部不出现「清除日期」，有值时出现且点后区间 + 开关一并清空；
- *              ⑤ 窄窗不溢出：宽度上限 16rem / 下限 14rem、控件 `width: 100%` + `min-width: 0`；
+ *              ⑤ 窄窗不溢出：面板定宽 14rem、控件 `width: 100%`；
  *              ⑥ 既有 `data-role` 契约由 t770 / t795 / t798 三文件继续守（本文件不改它们）。
  *
- * jsdom 不可测部分（留给用户视觉走查）：真实像素宽度、横向滚动条、清除键与日历图标的实际间距。
+ * 返工轮（用户实报「样式还是不对」）：面板改为**逐值复刻**任务详情面板的日期选择器
+ * （`task-date-selector.vue`）+ 提醒设置器的开关行，用户口径「直接读…然后复写吧，数据逻辑不变」。
+ * ⇒ 原先描述「横排残余」的几条判据（标签色 600 / min-max 宽度 / `padding-right` 不存在）
+ * 随需求改判：现断言复刻后的真值（标签色 400、定宽 14rem、清除键让位式存在）。
  */
 
 /** SFC 源码（`?raw`；仅供 CSS 契约断言，DOM 行为一律走真实挂载） */
@@ -30,6 +34,8 @@ const rawModules = import.meta.glob('/apps/web/src/components/search/search-due-
     eager: true
 }) as Record<string, string>
 const dueTriggerSource = rawModules['/apps/web/src/components/search/search-due-trigger.vue'] ?? ''
+/** 空白归一化副本（长选择器会被格式化器折行，逐字符匹配前先折叠空白） */
+const dueTriggerSourceFlat = dueTriggerSource.replace(/\s+/g, ' ')
 
 /**
  * 受控宿主：复刻 use-search 的接线（值回流 + clear 一并复位）⇒ 断言的是「状态与结果一致」
@@ -77,7 +83,7 @@ const mountHarness = (initial: HarnessProps = {}) => {
 
 const panel = () => wrapper!.find('.due-panel')
 const rows = () => panel().findAll('.due-panel__row')
-const switchRow = () => panel().find('.due-panel__row--switch')
+const switchRow = () => panel().find('.due-panel__switch-row')
 const switchEl = () => switchRow().find('[role="switch"]')
 const switchLabel = () => switchRow().find('.due-panel__switch-label')
 const clearButton = () => panel().find('.due-panel__clear')
@@ -107,7 +113,7 @@ afterEach(() => {
 describe('T755 AC1 · 起/止为竖排段（标签在上、控件全宽）', () => {
     it('两个日期段各自是一个行容器：标签在前、选择器在后', () => {
         mountHarness()
-        const rowEls = rows().filter((row) => !row.classes().includes('due-panel__row--switch'))
+        const rowEls = rows()
         expect(rowEls).toHaveLength(2)
         for (const row of rowEls) {
             const children = row.element.children
@@ -119,21 +125,53 @@ describe('T755 AC1 · 起/止为竖排段（标签在上、控件全宽）', () 
         expect(toRow!.text()).toContain('结束日')
     })
 
-    it('两段之间 / 段与开关行 / 开关行与动作区之间用分隔线分段', () => {
-        mountHarness({ from: '2026-03-01' })
-        expect(panel().findAll(':scope > .nue-divider')).toHaveLength(2)
-        const structure = panel().element
-        expect(structure.getAttribute('class')).toContain('due-panel')
-        // 面板为纵向 flex（nue-div vertical ⇒ --nue-div-flex-direction: column）
-        expect((structure as HTMLElement).style.getPropertyValue('--nue-div-flex-direction')).toBe(
-            'column'
+    it('骨架：row → 分隔线 → row → 分隔线 → 开关行（起/止之间也有分隔线，同参考件）', () => {
+        mountHarness()
+        const children = [...panel().element.children]
+        const shape = children.map((el) =>
+            el.classList.contains('nue-divider')
+                ? 'divider'
+                : el.classList.contains('due-panel__row')
+                  ? 'row'
+                  : el.classList.contains('due-panel__switch-row')
+                    ? 'switch'
+                    : 'other'
         )
+        expect(shape).toEqual(['row', 'divider', 'row', 'divider', 'switch'])
+        // 面板为纵向 flex（nue-div vertical ⇒ --nue-div-flex-direction: column）
+        expect(
+            (panel().element as HTMLElement).style.getPropertyValue('--nue-div-flex-direction')
+        ).toBe('column')
     })
 
-    it('源码契约：标签在上用 `vertical` 行、控件 100% 宽（含 `__trigger` 包裹层）', () => {
-        expect(dueTriggerSource).toMatch(/\.due-panel__label\s*\{[^}]*color:/m)
+    it('有筛选值时才多一条分隔线 + 动作区（无值时不留尾巴分隔线）', () => {
+        mountHarness()
+        expect(panel().findAll(':scope > .nue-divider')).toHaveLength(2)
+        wrapper!.unmount()
+        mountHarness({ from: '2026-03-01' })
+        expect(panel().findAll(':scope > .nue-divider')).toHaveLength(3)
+        const children = [...panel().element.children]
+        expect(children.at(-2)!.classList.contains('nue-divider')).toBe(true)
+        expect(children.at(-1)!.classList.contains('due-panel__actions')).toBe(true)
+    })
+
+    it('源码契约：复刻参考件的关键三行（标签缩进 / 控件 100% / 包裹层 100%）', () => {
+        // 标签左缘与控件内文字同缩进（参考件：`padding: 0 var(--nue-padding-xs)`）
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__row > \.nue-text\s*\{[^}]*padding:\s*0 var\(--nue-padding-xs\)/m
+        )
         expect(dueTriggerSource).toMatch(/\.due-panel__picker\s*\{[^}]*width:\s*100%/m)
-        expect(dueTriggerSource).toMatch(/\.nue-date-picker__trigger\)\s*\{[^}]*width:\s*100%/m)
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__picker > \.nue-date-picker__trigger\s*\{[^}]*width:\s*100%/m
+        )
+        // 日期是**无框文本行**：去边框/阴影、块向内边距归零（否则看起来像输入框）
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__picker \.nue-button\s*\{[^}]*border:\s*none/m
+        )
+        expect(dueTriggerSource).toMatch(/box-shadow:\s*none/m)
+        expect(dueTriggerSource).toMatch(/padding-block:\s*0/m)
+        // 取自 `--nue-padding-xs` ⇒ 与标签 padding-left 同值（数值左缘对齐的前提）
+        expect(dueTriggerSource).toMatch(/padding-left:\s*var\(--nue-padding-xs\)/m)
     })
 })
 
@@ -144,7 +182,7 @@ describe('T755 AC2 · 选完显示完整日期，清除键不与日历图标重�
         expect(fromText.text()).toBe('2026年07月02日')
     })
 
-    it('清除键随值出现 / 消失；本组件不覆盖主题给清除键预留的 padding-right', async () => {
+    it('清除键随值出现 / 消失；本组件按 `size="small"` 恢复主题给清除键预留的 padding-right', async () => {
         mountHarness()
         expect(panel().find('[data-role="due-from"] .nue-date-picker__clear').exists()).toBe(false)
         wrapper!.unmount()
@@ -152,13 +190,36 @@ describe('T755 AC2 · 选完显示完整日期，清除键不与日历图标重�
         await nextTick()
         expect(panel().find('[data-role="due-from"] .nue-date-picker__clear').exists()).toBe(true)
         expect(panel().find('[data-role="due-to"] .nue-date-picker__clear').exists()).toBe(true)
-        // 主题用 padding-right 给清除键留位（DEF-129）；组件若再用 padding 简写覆盖 ⇒ 图标被压
-        expect(dueTriggerSource).not.toMatch(/padding-right:/)
-        expect(dueTriggerSource).not.toMatch(/padding:\s*0\b/)
+        // `DEF-129`：主题靠 `--clearable .nue-button` 的 padding-right 给绝对定位的清除键留位。
+        // 本组件把块向内边距归零（去掉输入框观感）⇒ 必须显式恢复该预留，否则清除键压日历图标。
+        expect(dueTriggerSourceFlat).toMatch(
+            /\.due-panel__picker \.nue-date-picker__trigger--small\.nue-date-picker__trigger--clearable \.nue-button \{[^}]*padding-right: calc\([^}]*-nue-padding-xs\)/
+        )
+        // ⛔ 不得用 padding 简写覆盖（会把上面那条一起清掉）
+        expect(dueTriggerSource).not.toMatch(/padding:\s*0(?:px|rem)?\s*;/)
     })
 })
 
 describe('T755 AC3 · 「包含无截止日」三条点击路径各自切换一次', () => {
+    it('开关行：文字在左、开关在右（space-between，同提醒设置器）', () => {
+        mountHarness()
+        const row = switchRow()
+        const children = [...row.element.children]
+        expect(children[0]!.classList.contains('due-panel__switch-label')).toBe(true)
+        expect(children[1]!.getAttribute('role')).toBe('switch')
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__switch-row\s*\{[^}]*justify-content:\s*space-between/m
+        )
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__switch-row\s*\{[^}]*height:\s*var\(--nue-box-size-xs\)/m
+        )
+        // 行内缩进与标签/控件一致 ⇒ 三行左缘同一条线
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel__switch-row\s*\{[^}]*padding:\s*0 var\(--nue-padding-xs\)/m
+        )
+        // 开关高度取提醒行同值（1.75rem 行里默认高度几乎顶满）
+        expect(switchEl().attributes('style')).toContain('--nue-switch-height: 1rem')
+    })
     it('点开关：切换一次（不因冒泡与整行各抛一次而相互抵消）', async () => {
         mountHarness()
         await click(switchEl().element)
@@ -225,16 +286,26 @@ describe('T755 AC4 · 「清除日期」仅在有效值时出现，且一并清�
 })
 
 describe('T755 AC5 · 窄窗宽度契约', () => {
-    it('面板 14rem 起、16rem 封顶（竖排不再占横排的 20rem）', () => {
-        expect(dueTriggerSource).toMatch(/\.due-panel\s*\{[^}]*min-width:\s*14rem/m)
-        expect(dueTriggerSource).toMatch(/\.due-panel\s*\{[^}]*max-width:\s*16rem/m)
+    it('面板定宽 14rem（与参考件同值，宽度不再可漂移）', () => {
+        // 需求变更（返工轮）：由「min 14rem / max 16rem」改为「定宽 14rem」—— 参考件就是定宽，
+        // 宽度可漂移会让面板在不同字体的机器上左右缘对不齐。14rem = 224px < 320px 视口，窄屏不溢出。
+        expect(dueTriggerSource).toMatch(/\.due-panel\s*\{[^}]*width:\s*14rem/m)
+        expect(dueTriggerSource).not.toMatch(/max-width:\s*16rem/)
         expect(dueTriggerSource).not.toMatch(/max-width:\s*20rem/)
+        expect(dueTriggerSource).not.toMatch(/min-width:\s*14rem/)
     })
 
-    it('行容器与控件都不设固定 px 宽度（可随窄窗收缩，不产生横向滚动）', () => {
-        expect(dueTriggerSource).toMatch(/\.due-panel__row\s*\{[^}]*min-width:\s*0/m)
-        expect(dueTriggerSource).toMatch(/\.due-panel__picker\s*\{[^}]*min-width:\s*0/m)
+    it('不设固定 px 宽度（可随窄窗收缩，不产生横向滚动）', () => {
+        expect(dueTriggerSource).toMatch(/\.due-panel__picker\s*\{[^}]*box-sizing:\s*border-box/m)
         expect(dueTriggerSource).not.toMatch(/width:\s*\d+px/)
+    })
+
+    it('间距取参考件值（面板 gap / 行 gap / 内边距），不再用上一版的 sm', () => {
+        expect(dueTriggerSource).toMatch(/\.due-panel\s*\{[^}]*gap:\s*var\(--nue-gap-xs\)/m)
+        expect(dueTriggerSource).toMatch(
+            /\.due-panel\s*\{[^}]*padding:\s*var\(--nue-padding-2xs\) 0/m
+        )
+        expect(dueTriggerSource).toMatch(/\.due-panel__row\s*\{[^}]*gap:\s*var\(--nue-gap-2xs\)/m)
     })
 })
 

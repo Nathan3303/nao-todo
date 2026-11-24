@@ -122,11 +122,14 @@ describe('T798 · 触发器截断与面板排版', () => {
      * @description `#403`（T755）把面板由**横排**（标签定宽 3.25rem + 选择器 `flex: 1 1 0`）
      *              改为**竖排表单**（标签在上、控件全宽、`nue-divider` 分段、动作区由分隔线而非
      *              `border-top` 与上方分开）⇒ 原三条断言（定宽标签 / flex 拉伸 / border-top）
-     *              所描述的布局已被需求取消，改为断言新骨架。**判据变更仅此三条 CSS 契约**，
+     *              所描述的布局已被需求取消，改为断言新骨架。**判据变更仅此几条 CSS 契约**，
      *              `data-role` 断言与本文件其余用例（标题 / 年份 / 清除组）均未改。
+     *              返工轮（用户实报「样式还是不对」）：面板改为逐值复刻任务详情面板的日期选择器
+     *              ⇒ 标签选择器按参考件换成 `.due-panel__row > .nue-text`（值 400，非上版的 600），
+     *              此为本用例**唯一**改动的一行判据。
      */
     it('源码契约：竖排骨架（标签在上/控件全宽/分隔线分段）、日期等宽数字', () => {
-        expect(dueTriggerSource).toMatch(/\.due-panel__label\s*\{[^}]*color:/m)
+        expect(dueTriggerSource).toMatch(/\.due-panel__row > \.nue-text\s*\{[^}]*color:/m)
         expect(dueTriggerSource).toMatch(/\.due-panel__picker\s*\{[^}]*width:\s*100%/m)
         expect(dueTriggerSource).not.toMatch(/min-width:\s*3\.25rem/)
         expect(dueTriggerSource).not.toMatch(/\.due-panel__actions\s*\{[^}]*border-top:/m)
