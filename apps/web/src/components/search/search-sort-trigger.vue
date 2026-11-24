@@ -121,6 +121,8 @@ const onExecute = (id: string) => {
     </nue-dropdown>
 </template>
 
+<style scoped src="./filter-trigger.css"></style>
+
 <style scoped>
 .sort-trigger__order {
     color: var(--nue-secondary-text-color);

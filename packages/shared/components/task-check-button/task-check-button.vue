@@ -4,7 +4,7 @@
         :size="size"
         :icon="iconName"
         :loading="isUpdating"
-        :disabled="isUpdating"
+        :disabled="isUpdating || disabled"
         :style="priorityColor ? { '--nue-button-color': priorityColor } : undefined"
         @click="handleClick"
         @mouseover="isHover = true"
@@ -28,6 +28,8 @@ const iconName = computed(() => {
 
 const handleClick = (e: Event) => {
     e.stopPropagation()
+    // 只读（T795）：即使原生 disabled 被绕过也不上抛
+    if (props.disabled) return
     emit('change', !props.isDone)
 }
 </script>

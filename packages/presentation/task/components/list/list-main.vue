@@ -4,6 +4,7 @@ import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
 import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
 import { TaskDateInfo } from '@nao-todo/shared/components/task-date-info'
 import { TaskBasicInfo } from '@nao-todo/shared/components/task-basic-info'
+import { t } from '@nao-todo/shared/locales'
 import { TaskTagBar } from '../../'
 import { TASK_LIST_CONTEXT_KEY } from './use-list'
 import type { TaskListContext } from './types'
@@ -33,6 +34,7 @@ const {
             :class="{ 'todo-list-main__row--small': small }"
             :key="`${task.id}.${refreshKey}`"
             :data-done="task.state === 'done'"
+            :data-archived="task.isArchived ? 'true' : 'false'"
             :data-selected="isInMultiSelectRange(idx)"
             :data-deleted="task.isDeleted"
             @click.stop.exact="handleClickTask(task, idx)"
@@ -43,6 +45,14 @@ const {
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
                     <nue-div class="list-name-cell">
                         <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
+                        <!-- 已归档标记（`T795`）：图标 + 文字（灰阶 + 本标记 + `data-archived` 三重冗余） -->
+                        <span
+                            v-if="task.isArchived"
+                            class="list-name-cell__archived"
+                            data-archived-mark
+                        >
+                            {{ t('task.details.archivedBadge') }}
+                        </span>
                         <!-- 星标 -->
                         <nue-icon
                             v-if="task.isStarMarked"
@@ -116,3 +126,22 @@ const {
         </nue-div>
     </nue-div>
 </template>
+
+<style scoped>
+/* 已归档（`T795`）：行去强调色（灰阶）+ 名称旁文字标记；正文 token 为中性灰 ⇒ 对比不变（≥4.5:1） */
+.nue-div--todo-list-main__row[data-archived='true'] {
+    filter: grayscale(1);
+}
+
+.list-name-cell__archived {
+    flex: none;
+    margin-left: var(--nue-gap-2xs);
+    padding: 0 var(--nue-padding-2xs);
+    border-radius: var(--nue-radius-sm);
+    font-size: var(--nue-text-2xs);
+    line-height: 1.6;
+    color: var(--nue-primary-color-700);
+    background-color: var(--nue-primary-color-200);
+    white-space: nowrap;
+}
+</style>

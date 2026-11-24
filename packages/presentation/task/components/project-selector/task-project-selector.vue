@@ -23,7 +23,7 @@ const handleSelect = async (projectId: TaskProjectViewObject['id']) => {
 </script>
 
 <template>
-    <nue-select theme="project-selector" v-model="vm" size="small">
+    <nue-select theme="project-selector" v-model="vm" size="small" :disabled="disabled">
         <nue-select-option icon="inbox" label="收集箱" :value="'inbox'" theme="project-selector" />
         <nue-divider />
         <template v-if="projects && projects.length">

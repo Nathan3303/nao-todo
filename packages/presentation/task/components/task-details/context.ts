@@ -21,6 +21,14 @@ export type TaskDetailsContext = {
     vo: Ref<TaskDetailsViewObject | null>
     refreshKey: Ref<number>
 
+    /**
+     * 只读态（`T795` / Issue #398）
+     * @description 已归档任务**只能看**：判据沿用领域归档语义（`vo.isArchived`），⛔ 不另立规则。
+     *              所有编辑入口按此关停（`disabled` / `readonly` / 不渲染）；唯一出口 = 「取消归档」。
+     *              可选：缺失按「可编辑」处理（与 `isProjectArchived` 同先例，既有调用面不强绑）。
+     */
+    readOnly?: ComputedRef<boolean>
+
     projects: ComputedRef<TaskProjectViewObject[]>
     tags: Ref<TaskTagViewObject[]>
     checkItems: ComputedRef<TaskCheckItemViewObject[]>

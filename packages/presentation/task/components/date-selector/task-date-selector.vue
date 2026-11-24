@@ -66,6 +66,8 @@ const triggerText = computed(() => {
 
 // @method 打开面板前重置本地状态（并按 key 重挂载提醒设置器）
 const handleBeforeOpen = () => {
+    // 只读（T795）：兜底 —— 禁用态按钮不触发 click，正常不会走到这里
+    if (props.disabled) return
     // DEF-153：面板打开 = 交互起点 ⇒ 通知调用方冻结日期/提醒字段基准（⛔ 不是保存时刻）
     emit('edit-start')
     startAtLocal.value = props.startAt || ''
@@ -108,7 +110,11 @@ const handleCancel = () => {
     <nue-dropdown ref="dropdownRef" placement="bottom-start" @before-open="handleBeforeOpen">
         <!-- 触发按钮 -->
         <template #trigger="{ trigger }">
-            <nue-button :theme="{ small: true, expired: colored && isEndExpired }" @click="trigger">
+            <nue-button
+                :theme="{ small: true, expired: colored && isEndExpired }"
+                :disabled="disabled"
+                @click="trigger"
+            >
                 <nue-text>{{ triggerText.range }}</nue-text>
                 <nue-text v-if="triggerText.remind"> , {{ triggerText.remind }}</nue-text>
             </nue-button>

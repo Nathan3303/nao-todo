@@ -17,6 +17,7 @@ import DetailsMainSubTasks from './subtasks.vue'
 
 const {
     vo,
+    readOnly: readOnlyRef,
     checkItemProgress,
     subTaskProgress,
     checkItems,
@@ -30,6 +31,8 @@ const {
     updateTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
 const percentage = computed(() => {
     // 子任务详情不渲染子任务板块（深度限制），进度仅计检查事项
     if (vo.value?.parentTaskId) return checkItemProgress.value.percentage
@@ -54,34 +57,34 @@ const beginEditSelectors = () => {
 }
 
 const updateTaskState = (v: unknown) => {
-    if (vo.value === null) return
+    if (vo.value === null || isReadOnly.value) return
     updateTaskDetails(vo.value.id, { state: v as TaskViewObject['state'] })
 }
 
 const updateTaskPriority = (v: unknown) => {
-    if (vo.value === null) return
+    if (vo.value === null || isReadOnly.value) return
     updateTaskDetails(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
 const updateTaskName = () => {
-    if (vo.value === null) return
+    if (vo.value === null || isReadOnly.value) return
     updateTaskDetails(vo.value.id, { name: vo.value.name as TaskViewObject['name'] })
 }
 
 const updateTaskDescription = () => {
-    if (vo.value === null) return
+    if (vo.value === null || isReadOnly.value) return
     updateTaskDetails(vo.value.id, {
         description: vo.value.description as TaskViewObject['description']
     })
 }
 
 const updateTaskTags = (v: unknown) => {
-    if (vo.value === null) return
+    if (vo.value === null || isReadOnly.value) return
     updateTaskDetails(vo.value.id, { tags: v as TaskViewObject['tags'] })
 }
 
 const createCommentHandler = async (content: string) => {
-    if (vo.value === null) return false
+    if (vo.value === null || isReadOnly.value) return false
     const createError = await commentHandler.create({ taskId: vo.value.id, content })
     return createError === null
 }
@@ -96,11 +99,13 @@ const createCommentHandler = async (content: string) => {
                 <task-selector
                     :options="TaskStateSelectOptions"
                     :value="vo.state"
+                    :disabled="isReadOnly"
                     @change="updateTaskState"
                 />
                 <task-selector
                     :options="TaskPrioritySelectOptions"
                     :value="vo.priority"
+                    :disabled="isReadOnly"
                     @change="updateTaskPriority"
                 />
             </nue-div>
@@ -125,10 +130,12 @@ const createCommentHandler = async (content: string) => {
                     >
                         {{ t('task.details.backToParent') }}
                     </nue-button>
+                    <!-- 只读（T795）：已归档 ⇒ `readonly`（仍可选中复制；⛔ 不用 disabled —— 会压灰不可选） -->
                     <nue-textarea
                         v-model="vo.name"
                         :autosize="{ minRows: 1, maxRows: 2 }"
                         maxlength="64"
+                        :readonly="isReadOnly"
                         :placeholder="t('task.details.namePlaceholder')"
                         theme="pure,name"
                         @change="updateTaskName"
@@ -137,6 +144,7 @@ const createCommentHandler = async (content: string) => {
                         v-model="vo.description as string | undefined"
                         :autosize="{ minRows: 1, maxRows: 99 }"
                         maxlength="256"
+                        :readonly="isReadOnly"
                         :placeholder="t('task.details.descPlaceholder')"
                         theme="pure,description"
                         @change="updateTaskDescription"
@@ -162,6 +170,7 @@ const createCommentHandler = async (content: string) => {
                     <task-tag-bar
                         :available-tags="tags"
                         :task-tag-ids="vo.tags"
+                        :readonly="isReadOnly"
                         @edit-start="beginEdit('tags')"
                         @update-tags="updateTaskTags"
                         @create-tag="
@@ -192,7 +201,7 @@ const createCommentHandler = async (content: string) => {
         <!-- 任务详情底部 -->
         <nue-footer>
             <!-- 任务详情评论创建器 -->
-            <nue-div v-if="isCommenting" vertical width="100%">
+            <nue-div v-if="isCommenting && !isReadOnly" vertical width="100%">
                 <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
             <!-- 任务详情事件进度 -->

@@ -11,6 +11,7 @@ type FilterStatus = 'all' | 'undone' | 'done'
 
 const {
     vo,
+    readOnly: readOnlyRef,
     checkItems,
     resortCheckItems,
     checkItemHandler,
@@ -20,6 +21,33 @@ const {
     makeCheckItemToTask
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
+// 只读守卫（`T795`）：始终绑定事件、在处理器内早退（⛔ 不用「条件绑定 undefined」——
+// 实测该写法会让监听在某些渲染路径下失效，见 subtasks 拖拽用例）。
+const onDragStart = (event: DragEvent): void => {
+    if (isReadOnly.value) {
+        event.preventDefault()
+        return
+    }
+    handleDragStart(event)
+}
+const onDragOver = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragOver(event)
+}
+const onDragLeave = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragLeave(event)
+}
+const onDragEnd = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragEnd(event)
+}
+const onDrop = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDrop(event)
+}
 const searchQuery = ref('')
 const filterStatus = ref<FilterStatus>('all')
 
@@ -64,14 +92,16 @@ const getFilterIcon = () => {
     }
 }
 
-const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
-    useEventDragger((dragged, dropped, isUp) => {
-        if (!dragged.dataset.eid || !dropped.dataset.eid) return
-        resortCheckItems(dragged.dataset.eid, dropped.dataset.eid, isUp)
-    })
+/** 拖拽排序只读时整体失效（`T795`：已归档不做任何增删改/排序） */
+const dragHandlers = useEventDragger((dragged, dropped, isUp) => {
+    if (isReadOnly.value) return
+    if (!dragged.dataset.eid || !dropped.dataset.eid) return
+    resortCheckItems(dragged.dataset.eid, dropped.dataset.eid, isUp)
+})
+const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } = dragHandlers
 
 const createEvent = async (payload: { value: string }) => {
-    if (!vo.value) return
+    if (!vo.value || isReadOnly.value) return
     await checkItemHandler.create({ taskId: vo.value.id, name: payload.value })
 }
 
@@ -114,11 +144,11 @@ watch(
                 vertical
                 gap="0"
                 theme="event-list"
-                @dragover="handleDragOver"
-                @dragstart="handleDragStart"
-                @dragleave="handleDragLeave"
-                @dragend="handleDragEnd"
-                @drop="handleDrop"
+                @dragover="onDragOver"
+                @dragstart="onDragStart"
+                @dragleave="onDragLeave"
+                @dragend="onDragEnd"
+                @drop="onDrop"
             >
                 <event-row
                     v-for="event in filteredCheckItems"
@@ -126,12 +156,15 @@ watch(
                     :key="event.id"
                     :event="event"
                     :data-eid="event.id"
+                    :readonly="isReadOnly"
                     :on-update="(id, v) => checkItemHandler.update(id, v)"
                     :on-delete="(id) => checkItemHandler.delete(id)"
                     @to-task="makeCheckItemToTask"
                 />
             </nue-div>
+            <!-- 只读（T795）：已归档 ⇒ 不渲染「新增检查项」入口 -->
             <input-button
+                v-if="!isReadOnly"
                 icon="plus-circle"
                 :button-text="t('task.details.eventCreate')"
                 :placeholder="t('task.details.eventNamePlaceholder')"

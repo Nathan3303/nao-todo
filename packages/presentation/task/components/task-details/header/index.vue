@@ -2,17 +2,26 @@
 import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
 import { t } from '@nao-todo/shared/locales'
 import { TaskDateSelector } from '../../date-selector'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const emit = defineEmits<{ (e: 'reload'): void }>()
 
-const { vo, refreshKey, closeDetails, beginEdit, updateTaskDetails } =
-    inject(TASK_DETAILS_CONTEXT_KEY)!
+const {
+    vo,
+    refreshKey,
+    readOnly: readOnlyRef,
+    closeDetails,
+    beginEdit,
+    updateTaskDetails
+} = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
 const switchState = () => {
     if (vo.value === null) return
+    if (isReadOnly.value) return
     // DEF-153：点击（= 交互起点）即冻结 state 基准（此刻 vo.state 仍是旧值）
     beginEdit('state')
     updateTaskDetails(vo.value.id, { state: vo.value.isDone ? 'todo' : 'done' })
@@ -44,13 +53,19 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
 <template>
     <nue-header v-if="vo">
         <nue-div theme="left">
-            <task-check-button :is-done="vo.isDone" @change="switchState" />
+            <task-check-button
+                :is-done="vo.isDone"
+                :disabled="isReadOnly"
+                :title="isReadOnly ? t('task.details.archivedReadOnly') : undefined"
+                @change="switchState"
+            />
             <task-date-selector
-                :colored="!vo.isDone"
+                :colored="!vo.isDone && !isReadOnly"
                 :start-at="vo.startAt"
                 :end-at="vo.endAt"
                 :task="vo"
                 :refresh-key="refreshKey"
+                :disabled="isReadOnly"
                 @edit-start="beginEditDates"
                 @update-all="updateDateAndRemind"
             />

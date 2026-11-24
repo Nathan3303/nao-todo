@@ -9,6 +9,12 @@ export type TaskDateSelectorProps = {
     task?: TaskViewObject
     remind?: TaskRemindData
     refreshKey?: number
+    /**
+     * 只读（`T795`）：已归档任务等只读场景禁用日期/提醒编辑入口
+     * @description 触发器按钮原生 `disabled` ⇒ 下拉打不开、`edit-start` / `update-all` 都不会发生
+     * @default false
+     */
+    disabled?: boolean
 }
 
 // 任务日期选择器事件

@@ -84,4 +84,17 @@
         opacity: 0.5;
         transform: scale(0.98);
     }
+
+    /* 只读（T795）：保留布局（图标尺寸 / 不收缩），但不再表现「可点」 */
+    &[data-readonly='true'] {
+        .nue-icon--pointer,
+        .nue-text--pointer {
+            cursor: default;
+        }
+
+        &:hover,
+        &:focus-within {
+            background-color: transparent;
+        }
+    }
 }

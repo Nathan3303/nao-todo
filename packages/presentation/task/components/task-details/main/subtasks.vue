@@ -8,12 +8,13 @@ import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
 import { TaskPriorityPresets } from '@nao-todo/shared/components/task-priority-info'
 import { TaskTagBar } from '../../tag-bar'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
-import { inject, reactive } from 'vue'
+import { computed, inject, reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import useEventDragger from '../use-event-dragger'
 
 const {
     subTasks,
+    readOnly: readOnlyRef,
     subTasksLoading,
     subTasksError,
     subTasksRefreshError,
@@ -25,11 +26,41 @@ const {
     tags
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
+/** 只读态（`T795`）：上下文可缺省（缺失按「可编辑」，同 `isProjectArchived` 先例） */
+const isReadOnly = computed(() => readOnlyRef?.value === true)
+
+// 只读守卫（`T795`）：**始终绑定**事件、在处理器内早退 —— 不用「条件绑定 undefined」
+// （Δ：条件绑定会让事件监听在某些渲染路径下不生效，实测既有拖拽用例 3 例红）。
+const onDragStart = (event: DragEvent): void => {
+    if (isReadOnly.value) {
+        event.preventDefault()
+        return
+    }
+    handleDragStart(event)
+}
+const onDragOver = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragOver(event)
+}
+const onDragLeave = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragLeave(event)
+}
+const onDragEnd = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDragEnd(event)
+}
+const onDrop = (event: DragEvent): void => {
+    if (isReadOnly.value) return
+    handleDrop(event)
+}
 // 子任务拖拽排序（整行拖拽 + up/down 蓝色插入指示线；
 // 选择器/ID 键按子任务契约传参，默认值仍为检查项契约）
 const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleDrop } =
     useEventDragger(
         (dragged, dropped, isUp) => {
+            // 只读（T795）：已归档不做任何排序
+            if (isReadOnly.value) return
             const originalId = dragged.dataset.sid
             const boundId = dropped.dataset.sid
             if (!originalId || !boundId) return
@@ -70,7 +101,7 @@ const updatingIds = reactive(new Set<TaskViewObject['id']>())
 
 // 切换子任务完成状态（todo ⇄ done）
 const toggleState = (subTask: TaskViewObject) => {
-    if (updatingIds.has(subTask.id)) return
+    if (isReadOnly.value || updatingIds.has(subTask.id)) return
     updatingIds.add(subTask.id)
     subTaskHandler
         .updateTaskState(subTask.id, subTask.state === 'done' ? 'todo' : 'done')
@@ -79,6 +110,7 @@ const toggleState = (subTask: TaskViewObject) => {
 
 // 创建子任务（提交任务名称）
 const handleCreateSubTask = async (payload: { value: string }) => {
+    if (isReadOnly.value) return
     await createSubTask(payload.value)
 }
 </script>
@@ -111,18 +143,18 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                         class="subtask-list"
                         vertical
                         gap="0"
-                        @dragover="handleDragOver"
-                        @dragstart="handleDragStart"
-                        @dragleave="handleDragLeave"
-                        @dragend="handleDragEnd"
-                        @drop="handleDrop"
+                        @dragover="onDragOver"
+                        @dragstart="onDragStart"
+                        @dragleave="onDragLeave"
+                        @dragend="onDragEnd"
+                        @drop="onDrop"
                     >
                         <nue-div
                             v-for="subTask in subTasks"
                             :key="subTask.id"
                             class="subtask-row"
-                            draggable="true"
-                            data-drag-item="true"
+                            :draggable="!isReadOnly"
+                            :data-drag-item="isReadOnly ? undefined : 'true'"
                             :data-sid="subTask.id"
                             :data-done="subTask.state === 'done'"
                         >
@@ -131,6 +163,7 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                                 size="small"
                                 :is-done="subTask.state === 'done'"
                                 :is-updating="updatingIds.has(subTask.id)"
+                                :disabled="isReadOnly"
                                 :priority-color="
                                     subTask.state === 'done'
                                         ? undefined
@@ -193,6 +226,7 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                         </nue-div>
                     </nue-div>
                     <input-button
+                        v-if="!isReadOnly"
                         class="subtask-row__create-bar"
                         icon="plus-circle"
                         :button-text="t('task.details.subTaskCreate')"

@@ -28,19 +28,20 @@ const themeModules = import.meta.glob('/apps/web/src/themes/dropdown.css', {
     import: 'default',
     eager: true
 }) as Record<string, string>
-const barModules = import.meta.glob('/apps/web/src/components/search/search-filter-bar.vue', {
-    query: '?raw',
-    import: 'default',
-    eager: true
-}) as Record<string, string>
 const dropdownCss = themeModules['/apps/web/src/themes/dropdown.css'] ?? ''
-const barSource = barModules['/apps/web/src/components/search/search-filter-bar.vue'] ?? ''
 const triggerLabelModules = import.meta.glob(
     '/apps/web/src/components/search/filter-trigger-label.vue',
     { query: '?raw', import: 'default', eager: true }
 ) as Record<string, string>
 const triggerLabelSource =
     triggerLabelModules['/apps/web/src/components/search/filter-trigger-label.vue'] ?? ''
+/** 触发器几何唯一来源（`T795`：三个触发器组件 `<style scoped src>` 共用） */
+const triggerCssModules = import.meta.glob('/apps/web/src/components/search/filter-trigger.css', {
+    query: '?raw',
+    import: 'default',
+    eager: true
+}) as Record<string, string>
+const triggerCss = triggerCssModules['/apps/web/src/components/search/filter-trigger.css'] ?? ''
 
 const makeProject = (id: string, name: string, sortId: number): ProjectViewObject =>
     ({ id, name, sortId, isArchived: false, isDeleted: false }) as unknown as ProjectViewObject
@@ -228,8 +229,10 @@ describe('T505 ④ 触发器显示已选名称', () => {
     it('AC6：超宽折叠 + 触发器最大宽度 / 内部文本可收缩省略（源码契约）', () => {
         mountBar({ selectedProjectIds: ['', 'p1', 'p2'] })
         expect(triggerText(TRIGGER.project)).toBe('清单：收集箱、工作 +1')
-        expect(barSource).toMatch(/\.filter-trigger\s*\{[^}]*max-width/m)
-        expect(barSource).toMatch(
+        // `T795`：几何（最大宽度 / 不收缩 / 文本可省略）收敛到唯一来源 `filter-trigger.css`
+        expect(triggerCss).toMatch(/\.filter-trigger\s*\{[^}]*max-width:\s*220px/m)
+        expect(triggerCss).toMatch(/\.filter-trigger\s*\{[^}]*flex:\s*none/m)
+        expect(triggerCss).toMatch(
             /\.filter-trigger :deep\(\.nue-button__text\)\s*\{[^}]*min-width:\s*0/m
         )
     })

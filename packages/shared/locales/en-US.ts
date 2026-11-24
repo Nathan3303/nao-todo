@@ -686,6 +686,9 @@ const enUS: LocaleMessages = {
     'task.details.restore': 'Restore Task',
     'task.details.unarchive': 'Unarchive',
     'task.details.archive': 'Archive this task',
+    'task.details.archivedReadOnly':
+        'This task is archived, so it is read-only. Unarchive it to edit again.',
+    'task.details.archivedBadge': 'Archived',
     'task.details.deleteTask': 'Delete Task',
     'task.details.backToList': 'Back to Task List',
     'task.details.view': 'View Details',

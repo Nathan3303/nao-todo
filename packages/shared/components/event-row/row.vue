@@ -13,7 +13,7 @@ const isEditing = ref(false)
 const updateLoading = ref(false)
 
 const handleGoEdit = () => {
-    if (updateLoading.value) return
+    if (updateLoading.value || props.readonly) return
     isEditing.value = true
     nextTick(() => eventNameInputer.value?.innerInputRef?.focus())
 }
@@ -25,7 +25,7 @@ const handleGoCancel = () => {
 }
 
 const handleUpdateIsDone = () => {
-    if (updateLoading.value) return
+    if (updateLoading.value || props.readonly) return
     updateLoading.value = true
     props
         .onUpdate(props.event.id, { isDone: !props.event.isDone })
@@ -33,6 +33,10 @@ const handleUpdateIsDone = () => {
 }
 
 const handleUpdateName = () => {
+    if (props.readonly) {
+        isEditing.value = false
+        return
+    }
     if (updateLoading.value) {
         isEditing.value = false
         return
@@ -48,15 +52,16 @@ const handleUpdateName = () => {
 }
 
 const handleDelete = () => {
-    if (updateLoading.value) return
+    if (updateLoading.value || props.readonly) return
     updateLoading.value = true
     props.onDelete(props.event.id).finally(() => (updateLoading.value = false))
 }
 </script>
 
 <template>
-    <nue-div theme="event-row">
-        <nue-icon theme="drag-icon" name="more-vertical" draggable="true" />
+    <nue-div theme="event-row" :data-readonly="String(readonly)">
+        <!-- 只读（T795）：拖拽手柄不渲染 ⇒ 该行不可拖 -->
+        <nue-icon v-if="!readonly" theme="drag-icon" name="more-vertical" draggable="true" />
         <nue-icon
             theme="pointer"
             :name="updateLoading ? 'loading' : event.isDone ? 'square-check-fill' : 'square'"
@@ -77,8 +82,17 @@ const handleDelete = () => {
             maxlength="64"
             counter="word-left"
         />
+        <!-- 只读（T795）：「依据该检查事项创建新任务」是**新建**动作，不属编辑 ⇒ 保留；其余动作不进 DOM -->
         <nue-div theme="actions">
-            <template v-if="isEditing">
+            <template v-if="readonly">
+                <nue-icon
+                    name="plus-circle"
+                    title="依据该检查事项创建新任务"
+                    theme="pointer"
+                    @click="emit('toTask', event.id)"
+                />
+            </template>
+            <template v-else-if="isEditing">
                 <nue-icon name="clear" title="取消编辑" theme="pointer" @click="handleGoCancel" />
                 <nue-icon name="blank" />
             </template>

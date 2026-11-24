@@ -404,7 +404,9 @@ const hasContent = computed(() => items.value.length > 0)
     width: 100%;
 }
 
-/* 列表：查阅型信息 ⇒ 由列表自身滚动（全对话框唯一滚动容器），标题与底部按钮常驻 */
+/* 列表：查阅型信息 ⇒ 由列表自身滚动（全对话框唯一滚动容器），标题与底部按钮常驻。
+   横轴 padding 0（`T795` / #398）：行 hover 底色铺满内容宽，且分组标题 / 条目左缘与弹窗内容轴
+   （标题左缘）对齐 —— 纵向留白保留 */
 .task-history__list {
     display: flex;
     flex-direction: column;
@@ -412,7 +414,7 @@ const hasContent = computed(() => items.value.length > 0)
     gap: var(--nue-gap-df);
     width: 100%;
     max-height: min(58vh, 26rem);
-    padding: var(--nue-padding-xs);
+    padding: var(--nue-padding-xs) 0;
     overflow: auto;
     box-sizing: border-box;
 }
@@ -423,10 +425,11 @@ const hasContent = computed(() => items.value.length > 0)
     gap: var(--nue-gap-2xs);
 }
 
-/* 组标题：小字 + 次要色（今天 / 昨天 / 更早，专用键 `history.group.*`） */
+/* 组标题：小字 + 次要色（今天 / 昨天 / 更早，专用键 `history.group.*`）
+   横轴 0（`T795` / #398）：与弹窗标题左缘同一条内容轴（⛔ 不再比标题多缩 8px） */
 .task-history__group-title {
     margin: 0;
-    padding: 0 var(--nue-padding-xs);
+    padding: 0;
     font-size: var(--nue-text-xs);
     font-weight: 500;
     /* 小文本 ≥4.5:1 ⇒ 用次要文字色（DESIGN §2：次要文字色，实测 5.74:1 @ 白底） */
